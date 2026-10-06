@@ -22,7 +22,7 @@ Fonts or any third party), subset and preloaded for speed.
 
 | Language | Font | Notes |
 | --- | --- | --- |
-| Persian | **IRANSans** | Persian digits, RTL; licensed web version |
+| Persian | **IRANSans** | Persian digits, RTL; font files taken from the owner's other repositories |
 | Turkish | **Inter** | full Turkish set (ç ğ ı İ ö ş ü), excellent on screen |
 | English | **Inter** | same family as Turkish for a consistent look |
 
