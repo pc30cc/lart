@@ -52,7 +52,37 @@ site members.
   details (dates, sessions, fee or revenue share). The instructor signs it
   electronically through a secure link. After signing, the class is published
   on the home page.
-- **Settings**: default language, site details, SEO defaults.
+- **Settings**: default language, site details, SEO defaults, and the
+  **media CDN**: choose **Bunny CDN** (Bunny Storage + Bunny Stream for
+  video) or **Cloudflare** (R2 storage + Cloudflare CDN / Stream), with their
+  keys. Every uploaded image and video goes straight to the selected CDN;
+  the database stores only the file path.
+
+## Course finances and closing
+
+Every course has its own finances:
+
+- **Customer price**: the price shown on the public site.
+- **Instructor fee**, chosen per course: a fixed fee for the whole course,
+  or a fee per participant.
+- **Course expenses** (venue, materials, catering, advertising, ...): any
+  super admin can add them, with the partner who paid.
+- A live course summary: registrations, revenue, instructor fee, expenses.
+
+When the course ends, an admin presses **Close course**. The system then
+locks the figures and shows exactly:
+
+- total revenue, instructor fee and every expense,
+- **net profit** of the course,
+- **each partner's share** of that profit,
+
+and posts the result to the shared wallet ledger.
+
+### Past courses
+
+After closing, admins upload the course photos and videos. The course then
+moves to an elegant **Past courses** section (gallery with lightbox, photos
+and video, course story), which also helps SEO.
 
 ## Shared wallet and accounting
 
@@ -81,10 +111,10 @@ site members.
 | i18n | next-intl (fa, tr, en; RTL for Persian) |
 | Validation / forms | Zod, React Hook Form |
 | Contracts | PDF generation and e-signature with a signed audit record |
-| Media | S3-compatible object storage, Next.js image optimization |
+| Media | Bunny CDN or Cloudflare (R2 / Stream), chosen in admin settings |
 | Email | Transactional email provider (e.g. Resend) |
 | Testing | Vitest, Playwright |
-| Deployment | Docker (e.g. on Coolify) with managed PostgreSQL |
+| Deployment | Docker on Coolify (own server), PostgreSQL on the same server with daily backups; CDN in front |
 
 ## Data model (draft, kept minimal)
 
@@ -93,9 +123,10 @@ site members.
 | `admins` | super admins / partners (separate login) |
 | `members` | site users |
 | `instructors` | photo, bio |
-| `courses` | class or workshop, instructor, dates, capacity, price, status |
+| `courses` | class or workshop, instructor, dates, capacity, price, instructor fee type and amount, status, closed totals |
 | `registrations` | member ↔ course, status |
 | `contracts` | course ↔ instructor, terms, signature, signed date |
 | `translations` | text for fa / tr / en, keyed by entity and field |
+| `course_expenses` | expenses of a course, who paid |
 | `ledger_entries` | double-entry wallet accounting (contributions, expenses, income, payouts) |
 | `media`, `faqs`, `settings` | gallery, FAQ, site settings incl. default language |
