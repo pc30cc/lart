@@ -131,6 +131,8 @@ on the public site.
 | Field | Required | Visibility | Notes |
 | --- | :---: | --- | --- |
 | Official full name | ⭐ | 🔒 | exactly as on ID; used in contracts |
+| Display name (Turkish) | ⭐ | public | name shown on the Turkish site |
+| Display name (English) | ⭐ | public | name shown on the English site (and Persian site) |
 | ID number | ⭐ | 🔒 | stored **encrypted**; used in contracts |
 | Mobile number | ⭐ | 🔒 | with country code |
 | Email | ⭐ | 🔒 | login and contract emails; must be verified |
