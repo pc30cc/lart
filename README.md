@@ -92,15 +92,17 @@ stay in one place:
 - Shop sales go into the shared wallet and show up in the accounting
   reports.
 
-## Three separate panels
+## Students, instructors and admins
 
-Each role has its own panel, its own login and its own session.
+Instructors and super admins each have their own panel and login.
+**Students have no panel**: everything happens on the public site itself.
 
-### Student panel
+### Students (no panel)
 
-- Sign up and log in from the site.
-- Browse courses, choose a class and register.
-- My courses, registration status and payments.
+- Sign up and log in right on the site (small account button in the menu).
+- Browse courses, choose a class and register on the course page.
+- The course page shows "You are registered" for classes they joined; the
+  account menu lists their classes. Nothing more.
 
 #### Terms and conditions at registration
 
@@ -183,8 +185,8 @@ contract**:
 
 Kept as easy as possible:
 
-- After signing up, a student or instructor goes **straight into their
-  panel**; no waiting.
+- After signing up, a student goes **straight back to the site** and an
+  instructor **straight into their panel**; no waiting.
 - A gentle, always-visible banner says **"Please confirm your email"**
   with a button to resend the email, until the email is verified.
 - Actions that need a verified email (for example registering and paying
@@ -292,7 +294,7 @@ for example when a new design reference is given:
 1. **Super-admin panel first**: database, admin login, courses,
    instructors, contracts, course finances, shared wallet and accounting,
    settings, charts dashboard.
-2. Student and instructor panels.
+2. Instructor panel and student sign-up / registration on the site.
 3. Public landing site on top of the theme system (first theme after the
    throttlehaus.ca reference).
 4. Later phase: shop, two-factor login (2FA) for super admins.
