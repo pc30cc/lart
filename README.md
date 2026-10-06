@@ -189,9 +189,40 @@ contract**:
 4. Only then is the course published on the home page and open for
    registration.
 
+### Workshop definition
+
+What students see on the course page. Text fields are in three languages.
+Fields marked 🔗 are **shared with the contract**: entered once, used in both.
+
+| Field | Input |
+| --- | --- |
+| Workshop name 🔗 | text |
+| Category | dropdown, managed by admins (e.g. candle making) |
+| Instructor | chosen from instructor profiles |
+| Date 🔗 | date picker; weekday shown automatically |
+| Start and end time 🔗 | time pickers |
+| Venue 🔗 | text |
+| Age group | adults, or a children's age range (e.g. 7–12) |
+| Minimum and maximum capacity 🔗 | two numbers |
+| Price per person | number, ₺ |
+| Registration deadline | date and time; registration closes automatically |
+| Go / no-go decision time | date and time to check whether the minimum was reached |
+| Short introduction | what will participants make or learn? |
+| What the price includes | materials, tools, refreshments, other |
+| What to bring | or "Nothing needed" |
+| Previous experience needed? | yes / no, with a short note |
+| Cover photo and sample work photos | images, sent to the CDN |
+| Additional notes | only for what does not fit above |
+
+**Go / no-go decision**: at the decision time the admins are notified with
+the number of registrations against the minimum. They either confirm the
+workshop or cancel it; on cancellation every registered participant gets a
+friendly email automatically.
+
 ### Contract fields
 
 Filled in by the super admin; the contract text is generated from them.
+Fields shared with the workshop definition (🔗) are not entered twice.
 All amounts are in **Turkish lira (₺)**.
 
 **Workshop**
