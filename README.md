@@ -189,6 +189,35 @@ contract**:
 4. Only then is the course published on the home page and open for
    registration.
 
+### Contract fields
+
+Filled in by the super admin; the contract text is generated from them.
+All amounts are in **Turkish lira (₺)**.
+
+**Workshop**
+
+| Field | Input |
+| --- | --- |
+| Workshop title / subject | text |
+| Date | date picker; the **weekday is shown automatically** |
+| Start time | time picker |
+| End time | time picker (must be after start) |
+| Venue | text |
+| Minimum participants | number |
+| Maximum participants | number (≥ minimum); also the course capacity |
+
+**Fee and settlement**
+
+| Field | Input |
+| --- | --- |
+| Instructor fee type | **per participant** or **fixed for the whole workshop** |
+| Agreed amount | number, ₺ (per person or total, depending on the type) |
+| Advance payment? | yes / no; if yes, the advance amount in ₺ (≤ total) |
+
+The same values feed the course page and the course finances, so nothing is
+entered twice. An advance payment is recorded in the shared wallet and
+deducted from the final settlement when the course is closed.
+
 ## Emails
 
 - Sent with **Resend**.
