@@ -26,6 +26,16 @@ Fonts or any third party), subset and preloaded for speed.
 | Turkish | **Inter** | full Turkish set (ç ğ ı İ ö ş ü), excellent on screen |
 | English | **Inter** | same family as Turkish for a consistent look |
 
+## Simple and friendly for everyone
+
+Almost all students and instructors are women, many of them not technical.
+Every screen they use must be **simple, warm and obvious**:
+
+- one clear action per screen, large buttons, short plain sentences,
+- as few form fields and steps as possible,
+- friendly messages that say what to do next, never technical errors,
+- works perfectly on a phone.
+
 ## Everything is editable
 
 Nothing on the site is hard-coded. From the super-admin panel:
@@ -144,6 +154,41 @@ charts and a dark / light theme:
   (R2 + Cloudflare CDN), with their keys. Every uploaded image **and video**
   is stored as a plain file on the selected CDN and served from it (no
   streaming service). The database stores only the file path.
+
+## Creating a course: contract first
+
+When a super admin creates a course, the **first step is the instructor
+contract**:
+
+1. Admin fills in the course details and picks the instructor and fee.
+2. The contract is generated and **emailed to the instructor**.
+3. The instructor opens it in their panel and signs.
+4. Only then is the course published on the home page and open for
+   registration.
+
+## Emails
+
+- Sent with **Resend**.
+- **Beautiful branded templates** (React Email): logo, brand colours,
+  clean layout, readable on phones and in dark mode.
+- Written in **Turkish** by default (Persian and English versions use the
+  same templates).
+- Emails:
+  - **welcome** after sign-up, with an **email verification** button,
+  - contract ready to sign (instructor), contract signed (admins),
+  - class registration confirmed, class reminder,
+  - password reset.
+
+## Sign-up and email verification
+
+Kept as easy as possible:
+
+- After signing up, a student or instructor goes **straight into their
+  panel**; no waiting.
+- A gentle, always-visible banner says **"Please confirm your email"**
+  with a button to resend the email, until the email is verified.
+- Actions that need a verified email (for example registering and paying
+  for a class) ask for it in plain words.
 
 ## Course finances and closing
 
@@ -268,7 +313,7 @@ for example when a new design reference is given:
 | Contracts | PDF generation and e-signature with a signed audit record |
 | Image processing | sharp (resize, WebP/AVIF, watermark) |
 | Media | Bunny CDN or Cloudflare R2 for images and videos (plain CDN files, no streaming service) |
-| Email | Transactional email provider (e.g. Resend) |
+| Email | Resend + React Email templates (Turkish by default) |
 | Testing | Vitest, Playwright |
 | Payments | iyzico and PayTR (Turkish gateways) |
 | Deployment | **Coolify** on the owner's server: Docker, PostgreSQL alongside with daily backups, auto-deploy on push |
