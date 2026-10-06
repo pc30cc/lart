@@ -23,7 +23,7 @@ export type ContractData = {
     title: LocalizedText
     startsAt: Date
     endsAt: Date
-    venue: string
+    venue: LocalizedText
     minCapacity: number
     maxCapacity: number
     decisionAt: Date
@@ -89,7 +89,7 @@ export function contractValues(data: ContractData, locale: Locale, brand: string
     weekday: formatWeekday(course.startsAt, locale),
     start_time: formatTime(course.startsAt, locale),
     end_time: formatTime(course.endsAt, locale),
-    venue: course.venue,
+    venue: localized(course.venue, locale),
     min_participants: formatNumber(course.minCapacity, locale),
     max_participants: formatNumber(course.maxCapacity, locale),
     fee_type: t(`feeType.${fee.feeType}`),

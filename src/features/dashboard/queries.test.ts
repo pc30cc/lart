@@ -73,7 +73,7 @@ async function seed(tx: Tx) {
         categoryId: category.id,
         instructorId: o.instructorId ?? i1.id,
         title: { tr: title, en: title },
-        venue: "Atölye",
+        venue: { tr: "Atölye" },
         startsAt,
         endsAt: new Date(startsAt.getTime() + 2 * 3_600_000),
         minCapacity: o.min ?? 1,

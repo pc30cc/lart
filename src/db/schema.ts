@@ -141,12 +141,29 @@ export const templates = pgTable("templates", {
   uniqueIndex("templates_one_default_per_kind").on(t.kind).where(sql`${t.isDefault}`),
 ])
 
+/**
+ * Workshop lifecycle (README §7). A change to a contract field sends a
+ * published or confirmed workshop back to "awaiting_signature" (a confirmed one
+ * keeps `final_participants`; signing confirms it again).
+ *
+ * - "closed" means held and settled: a confirmed workshop that has ended, whose
+ *   instructor fee was accrued and whose profit or loss went to the partners
+ *   (money/closing.ts). `closed_at` and `closed_totals` are set, its figures are
+ *   locked (no more workshop postings), and only then can the gallery be filled.
+ * - A cancelled workshop is closed too (its books locked, `closed_at` and
+ *   `closed_totals` set), but it keeps status "cancelled": status "cancelled"
+ *   with `closed_at` set means "cancelled, books closed"; `closed_at` null
+ *   means "cancelled, books still open".
+ * - Older rows may have status "closed" with `cancelled_at` set (closed before
+ *   that rule): treat them as cancelled (`isCancelled`, `displayStatus` and the
+ *   list views in features/workshops).
+ */
 export const courseStatus = pgEnum("course_status", [
   "awaiting_signature", // contract sent, not yet signed
   "published", // signed, visible, registration open until the deadline
   "confirmed", // go decision taken; final participant number fixed
-  "cancelled",
-  "closed", // finished and settled; figures locked
+  "cancelled", // no-go or cancelled by an admin; stays "cancelled" after its books are closed (closed_at set)
+  "closed", // held, ended and settled; figures locked (never for a cancelled workshop, except older rows with cancelled_at)
 ])
 
 /** A workshop. Fields shared with the contract live here once. */
@@ -166,7 +183,8 @@ export const courses = pgTable("courses", {
   /** Null/null means adults. */
   ageMin: smallint("age_min"),
   ageMax: smallint("age_max"),
-  venue: text("venue").notNull(),
+  /** Where it takes place, like the title in three languages (Turkish required). */
+  venue: localized("venue").notNull(),
   startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
   endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
   minCapacity: smallint("min_capacity").notNull(),
@@ -181,10 +199,13 @@ export const courses = pgTable("courses", {
   decisionNotifiedAt: timestamp("decision_notified_at", { withTimezone: true }),
   /** Fixed at the go decision; the per-participant fee is based on it. */
   finalParticipants: smallint("final_participants"),
-  /** Locked figures written when the workshop is closed. */
+  /** Locked figures written when the workshop's books are closed (also a cancelled one). */
   closedTotals: jsonb("closed_totals").$type<ClosedTotals>(),
+  /** First signature; kept when a later contract version sends it back to awaiting_signature. */
   publishedAt: timestamp("published_at", { withTimezone: true }),
+  /** When it was cancelled. Also set on older rows that were later closed as status "closed". */
   cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+  /** When its books were closed: status "closed", or "cancelled" for a cancelled workshop (see courseStatus). */
   closedAt: timestamp("closed_at", { withTimezone: true }),
   createdBy: uuid("created_by").notNull().references(() => admins.id),
   createdAt: createdAt(),
@@ -229,7 +250,15 @@ export const contracts = pgTable("contracts", {
   signedAt: timestamp("signed_at", { withTimezone: true }),
   signedName: text("signed_name"),
   signedLocale: text("signed_locale"),
+  /**
+   * The exact text signed, AES-256-GCM ciphertext ("v1.…", lib/crypto): it
+   * contains the instructor's ID number. Written and read only through
+   * features/contracts/signed-text.ts, which decrypts server-side for admins
+   * (and, in phase 2, the signing instructor). Rows signed before it was
+   * encrypted may still hold the plain text until `pnpm contracts:encrypt` runs.
+   */
   signedText: text("signed_text"),
+  /** SHA-256 (hex) of the plain signed text, not of the ciphertext: the evidence. */
   signedTextSha256: text("signed_text_sha256"),
   signedIp: text("signed_ip"),
   signedUserAgent: text("signed_user_agent"),

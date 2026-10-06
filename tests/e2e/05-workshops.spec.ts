@@ -97,7 +97,7 @@ test.describe.serial("workshops", () => {
       new Intl.DateTimeFormat("en-GB", { weekday: "long", timeZone: "Europe/Istanbul" }).format(new Date(Date.now() + 10 * DAY)),
     )
 
-    await field(page, /^Place/).getByRole("textbox").fill(`Moda Art House, Kadıköy ${RUN}`)
+    await fillLocalized(page, /^Place/, w.venue)
     await page.getByRole("radio", { name: /Children/ }).click()
     await field(page, /^From age/).getByRole("spinbutton").fill("8")
     await field(page, /^To age/).getByRole("spinbutton").fill("14")
@@ -138,6 +138,8 @@ test.describe.serial("workshops", () => {
     expect(course).toMatchObject({ status: "awaiting_signature", age_min: 8, age_max: 14, min_capacity: 2, max_capacity: 8, experience_required: true })
     expect(Number(course.price)).toBe(150_000)
     expect(course.cover_path).toMatch(/^courses\//)
+    // The venue is stored in three languages, like the title.
+    expect(course.venue).toEqual(w.venue)
     const samples = await sql("select 1 from media where course_id = $1 and kind = 'sample'", [id])
     expect(samples).toHaveLength(2)
     const contract = await one<{ fee_type: string; fee_amount: string; advance_amount: string; version: number }>(
@@ -154,6 +156,10 @@ test.describe.serial("workshops", () => {
     expect(email.html).toMatch(/\/instructor\/contracts\//)
 
     await expect(page.getByText(`Waiting for ${INSTRUCTORS.elif.displayName.en} to sign`)).toBeVisible()
+    // The header and the details show the venue in the page's language.
+    await expect(page.locator("main")).toContainText(w.venue.en)
+    await page.goto(`/tr/admin/workshops/${id}`)
+    await expect(page.locator("main")).toContainText(w.venue.tr)
   })
 
   test("create the pottery workshop (per-participant fee)", async ({ page }) => {
@@ -165,7 +171,8 @@ test.describe.serial("workshops", () => {
     await fillDateTime(page, /^Date and time/, inDays(14), "14:00", "17:30")
     await fillDateTime(page, /^Registration closes/, inDays(12), "20:00")
     await fillDateTime(page, /^Go \/ no-go decision/, inDays(12), "21:00")
-    await field(page, /^Place/).getByRole("textbox").fill("Clay Studio, Beşiktaş")
+    // Only the Turkish venue (the required one); the English page falls back to it.
+    await fillLocalized(page, /^Place/, { tr: "Kil Atölyesi, Beşiktaş" })
     await field(page, /^Minimum participants/).getByRole("spinbutton").fill("3")
     await field(page, /^Maximum participants/).getByRole("spinbutton").fill("6")
     await field(page, /^Price per person/).getByRole("textbox").fill("900")
@@ -180,6 +187,9 @@ test.describe.serial("workshops", () => {
     expect(contract.fee_type).toBe("per_participant")
     expect(Number(contract.fee_amount)).toBe(40_000)
     expect(Number(contract.advance_amount)).toBe(0)
+    expect((await one<{ venue: unknown }>("select venue from courses where id = $1", [id])).venue).toEqual({ tr: "Kil Atölyesi, Beşiktaş" })
+    await expect(page).toHaveURL(new RegExp(`/en/admin/workshops/${id}$`))
+    await expect(page.locator("main")).toContainText("Kil Atölyesi, Beşiktaş")
   })
 
   test("a duplicate page address and a past date are refused", async ({ page }) => {
@@ -190,7 +200,7 @@ test.describe.serial("workshops", () => {
     await fillDateTime(page, /^Date and time/, inDays(-1), "10:00", "11:00")
     await fillDateTime(page, /^Registration closes/, inDays(-2), "10:00")
     await fillDateTime(page, /^Go \/ no-go decision/, inDays(-2), "11:00")
-    await field(page, /^Place/).getByRole("textbox").fill("Somewhere")
+    await fillLocalized(page, /^Place/, { tr: "Bir yer" })
     await field(page, /^Minimum participants/).getByRole("spinbutton").fill("1")
     await field(page, /^Maximum participants/).getByRole("spinbutton").fill("2")
     await field(page, /^Price per person/).getByRole("textbox").fill("100")
@@ -209,7 +219,7 @@ test.describe.serial("workshops", () => {
     await expect(page.getByText("Not signed yet. This is the text as the instructor sees it now.")).toBeVisible()
     await expect(page.locator("main")).toContainText(INSTRUCTORS.elif.officialName)
     await expect(page.locator("main")).toContainText(INSTRUCTORS.elif.idNumber)
-    await expect(page.locator("main")).toContainText(`Moda Art House, Kadıköy ${RUN}`)
+    await expect(page.locator("main")).toContainText(WORKSHOPS.held.venue.en)
     await expect(page.locator("main")).toContainText("₺3,000")
     await expect(page.locator("main")).toContainText("₺1,000")
     await expect(page.locator("main")).not.toContainText(/\{[a-z_]+\}/)
@@ -219,6 +229,7 @@ test.describe.serial("workshops", () => {
     await page.getByRole("link", { name: "فارسی" }).click()
     await expect(page).toHaveURL(/lang=fa/)
     await expect(page.locator("main [dir=rtl], main [lang=fa]").first()).toBeVisible()
+    await expect(page.locator("main")).toContainText(WORKSHOPS.held.venue.fa)
 
     // Print: only the contract.
     await page.goto(`/en/admin/workshops/${id}/contract`)
@@ -236,7 +247,7 @@ test.describe.serial("workshops", () => {
     // A text-only change does not touch the contract.
     await fillLocalized(page, /^Additional notes/, { en: "Parking nearby. Tea is served." })
     await expect(page.getByText("These changes update the contract")).toHaveCount(0)
-    await field(page, /^Place/).getByRole("textbox").fill(`Moda Art House, Studio 2, Kadıköy ${RUN}`)
+    await fillLocalized(page, /^Place/, { en: `Moda Art House, Studio 2, Kadıköy ${RUN}` })
     await expect(page.getByText("These changes update the contract")).toBeVisible()
     await expect(page.getByText("Contract version 1 hasn’t been signed yet.")).toBeVisible()
     await page.getByRole("button", { name: "Save changes" }).click()
@@ -269,6 +280,14 @@ test.describe.serial("workshops", () => {
       const result = signContract(contract.id, who.officialName, "tr")
       expect(result.courseId).toBe(id)
       expect(result.sha256).toMatch(/^[0-9a-f]{64}$/)
+      // The signed text holds the ID number: stored encrypted, the hash is of the plain text.
+      const stored = await one<{ signed_text: string; signed_text_sha256: string }>(
+        "select signed_text, signed_text_sha256 from contracts where id = $1",
+        [contract.id],
+      )
+      expect(stored.signed_text).toMatch(/^v1\.[A-Za-z0-9_-]{16}\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]+$/)
+      expect(stored.signed_text).not.toContain(who.idNumber)
+      expect(stored.signed_text_sha256).toBe(result.sha256)
       const course = await one<{ status: string; published_at: Date | null }>("select status, published_at from courses where id = $1", [id])
       expect(course.status).toBe("published")
       expect(course.published_at).not.toBeNull()
@@ -283,6 +302,31 @@ test.describe.serial("workshops", () => {
     await page.goto(`/en/admin/workshops/${id}/contract`)
     await expect(page.getByText(`${INSTRUCTORS.elif.officialName} tarafından`)).toBeVisible()
     await expect(page.getByText("203.0.113.7")).toBeVisible()
+    // The admin sees the signed text decrypted, ID number included, in Turkish (venue too).
+    await expect(page.locator("main")).toContainText(`kimlik numarası: ${INSTRUCTORS.elif.idNumber}`)
+    await expect(page.locator("main")).toContainText(WORKSHOPS.held.venue.tr)
+    // It matches the fingerprint taken at signing (column and audit log): no warning.
+    await expect(page.getByText(/This may not be the text that was signed|This signed text can’t be opened|Not encrypted yet/)).toHaveCount(0)
+  })
+
+  test("filling in a missing venue translation keeps the signed contract", async ({ page }) => {
+    const id = await workshopId(WORKSHOPS.cancelled.slug)
+    const mark = mailMark()
+    await page.goto(`/en/admin/workshops/${id}/edit`)
+    await fillLocalized(page, /^Place/, { en: "Clay Studio, Beşiktaş" })
+    await expect(page.getByText("These changes update the contract")).toHaveCount(0)
+    await page.getByRole("button", { name: "Save changes" }).click()
+    await expect(page.getByRole("alertdialog")).toHaveCount(0)
+    await expect(toast(page, "Changes saved.")).toBeVisible()
+    expect((await one<{ venue: unknown }>("select venue from courses where id = $1", [id])).venue).toEqual({
+      tr: "Kil Atölyesi, Beşiktaş",
+      en: "Clay Studio, Beşiktaş",
+    })
+    expect(await sql<{ status: string }>("select status from contracts where course_id = $1", [id])).toEqual([{ status: "signed" }])
+    expect((await one<{ status: string }>("select status from courses where id = $1", [id])).status).toBe("published")
+    await page.goto(`/en/admin/workshops/${id}`)
+    await expect(page.locator("main")).toContainText("Clay Studio, Beşiktaş")
+    expect(emailsSince(mark)).toEqual([])
   })
 
   test("registrations arrive and are paid (phase-2 stand-in)", async ({ page }) => {
@@ -376,6 +420,12 @@ test.describe.serial("workshops", () => {
     await expect(page.getByRole("link", { name: new RegExp(WORKSHOPS.cancelled.title.en) }).first()).toBeVisible()
     await page.goto(`/en/admin/workshops?view=all&q=${encodeURIComponent(WORKSHOPS.held.title.en)}`)
     await expect(page.getByRole("link", { name: new RegExp(WORKSHOPS.cancelled.title.en) })).toHaveCount(0)
+    // The search also looks at the venue, in every language.
+    for (const q of [WORKSHOPS.held.venue.fa, `Studio 2, Kadıköy ${RUN}`]) {
+      await page.goto(`/en/admin/workshops?view=all&q=${encodeURIComponent(q)}`)
+      await expect(page.getByRole("link", { name: new RegExp(WORKSHOPS.held.title.en) }).first()).toBeVisible()
+      await expect(page.getByRole("link", { name: new RegExp(WORKSHOPS.cancelled.title.en) })).toHaveCount(0)
+    }
   })
 
   test("a third workshop stays open for registration (upcoming)", async ({ page }) => {
@@ -387,7 +437,7 @@ test.describe.serial("workshops", () => {
     await fillDateTime(page, /^Date and time/, inDays(21), "11:00", "14:00")
     await fillDateTime(page, /^Registration closes/, inDays(19), "20:00")
     await fillDateTime(page, /^Go \/ no-go decision/, inDays(19), "21:00")
-    await field(page, /^Place/).getByRole("textbox").fill("Karaköy Atelier, Beyoğlu")
+    await fillLocalized(page, /^Place/, { tr: "Karaköy Atölyesi, Beyoğlu", en: "Karaköy Atelier, Beyoğlu" })
     await field(page, /^Minimum participants/).getByRole("spinbutton").fill("2")
     await field(page, /^Maximum participants/).getByRole("spinbutton").fill("10")
     await field(page, /^Price per person/).getByRole("textbox").fill("1200")

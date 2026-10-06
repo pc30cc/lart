@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { isoDateTime, kurus, localizedText, slug, uuid } from "@/components/admin/form/schemas"
+import type { LocalizedText } from "@/db/schema"
 import { isSafePath } from "@/lib/storage/shared"
 
 /**
@@ -33,7 +34,8 @@ const fields = z.object({
   endsAt: isoDateTime(),
   registrationDeadline: isoDateTime(),
   decisionAt: isoDateTime(),
-  venue: z.string().trim().min(1).max(300),
+  /** Like the title, in three languages; Turkish is required (the other languages fall back to it). */
+  venue: localizedText({ required: ["tr"], max: 300 }),
   ageGroup: z.enum(ageGroups),
   ageMin: count(1, 18).nullable(),
   ageMax: count(1, 18).nullable(),
@@ -111,6 +113,35 @@ export const contractCourseFields = [
   "maxCapacity",
   "decisionAt",
 ] as const
+
+/**
+ * Whether an edit of a translatable contract field (title, venue) changes the
+ * contract: a text that was filled in is changed or removed. Filling in an
+ * empty language does not. That language showed the Turkish text (required,
+ * the reference) until now, a signed contract keeps the exact text it was
+ * signed with, and an unsigned one is rendered when it is signed. So adding a
+ * missing translation later never voids a contract, and a locked workshop
+ * (`contractLocked`) can still get it.
+ */
+export function translationsChanged(before: LocalizedText | null | undefined, after: LocalizedText | null | undefined): boolean {
+  return (["fa", "tr", "en"] as const).some((l) => {
+    const was = before?.[l]?.trim()
+    return Boolean(was) && was !== after?.[l]?.trim()
+  })
+}
+
+/** The contract fields (`contractCourseFields`) among the changed course fields: translations filled in don't count. */
+export function changedContractFields(
+  diff: Record<string, { from: unknown; to: unknown }>,
+): (typeof contractCourseFields)[number][] {
+  return contractCourseFields.filter(
+    (k) =>
+      k in diff &&
+      (k !== "title" && k !== "venue"
+        ? true
+        : translationsChanged(diff[k].from as LocalizedText | null, diff[k].to as LocalizedText | null)),
+  )
+}
 
 /** Course columns from validated form input (contract fee fields stay on the contract). */
 export function courseValues(v: WorkshopInput) {

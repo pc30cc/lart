@@ -39,7 +39,7 @@ export async function templatePreview(): Promise<TemplatePreview> {
           title: { [locale]: t("workshopTitle") },
           startsAt,
           endsAt,
-          venue: t("venue"),
+          venue: { [locale]: t("venue") },
           minCapacity: 4,
           maxCapacity: 12,
           decisionAt: new Date(startsAt.getTime() - 3 * DAY),

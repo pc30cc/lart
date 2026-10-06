@@ -25,7 +25,7 @@ function formValues(w: Workshop): WorkshopFormValues {
     endsAt: w.endsAt.toISOString(),
     registrationDeadline: w.registrationDeadline.toISOString(),
     decisionAt: w.decisionAt.toISOString(),
-    venue: w.venue,
+    venue: text(w.venue),
     ageGroup: w.ageMin !== null || w.ageMax !== null ? "children" : "adults",
     ageMin: w.ageMin,
     ageMax: w.ageMax,

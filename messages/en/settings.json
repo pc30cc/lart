@@ -200,7 +200,8 @@
       },
       "contract": {
         "sign": "Contract signed",
-        "resend": "Contract email sent again"
+        "resend": "Contract email sent again",
+        "encrypt": "Signed contract text encrypted"
       },
       "email": {
         "update": "Email texts changed",

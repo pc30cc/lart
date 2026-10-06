@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from "drizzle-orm"
+import { and, desc, eq, inArray, sql } from "drizzle-orm"
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { db } from "@/db"
@@ -10,7 +10,7 @@ import {
   defaultContractTemplate,
   runId,
 } from "@/features/workshops/test-fixtures"
-import { decrypt, sha256 } from "@/lib/crypto"
+import { decrypt, isCiphertext, sha256 } from "@/lib/crypto"
 import { UserError } from "@/lib/errors"
 import { getContractText } from "./queries"
 import { renderContract } from "./render"
@@ -59,7 +59,7 @@ async function pending(template = templateId) {
       categoryId,
       instructorId,
       title: { fa: "سفال", tr: "Seramik", en: "Ceramics" },
-      venue: "Atölye 5",
+      venue: { tr: "Atölye 5" },
       startsAt: start,
       endsAt: new Date(start.getTime() + 3 * 3_600_000),
       minCapacity: 3,
@@ -134,6 +134,24 @@ describe("signContract", () => {
     })
   })
 
+  it("never stores the signed text, or any line of it, in plain text", async () => {
+    const { contract } = await pending()
+    const expected = await renderContract(contract.id, "tr")
+    await signContract(contract.id, instructorId, "Zeynep Yılmaz", null, null, "tr")
+
+    const [row] = await db.select({ text: contracts.signedText, hash: contracts.signedTextSha256 }).from(contracts).where(eq(contracts.id, contract.id))
+    expect(isCiphertext(row.text!)).toBe(true)
+    expect(row.hash).toBe(sha256(expected))
+    // The whole row as PostgreSQL prints it, and every audit entry about it.
+    const raw = await db.execute<{ row: string }>(sql`select c::text as row from ${contracts} c where c.id = ${contract.id}`)
+    const audits = await db.select({ data: auditLog.data }).from(auditLog).where(eq(auditLog.entityId, contract.id))
+    const everything = [raw.rows[0].row, ...audits.map((a) => JSON.stringify(a.data))].join("\n")
+    expect(everything).not.toContain("12345678901")
+    const lines = expected.split("\n").map((l) => l.trim()).filter((l) => l.length >= 12)
+    expect(lines.length).toBeGreaterThan(5)
+    for (const line of lines) expect(everything).not.toContain(line)
+  })
+
   it("keeps the signed text when the template changes later", async () => {
     const [own] = await db
       .insert(templates)
@@ -145,6 +163,7 @@ describe("signContract", () => {
 
     const shown = await getContractText(contract.id, "fa")
     expect(shown.signed).toBe(true)
+    expect(shown.check).toBe("ok")
     expect(shown.locale).toBe("en")
     expect(shown.text).toContain("1. Old clause for Lart.")
     expect(shown.text).not.toContain("New clause")

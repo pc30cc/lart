@@ -42,6 +42,27 @@ describe("audit data formatting", () => {
     expect(long.endsWith("…")).toBe(true)
   })
 
+  it("shows a localized change in the language that changed, preferring the page's language", () => {
+    const venue = { fa: "خانهٔ هنر مودا", tr: "Moda Sanat Evi", en: "Moda Art House" }
+    // Only the English text changed (the e2e edit): shown in English, not as the unchanged Persian text.
+    const english = { venue: { from: venue, to: { ...venue, en: "Moda Art House, Studio 2" } } }
+    expect(auditSummary(english, "en")).toBe("venue (en): Moda Art House → Moda Art House, Studio 2")
+    expect(auditSummary(english, "fa")).toBe("venue (en): Moda Art House → Moda Art House, Studio 2")
+    // A Turkish-only change, read in any language.
+    const turkish = { venue: { from: { tr: "Moda Sanat Evi" }, to: { tr: "Kadıköy Atölye" } } }
+    for (const locale of ["fa", "tr", "en"]) expect(auditSummary(turkish, locale)).toBe("venue (tr): Moda Sanat Evi → Kadıköy Atölye")
+    // Several languages changed: the page's language first, else the first one that changed.
+    const both = { title: { from: { fa: "شمع", tr: "Mum", en: "Candle" }, to: { fa: "شمع", tr: "Mum yapımı", en: "Candle making" } } }
+    expect(auditSummary(both, "en")).toBe("title (en): Candle → Candle making")
+    expect(auditSummary(both, "fa")).toBe("title (tr): Mum → Mum yapımı")
+    // A translation filled in, a translation removed, an optional text added.
+    expect(auditSummary({ venue: { from: { tr: "Moda" }, to: { tr: "Moda", en: "Moda (EN)" } } }, "tr")).toBe("venue (en): — → Moda (EN)")
+    expect(auditSummary({ venue: { from: { tr: "Moda", fa: "مودا" }, to: { tr: "Moda" } } }, "en")).toBe("venue (fa): مودا → —")
+    expect(auditSummary({ intro: { from: null, to: { tr: "Yeni" } } }, "en")).toBe("intro (tr): — → Yeni")
+    // A localized value that is not a change shows the page's language when it has one.
+    expect(auditSummary({ title: { fa: "شمع", tr: "Mum", en: "Candle" } }, "tr")).toBe("title: Mum")
+  })
+
   it("shows amounts in lira, not in kuruş", () => {
     expect(auditSummary({ amount: 20000, category: "Printing" }, "en")).toBe("amount: ₺200 · category: Printing")
     expect(auditSummary({ price: { from: 150000, to: 180050 } }, "tr")).toBe("price: ₺1.500 → ₺1.800,50")

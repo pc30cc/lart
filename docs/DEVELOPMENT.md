@@ -14,7 +14,8 @@ pnpm dev
 ```
 
 Checks: `pnpm typecheck`, `pnpm lint`, `pnpm test` (uses the `lart_test`
-database: `pnpm db:test:migrate` first), `pnpm build`.
+and `lart_test_dashboard` databases: `pnpm db:test:migrate` migrates both),
+`pnpm build`. End-to-end: see `playwright.config.ts` (database `lart_e2e`).
 
 ## Stack
 
@@ -72,7 +73,11 @@ drizzle/                        SQL migrations (generated + custom guards)
   string-built SQL.
 - Private instructor data (official name, ID number, mobile, email) never
   reaches the public site. The ID number is stored encrypted
-  (`lib/crypto.ts`) and only decrypted for contracts and admins.
+  (`lib/crypto.ts`) and only decrypted for contracts and admins. So is the
+  signed contract text that contains it: write and read it only through
+  `sealSignedText` / `checkSignedText` (`features/contracts/signed-text.ts`);
+  `pnpm contracts:encrypt` encrypts rows signed before that once
+  ([runbook](#encrypting-older-signed-contract-texts-once)).
 - Every super-admin mutation writes an audit entry (`lib/audit.ts`).
 - Secrets only from `lib/env.ts` (environment) or encrypted settings.
 
@@ -90,7 +95,14 @@ drizzle/                        SQL migrations (generated + custom guards)
 - A value lives in one place. Workshop fields shared with the contract are
   stored on the workshop only.
 - Translatable text is one `jsonb` column `{ fa, tr, en }` (`LocalizedText`).
-- Schema changes: edit `src/db/schema.ts`, then `pnpm db:generate`.
+- Schema changes: edit `src/db/schema.ts`, then `pnpm db:generate --name <what>`.
+  When existing rows must be converted, hand-edit the generated SQL (e.g.
+  `drizzle/0002_venue_localized.sql`: text → `{ "tr": … }` with `USING`).
+  Then apply it to all four local databases: `pnpm db:migrate` (`lart`),
+  `pnpm db:test:migrate` (`lart_test` and `lart_test_dashboard`) and
+  `DATABASE_URL=postgres://lart:lart@127.0.0.1:5432/lart_e2e pnpm db:migrate`
+  (end to end). A missed one does not always fail loudly (a jsonb value
+  written into a column that is still `text` is accepted), so run all of them.
 
 ### Text and languages
 
@@ -353,7 +365,8 @@ const { form, submit, pending } = useActionForm({
     <LocalizedInput name="title" label={…} required={["fa", "tr", "en"]} />
     <FormField name="price" label={…} required>{(field) => <MoneyInput {...field} />}</FormField>
     <DateTimeFields label={…} startName="startsAt" endName="endsAt" required />
-    <TextField name="venue" label={…} description={…} />
+    <LocalizedInput name="venue" label={…} required={["tr"]} />
+    <TextField name="slug" label={…} description={…} />
   </FormSection>
   <FormActions><SubmitButton pending={pending}>{tc("actions.save")}</SubmitButton></FormActions>
 </Form>
@@ -416,3 +429,42 @@ mock `next-intl/server` (a `createTranslator` over the real messages),
 `@/lib/auth/admin` (a fixed `AdminSession` with a real admin row, needed by
 `audit_log`) and `next/cache`: see `src/features/categories/actions.test.ts`.
 `audit_log` is append-only, so test admins referenced by it stay in the test database.
+
+## Operations
+
+### Encrypting older signed contract texts (once)
+
+Contracts signed before signed texts were encrypted still hold the plain
+text, with the instructor's ID number, until `pnpm contracts:encrypt` runs.
+Run it once after deploying, in the app's own environment (in Coolify, a
+terminal in the app's container), so it has the app's `DATABASE_URL` and
+`ENCRYPTION_KEY`:
+
+1. `pnpm contracts:encrypt --dry-run` counts the plain texts and checks the
+   key: it must decrypt data the app already encrypted (instructor ID
+   numbers, newer signed texts). Another key (for example the development
+   key from `.env`, used when the variable is missing) stops it with exit
+   code 1 before anything changes; a wrong-key run could not be repaired by
+   running it again. With nothing encrypted to check against it refuses
+   unless `--unverified-key` is given.
+2. `pnpm contracts:encrypt` encrypts them (each audited as
+   `contract.encrypt`, with the hash, never the text), then runs
+   `VACUUM (FULL, ANALYZE) contracts`: an UPDATE keeps the old row version,
+   plain text included, in the table's files until the table is rewritten.
+   If the database user does not own the table, it says so (exit code 1):
+   run that command as the owner. A second run finds nothing to do.
+3. Exit code 1 with "does not match its SHA-256": those contracts were
+   encrypted all the same, but their text differs from the fingerprint taken
+   when they were signed. Their contract page flags them; look into them.
+
+What was copied before the run still holds the plain texts: database
+backups, WAL archives (point-in-time recovery) and standby copies. They stay
+until they expire under the backup retention; to be rid of them sooner, take
+a new full backup after the run and delete the older backups and their WAL
+archives.
+
+Until it runs, the admin contract page shows such a contract with a "Not
+encrypted yet" notice. Every signed text is checked when it is shown
+(`checkSignedText`): against its SHA-256 and the hash in the audit log's
+`contract.sign` entry. One that doesn't match (or has no such entry) is
+flagged as possibly changed, and one that can't be decrypted is not shown.

@@ -35,6 +35,8 @@ export const WORKSHOPS = {
   held: {
     title: { fa: `کارگاه شمع ${RUN}`, tr: `Soya mumu atölyesi ${RUN}`, en: `Soy candle workshop ${RUN}` },
     slug: `soya-mumu-atolyesi-${RUN}`,
+    /** In three languages (the edit test changes the English one). */
+    venue: { fa: `خانهٔ هنر مودا، کادیکوی ${RUN}`, tr: `Moda Sanat Evi, Kadıköy ${RUN}`, en: `Moda Art House, Kadıköy ${RUN}` },
   },
   /** Per-participant fee; cancelled at the go / no-go decision. */
   cancelled: {

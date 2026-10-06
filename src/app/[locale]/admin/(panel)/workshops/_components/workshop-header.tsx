@@ -56,7 +56,7 @@ export async function WorkshopHeader({
             </span>
             <span className="inline-flex min-w-0 items-center gap-1.5">
               <MapPinIcon className="size-4 shrink-0 opacity-70" />
-              <span className="truncate">{workshop.venue}</span>
+              <span className="truncate">{localized(workshop.venue, locale)}</span>
             </span>
             <span className="inline-flex items-center gap-1.5">
               <UserRoundIcon className="size-4 opacity-70" />

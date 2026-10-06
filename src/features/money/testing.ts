@@ -89,7 +89,7 @@ export async function makeCourse(
       categoryId: world.categoryId,
       instructorId: world.instructorId,
       title: { tr: "Atölye", en: "Workshop", fa: "کارگاه" },
-      venue: "Studio",
+      venue: { tr: "Studio" },
       startsAt,
       endsAt,
       minCapacity: 1,

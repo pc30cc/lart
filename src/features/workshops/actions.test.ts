@@ -1,11 +1,13 @@
 import { and, asc, desc, eq, inArray } from "drizzle-orm"
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
+import { parseTableParams } from "@/components/admin/data-table/params"
 import { db } from "@/db"
 import { auditLog, categories, contracts, courses, instructors, media, members, registrations, templates } from "@/db/schema"
-import { encrypt } from "@/lib/crypto"
+import { sealSignedText } from "@/features/contracts/signed-text"
 import { cancelWorkshop, confirmWorkshop, createWorkshop, saveGallery, updateWorkshop } from "./actions"
-import { getWorkshop, listGallery, listRegistrations } from "./queries"
+import { getWorkshop, listGallery, listRegistrations, listWorkshops } from "./queries"
+import { workshopTable } from "./schema"
 import {
   addRegistration,
   createAdmin,
@@ -110,7 +112,7 @@ async function edit(id: string, changes: Parameters<typeof workshopInput>[2]) {
     endsAt: w.endsAt.toISOString(),
     registrationDeadline: w.registrationDeadline.toISOString(),
     decisionAt: w.decisionAt.toISOString(),
-    venue: w.venue,
+    venue: text(w.venue),
     minCapacity: w.minCapacity,
     maxCapacity: w.maxCapacity,
     price: w.price,
@@ -129,7 +131,7 @@ async function edit(id: string, changes: Parameters<typeof workshopInput>[2]) {
 async function markSigned(courseId: string) {
   await db
     .update(contracts)
-    .set({ status: "signed", signedAt: new Date(), signedText: encrypt("x") })
+    .set({ status: "signed", signedAt: new Date(), ...sealSignedText("x") })
     .where(and(eq(contracts.courseId, courseId), eq(contracts.status, "sent")))
   await db.update(courses).set({ status: "published", publishedAt: new Date() }).where(eq(courses.id, courseId))
 }
@@ -216,14 +218,49 @@ describe("updateWorkshop", () => {
   it("re-issues an unsigned contract when a contract field changes", async () => {
     const { id } = await create()
     sendEmail.mockClear()
-    const result = await edit(id, { venue: "Kadıköy Atölye" })
+    const result = await edit(id, { venue: text({ tr: "Kadıköy Atölye", fa: "آتلیهٔ کادیکوی" }) })
     expect(result).toMatchObject({ ok: true, data: { contractVersion: 2, emailSent: true } })
     const [v1, v2] = await contractsOf(id)
     expect(v1).toMatchObject({ status: "void", version: 1 })
     expect(v1.voidedAt).toBeInstanceOf(Date)
     expect(v2).toMatchObject({ status: "sent", version: 2, templateId })
-    expect((await lastAudit(id)).data).toMatchObject({ venue: { to: "Kadıköy Atölye" }, contract: { voidedVersion: 1, newVersion: 2 } })
+    expect((await courseRow(id)).venue).toEqual({ tr: "Kadıköy Atölye", fa: "آتلیهٔ کادیکوی" })
+    expect((await lastAudit(id)).data).toMatchObject({
+      venue: { from: { tr: "Moda Sanat Evi", en: "Moda Art House" }, to: { tr: "Kadıköy Atölye", fa: "آتلیهٔ کادیکوی" } },
+      contract: { voidedVersion: 1, newVersion: 2 },
+    })
     expect(sendEmail.mock.calls[0][0]).toMatchObject({ template: "contract_ready", props: { signUrl: `/tr/instructor/contracts/${v2.id}` } })
+  })
+
+  it("re-issues when a filled-in venue text changes, not when a missing translation is filled in", async () => {
+    const { id } = await create()
+    const same = await edit(id, { venue: text({ tr: " Moda Sanat Evi ", en: "Moda Art House" }) })
+    expect(same).toMatchObject({ ok: true, data: { contractVersion: null } })
+    // Persian was empty (it showed the Turkish text): filling it in updates the workshop, not the contract.
+    const persian = await edit(id, { venue: text({ tr: "Moda Sanat Evi", en: "Moda Art House", fa: "خانهٔ هنر مودا" }) })
+    expect(persian).toEqual({ ok: true, data: { id, contractVersion: null, emailSent: null } })
+    expect((await courseRow(id)).venue).toEqual({ tr: "Moda Sanat Evi", en: "Moda Art House", fa: "خانهٔ هنر مودا" })
+    expect(await contractsOf(id)).toHaveLength(1)
+    expect((await lastAudit(id)).data).toEqual({
+      venue: { from: { tr: "Moda Sanat Evi", en: "Moda Art House" }, to: { tr: "Moda Sanat Evi", en: "Moda Art House", fa: "خانهٔ هنر مودا" } },
+    })
+    // A filled-in translation that changes (English only) does re-issue, like the title.
+    const english = await edit(id, { venue: text({ tr: "Moda Sanat Evi", en: "Moda Art House, Studio 2", fa: "خانهٔ هنر مودا" }) })
+    expect(english).toMatchObject({ ok: true, data: { contractVersion: 2 } })
+    // So does removing one.
+    const removed = await edit(id, { venue: text({ tr: "Moda Sanat Evi", en: "Moda Art House, Studio 2" }) })
+    expect(removed).toMatchObject({ ok: true, data: { contractVersion: 3 } })
+  })
+
+  it("keeps a signed contract when a missing venue translation is filled in", async () => {
+    const { id } = await create()
+    await markSigned(id)
+    sendEmail.mockClear()
+    const result = await edit(id, { venue: text({ tr: "Moda Sanat Evi", en: "Moda Art House", fa: "خانهٔ هنر مودا" }) })
+    expect(result).toEqual({ ok: true, data: { id, contractVersion: null, emailSent: null } })
+    expect(await courseRow(id)).toMatchObject({ status: "published", venue: { fa: "خانهٔ هنر مودا" } })
+    expect((await contractsOf(id)).map((c) => c.status)).toEqual(["signed"])
+    expect(sendEmail).not.toHaveBeenCalled()
   })
 
   it("voids a signed contract on a fee change: the workshop waits for the signature again", async () => {
@@ -242,10 +279,10 @@ describe("updateWorkshop", () => {
     const { id } = await create()
     await markSigned(id)
     await db.update(courses).set({ status: "confirmed", finalParticipants: 3 }).where(eq(courses.id, id))
-    const result = await edit(id, { venue: "Studio 2" })
+    const result = await edit(id, { venue: text({ tr: "Studio 2" }) })
     expect(result).toMatchObject({ ok: true, data: { contractVersion: 2 } })
     expect((await contractsOf(id)).map((c) => c.status)).toEqual(["void", "sent"])
-    expect(await courseRow(id)).toMatchObject({ status: "awaiting_signature", finalParticipants: 3, venue: "Studio 2" })
+    expect(await courseRow(id)).toMatchObject({ status: "awaiting_signature", finalParticipants: 3, venue: { tr: "Studio 2" } })
     expect((await lastAudit(id)).data).toMatchObject({ status: { from: "confirmed", to: "awaiting_signature" } })
   })
 
@@ -266,7 +303,7 @@ describe("updateWorkshop", () => {
       .where(eq(courses.id, id))
     const venue = (await courseRow(id)).venue
 
-    expect(await edit(id, { venue: "Studio 2" })).toEqual({
+    expect(await edit(id, { venue: text({ tr: "Studio 2" }) })).toEqual({
       ok: false,
       error: "This workshop is cancelled or closed, or it has started after it was confirmed, so its date, place, capacity, instructor and fee can’t change.",
     })
@@ -275,6 +312,11 @@ describe("updateWorkshop", () => {
     expect(await contractsOf(id)).toHaveLength(1)
     expect(await edit(id, { intro: text({ tr: "Hikâye" }) })).toMatchObject({ ok: true, data: { contractVersion: null } })
     expect(await courseRow(id)).toMatchObject({ status: "confirmed", finalParticipants: 3 })
+    // A missing translation of the venue can still be filled in; it does not change the contract.
+    const translated = await edit(id, { venue: text({ ...venue, fa: "خانهٔ هنر مودا" }) })
+    expect(translated).toMatchObject({ ok: true, data: { contractVersion: null } })
+    expect(await courseRow(id)).toMatchObject({ status: "confirmed", venue: { ...venue, fa: "خانهٔ هنر مودا" } })
+    expect(await contractsOf(id)).toHaveLength(1)
   })
 
   it("re-issues on a new instructor, a new title and new times", async () => {
@@ -326,9 +368,19 @@ describe("updateWorkshop", () => {
   it("keeps contract fields of a cancelled workshop, but texts stay editable", async () => {
     const { id } = await create()
     expect(await cancelWorkshop({ id })).toMatchObject({ ok: true })
-    expect(await edit(id, { venue: "Elsewhere" })).toMatchObject({ ok: false, error: expect.stringContaining("cancelled or closed") })
-    expect((await courseRow(id)).venue).not.toBe("Elsewhere")
+    expect(await edit(id, { venue: text({ tr: "Elsewhere" }) })).toMatchObject({ ok: false, error: expect.stringContaining("cancelled or closed") })
+    expect((await courseRow(id)).venue).toEqual({ tr: "Moda Sanat Evi", en: "Moda Art House" })
     expect(await edit(id, { intro: text({ tr: "Hikâye" }) })).toMatchObject({ ok: true })
+  })
+
+  it("finds a workshop in the list by its venue, in any language", async () => {
+    const venue = { fa: `خانهٔ هنر ${run}`, tr: `Sanat Evi ${run}`, en: `Art House ${run}` }
+    const { id } = await create({ venue: text(venue) })
+    for (const q of Object.values(venue)) {
+      const params = parseTableParams({ q, view: "all" }, { ...workshopTable, defaultSort: "startsAt" })
+      const { rows } = await listWorkshops(params, "en")
+      expect(rows.map((r) => r.id)).toEqual([id])
+    }
   })
 
   it("says so when the workshop is gone", async () => {

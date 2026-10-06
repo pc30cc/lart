@@ -5,10 +5,10 @@ import { z } from "zod"
 import { db } from "@/db"
 import { contracts, courses } from "@/db/schema"
 import { audit } from "@/lib/audit"
-import { encrypt, sha256 } from "@/lib/crypto"
 import { errorForLog, UserError } from "@/lib/errors"
 import { sendContractSigned } from "./notify"
 import { renderContract } from "./render"
+import { sealSignedText } from "./signed-text"
 
 const input = z.object({
   contractId: z.uuid(),
@@ -26,7 +26,7 @@ export type SignResult = { contractId: string; courseId: string; sha256: string;
  * after its own login check). Only the instructor of the contract can sign,
  * only a contract that is still "sent", and only while the workshop awaits
  * the signature. Stores the exact text signed (in `locale`), encrypted like
- * the ID number it contains (`lib/crypto.ts`), the SHA-256 of the plain text
+ * the ID number it contains (`sealSignedText`), the SHA-256 of the plain text
  * and the evidence (name typed, time, IP, browser). The workshop is then
  * published, or confirmed again when the go decision was already taken (a
  * contract re-issued after it keeps that decision and its final number), and
@@ -67,8 +67,8 @@ export async function signContract(
     if (contract.status === "void") throw new UserError("contracts.errors.replaced")
     if (course.status !== "awaiting_signature") throw new UserError("contracts.errors.notSignable")
 
-    const text = await renderContract(v.contractId, v.locale, { tx })
-    const hash = sha256(text)
+    const sealed = sealSignedText(await renderContract(v.contractId, v.locale, { tx }))
+    const hash = sealed.signedTextSha256
     const now = new Date()
     await tx
       .update(contracts)
@@ -77,8 +77,7 @@ export async function signContract(
         signedAt: now,
         signedName: v.signedName,
         signedLocale: v.locale,
-        signedText: encrypt(text),
-        signedTextSha256: hash,
+        ...sealed,
         signedIp: v.ip,
         signedUserAgent: v.userAgent?.slice(0, 500) || null,
       })

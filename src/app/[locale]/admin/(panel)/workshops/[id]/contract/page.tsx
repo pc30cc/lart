@@ -1,4 +1,4 @@
-import { FileClockIcon, FileXIcon, InfoIcon } from "lucide-react"
+import { FileClockIcon, FileXIcon, InfoIcon, LockOpenIcon, ShieldAlertIcon } from "lucide-react"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { getLocale, getTranslations } from "next-intl/server"
@@ -58,6 +58,8 @@ export default async function WorkshopContractPage({
   const doc = selected && (selected.hasText || selected.status === "sent") ? await getContractText(selected.id, lang) : null
   // The signature line belongs to the document: in its language, not the panel's.
   const tDoc = doc ? await getTranslations({ locale: doc.locale, namespace: "workshops.contractPage" }) : null
+  // A signed text that can't be decrypted has nothing to show or print (`checkSignedText`).
+  const readable = doc && doc.check !== "unreadable"
   const n = (v: number) => formatNumber(v, locale)
   const href = (query: Record<string, string>) => ({ pathname: `/admin/workshops/${id}/contract`, query })
 
@@ -70,7 +72,7 @@ export default async function WorkshopContractPage({
         actions={
           <>
             {current?.status === "sent" && <ResendContractButton courseId={id} />}
-            {doc && <PrintButton />}
+            {readable && <PrintButton />}
           </>
         }
       />
@@ -104,7 +106,12 @@ export default async function WorkshopContractPage({
                 </nav>
               </div>
             )}
-            {doc ? (
+            {doc?.check && doc.check !== "ok" && (
+              <CheckNotice tone={doc.check === "unencrypted" ? "warning" : "danger"} title={t(`contractPage.check.${doc.check}.title`)}>
+                {t(`contractPage.check.${doc.check}.description`)}
+              </CheckNotice>
+            )}
+            {readable ? (
               <ContractDocument text={doc.text} locale={doc.locale}>
                 {selected.signedAt && tDoc && (
                   <footer className="mt-10 space-y-1 border-t pt-4 text-xs print:border-black/30">
@@ -121,11 +128,13 @@ export default async function WorkshopContractPage({
                 )}
               </ContractDocument>
             ) : (
-              <EmptyState
-                icon={FileXIcon}
-                title={t("contractPage.noText.title")}
-                description={t("contractPage.noText.description")}
-              />
+              !doc && (
+                <EmptyState
+                  icon={FileXIcon}
+                  title={t("contractPage.noText.title")}
+                  description={t("contractPage.noText.description")}
+                />
+              )
             )}
           </div>
 
@@ -212,6 +221,26 @@ export default async function WorkshopContractPage({
         </div>
       )}
     </>
+  )
+}
+
+/** Why a signed text can't be shown as proven (danger, also printed) or is not encrypted yet (warning, screen only). */
+function CheckNotice({ tone, title, children }: { tone: "danger" | "warning"; title: string; children: React.ReactNode }) {
+  const Icon = tone === "danger" ? ShieldAlertIcon : LockOpenIcon
+  return (
+    <div
+      role="alert"
+      className={cn(
+        "flex gap-3 rounded-xl border p-4 text-sm",
+        tone === "danger" ? "border-destructive/30 bg-destructive/8" : "border-warning/30 bg-warning/8 print:hidden",
+      )}
+    >
+      <Icon className={cn("mt-0.5 size-4 shrink-0", tone === "danger" ? "text-destructive" : "text-warning")} />
+      <div className="space-y-1">
+        <p className="font-medium">{title}</p>
+        <p className="text-muted-foreground text-pretty">{children}</p>
+      </div>
+    </div>
   )
 }
 

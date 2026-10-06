@@ -96,7 +96,7 @@
   },
   "form": {
     "lockedTitle": "Contract terms can’t change any more",
-    "lockedDescription": "This workshop is cancelled or closed, or it has started after it was confirmed, so the date, place, capacity, instructor and fee stay as they are. You can still edit the texts and photos.",
+    "lockedDescription": "This workshop is cancelled or closed, or it has started after it was confirmed, so the date, place, capacity, instructor and fee stay as they are. You can still edit the texts and photos, and fill in a missing translation of the name or place.",
     "createAndSend": "Create and send contract",
     "basics": {
       "title": "The workshop",
@@ -154,6 +154,7 @@
     "decisionAtHint": "We’ll email you then with the number of registrations",
     "venue": "Place",
     "venuePlaceholder": "e.g. Moda Art House, Kadıköy",
+    "venueHint": "Needed in Turkish. An empty language shows the Turkish text; filling it in later doesn’t send a new contract.",
     "ageGroup": "Who is it for?",
     "adults": "Adults",
     "adultsHint": "For grown-ups.",
@@ -349,6 +350,20 @@
     "noText": {
       "title": "This version wasn’t signed",
       "description": "It stopped being valid before the instructor signed it (a newer version was sent, or the workshop was cancelled), so there’s no signed text to show."
+    },
+    "check": {
+      "unreadable": {
+        "title": "This signed text can’t be opened",
+        "description": "It was encrypted with a different key from this server’s, or it was changed after signing. The fingerprint shows what was signed."
+      },
+      "mismatch": {
+        "title": "This may not be the text that was signed",
+        "description": "It doesn’t match the fingerprint recorded when the contract was signed, or that record is missing. It may have been changed: don’t rely on it."
+      },
+      "unencrypted": {
+        "title": "Not encrypted yet",
+        "description": "This contract was signed before signed texts were encrypted. It matches its fingerprint and will be encrypted by the server’s one-time step (pnpm contracts:encrypt)."
+      }
     },
     "version": "Version {version}",
     "sentAt": "Sent",

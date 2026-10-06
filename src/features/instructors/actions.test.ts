@@ -157,7 +157,7 @@ async function addCourse(instructorId: string) {
       categoryId: extra.categoryId,
       instructorId,
       title: { tr: `Atölye ${run}` },
-      venue: "Studio",
+      venue: { tr: "Studio" },
       startsAt: start,
       endsAt: new Date(start.getTime() + 2 * 3_600_000),
       minCapacity: 3,

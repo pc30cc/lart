@@ -116,7 +116,7 @@ async function addCourse(termsId: string | null) {
       categoryId: fixtures.category,
       instructorId: fixtures.instructor,
       title: { tr: "Atölye" },
-      venue: "Studio",
+      venue: { tr: "Studio" },
       startsAt: start,
       endsAt: new Date(start.getTime() + 3_600_000),
       minCapacity: 1,

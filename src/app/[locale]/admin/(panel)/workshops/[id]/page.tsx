@@ -78,7 +78,7 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/admi
                   <bdi className="tabular-nums">{formatTimeRange(w.startsAt, w.endsAt, locale)}</bdi>
                 </Sub>
               </Fact>
-              <Fact label={t("fields.venue")}>{w.venue}</Fact>
+              <Fact label={t("fields.venue")}>{localized(w.venue, locale)}</Fact>
               <Fact label={t("fields.registrationDeadline")}>{formatDateTime(w.registrationDeadline, locale, "long")}</Fact>
               <Fact label={t("fields.decisionAt")}>
                 {formatDateTime(w.decisionAt, locale, "long")}

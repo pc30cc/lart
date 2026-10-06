@@ -96,7 +96,7 @@
   },
   "form": {
     "lockedTitle": "Sözleşme koşulları artık değiştirilemez",
-    "lockedDescription": "Bu atölye iptal edildi ya da kapandı, ya da kesinleştikten sonra başladı; bu yüzden tarih, yer, kontenjan, eğitmen ve ücret olduğu gibi kalır. Metinleri ve fotoğrafları yine de düzenleyebilirsiniz.",
+    "lockedDescription": "Bu atölye iptal edildi ya da kapandı, ya da kesinleştikten sonra başladı; bu yüzden tarih, yer, kontenjan, eğitmen ve ücret olduğu gibi kalır. Metinleri ve fotoğrafları yine de düzenleyebilir, adın ya da yerin eksik çevirisini ekleyebilirsiniz.",
     "createAndSend": "Oluştur ve sözleşmeyi gönder",
     "basics": {
       "title": "Atölye",
@@ -154,6 +154,7 @@
     "decisionAtHint": "Bu saatte kayıt sayısını size e-postayla bildiririz; atölyenin yapılıp yapılmayacağına o zaman karar verirsiniz",
     "venue": "Yer",
     "venuePlaceholder": "ör. Moda Sanat Evi, Kadıköy",
+    "venueHint": "Türkçesi gerekli. Boş bırakılan dillerde Türkçesi gösterilir; bunları sonradan doldurmak yeni bir sözleşme göndermez.",
     "ageGroup": "Kimler için?",
     "adults": "Yetişkinler",
     "adultsHint": "Yetişkinlere yönelik.",
@@ -349,6 +350,20 @@
     "noText": {
       "title": "Bu sürüm imzalanmadı",
       "description": "Eğitmen imzalamadan önce geçersiz hale geldi (yeni bir sürüm gönderildi ya da atölye iptal edildi), bu yüzden gösterilecek imzalı bir metin yok."
+    },
+    "check": {
+      "unreadable": {
+        "title": "Bu imzalı metin açılamıyor",
+        "description": "Bu sunucununkinden farklı bir anahtarla şifrelenmiş ya da imzadan sonra değiştirilmiş. Neyin imzalandığını parmak izi gösterir."
+      },
+      "mismatch": {
+        "title": "Bu, imzalanan metin olmayabilir",
+        "description": "İmza sırasında kaydedilen parmak iziyle uyuşmuyor ya da bu kayıt yok. Değiştirilmiş olabilir: buna güvenmeyin."
+      },
+      "unencrypted": {
+        "title": "Henüz şifrelenmedi",
+        "description": "Bu sözleşme, imzalı metinler şifrelenmeye başlamadan önce imzalandı. Parmak iziyle uyuşuyor; sunucudaki tek seferlik adımla (pnpm contracts:encrypt) şifrelenecek."
+      }
     },
     "version": "{version}. sürüm",
     "sentAt": "Gönderildi",

@@ -14,6 +14,16 @@ export function encrypt(plain: string): string {
   return ["v1", iv, tag, data].map((p) => (typeof p === "string" ? p : p.toString("base64url"))).join(".")
 }
 
+/**
+ * The shape of `encrypt` output, v1: 12-byte IV, 16-byte tag and the data, in
+ * base64url. Also usable in PostgreSQL (`column ~ CIPHERTEXT_PATTERN`).
+ */
+export const CIPHERTEXT_PATTERN = "^v1\\.[A-Za-z0-9_-]{16}\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]+$"
+const ciphertext = new RegExp(CIPHERTEXT_PATTERN)
+
+/** Whether a stored value looks like `encrypt` output (it may still fail to decrypt with another key). */
+export const isCiphertext = (value: string) => ciphertext.test(value)
+
 export function decrypt(payload: string): string {
   const [version, iv, tag, data] = payload.split(".")
   if (version !== "v1" || !iv || !tag || !data) throw new Error("Invalid ciphertext")

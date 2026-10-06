@@ -73,9 +73,9 @@ export async function listWorkshops(params: TableParams<Sort, Filter>, locale: s
         ...(["fa", "tr", "en"] as const).flatMap((l) => [
           ilike(sql`${courses.title}->>${l}`, pattern),
           ilike(sql`${instructors.displayName}->>${l}`, pattern),
+          ilike(sql`${courses.venue}->>${l}`, pattern),
         ]),
         ilike(courses.slug, pattern),
-        ilike(courses.venue, pattern),
         ilike(instructors.officialName, pattern),
       ),
     )

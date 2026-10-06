@@ -115,6 +115,7 @@ export const emailTemplates = {
       workshopTitle: text(),
       date: text(100),
       time: text(50),
+      /** The venue in the email's language: `localized(course.venue, locale)`. */
       venue: text(300),
       amount: text(50),
       workshopUrl: siteUrl.optional(),
@@ -129,6 +130,7 @@ export const emailTemplates = {
       workshopTitle: text(),
       date: text(100),
       time: text(50),
+      /** The venue in the email's language: `localized(course.venue, locale)`. */
       venue: text(300),
       bring: z.string().trim().max(500).optional(),
       workshopUrl: siteUrl.optional(),

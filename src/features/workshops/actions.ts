@@ -16,7 +16,7 @@ import { getSetting } from "@/lib/settings"
 import { sendEmail } from "@/lib/email"
 import { removeFiles, syncMedia, type MediaFile } from "./media"
 import {
-  contractCourseFields,
+  changedContractFields,
   contractLocked,
   courseValues,
   feeValues,
@@ -164,7 +164,7 @@ export const updateWorkshop = adminAction(workshopUpdateSchema, async ({ id, ...
 
       const courseDiff = changes(before, values)
       const feeDiff = changes((current ?? {}) as Partial<typeof fee>, fee)
-      const contractDiff = Object.keys(courseDiff).filter((k) => (contractCourseFields as readonly string[]).includes(k))
+      const contractDiff = changedContractFields(courseDiff)
       const contractChanged = contractDiff.length > 0 || Object.keys(feeDiff).length > 0
       if (contractChanged && contractLocked(before)) throw new UserError("workshops.errors.contractLocked")
 

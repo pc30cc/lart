@@ -17,7 +17,7 @@ const data: ContractData = {
     // 14 Oct 2026, 18:00–20:30 Istanbul time (UTC+3).
     startsAt: new Date("2026-10-14T15:00:00Z"),
     endsAt: new Date("2026-10-14T17:30:00Z"),
-    venue: "Moda Sanat Evi",
+    venue: { tr: "Moda Sanat Evi", en: "Moda Art House" },
     minCapacity: 4,
     maxCapacity: 12,
     decisionAt: new Date("2026-10-12T15:00:00Z"),
@@ -63,6 +63,14 @@ describe("renderContract", () => {
     expect(text).toContain(`a fixed fee of ${fee} for the whole workshop`)
     expect(text).toContain("There is no advance payment.")
     expect(text).toContain(`1. Lart pays ${fee} (fixed for the whole workshop); advance ${formatLira(0, "en")}.`)
+  })
+
+  it("writes the venue in the contract's language, falling back to Turkish", async () => {
+    const en = await renderContract(data, "en", { brand: "Lart" })
+    expect(en).toContain("- Venue: Moda Art House")
+    expect(en).not.toContain("Moda Sanat Evi")
+    const fa = await renderContract({ ...data, course: { ...data.course, venue: { ...data.course.venue, fa: "خانهٔ هنر مودا" } } }, "fa", { brand: "لارت" })
+    expect(fa).toContain("«شمع‌سازی» در خانهٔ هنر مودا")
   })
 
   it("is deterministic, so the signed text can be hashed and checked", async () => {

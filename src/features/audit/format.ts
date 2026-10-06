@@ -29,14 +29,22 @@ const MONEY_KEYS = new Set([
   "refundTotal",
 ])
 
-/** A short text for any JSON value. Localized texts show their first language. */
-function short(value: unknown): string {
+const LOCALES = ["fa", "tr", "en"] as const
+type Locale = (typeof LOCALES)[number]
+const isLocale = (l: string): l is Locale => (LOCALES as readonly string[]).includes(l)
+/** A `LocalizedText` ({ fa?, tr?, en? }), or null / undefined for "none" (an optional text). */
+const isLocalizedOrNone = (v: unknown): v is Partial<Record<Locale, unknown>> | null | undefined =>
+  v === null || v === undefined || (isRecord(v) && Object.keys(v).every(isLocale))
+const textOf = (v: unknown) => (typeof v === "string" ? v.trim() : "")
+
+/** A short text for any JSON value. Localized texts show the page's language, else the first one filled in. */
+function short(value: unknown, locale?: string): string {
   if (value === null || value === undefined || value === "") return "—"
   if (typeof value === "string") return clip(value.replace(/\s+/g, " ").trim(), VALUE_MAX)
   if (typeof value === "number" || typeof value === "boolean") return String(value)
-  if (Array.isArray(value)) return value.length ? clip(value.slice(0, 3).map(short).join(", "), VALUE_MAX) : "—"
+  if (Array.isArray(value)) return value.length ? clip(value.slice(0, 3).map((v) => short(v, locale)).join(", "), VALUE_MAX) : "—"
   if (isRecord(value)) {
-    const text = ["fa", "tr", "en"].map((l) => value[l]).find((v) => typeof v === "string" && v.trim())
+    const text = [locale, ...LOCALES].map((l) => (l ? value[l] : undefined)).find((v) => typeof v === "string" && v.trim())
     return text ? short(text) : "{…}"
   }
   return "…"
@@ -44,15 +52,29 @@ function short(value: unknown): string {
 
 /** The value of `key` in the summary: amounts in kuruş as lira, anything else as `short`. */
 const shown = (key: string, value: unknown, locale: string) =>
-  MONEY_KEYS.has(key) && typeof value === "number" && Number.isSafeInteger(value) ? formatLira(value, locale) : short(value)
+  MONEY_KEYS.has(key) && typeof value === "number" && Number.isSafeInteger(value) ? formatLira(value, locale) : short(value, locale)
 
-/** "slug: candles → candle-making · sort: 1 → 2 · price: ₺1,500 → ₺1,800" */
+/**
+ * A change of a localized text, in the language that changed: the page's
+ * language when it is one of them, otherwise the first that changed
+ * ("venue (tr): Moda → Kadıköy"). Null when it is not a localized text.
+ */
+function localizedChange(key: string, from: unknown, to: unknown, locale: string): string | null {
+  if (!isLocalizedOrNone(from) || !isLocalizedOrNone(to) || (!isRecord(from) && !isRecord(to))) return null
+  const changed = LOCALES.filter((l) => textOf(from?.[l]) !== textOf(to?.[l]))
+  if (!changed.length) return null
+  const lang = changed.find((l) => l === locale) ?? changed[0]
+  return `${key} (${lang}): ${short(from?.[lang])} → ${short(to?.[lang])}`
+}
+
+/** "slug: candles → candle-making · venue (tr): Moda → Kadıköy · price: ₺1,500 → ₺1,800" */
 export function auditSummary(data: unknown, locale: string): string {
   if (data === null || data === undefined) return ""
-  if (!isRecord(data)) return clip(short(data), SUMMARY_MAX)
+  if (!isRecord(data)) return clip(short(data, locale), SUMMARY_MAX)
   const parts = Object.entries(data).map(([key, value]) =>
     isChange(value)
-      ? `${key}: ${shown(key, value.from, locale)} → ${shown(key, value.to, locale)}`
+      ? (localizedChange(key, value.from, value.to, locale) ??
+        `${key}: ${shown(key, value.from, locale)} → ${shown(key, value.to, locale)}`)
       : `${key}: ${shown(key, value, locale)}`,
   )
   return clip(parts.join(" · "), SUMMARY_MAX)

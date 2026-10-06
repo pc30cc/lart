@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  changedContractFields,
   contractLocked,
   courseValues,
   displayStatus,
@@ -8,6 +9,7 @@ import {
   gallerySchema,
   isCancelled,
   maxAdvance,
+  translationsChanged,
   workshopEditSchema,
   workshopSchema,
 } from "./schema"
@@ -32,6 +34,14 @@ describe("workshop schema", () => {
   it("needs the title in all three languages", () => {
     const result = workshopSchema.safeParse(input({ title: { fa: "", tr: "Mum", en: "Candle" } }))
     expect(Object.keys(issues(result))).toContain("title.fa")
+  })
+
+  it("needs the venue in Turkish; Persian and English are optional, empty ones dropped", () => {
+    expect(Object.keys(issues(workshopSchema.safeParse(input({ venue: text({ en: "Moda Art House" }) }))))).toContain("venue.tr")
+    expect(Object.keys(issues(workshopSchema.safeParse(input({ venue: text({ tr: "x".repeat(301) }) }))))).toContain("venue.tr")
+    const parsed = workshopSchema.parse(input({ venue: text({ tr: " Moda Sanat Evi ", fa: "", en: "Moda Art House" }) }))
+    expect(parsed.venue).toEqual({ tr: "Moda Sanat Evi", en: "Moda Art House" })
+    expect(courseValues(parsed).venue).toEqual({ tr: "Moda Sanat Evi", en: "Moda Art House" })
   })
 
   it("wants the end after the start", () => {
@@ -164,5 +174,31 @@ describe("workshop lifecycle helpers", () => {
     expect(isCancelled({ status: "closed", cancelledAt: null })).toBe(false)
     expect(displayStatus({ status: "closed", cancelledAt: null })).toBe("closed")
     expect(displayStatus({ status: "confirmed", cancelledAt: null })).toBe("confirmed")
+  })
+})
+
+describe("which edits change the contract", () => {
+  it("counts a changed or removed translation, not one filled in where it was empty", () => {
+    const venue = { tr: "Moda Sanat Evi", en: "Moda Art House" }
+    expect(translationsChanged(venue, { ...venue })).toBe(false)
+    expect(translationsChanged(venue, { ...venue, fa: "خانهٔ هنر مودا" })).toBe(false)
+    expect(translationsChanged({ tr: "Moda" }, { tr: " Moda ", en: "Moda", fa: "مودا" })).toBe(false)
+    expect(translationsChanged(venue, { ...venue, en: "Studio 2" })).toBe(true)
+    expect(translationsChanged(venue, { tr: "Kadıköy", en: "Moda Art House" })).toBe(true)
+    expect(translationsChanged(venue, { tr: "Moda Sanat Evi" })).toBe(true)
+    expect(translationsChanged(null, { tr: "Moda" })).toBe(false)
+  })
+
+  it("keeps the other contract fields as they are", () => {
+    const at = (iso: string) => new Date(iso)
+    const diff = {
+      title: { from: { fa: "شمع", tr: "Mum" }, to: { fa: "شمع", tr: "Mum", en: "Candle" } },
+      venue: { from: { tr: "Moda" }, to: { tr: "Kadıköy" } },
+      startsAt: { from: at("2026-11-01T10:00:00Z"), to: at("2026-11-02T10:00:00Z") },
+      intro: { from: null, to: { tr: "Yeni" } },
+      price: { from: 100, to: 200 },
+    }
+    expect(changedContractFields(diff)).toEqual(["startsAt", "venue"])
+    expect(changedContractFields({ intro: diff.intro, price: diff.price })).toEqual([])
   })
 })

@@ -92,6 +92,8 @@ async function checkPage(page: Page, name: string) {
     const placeholder = /\{(brand|instructor_[a-z_]+|workshop_[a-z_]+|[a-z]+_[a-z_]+)\}/.exec(text)
     expect.soft(placeholder?.[0] ?? null, `${name}: unfilled placeholder`).toBeNull()
   }
+  // A jsonb value (e.g. a localized text) rendered as it is.
+  expect.soft(/\[object Object\]/.test(text) ? name : null, `${name}: [object Object] on the page`).toBeNull()
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
   expect.soft(overflow, `${name}: page scrolls sideways by ${overflow}px`).toBeLessThanOrEqual(1)
 }

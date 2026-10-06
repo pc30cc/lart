@@ -6,7 +6,9 @@ class. Instructors work in their own private panel, and a separate
 super-admin panel runs the business: workshops, instructors, contracts,
 course finances, a shared partner wallet and full accounting.
 
-> **Status:** project brief. No code has been written yet.
+> **Status:** phase 1 (the super-admin panel) is built and tested. Next: the
+> instructor panel and student sign-up / registration on the site. How to run
+> it: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## Contents
 
@@ -281,7 +283,10 @@ a dark / light theme:
 ### Workshop fields
 
 Text fields are in three languages. Fields marked 🔗 are **shared with the
-contract**: entered once, used in both. Amounts are in **Turkish lira (₺)**.
+contract**: entered once, used in both. Changing one after the contract was
+sent sends the instructor a new version to sign; filling in a missing
+translation of the name or venue does not (that language showed the Turkish
+text until then). Amounts are in **Turkish lira (₺)**.
 
 | Field | Input |
 | --- | --- |
@@ -290,7 +295,7 @@ contract**: entered once, used in both. Amounts are in **Turkish lira (₺)**.
 | Instructor 🔗 | chosen from instructor profiles |
 | Date 🔗 | date picker; weekday shown automatically |
 | Start and end time 🔗 | time pickers; end after start |
-| Venue 🔗 | text |
+| Venue 🔗 | text (Turkish required) |
 | Age group | adults, or a children's age range (e.g. 7–12) |
 | Minimum and maximum capacity 🔗 | two numbers; maximum ≥ minimum |
 | Price per person | number, ₺ |
@@ -422,8 +427,11 @@ before each release.
   queries only (Drizzle), no raw SQL from user input.
 - **Web protections**: CSRF protection, strict Content Security Policy,
   secure HTTP-only SameSite cookies, HSTS and security headers.
-- **Personal data**: instructor ID numbers encrypted; private fields never
-  reach the public site.
+- **Personal data**: instructor ID numbers and signed contract texts (which
+  contain them) stored encrypted; private fields never reach the public site.
+  Contracts signed before their text was encrypted are encrypted once on
+  deployment; backups made before that hold the plain text until they expire
+  ([runbook](docs/DEVELOPMENT.md#encrypting-older-signed-contract-texts-once)).
 - **Uploads**: type and size checked, images re-encoded (removes hidden
   content and metadata), random file names, no executable files.
 - **Payments**: gateway callbacks verified by signature; amounts always
@@ -440,45 +448,66 @@ before each release.
 
 | Layer | Choice |
 | --- | --- |
-| Framework | Next.js (App Router), React, TypeScript |
-| Styling / UI | Tailwind CSS, shadcn/ui, Framer Motion |
+| Framework | Next.js 16 (App Router), React 19, TypeScript |
+| Styling / UI | Tailwind CSS 4, shadcn/ui, Motion (formerly Framer Motion) |
 | Charts | Recharts (via shadcn/ui charts) |
 | Fonts | self-hosted with `next/font/local`: IRANSans, Inter |
 | Database | PostgreSQL |
-| ORM / migrations | Drizzle ORM |
+| ORM / migrations | Drizzle ORM, drizzle-kit (generated SQL migrations, hand-edited when data must be converted) |
 | Auth | Own session code (src/lib/auth): database sessions, Argon2id, lockout; separate logins for students, instructors and super admins |
 | i18n | next-intl (fa, tr, en; RTL for Persian) |
 | Validation / forms | Zod, React Hook Form |
-| Contracts | PDF generation and e-signature with a signed audit record |
-| Image processing | sharp (resize, WebP / AVIF, watermark) |
-| Media | Bunny CDN or Cloudflare R2 (plain files, no streaming service) |
+| Contracts | text built from an editable template in three languages; signed with the typed name, with the evidence (time, IP, browser) and the exact text kept (encrypted) with its SHA-256; print view for paper or PDF |
+| Encryption | AES-256-GCM (Node.js crypto) for instructor ID numbers, signed contract texts and CDN keys |
+| Image processing | sharp (auto-rotate, resize, strip metadata, WebP, watermark) |
+| Media | Bunny CDN or Cloudflare R2 (plain files, no streaming service); a local folder in development |
 | Email | Resend + React Email |
 | Payments | iyzico, PayTR |
-| Testing | Vitest, Playwright |
+| Testing | Vitest (against a test database), Playwright (end to end, against a production build) |
 | Deployment | **Coolify** on the owner's server: Docker, PostgreSQL alongside with daily backups, auto-deploy on push |
 
 ## 13. Data model
 
-Draft, kept minimal.
+Kept minimal; the whole schema is `src/db/schema.ts`.
+
+- **Three languages everywhere**: translatable text is one `jsonb` column
+  `{ fa, tr, en }` on its own table (workshop name and venue, bios,
+  category names, template bodies, …). There is no translations table.
+- **Money** is an integer number of kuruş. **Times** are `timestamptz`
+  (an instant, kept in UTC, no time zone stored) shown in Istanbul time;
+  ledger dates (`occurred_on`) are plain dates.
+- **Private data**: the instructor ID number and the signed contract text
+  (which contains it) are encrypted; the other private fields (official
+  name, mobile, email) are plain columns that never reach the public site.
+  Sessions and email links keep only the SHA-256 of their token.
 
 | Table | Purpose |
 | --- | --- |
-| `admins` | super admins / partners (separate login) |
+| `admins` | super admins / partners (separate login), profit share |
 | `members` | students |
-| `instructors` | profile; private fields encrypted where needed |
+| `instructors` | public profile (three languages) and private fields: official name, ID number (encrypted), mobile, email |
+| `sessions` | login sessions of admins, instructors and members, kept on the server |
+| `email_tokens` | one-time email links: verify email, reset password, instructor invite |
 | `categories` | workshop categories |
-| `courses` | workshop fields, status, terms template, closed totals |
-| `contracts` | course ↔ instructor: fee type, amount, advance, signed text, signature, signed time |
-| `registrations` | member ↔ course: status, accepted terms and time, photo / video consent, refund |
-| `course_expenses` | expenses of a workshop and the partner who paid |
-| `ledger_entries` | double-entry wallet accounting |
-| `translations` | text for fa / tr / en, keyed by entity and field |
-| `terms` | terms templates, one default |
-| `pages`, `sections` | editable pages, hero and home sections |
-| `media` | photos and videos (CDN paths) |
-| `faqs` | FAQ |
-| `settings` | brand name, default language, theme, CDN, watermark, gateway |
-| `products`, `orders`, `order_items` | shop (later phase) |
+| `templates` | editable terms and contract templates, one default of each |
+| `courses` | workshop fields, status, terms template, final participant number, closed totals |
+| `contracts` | one row per contract version: fee type, amount, advance, status (sent, signed, void), signature evidence, the exact signed text (encrypted) and its SHA-256 |
+| `registrations` | member ↔ course: participant, status, amount, accepted terms and time, photo / video consent, refund |
+| `media` | sample work, gallery photos and videos (CDN paths; private unwatermarked originals) |
+| `ledger_transactions` | double-entry accounting: one row per movement of money (registration, refund, expense, capital, instructor advance or payment, closing, reversal) |
+| `ledger_lines` | the lines of each transaction (account, partner, amount); they always sum to zero |
+| `settings` | key / value: brand name, default language, SEO, theme, CDN, watermark, email texts |
+| `audit_log` | who did what in the super-admin panel |
+
+Course expenses are ledger transactions linked to their workshop (paid from
+the wallet or by a partner), not a table of their own. The database itself
+rejects an unbalanced transaction and any change to ledger or audit rows: a
+correction is a reversal. A workshop is awaiting signature, published,
+confirmed, then closed (held and settled, figures locked), or cancelled; a
+cancelled workshop keeps that status once its books are closed.
+
+Later phases add editable pages and home sections, FAQs and the shop
+(`products`, `orders`, `order_items`).
 
 ## 14. Build order
 

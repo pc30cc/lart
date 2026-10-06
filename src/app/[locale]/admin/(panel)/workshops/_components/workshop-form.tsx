@@ -36,6 +36,7 @@ import {
   contractCourseFields,
   feeTypes,
   maxAdvance,
+  translationsChanged,
   workshopEditSchema,
   workshopSchema,
   type WorkshopFormValues,
@@ -71,7 +72,7 @@ export function emptyWorkshopValues(): DefaultValues<Values> {
     endsAt: "",
     registrationDeadline: "",
     decisionAt: "",
-    venue: "",
+    venue: text(),
     ageGroup: "adults",
     ageMin: null,
     ageMax: null,
@@ -105,12 +106,19 @@ const stable = (v: unknown) =>
 const trimmed = (t: Record<string, string | undefined> | undefined) =>
   Object.fromEntries(Object.entries(t ?? {}).flatMap(([k, v]) => (v?.trim() ? [[k, v.trim()]] : [])))
 
-/** The part of the form that appears in the contract, for "will this re-issue the contract?". */
+/** The part of the form that appears in the contract, except the translated texts (see `reissues`). */
 function contractPart(v: Partial<Values>) {
-  const course = Object.fromEntries(
-    contractCourseFields.map((k) => [k, k === "title" ? trimmed(v.title) : k === "venue" ? v.venue?.trim() : v[k]]),
-  )
+  const course = Object.fromEntries(contractCourseFields.flatMap((k) => (k === "title" || k === "venue" ? [] : [[k, v[k]]])))
   return stable({ ...course, feeType: v.feeType, feeAmount: v.feeAmount, advance: v.hasAdvance ? v.advanceAmount : 0 })
+}
+
+/** Will saving re-issue the contract? Like the server: filling in a missing translation of the title or venue does not. */
+function reissues(before: Partial<Values>, after: Partial<Values>) {
+  return (
+    contractPart(after) !== contractPart(before) ||
+    translationsChanged(trimmed(before.title), trimmed(after.title)) ||
+    translationsChanged(trimmed(before.venue), trimmed(after.venue))
+  )
 }
 
 /** Create (no `workshop`) or edit a workshop and its contract terms, in one friendly form. */
@@ -160,7 +168,7 @@ export function WorkshopForm({ workshop, options }: { workshop?: WorkshopEdit; o
   const watched = useWatch({ control: form.control }) as Partial<Values>
   const live = workshop?.contract && workshop.contract.status !== "void" ? workshop.contract : null
   const locked = Boolean(workshop?.contractLocked)
-  const reissue = Boolean(workshop && !locked && contractPart(watched) !== contractPart(workshop.values))
+  const reissue = Boolean(workshop && !locked && reissues(workshop.values, watched))
 
   async function onSubmit(event?: React.BaseSyntheticEvent) {
     event?.preventDefault()
@@ -239,11 +247,12 @@ export function WorkshopForm({ workshop, options }: { workshop?: WorkshopEdit; o
       </FormSection>
 
       <FormSection title={t("form.where.title")} description={t("form.where.description")}>
-        <TextField<Values>
+        <LocalizedInput
           name="venue"
           label={<ContractLabel>{t("fields.venue")}</ContractLabel>}
+          description={t("fields.venueHint")}
           placeholder={t("fields.venuePlaceholder")}
-          required
+          required={["tr"]}
           maxLength={300}
         />
         <AgeGroupField />

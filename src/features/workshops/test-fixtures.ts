@@ -129,7 +129,7 @@ export function workshopInput(
     endsAt: iso(start + 2 * HOUR),
     registrationDeadline: iso(start - DAY),
     decisionAt: iso(start - 2 * DAY),
-    venue: "Moda Sanat Evi",
+    venue: text({ tr: "Moda Sanat Evi", en: "Moda Art House" }),
     ageGroup: "adults",
     ageMin: null,
     ageMax: null,

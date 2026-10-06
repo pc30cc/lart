@@ -1,5 +1,5 @@
 import { formatLira } from "../../src/lib/money"
-import { ADMIN, expect, settle, test } from "./helpers/app"
+import { ADMIN, expect, RUN, settle, test } from "./helpers/app"
 import { INSTRUCTORS, WORKSHOPS } from "./helpers/data"
 import { one } from "./helpers/db"
 
@@ -82,6 +82,14 @@ test.describe("activity log", () => {
     await page.goto("/en/admin/audit?entity=workshop")
     await expect(page.getByRole("cell").filter({ hasText: "Workshop created" }).first()).toBeVisible()
     await expect(page.getByRole("cell").filter({ hasText: "Signed in" })).toHaveCount(0)
+
+    // A change of one language of a localized text shows that language (here the English venue, edited in 05;
+    // the summary line is cut at 140 characters).
+    await page.goto(`/en/admin/audit?entity=workshop&q=${encodeURIComponent(`Studio 2, Kadıköy ${RUN}`)}`)
+    await expect(
+      page.getByRole("cell").filter({ hasText: `venue (en): Moda Art House, Kadıköy ${RUN} → Moda Art House, Studio 2` }),
+    ).toHaveCount(1)
+    await expect(page.getByRole("cell").filter({ hasText: `venue: ${WORKSHOPS.held.venue.fa}` })).toHaveCount(0)
 
     // The contract signature came from the instructor (no admin): shown as "System".
     await page.goto("/en/admin/audit?entity=contract")
