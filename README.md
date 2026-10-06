@@ -298,6 +298,10 @@ All amounts are in **Turkish lira (₺)**.
 | Agreed amount | number, ₺ (per person or total, depending on the type) |
 | Advance payment? | yes / no; if yes, the advance amount in ₺ (≤ total) |
 
+The fixed clauses of the contract (responsibilities, joint advertising,
+payments, settlement, cancellations, participant data) are in
+[docs/CONTRACT_TEMPLATE.md](docs/CONTRACT_TEMPLATE.md).
+
 The same values feed the course page and the course finances, so nothing is
 entered twice. An advance payment is recorded in the shared wallet and
 deducted from the final settlement when the course is closed.
