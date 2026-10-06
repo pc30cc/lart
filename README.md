@@ -36,6 +36,14 @@ Every screen they use must be **simple, warm and obvious**:
 - friendly messages that say what to do next, never technical errors,
 - works perfectly on a phone.
 
+## Brand name from settings
+
+The brand name is **never hard-coded**. It is stored once in the database
+and set in the super-admin settings (per language if needed). Everywhere it
+appears (terms, contracts, emails, pages, SEO titles, menus, footer,
+watermark text) it is written as `{brand}` and filled in automatically, so
+renaming the brand changes it across the whole site at once.
+
 ## Everything is editable
 
 Nothing on the site is hard-coded. From the super-admin panel:
