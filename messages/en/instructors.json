@@ -1,1 +1,191 @@
-{}
+{
+  "title": "Instructors",
+  "description": "The people who teach your workshops: their public profile and the private details used in contracts.",
+  "new": "New instructor",
+  "create": "Add and send invitation",
+  "newTitle": "New instructor",
+  "newDescription": "Start with the required details. When you save, we email the instructor a link to set up their account.",
+  "edit": "Edit profile",
+  "editTitle": "Edit {name}",
+  "editDescription": "Changes to the public profile show on the site right away.",
+  "backToList": "All instructors",
+  "backToProfile": "Back to profile",
+  "form": {
+    "publicTitle": "Public profile",
+    "publicDescription": "What visitors see. Persian is optional: when it’s empty, the Persian site shows the English text.",
+    "privateTitle": "Private details",
+    "privateDescription": "Only admins see these. They’re used for contracts and for signing in, never on the site.",
+    "aboutTitle": "More about them",
+    "aboutDescription": "Optional, but a photo and a few warm sentences help people choose a workshop.",
+    "inviteTitle": "Invitation",
+    "inviteDescription": "When you save, we email the instructor a link to choose a password. The link works for 7 days."
+  },
+  "fields": {
+    "displayName": "Display name",
+    "displayNameHint": "The name shown on the site, for example “Elif Yılmaz”.",
+    "teachingField": "Teaching field",
+    "teachingFieldHint": "For example: ceramics, painting or candle making.",
+    "officialName": "Official full name",
+    "officialNameHint": "Exactly as on their ID card. It’s used in contracts.",
+    "idNumber": "ID number",
+    "idNumberHint": "Turkish ID, residence permit or passport number. It’s stored encrypted.",
+    "idNumberKeep": "Leave empty to keep the current one ({masked}).",
+    "idNumberKeepPlain": "Leave empty to keep the current one.",
+    "mobile": "Mobile number",
+    "mobileHint": "With the country code, for example +90 532 123 45 67.",
+    "email": "Email",
+    "emailHint": "They sign in with this address and receive their contracts here.",
+    "photo": "Profile photo",
+    "photoHint": "A square photo works best. We crop and optimize it for you.",
+    "bio": "Short introduction",
+    "bioHint": "A few sentences about their work and style.",
+    "teachingLanguages": "Teaching languages",
+    "teachingLanguagesHint": "The languages they can teach a workshop in.",
+    "website": "Instagram or website",
+    "websiteHint": "A full link, or just @username for Instagram.",
+    "inviteLocale": "Email language",
+    "inviteLocaleHint": "The invitation email and the page it opens will be in this language."
+  },
+  "languages": {
+    "placeholder": "Choose languages",
+    "search": "Search languages…",
+    "empty": "No language found.",
+    "remove": "Remove {language}",
+    "selected": "Selected"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "invited": "Invited"
+  },
+  "table": {
+    "name": "Instructor",
+    "teachingField": "Teaching field",
+    "languages": "Languages",
+    "status": "Status",
+    "workshops": "Workshops",
+    "createdAt": "Added",
+    "actions": "Actions",
+    "searchPlaceholder": "Search by name or email…",
+    "workshopsCount": "{count, plural, =0 {None yet} one {# workshop} other {# workshops}}",
+    "moreLanguages": "+{count}",
+    "view": "View profile"
+  },
+  "empty": {
+    "title": "No instructors yet",
+    "description": "Add your first instructor, and we’ll send them an invitation by email."
+  },
+  "detail": {
+    "publicTitle": "Public profile",
+    "publicDescription": "Shown on the site.",
+    "privateTitle": "Private details",
+    "privateDescription": "For admins and contracts only. Never shown on the site.",
+    "publicBadge": "Public",
+    "privateBadge": "Private",
+    "accountTitle": "Account",
+    "displayName": "Display name",
+    "teachingField": "Teaching field",
+    "bio": "Introduction",
+    "languages": "Teaching languages",
+    "website": "Instagram or website",
+    "notSet": "Not added yet",
+    "officialName": "Official full name",
+    "idNumber": "ID number",
+    "mobile": "Mobile",
+    "email": "Email",
+    "status": "Status",
+    "signIn": "Sign-in",
+    "signedUp": "Has set a password",
+    "inviteSent": "Invited on {sent}. The link works until {expires}.",
+    "inviteExpired": "The invitation expired on {expires}. Send a new one when you’re ready.",
+    "notInvited": "No invitation waiting. Send one so they can set up their account.",
+    "emailVerified": "Email confirmed",
+    "emailNotVerified": "Email not confirmed yet",
+    "added": "Added",
+    "workshops": {
+      "title": "Workshops",
+      "empty": "No workshops yet.",
+      "name": "Workshop",
+      "date": "Date",
+      "status": "Status"
+    },
+    "contracts": {
+      "title": "Contracts",
+      "empty": "No contracts yet.",
+      "workshop": "Workshop",
+      "version": "Version",
+      "versionValue": "v{version}",
+      "status": "Status",
+      "signedAt": "Signed",
+      "notSigned": "Not signed"
+    }
+  },
+  "workshopStatus": {
+    "awaiting_signature": "Awaiting signature",
+    "published": "Published",
+    "confirmed": "Confirmed",
+    "cancelled": "Cancelled",
+    "closed": "Closed"
+  },
+  "contractStatus": {
+    "sent": "Waiting for signature",
+    "signed": "Signed",
+    "void": "Replaced"
+  },
+  "reveal": {
+    "show": "Show",
+    "hide": "Hide",
+    "showLabel": "Show the full ID number",
+    "note": "Each time it’s shown, it’s recorded in the activity log.",
+    "unavailable": "Can’t be read. Please enter it again on the edit page."
+  },
+  "invite": {
+    "send": "Send invitation",
+    "resend": "Send invitation again",
+    "choose": "Email language",
+    "sent": "Invitation sent."
+  },
+  "activation": {
+    "title": "Active status",
+    "activeDescription": "Active instructors can sign in and be chosen for new workshops.",
+    "inactiveDescription": "This instructor is inactive: they can’t sign in and aren’t offered for new workshops.",
+    "deactivate": "Deactivate",
+    "activate": "Activate",
+    "deactivateTitle": "Deactivate {name}?",
+    "deactivateDescription": "They won’t be able to sign in, and they won’t be offered when you create a workshop. Their workshops and contracts stay as they are. You can activate them again at any time.",
+    "deactivateConfirm": "Yes, deactivate",
+    "activateTitle": "Activate {name} again?",
+    "activateDescription": "They can sign in again and be chosen for new workshops.",
+    "activateConfirm": "Activate",
+    "deactivated": "Instructor deactivated.",
+    "activated": "Instructor activated again."
+  },
+  "delete": {
+    "action": "Delete instructor",
+    "title": "Delete {name}?",
+    "description": "Their profile is removed for good. This can’t be undone.",
+    "confirm": "Yes, delete",
+    "dangerTitle": "Delete this instructor",
+    "dangerDescription": "Only instructors without any workshops or contracts can be deleted.",
+    "inUse": "They have workshops or contracts, so they can’t be deleted. You can deactivate them instead."
+  },
+  "toast": {
+    "created": "Instructor added. We’ve emailed them their invitation.",
+    "createdNoEmail": "Instructor added, but we couldn’t send the invitation email. Use “Send invitation again” on their page.",
+    "updated": "Changes saved.",
+    "inviteCancelled": "Changes saved. Because the email changed, the earlier invitation no longer works. Send a new one from this page.",
+    "deleted": "Instructor deleted."
+  },
+  "errors": {
+    "emailTaken": "Another instructor already uses this email address.",
+    "mobile": "Please enter the number with its country code, like +90 532 123 45 67.",
+    "idNumber": "Please use 5 to 20 letters and numbers, without spaces.",
+    "photo": "This photo couldn’t be saved. Please upload it again.",
+    "notFound": "This instructor no longer exists. They may have just been deleted.",
+    "inUse": "This instructor has workshops or contracts, so they can’t be deleted. You can deactivate them instead.",
+    "idUnreadable": "We couldn’t read this ID number. Please enter it again on the edit page.",
+    "inviteInactive": "This instructor is inactive. Activate them first, then send the invitation.",
+    "alreadySetUp": "This instructor has already set a password, so they don’t need an invitation.",
+    "inviteNotSent": "We couldn’t send the invitation email. Please try again in a moment."
+  }
+}

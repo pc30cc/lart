@@ -1,1 +1,59 @@
-{}
+{
+  "title": "Kategoriler",
+  "description": "Atölyeleri türüne göre gruplayın; örneğin mum yapımı ya da seramik.",
+  "new": "Yeni kategori",
+  "create": "Kategori oluştur",
+  "newTitle": "Yeni kategori",
+  "newDescription": "Kategorinin adını her dilde yazın. Ziyaretçiler bu adı atölye sayfalarında görür.",
+  "editDescription": "Değişiklikler sitede hemen görünür.",
+  "backToList": "Tüm kategoriler",
+  "form": {
+    "nameTitle": "Ad",
+    "nameDescription": "Kategorinin Farsça, Türkçe ve İngilizce adı.",
+    "displayTitle": "Sitede",
+    "displayDescription": "Sayfa adresi ve kategorinin listelerdeki sırası."
+  },
+  "fields": {
+    "name": "Kategori adı",
+    "slug": "Sayfa adresi",
+    "slugHint": "Sayfa bağlantısının bir parçasıdır ve Türkçe addan oluşturulur. Yalnızca gerekirse değiştirin.",
+    "sort": "Sıra",
+    "sortHint": "Küçük sayılar önce gösterilir."
+  },
+  "table": {
+    "name": "Ad",
+    "slug": "Adres",
+    "workshops": "Atölyeler",
+    "sort": "Sıra",
+    "actions": "İşlemler",
+    "searchPlaceholder": "Kategori ara…",
+    "usage": "Kullanım",
+    "used": "Kullanımda",
+    "unused": "Henüz kullanılmıyor",
+    "usedCount": "{count, plural, one {# atölye} other {# atölye}}"
+  },
+  "empty": {
+    "title": "Henüz kategori yok",
+    "description": "İlk kategorinizi oluşturun; örneğin “Mum yapımı”."
+  },
+  "delete": {
+    "action": "Kategoriyi sil",
+    "title": "“{name}” silinsin mi?",
+    "description": "Bu işlem geri alınamaz.",
+    "confirm": "Evet, sil",
+    "dangerTitle": "Bu kategoriyi sil",
+    "dangerDescription": "Yalnızca atölyesi olmayan kategoriler silinebilir.",
+    "inUse": "Bu kategoride {count, plural, one {# atölye} other {# atölye}} var, bu yüzden silinemez. Önce atölyeleri başka bir kategoriye taşıyın."
+  },
+  "toast": {
+    "created": "Kategori oluşturuldu.",
+    "updated": "Değişiklikler kaydedildi.",
+    "deleted": "Kategori silindi."
+  },
+  "errors": {
+    "slugTaken": "Bu sayfa adresini başka bir kategori kullanıyor. Lütfen farklı bir adres seçin.",
+    "inUse": "Bu kategoride {count, plural, one {# atölye} other {# atölye}} var, bu yüzden silinemez.",
+    "inUseGeneric": "Bu kategoride atölyeler var, bu yüzden silinemez.",
+    "notFound": "Bu kategori artık yok. Az önce silinmiş olabilir."
+  }
+}

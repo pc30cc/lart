@@ -1,1 +1,248 @@
-{}
+{
+  "title": "Settings",
+  "description": "Your brand, languages, search defaults and where photos and videos are stored.",
+  "tabs": {
+    "label": "Settings sections",
+    "general": "General",
+    "storage": "Storage",
+    "watermark": "Watermark"
+  },
+  "toast": {
+    "saved": "Settings saved."
+  },
+  "general": {
+    "brandTitle": "Brand name",
+    "brandDescription": "Shown across the whole site, in emails, terms and contracts: everywhere the text says {token}. Change it here and it changes everywhere.",
+    "brand": "Brand name",
+    "languageTitle": "Default language",
+    "languageDescription": "The language visitors see when they open the site without choosing one. Emails also use it when someone’s language isn’t known.",
+    "defaultLocale": "Language",
+    "seoTitle": "Search engines",
+    "seoDescription": "The title and description that Google and social media show for pages that don’t have their own.",
+    "seoPageTitle": "Title",
+    "seoPageTitleHint": "Around 50–60 characters works best.",
+    "seoPageDescription": "Description",
+    "seoPageDescriptionHint": "One or two sentences, around 150–160 characters.",
+    "themeTitle": "Site theme",
+    "themeDescription": "The look of the public website. The admin panel and the instructor panel always keep their own design.",
+    "theme": "Theme",
+    "themeHint": "New themes will appear here as they are added.",
+    "themes": {
+      "default": "Default"
+    }
+  },
+  "storage": {
+    "providerTitle": "Where files are stored",
+    "providerDescription": "Photos and videos are stored as files on a CDN, which delivers them quickly. Originals and the watermark logo go to a separate private space that nobody can open from outside.",
+    "provider": "Storage",
+    "providers": {
+      "local": {
+        "title": "This server",
+        "hint": "For trying things out only."
+      },
+      "bunny": {
+        "title": "Bunny CDN",
+        "hint": "Bunny Storage with a pull zone."
+      },
+      "cloudflare": {
+        "title": "Cloudflare R2",
+        "hint": "R2 buckets with Cloudflare’s CDN."
+      }
+    },
+    "switchWarning": "Files that are already uploaded stay where they are now; they aren’t moved. Change this before uploading, or move the files yourself.",
+    "localNote": "Files are kept in the .data folder on this server. That’s fine for development, but for the live website choose Bunny or Cloudflare, so files are fast and survive a new deployment.",
+    "bunnyTitle": "Bunny Storage",
+    "bunnyDescription": "You’ll find these in the Bunny dashboard, under Storage. Use one storage zone for public files and another one, with no pull zone, for private files.",
+    "cloudflareTitle": "Cloudflare R2",
+    "cloudflareDescription": "You’ll find these in the Cloudflare dashboard, under R2. Use one bucket for public files and another one, without public access, for private files.",
+    "publicGroup": "Public files",
+    "publicGroupHint": "Photos, videos and covers shown on the website.",
+    "privateGroup": "Private files",
+    "privateGroupHint": "Original gallery photos and the watermark logo. Only admins can see them.",
+    "fields": {
+      "storageHost": "Storage endpoint",
+      "publicZone": "Storage zone name",
+      "publicZoneKey": "Storage zone password",
+      "publicHost": "CDN hostname",
+      "privateZone": "Storage zone name",
+      "privateZoneKey": "Storage zone password",
+      "accountId": "Account ID",
+      "accessKeyId": "Access key ID",
+      "secretAccessKey": "Secret access key",
+      "publicBucket": "Bucket name",
+      "privateBucket": "Bucket name"
+    },
+    "hints": {
+      "storageHost": "Depends on the zone’s main region, for example storage.bunnycdn.com or uk.storage.bunnycdn.com.",
+      "bunnyKey": "Storage zone → FTP & API Access → Password.",
+      "bunnyHost": "The hostname of the pull zone connected to this storage zone, for example cdn.example.com.",
+      "accountId": "The 32-character ID on the R2 overview page.",
+      "r2Keys": "Create an R2 API token with read and write access to both buckets.",
+      "r2Host": "The custom domain connected to the public bucket, for example cdn.example.com."
+    },
+    "keySaved": "Saved securely",
+    "replaceKey": "Replace",
+    "keepSaved": "Keep the saved one",
+    "keyPlaceholderReplace": "Paste the new key",
+    "test": {
+      "action": "Test connection",
+      "running": "Testing…",
+      "ok": "Connected. Files can be saved, read and deleted in both places.",
+      "config": "The saved keys couldn’t be read. Please enter them again.",
+      "write": "A test file couldn’t be saved in {zone, select, private {private storage} other {public storage}}. Please check its name and key.",
+      "read": "A test file was saved in {zone, select, private {private storage} other {public storage}} but couldn’t be read back. Please check the key’s permissions.",
+      "url": "Files are saved, but they don’t open from the CDN hostname. Please check the hostname.",
+      "delete": "A test file couldn’t be deleted from {zone, select, private {private storage} other {public storage}}. Please check that the key is allowed to delete files."
+    },
+    "errors": {
+      "host": "Please enter a hostname, like cdn.example.com (without https://).",
+      "bunnyHost": "Please enter a Bunny storage endpoint, like storage.bunnycdn.com.",
+      "bucket": "Use lowercase letters, numbers and hyphens only.",
+      "sameZone": "Private files need their own zone or bucket, different from the public one.",
+      "accountId": "The account ID is 32 characters long, using the digits 0–9 and the letters a–f.",
+      "key": "A key can’t contain spaces.",
+      "keyRequired": "Please paste the key. It’s stored encrypted and never shown again."
+    }
+  },
+  "watermark": {
+    "enabledTitle": "Watermark",
+    "enabledDescription": "Your logo is added to every gallery photo when it’s uploaded. The original, without the logo, stays private for admins.",
+    "enabled": "Add a watermark to gallery photos",
+    "enabledHint": "Photos that are already uploaded don’t change.",
+    "logoTitle": "Logo",
+    "logoDescription": "A PNG with a transparent background looks best.",
+    "logo": "Watermark logo",
+    "noLogo": "There’s no logo yet, so photos are uploaded without a watermark. Add one here.",
+    "placementTitle": "Position and size",
+    "placementDescription": "Watch the preview while you adjust.",
+    "position": "Position",
+    "positions": {
+      "top-left": "Top left",
+      "top": "Top centre",
+      "top-right": "Top right",
+      "left": "Middle left",
+      "center": "Centre",
+      "right": "Middle right",
+      "bottom-left": "Bottom left",
+      "bottom": "Bottom centre",
+      "bottom-right": "Bottom right",
+      "tiled": "Repeated across the photo"
+    },
+    "size": "Size",
+    "sizeHint": "The logo’s width, as a share of the photo’s width.",
+    "opacity": "Opacity",
+    "opacityHint": "Lower is more see-through.",
+    "margin": "Margin",
+    "marginHint": "Space from the edge of the photo (between logos when repeated).",
+    "previewAlt": "A sample photo with the watermark",
+    "previewNoLogo": "Add a logo to see the preview.",
+    "previewCaption": "A sample photo with your current choices (not saved yet).",
+    "previewCaptionOff": "The watermark is turned off, so photos are uploaded without it. This is how it would look.",
+    "errors": {
+      "logo": "Please upload the logo again."
+    }
+  },
+  "audit": {
+    "title": "Activity log",
+    "description": "Who did what in the admin panel, and when. Entries can’t be changed or deleted.",
+    "system": "System",
+    "showDetails": "Show all details",
+    "table": {
+      "when": "When",
+      "who": "Who",
+      "what": "What",
+      "record": "Record",
+      "details": "Details",
+      "ip": "IP address",
+      "search": "Search the activity…"
+    },
+    "empty": {
+      "title": "No activity yet",
+      "description": "Every change made in the admin panel will be listed here."
+    },
+    "range": {
+      "all": "All dates",
+      "between": "{from} – {to}",
+      "since": "Since {date}",
+      "until": "Until {date}",
+      "today": "Today",
+      "last7": "Last 7 days",
+      "last30": "Last 30 days",
+      "thisMonth": "This month",
+      "timezone": "Istanbul time",
+      "apply": "Show",
+      "clear": "Show all dates"
+    },
+    "entities": {
+      "admin": "Admin",
+      "category": "Category",
+      "contract": "Contract",
+      "instructor": "Instructor",
+      "ledger_transaction": "Transaction",
+      "media": "Media",
+      "report": "Report",
+      "setting": "Setting",
+      "template": "Template",
+      "workshop": "Workshop"
+    },
+    "actions": {
+      "admin": {
+        "create": "Admin added"
+      },
+      "auth": {
+        "login": "Signed in",
+        "logout": "Signed out",
+        "lockout": "Locked out after failed sign-ins"
+      },
+      "category": {
+        "create": "Category created",
+        "update": "Category edited",
+        "delete": "Category deleted"
+      },
+      "contract": {
+        "sign": "Contract signed",
+        "resend": "Contract email sent again"
+      },
+      "instructor": {
+        "create": "Instructor added",
+        "update": "Instructor edited",
+        "delete": "Instructor deleted",
+        "invite": "Invitation sent",
+        "reveal_id": "ID number viewed"
+      },
+      "media": {
+        "upload": "File uploaded"
+      },
+      "money": {
+        "contribution": "Capital added",
+        "withdrawal": "Capital withdrawn",
+        "expense": "Expense recorded",
+        "advance_paid": "Advance paid",
+        "advance_returned": "Advance returned",
+        "instructor_payment": "Instructor paid",
+        "reverse": "Transaction reversed",
+        "export": "Report exported"
+      },
+      "partner": {
+        "shares": "Partner shares changed"
+      },
+      "setting": {
+        "update": "Settings changed"
+      },
+      "template": {
+        "create": "Template created",
+        "update": "Template edited",
+        "set_default": "Default template changed",
+        "delete": "Template deleted"
+      },
+      "workshop": {
+        "create": "Workshop created",
+        "update": "Workshop edited",
+        "confirm": "Workshop confirmed",
+        "cancel": "Workshop cancelled",
+        "close": "Workshop closed",
+        "gallery": "Gallery updated"
+      }
+    }
+  }
+}

@@ -1,1 +1,28 @@
-{}
+{
+  "meta": { "title": "مدیریت" },
+  "brandSubtitle": "پنل مدیریت",
+  "nav": {
+    "groups": { "overview": "نمای کلی", "workshops": "کارگاه‌ها", "money": "امور مالی", "system": "سیستم" },
+    "dashboard": "داشبورد",
+    "workshops": "کارگاه‌ها",
+    "instructors": "مدرس‌ها",
+    "categories": "دسته‌بندی‌ها",
+    "wallet": "کیف پول مشترک",
+    "partners": "شرکا",
+    "transactions": "تراکنش‌ها",
+    "reports": "گزارش‌ها",
+    "templates": "قالب‌ها",
+    "settings": "تنظیمات",
+    "audit": "گزارش فعالیت‌ها"
+  },
+  "shell": {
+    "toggleSidebar": "نمایش یا پنهان کردن منو",
+    "skipToContent": "رفتن به محتوا",
+    "userMenu": "حساب شما",
+    "breadcrumb": "مسیر صفحه"
+  },
+  "home": {
+    "greeting": "سلام {name}",
+    "intro": "امروز از کجا شروع کنیم؟"
+  }
+}

@@ -1,1 +1,95 @@
-{}
+{
+  "layout": {
+    "greeting": "Merhaba {name},",
+    "linkHint": "Buton çalışmazsa bu bağlantıyı kopyalayıp tarayıcınıza yapıştırın:",
+    "signoff": "Sevgiyle,",
+    "team": "{brand} ekibi",
+    "footer": "Bu e-postayı size {brand} gönderdi."
+  },
+  "details": {
+    "workshop": "Atölye",
+    "instructor": "Eğitmen",
+    "date": "Tarih",
+    "time": "Saat",
+    "venue": "Yer",
+    "amount": "Ödenen tutar",
+    "bring": "Yanınızda getirin",
+    "registrations": "Kayıt sayısı",
+    "minimum": "Gereken en az kişi",
+    "decisionAt": "Son karar zamanı",
+    "refund": "İade tutarı"
+  },
+  "welcome_verify": {
+    "subject": "{brand} ailesine hoş geldiniz! Lütfen e-postanızı onaylayın",
+    "preview": "Küçük bir adım kaldı: e-posta adresinizi onaylayın.",
+    "heading": "{brand} ailesine hoş geldiniz!",
+    "intro": "Aramıza katıldığınız için çok mutluyuz. Geriye yalnızca küçük bir adım kaldı: lütfen aşağıdaki butona tıklayarak e-posta adresinizi onaylayın.",
+    "cta": "E-postamı onayla",
+    "note": "Bu hesabı siz oluşturmadıysanız bu e-postayı görmezden gelebilirsiniz."
+  },
+  "instructor_invite": {
+    "subject": "{brand} ailesine hoş geldiniz: artık eğitmenlerimizdensiniz",
+    "preview": "Eğitmen panelinizi açmak için bir şifre belirleyin.",
+    "heading": "Ekibimize hoş geldiniz!",
+    "intro": "Sizinle çalışacağımız için çok mutluyuz. Sizi {brand} eğitmeni olarak ekledik. Atölyelerinizi, sözleşmelerinizi ve katılımcılarınızı artık kendi panelinizden görebilirsiniz.",
+    "intro2": "Başlamak için lütfen hesabınız için bir şifre belirleyin.",
+    "cta": "Şifremi belirle",
+    "note": "Bu bağlantı yalnızca size özel, lütfen kimseyle paylaşmayın. Bu e-postayı beklemiyorduysanız görmezden gelebilirsiniz."
+  },
+  "contract_ready": {
+    "subject": "“{workshopTitle}” sözleşmeniz imzaya hazır",
+    "preview": "Okuyup imzaladığınızda atölyeniz yayına girer.",
+    "heading": "Sözleşmeniz hazır",
+    "intro": "Güzel bir haberimiz var! Atölyenizin sözleşmesi hazır. Lütfen panelinizde dikkatlice okuyup imzalayın. İmzaladığınız anda atölyeniz sitede görünür ve kayıtlar açılır.",
+    "cta": "Okuyup imzala",
+    "note": "Sözleşmeyle ilgili bir sorunuz mu var? Lütfen imzalamadan önce bizimle konuşun."
+  },
+  "contract_signed": {
+    "subject": "{instructorName}, “{workshopTitle}” sözleşmesini imzaladı",
+    "preview": "Atölye artık yayında ve kayıtlar açık.",
+    "heading": "Sözleşme imzalandı",
+    "intro": "{instructorName}, “{workshopTitle}” için sözleşmeyi imzaladı. Atölye artık sitede yayında ve kayıtlar açık.",
+    "cta": "Atölyeyi görüntüle",
+    "note": "İmzalı sözleşme atölyenin kayıtlarında saklanıyor."
+  },
+  "decision_due": {
+    "subject": "Karar zamanı: “{workshopTitle}”",
+    "preview": "{registrations} kayıt var, en az {minimum} kişi gerekiyor.",
+    "heading": "Atölye yapılsın mı?",
+    "intro": "{status, select, reached {Güzel haber: “{workshopTitle}” gereken en az katılımcı sayısına ulaştı. Herkes atölyenin yapılacağını bilsin diye lütfen atölyeyi onaylayın.} other {“{workshopTitle}” henüz gereken en az katılımcı sayısına ulaşmadı. Lütfen atölyenin yapılıp yapılmayacağına karar verin. İptal ederseniz her katılımcıya nazik bir e-posta gider ve ödemesinin tamamı iade edilir.}}",
+    "cta": "Karar ver"
+  },
+  "registration_confirmed": {
+    "subject": "“{workshopTitle}” kaydınız tamamlandı",
+    "preview": "Görüşmek üzere: {date}, saat {time}.",
+    "heading": "Yeriniz ayrıldı!",
+    "intro": "Kaydınız için teşekkür ederiz! “{workshopTitle}” için yeriniz onaylandı. İşte detaylar:",
+    "cta": "Atölyeyi görüntüle",
+    "note": "Planlarınız değişirse lütfen bize olabildiğince erken haber verin. İptal koşullarını atölye sayfasında bulabilirsiniz."
+  },
+  "workshop_reminder": {
+    "subject": "“{workshopTitle}” yaklaşıyor, görüşmek üzere!",
+    "preview": "Küçük bir hatırlatma: {date}, saat {time}.",
+    "heading": "Atölyeniz çok yakında",
+    "intro": "Küçük bir hatırlatma: “{workshopTitle}” çok yakında ve sizi görmek için sabırsızlanıyoruz!",
+    "cta": "Atölyeyi görüntüle",
+    "note": "Hep birlikte zamanında başlayabilmemiz için lütfen birkaç dakika erken gelmeye çalışın."
+  },
+  "workshop_cancelled": {
+    "subject": "“{workshopTitle}” iptal edildi",
+    "preview": "Çok üzgünüz. Ödemeniz size iade edilecek.",
+    "heading": "Üzgünüz, bu atölye iptal edildi",
+    "intro": "Bunu söylemek zorunda olduğumuz için çok üzgünüz: “{workshopTitle}” iptal edildi. Bu atölyeyi heyecanla beklediğinizi biliyoruz.",
+    "intro2": "Sizin bir şey yapmanıza gerek yok. {refundAmount} tutarındaki ödemeniz beş iş günü içinde size iade edilecek.",
+    "cta": "Yaklaşan atölyeleri gör",
+    "note": "Sizi yakında başka bir atölyede görmeyi çok isteriz."
+  },
+  "password_reset": {
+    "subject": "{brand} şifrenizi yenileyin",
+    "preview": "Birkaç saniyede yeni bir şifre belirleyin.",
+    "heading": "Yeni bir şifre belirleyin",
+    "intro": "Şifrenizi yenilemek için bir istek aldık. Yeni bir şifre belirlemek için aşağıdaki butona tıklayın.",
+    "cta": "Yeni şifre belirle",
+    "note": "Bu isteği siz yapmadıysanız bu e-postayı görmezden gelebilirsiniz; şifreniz değişmez."
+  }
+}

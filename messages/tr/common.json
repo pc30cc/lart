@@ -1,1 +1,96 @@
-{}
+{
+  "locales": {
+    "fa": "فارسی",
+    "tr": "Türkçe",
+    "en": "English"
+  },
+  "language": "Dil",
+  "theme": {
+    "label": "Tema",
+    "light": "Açık",
+    "dark": "Koyu",
+    "system": "Cihazla aynı"
+  },
+  "actions": {
+    "save": "Kaydet",
+    "saveChanges": "Değişiklikleri kaydet",
+    "create": "Oluştur",
+    "cancel": "Vazgeç",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "back": "Geri",
+    "close": "Kapat",
+    "more": "Diğer işlemler",
+    "new": "Yeni"
+  },
+  "toast": {
+    "saved": "Kaydedildi.",
+    "created": "Oluşturuldu.",
+    "deleted": "Silindi."
+  },
+  "errors": {
+    "generic": "Bizim tarafımızda bir sorun oluştu. Lütfen biraz sonra tekrar deneyin.",
+    "network": "Sunucuya ulaşamadık. Lütfen bağlantınızı kontrol edip tekrar deneyin.",
+    "invalidInput": "Lütfen işaretli alanları kontrol edin.",
+    "notFound": "Bunu bulamadık. Kaldırılmış olabilir.",
+    "unauthorized": "Devam etmek için lütfen yeniden giriş yapın."
+  },
+  "validation": {
+    "required": "Lütfen bu alanı doldurun.",
+    "tooShort": "Lütfen en az {min} karakter girin.",
+    "tooLong": "Lütfen en fazla {max} karakter kullanın.",
+    "tooSmall": "Lütfen {min} veya daha büyük bir değer girin.",
+    "tooBig": "Lütfen {max} veya daha küçük bir değer girin.",
+    "number": "Lütfen bir sayı girin.",
+    "integer": "Lütfen küsuratsız bir sayı girin.",
+    "email": "Lütfen geçerli bir e-posta adresi girin.",
+    "url": "Lütfen https://ornek.com gibi tam bir web adresi girin.",
+    "date": "Lütfen bir tarih ve saat seçin.",
+    "time": "Lütfen bir saat seçin.",
+    "choose": "Lütfen seçeneklerden birini seçin.",
+    "invalid": "Bu değer doğru görünmüyor. Lütfen kontrol edin.",
+    "slug": "Yalnızca küçük harf, rakam ve tire kullanın (örneğin: mum-yapimi).",
+    "endAfterStart": "Bitiş saati, başlangıç saatinden sonra olmalı."
+  },
+  "form": {
+    "required": "Zorunlu",
+    "optional": "İsteğe bağlı",
+    "filled": "Dolduruldu",
+    "missing": "Henüz doldurulmadı",
+    "hasError": "Kontrol edilmeli",
+    "languagesFilled": "{count}/{total} dil dolu"
+  },
+  "date": {
+    "pickDate": "Tarih seçin",
+    "start": "Başlangıç saati",
+    "end": "Bitiş saati",
+    "timezone": "Saatler İstanbul saatine göredir."
+  },
+  "table": {
+    "all": "Tümü",
+    "searchPlaceholder": "Ara…",
+    "clearSearch": "Aramayı temizle",
+    "clearFilters": "Aramayı ve filtreleri temizle",
+    "noResults": "Eşleşen sonuç yok",
+    "noResultsHint": "Farklı bir arama deneyin ya da filtreleri temizleyin.",
+    "showing": "{total} kayıttan {from}–{to}",
+    "previous": "Önceki",
+    "next": "Sonraki",
+    "pagination": "Sayfalar"
+  },
+  "notFound": {
+    "title": "Bu sayfa burada değil",
+    "description": "Bağlantı eski olabilir ya da sayfa taşınmış olabilir.",
+    "home": "Ana sayfaya git"
+  },
+  "ui": {
+    "menu": "Menü",
+    "menuDescription": "Panelin ana menüsü",
+    "toggleSidebar": "Menüyü aç veya kapat"
+  },
+  "panelError": {
+    "title": "Bir sorun oluştu",
+    "description": "Bu sayfa şu anda açılamadı. Lütfen tekrar deneyin; olmazsa birkaç dakika sonra yeniden bakın.",
+    "retry": "Tekrar deneyin"
+  }
+}

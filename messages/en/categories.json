@@ -1,1 +1,59 @@
-{}
+{
+  "title": "Categories",
+  "description": "Group workshops by craft, like candle making or ceramics.",
+  "new": "New category",
+  "create": "Create category",
+  "newTitle": "New category",
+  "newDescription": "Give the category a name in each language. Visitors see it on the workshop pages.",
+  "editDescription": "Changes show on the site right away.",
+  "backToList": "All categories",
+  "form": {
+    "nameTitle": "Name",
+    "nameDescription": "What the category is called in Persian, Turkish and English.",
+    "displayTitle": "On the site",
+    "displayDescription": "The page address and where the category appears in lists."
+  },
+  "fields": {
+    "name": "Category name",
+    "slug": "Page address",
+    "slugHint": "Part of the page link. It’s made from the Turkish name; change it only if you need to.",
+    "sort": "Order",
+    "sortHint": "Smaller numbers come first."
+  },
+  "table": {
+    "name": "Name",
+    "slug": "Address",
+    "workshops": "Workshops",
+    "sort": "Order",
+    "actions": "Actions",
+    "searchPlaceholder": "Search categories…",
+    "usage": "Usage",
+    "used": "In use",
+    "unused": "Not used yet",
+    "usedCount": "{count, plural, one {# workshop} other {# workshops}}"
+  },
+  "empty": {
+    "title": "No categories yet",
+    "description": "Start with your first one, for example “Candle making”."
+  },
+  "delete": {
+    "action": "Delete category",
+    "title": "Delete “{name}”?",
+    "description": "This can’t be undone.",
+    "confirm": "Yes, delete",
+    "dangerTitle": "Delete this category",
+    "dangerDescription": "Only categories without workshops can be deleted.",
+    "inUse": "{count, plural, one {# workshop uses} other {# workshops use}} this category, so it can’t be deleted. Move {count, plural, one {it} other {them}} to another category first."
+  },
+  "toast": {
+    "created": "Category created.",
+    "updated": "Changes saved.",
+    "deleted": "Category deleted."
+  },
+  "errors": {
+    "slugTaken": "Another category already uses this page address. Please choose a different one.",
+    "inUse": "{count, plural, one {# workshop uses} other {# workshops use}} this category, so it can’t be deleted.",
+    "inUseGeneric": "Workshops use this category, so it can’t be deleted.",
+    "notFound": "This category no longer exists. It may have just been deleted."
+  }
+}

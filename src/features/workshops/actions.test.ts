@@ -1,0 +1,415 @@
+import { and, asc, desc, eq, inArray } from "drizzle-orm"
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
+
+import { db } from "@/db"
+import { auditLog, categories, contracts, courses, instructors, media, members, registrations, templates } from "@/db/schema"
+import { cancelWorkshop, confirmWorkshop, createWorkshop, saveGallery, updateWorkshop } from "./actions"
+import { getWorkshop, listGallery, listRegistrations } from "./queries"
+import {
+  addRegistration,
+  createAdmin,
+  createCategory,
+  createInstructor,
+  createMember,
+  createTermsTemplate,
+  defaultContractTemplate,
+  runId,
+  text,
+  workshopInput,
+} from "./test-fixtures"
+
+vi.mock("next-intl/server", async () => {
+  const { createTranslator } = await import("next-intl")
+  const messages = {
+    common: (await import("../../../messages/en/common.json")).default,
+    workshops: (await import("../../../messages/en/workshops.json")).default,
+    contracts: (await import("../../../messages/en/contracts.json")).default,
+  }
+  return {
+    getTranslations: async (namespace?: string) => createTranslator({ locale: "en", messages, namespace: namespace as never }),
+    getLocale: async () => "en",
+  }
+})
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn(), refresh: vi.fn() }))
+const background = vi.hoisted(() => [] as Promise<unknown>[])
+vi.mock("next/server", () => ({ after: (fn: () => unknown) => void background.push(Promise.resolve().then(fn)) }))
+const sendEmail = vi.hoisted(() => vi.fn<(input: unknown) => Promise<{ ok: boolean }>>(async () => ({ ok: true })))
+vi.mock("@/lib/email", () => ({ sendEmail }))
+const removed = vi.hoisted(() => [] as { path: string; zone: string }[])
+vi.mock("@/lib/storage", () => ({
+  getStorage: async () => ({
+    publicUrl: (path: string) => `https://cdn.test/${path}`,
+    remove: async (path: string, zone = "public") => void removed.push({ path, zone }),
+  }),
+}))
+const session = vi.hoisted(() => ({ sessionId: "test", admin: { id: "", email: "", name: "Workshop Tester", shareBp: 0 } }))
+vi.mock("@/lib/auth/admin", () => ({ requireAdmin: async () => session, getAdmin: async () => session }))
+
+const run = runId()
+const made = { courses: [] as string[], members: [] as string[], instructors: [] as string[], terms: [] as string[] }
+let refs: { categoryId: string; instructorId: string }
+let instructorEmail: string
+let templateId: string
+let termsId: string
+
+beforeAll(async () => {
+  const admin = await createAdmin(run)
+  Object.assign(session.admin, { id: admin.id, email: admin.email })
+  const [category, instructor, terms] = await Promise.all([createCategory(run), createInstructor(run), createTermsTemplate(run)])
+  refs = { categoryId: category.id, instructorId: instructor.id }
+  instructorEmail = instructor.email
+  made.instructors.push(instructor.id)
+  termsId = terms.id
+  made.terms.push(terms.id)
+  templateId = await defaultContractTemplate()
+})
+
+afterAll(async () => {
+  await Promise.all(background)
+  if (made.courses.length) {
+    await db.delete(media).where(inArray(media.courseId, made.courses))
+    await db.delete(registrations).where(inArray(registrations.courseId, made.courses))
+    await db.delete(contracts).where(inArray(contracts.courseId, made.courses))
+    await db.delete(courses).where(inArray(courses.id, made.courses))
+  }
+  if (made.members.length) await db.delete(members).where(inArray(members.id, made.members))
+  await db.delete(templates).where(inArray(templates.id, made.terms))
+  await db.delete(instructors).where(inArray(instructors.id, made.instructors))
+  await db.delete(categories).where(eq(categories.id, refs.categoryId))
+})
+
+beforeEach(() => {
+  sendEmail.mockClear()
+  removed.length = 0
+})
+
+async function create(overrides: Parameters<typeof workshopInput>[2] = {}) {
+  const result = await createWorkshop(workshopInput(run, refs, overrides))
+  if (!result.ok) throw new Error(`${result.error} ${JSON.stringify(result.fieldErrors)}`)
+  made.courses.push(result.data.id)
+  return result.data
+}
+
+const contractsOf = (courseId: string) =>
+  db.select().from(contracts).where(eq(contracts.courseId, courseId)).orderBy(asc(contracts.version))
+const courseRow = async (id: string) => (await db.select().from(courses).where(eq(courses.id, id)))[0]
+const lastAudit = async (entityId: string) =>
+  (await db.select().from(auditLog).where(eq(auditLog.entityId, entityId)).orderBy(desc(auditLog.at)).limit(1))[0]
+
+/** Edit with the saved values plus changes (as the edit form sends them). */
+async function edit(id: string, changes: Parameters<typeof workshopInput>[2]) {
+  const w = (await getWorkshop(id))!
+  const advance = w.contract?.advanceAmount ?? 0
+  return updateWorkshop({
+    ...workshopInput(run, refs),
+    id,
+    title: { fa: w.title.fa ?? "", tr: w.title.tr ?? "", en: w.title.en ?? "" },
+    slug: w.slug,
+    startsAt: w.startsAt.toISOString(),
+    endsAt: w.endsAt.toISOString(),
+    registrationDeadline: w.registrationDeadline.toISOString(),
+    decisionAt: w.decisionAt.toISOString(),
+    venue: w.venue,
+    minCapacity: w.minCapacity,
+    maxCapacity: w.maxCapacity,
+    price: w.price,
+    coverPath: w.coverPath,
+    samples: w.samples,
+    intro: text(w.intro ?? {}),
+    feeType: w.contract?.feeType ?? "per_participant",
+    feeAmount: w.contract?.feeAmount ?? 0,
+    hasAdvance: advance > 0,
+    advanceAmount: advance || null,
+    ...changes,
+  })
+}
+
+/** What signing does to the database (signContract itself is tested in contracts/sign.test.ts). */
+async function markSigned(courseId: string) {
+  await db.update(contracts).set({ status: "signed", signedAt: new Date(), signedText: "x" }).where(and(eq(contracts.courseId, courseId), eq(contracts.status, "sent")))
+  await db.update(courses).set({ status: "published", publishedAt: new Date() }).where(eq(courses.id, courseId))
+}
+
+async function newMember() {
+  const member = await createMember(run)
+  made.members.push(member.id)
+  return member
+}
+
+describe("createWorkshop", () => {
+  it("creates the workshop and contract v1 in one go, audits it and emails the instructor", async () => {
+    const sample = { path: `courses/2026-10/sample${run}.webp`, width: 1600, height: 1200 }
+    const { id, emailSent, contractVersion } = await create({ samples: [sample], coverPath: `courses/2026-10/cover${run}.webp` })
+    expect(emailSent).toBe(true)
+    expect(contractVersion).toBe(1)
+
+    const course = await courseRow(id)
+    expect(course).toMatchObject({ status: "awaiting_signature", createdBy: session.admin.id, bring: null, price: 150_000 })
+    const [contract] = await contractsOf(id)
+    expect(contract).toMatchObject({
+      version: 1,
+      status: "sent",
+      templateId,
+      instructorId: refs.instructorId,
+      feeType: "per_participant",
+      feeAmount: 50_000,
+      advanceAmount: 100_000,
+    })
+    const rows = await db.select().from(media).where(eq(media.courseId, id))
+    expect(rows).toMatchObject([{ kind: "sample", path: sample.path, width: 1600, height: 1200, sort: 0 }])
+    expect(await lastAudit(id)).toMatchObject({ action: "workshop.create", adminId: session.admin.id })
+
+    expect(sendEmail).toHaveBeenCalledTimes(1)
+    expect(sendEmail.mock.calls[0][0]).toMatchObject({
+      to: instructorEmail,
+      template: "contract_ready",
+      locale: "tr",
+      props: { instructorName: "Zeynep", signUrl: `/tr/instructor/contracts/${contract.id}` },
+    })
+  })
+
+  it("still saves when the email can't be sent, and says so", async () => {
+    sendEmail.mockResolvedValueOnce({ ok: false })
+    const { id, emailSent } = await create()
+    expect(emailSent).toBe(false)
+    expect((await contractsOf(id))[0].status).toBe("sent")
+  })
+
+  it("refuses a taken page address on the slug field", async () => {
+    const { id } = await create()
+    const result = await createWorkshop(workshopInput(run, refs, { slug: (await courseRow(id)).slug }))
+    expect(result).toMatchObject({ ok: false, fieldErrors: { slug: expect.stringContaining("page address") } })
+  })
+
+  it("refuses an inactive instructor", async () => {
+    const inactive = await createInstructor(run, { active: false })
+    made.instructors.push(inactive.id)
+    const result = await createWorkshop(workshopInput(run, { ...refs, instructorId: inactive.id }))
+    expect(result).toMatchObject({ ok: false, fieldErrors: { instructorId: "This instructor isn’t active. Please choose another one." } })
+  })
+
+  it("refuses a contract template as terms template, and invalid input", async () => {
+    const wrong = await createWorkshop(workshopInput(run, refs, { termsTemplateId: templateId }))
+    expect(wrong).toMatchObject({ ok: false, fieldErrors: { termsTemplateId: expect.any(String) } })
+    const invalid = await createWorkshop(workshopInput(run, refs, { maxCapacity: 2, minCapacity: 3 }))
+    expect(invalid).toMatchObject({ ok: false, fieldErrors: { maxCapacity: "The maximum can’t be less than the minimum." } })
+    expect(sendEmail).not.toHaveBeenCalled()
+  })
+})
+
+describe("updateWorkshop", () => {
+  it("edits free fields without touching the contract", async () => {
+    const { id } = await create()
+    sendEmail.mockClear()
+    const result = await edit(id, { intro: text({ tr: "Yeni tanıtım", en: "New intro" }) })
+    expect(result).toEqual({ ok: true, data: { id, contractVersion: null, emailSent: null } })
+    expect(await contractsOf(id)).toHaveLength(1)
+    expect((await courseRow(id)).intro).toEqual({ tr: "Yeni tanıtım", en: "New intro" })
+    expect((await lastAudit(id)).data).toMatchObject({ intro: { to: { tr: "Yeni tanıtım", en: "New intro" } } })
+    expect(sendEmail).not.toHaveBeenCalled()
+  })
+
+  it("re-issues an unsigned contract when a contract field changes", async () => {
+    const { id } = await create()
+    sendEmail.mockClear()
+    const result = await edit(id, { venue: "Kadıköy Atölye" })
+    expect(result).toMatchObject({ ok: true, data: { contractVersion: 2, emailSent: true } })
+    const [v1, v2] = await contractsOf(id)
+    expect(v1).toMatchObject({ status: "void", version: 1 })
+    expect(v1.voidedAt).toBeInstanceOf(Date)
+    expect(v2).toMatchObject({ status: "sent", version: 2, templateId })
+    expect((await lastAudit(id)).data).toMatchObject({ venue: { to: "Kadıköy Atölye" }, contract: { voidedVersion: 1, newVersion: 2 } })
+    expect(sendEmail.mock.calls[0][0]).toMatchObject({ template: "contract_ready", props: { signUrl: `/tr/instructor/contracts/${v2.id}` } })
+  })
+
+  it("voids a signed contract on a fee change: the workshop waits for the signature again", async () => {
+    const { id } = await create()
+    await markSigned(id)
+    await db.update(courses).set({ status: "confirmed", finalParticipants: 3 }).where(eq(courses.id, id))
+    const result = await edit(id, { feeType: "fixed", feeAmount: 400_000, advanceAmount: 50_000 })
+    expect(result).toMatchObject({ ok: true, data: { contractVersion: 2 } })
+    const [v1, v2] = await contractsOf(id)
+    expect(v1.status).toBe("void")
+    expect(v2).toMatchObject({ status: "sent", feeType: "fixed", feeAmount: 400_000, advanceAmount: 50_000 })
+    expect(await courseRow(id)).toMatchObject({ status: "awaiting_signature", finalParticipants: null })
+  })
+
+  it("re-issues on a new instructor, a new title and new times", async () => {
+    const { id } = await create()
+    const other = await createInstructor(run)
+    made.instructors.push(other.id)
+    await edit(id, { instructorId: other.id })
+    await edit(id, { title: { fa: "شمع", tr: "Yeni ad", en: "New name" } })
+    const w = (await getWorkshop(id))!
+    await edit(id, { endsAt: new Date(w.endsAt.getTime() + 3_600_000).toISOString() })
+    const all = await contractsOf(id)
+    expect(all.map((c) => c.status)).toEqual(["void", "void", "void", "sent"])
+    expect(all[1].instructorId).toBe(other.id)
+  })
+
+  it("resets the decision reminder when the decision time moves", async () => {
+    const { id } = await create()
+    await db.update(courses).set({ decisionNotifiedAt: new Date() }).where(eq(courses.id, id))
+    const w = (await getWorkshop(id))!
+    await edit(id, { decisionAt: new Date(w.decisionAt.getTime() - 3_600_000).toISOString() })
+    expect((await courseRow(id)).decisionNotifiedAt).toBeNull()
+  })
+
+  it("locks the price and keeps the capacity above the registrations", async () => {
+    const { id } = await create({ minCapacity: 1 })
+    const member = await newMember()
+    await addRegistration(id, member.id, termsId, { status: "confirmed" })
+    await addRegistration(id, member.id, termsId, { status: "pending" })
+    await addRegistration(id, member.id, termsId, { status: "cancelled" })
+
+    const price = await edit(id, { price: 200_000 })
+    expect(price).toMatchObject({ ok: false, fieldErrors: { price: "People have already registered at this price, so it can’t be changed." } })
+    const capacity = await edit(id, { maxCapacity: 1, hasAdvance: false, advanceAmount: null })
+    expect(capacity).toMatchObject({ ok: false, fieldErrors: { maxCapacity: expect.stringContaining("2 people") } })
+    expect((await courseRow(id)).price).toBe(150_000)
+  })
+
+  it("removes a replaced cover and dropped samples from storage after saving", async () => {
+    const cover = `courses/2026-10/old${run}.webp`
+    const a = { path: `courses/2026-10/a${run}.webp` }
+    const b = { path: `courses/2026-10/b${run}.webp` }
+    const { id } = await create({ coverPath: cover, samples: [a, b] })
+    await edit(id, { coverPath: `courses/2026-10/new${run}.webp`, samples: [b] })
+    expect(removed).toEqual(expect.arrayContaining([{ path: cover, zone: "public" }, { path: a.path, zone: "public" }]))
+    const rows = await db.select().from(media).where(eq(media.courseId, id))
+    expect(rows).toMatchObject([{ path: b.path, sort: 0 }])
+  })
+
+  it("keeps contract fields of a cancelled workshop, but texts stay editable", async () => {
+    const { id } = await create()
+    expect(await cancelWorkshop({ id })).toMatchObject({ ok: true })
+    expect(await edit(id, { venue: "Elsewhere" })).toMatchObject({ ok: false, error: expect.stringContaining("cancelled or closed") })
+    expect(await edit(id, { intro: text({ tr: "Hikâye" }) })).toMatchObject({ ok: true })
+  })
+
+  it("says so when the workshop is gone", async () => {
+    const result = await updateWorkshop({ ...workshopInput(run, refs), id: crypto.randomUUID() })
+    expect(result).toEqual({ ok: false, error: "This workshop no longer exists." })
+  })
+})
+
+describe("go / no-go", () => {
+  it("confirms a published workshop and fixes the number of participants", async () => {
+    const { id } = await create()
+    expect(await confirmWorkshop({ id })).toMatchObject({ ok: false, error: expect.stringContaining("open for registration") })
+    await markSigned(id)
+    const member = await newMember()
+    await addRegistration(id, member.id, termsId, { status: "confirmed" })
+    await addRegistration(id, member.id, termsId, { status: "confirmed" })
+    await addRegistration(id, member.id, termsId, { status: "pending" })
+
+    expect(await confirmWorkshop({ id })).toEqual({ ok: true, data: { id, finalParticipants: 2 } })
+    expect(await courseRow(id)).toMatchObject({ status: "confirmed", finalParticipants: 2 })
+    expect(await lastAudit(id)).toMatchObject({ action: "workshop.confirm", data: { finalParticipants: 2, minimum: 4 } })
+  })
+
+  it("cancels: open registrations are cancelled and refunded, payers are emailed once each", async () => {
+    const { id } = await create()
+    await markSigned(id)
+    const [parent, payer, unpaid] = [await newMember(), await newMember(), await newMember()]
+    const r1 = await addRegistration(id, parent.id, termsId, { status: "confirmed", amount: 150_000 })
+    const r2 = await addRegistration(id, parent.id, termsId, { status: "confirmed", amount: 120_000 })
+    const r3 = await addRegistration(id, payer.id, termsId, { status: "confirmed", amount: 150_000 })
+    const r4 = await addRegistration(id, unpaid.id, termsId, { status: "pending", amount: 150_000 })
+    sendEmail.mockClear()
+
+    const result = await cancelWorkshop({ id })
+    expect(result).toEqual({ ok: true, data: { id, cancelledRegistrations: 4, emailed: 2 } })
+    await Promise.all(background)
+
+    const course = await courseRow(id)
+    expect(course.status).toBe("cancelled")
+    expect(course.cancelledAt).toBeInstanceOf(Date)
+    const rows = await db.select().from(registrations).where(eq(registrations.courseId, id))
+    const byId = new Map(rows.map((r) => [r.id, r]))
+    expect(byId.get(r1.id)).toMatchObject({ status: "cancelled", refundAmount: 150_000 })
+    expect(byId.get(r2.id)).toMatchObject({ status: "cancelled", refundAmount: 120_000 })
+    expect(byId.get(r3.id)).toMatchObject({ status: "cancelled", refundAmount: 150_000 })
+    expect(byId.get(r4.id)).toMatchObject({ status: "cancelled", refundAmount: 0 })
+    // The signed contract stays as the record.
+    expect((await contractsOf(id))[0].status).toBe("signed")
+
+    const cancelled = sendEmail.mock.calls.map((c) => c[0] as { to: string; template: string; props: { refundAmount: string } })
+    expect(cancelled.every((c) => c.template === "workshop_cancelled")).toBe(true)
+    expect(cancelled.map((c) => c.to).sort()).toEqual([parent.email, payer.email].sort())
+    expect(cancelled.find((c) => c.to === parent.email)!.props.refundAmount).toBe("₺2.700")
+    expect(await lastAudit(id)).toMatchObject({ action: "workshop.cancel", data: { registrations: 4, refundTotal: 420_000 } })
+
+    expect(await cancelWorkshop({ id })).toMatchObject({ ok: false, error: "This workshop is already cancelled or closed." })
+  })
+
+  it("voids an unsigned contract when the workshop is cancelled", async () => {
+    const { id } = await create()
+    await cancelWorkshop({ id })
+    expect((await contractsOf(id))[0]).toMatchObject({ status: "void" })
+  })
+})
+
+describe("gallery", () => {
+  const photo = (name: string) => ({
+    kind: "image" as const,
+    path: `gallery/2026-10/${name}${run}.webp`,
+    originalPath: `originals/2026-10/${name}${run}.webp`,
+    width: 2400,
+    height: 1600,
+  })
+  const video = (name: string) => ({ kind: "video" as const, path: `gallery/2026-10/${name}${run}.mp4` })
+
+  it("is only for closed workshops", async () => {
+    const { id } = await create()
+    expect(await saveGallery({ id, items: [photo("early")] })).toMatchObject({
+      ok: false,
+      error: "Photos and videos can be added once the workshop is closed.",
+    })
+  })
+
+  it("adds, re-orders and removes photos and videos, and deletes removed files", async () => {
+    const { id } = await create()
+    await db.update(courses).set({ status: "closed", closedAt: new Date() }).where(eq(courses.id, id))
+    const [p1, p2, v1] = [photo("p1"), photo("p2"), video("v1")]
+
+    expect(await saveGallery({ id, items: [p1, v1, p2] })).toEqual({ ok: true, data: { id, count: 3 } })
+    expect((await listGallery(id)).map((i) => [i.kind, i.path, i.originalPath ?? null])).toEqual([
+      ["image", p1.path, p1.originalPath],
+      ["video", v1.path, null],
+      ["image", p2.path, p2.originalPath],
+    ])
+
+    await saveGallery({ id, items: [p2, p1] })
+    expect((await listGallery(id)).map((i) => i.path)).toEqual([p2.path, p1.path])
+    expect(removed).toEqual([{ path: v1.path, zone: "public" }])
+    expect(await lastAudit(id)).toMatchObject({ action: "workshop.gallery", data: { added: 0, removed: 1, reordered: 2 } })
+
+    removed.length = 0
+    await saveGallery({ id, items: [p1] })
+    expect(removed).toEqual([
+      { path: p2.path, zone: "public" },
+      { path: p2.originalPath, zone: "private" },
+    ])
+  })
+
+  it("refuses files that belong to another workshop", async () => {
+    const [{ id: a }, { id: b }] = [await create(), await create()]
+    await db.update(courses).set({ status: "closed" }).where(inArray(courses.id, [a, b]))
+    const shared = photo("shared")
+    await saveGallery({ id: a, items: [shared] })
+    expect(await saveGallery({ id: b, items: [shared] })).toMatchObject({ ok: false, error: expect.stringContaining("already used") })
+    // A new item that reuses another photo's original is refused too.
+    expect(await saveGallery({ id: b, items: [{ ...photo("x"), originalPath: shared.originalPath }] })).toMatchObject({ ok: false })
+  })
+})
+
+describe("listRegistrations", () => {
+  it("lists participants with the member's contact and consents", async () => {
+    const { id } = await create()
+    const member = await newMember()
+    await addRegistration(id, member.id, termsId, { status: "confirmed", photo: true })
+    const [row] = await listRegistrations(id)
+    expect(row).toMatchObject({ status: "confirmed", photoConsent: true, videoConsent: false, member: { email: member.email } })
+  })
+})

@@ -1,1 +1,191 @@
-{}
+{
+  "title": "Eğitmenler",
+  "description": "Atölyelerinizi yöneten eğitmenler: sitede görünen profilleri ve sözleşmelerde kullanılan özel bilgileri.",
+  "new": "Yeni eğitmen",
+  "create": "Ekle ve davet gönder",
+  "newTitle": "Yeni eğitmen",
+  "newDescription": "Önce zorunlu bilgileri doldurun. Kaydettiğinizde eğitmene, hesabını kurması için bir bağlantı e-postayla gönderilir.",
+  "edit": "Profili düzenle",
+  "editTitle": "Düzenle: {name}",
+  "editDescription": "Herkese açık profildeki değişiklikler sitede hemen görünür.",
+  "backToList": "Tüm eğitmenler",
+  "backToProfile": "Profile dön",
+  "form": {
+    "publicTitle": "Herkese açık profil",
+    "publicDescription": "Ziyaretçilerin gördüğü bilgiler. Farsça isteğe bağlıdır; boş bırakılırsa Farsça sitede İngilizce metin görünür.",
+    "privateTitle": "Özel bilgiler",
+    "privateDescription": "Bu bilgileri yalnızca yöneticiler görür. Sözleşmelerde ve giriş için kullanılır, sitede asla görünmez.",
+    "aboutTitle": "Eğitmen hakkında",
+    "aboutDescription": "İsteğe bağlıdır; ancak bir fotoğraf ve birkaç sıcak cümle, katılımcıların atölye seçmesine yardımcı olur.",
+    "inviteTitle": "Davet",
+    "inviteDescription": "Kaydettiğinizde eğitmene şifresini belirlemesi için bir bağlantı e-postayla gönderilir. Bağlantı 7 gün geçerlidir."
+  },
+  "fields": {
+    "displayName": "Görünen ad",
+    "displayNameHint": "Sitede görünecek ad, örneğin “Elif Yılmaz”.",
+    "teachingField": "Uzmanlık alanı",
+    "teachingFieldHint": "Örneğin: seramik, resim veya mum yapımı.",
+    "officialName": "Resmî ad soyad",
+    "officialNameHint": "Kimlik kartındaki gibi, aynen. Sözleşmelerde kullanılır.",
+    "idNumber": "Kimlik numarası",
+    "idNumberHint": "T.C. kimlik, ikamet izni ya da pasaport numarası. Şifrelenerek saklanır.",
+    "idNumberKeep": "Mevcut numarayı ({masked}) korumak için boş bırakın.",
+    "idNumberKeepPlain": "Mevcut numarayı korumak için boş bırakın.",
+    "mobile": "Cep telefonu",
+    "mobileHint": "Ülke koduyla birlikte, örneğin +90 532 123 45 67.",
+    "email": "E-posta",
+    "emailHint": "Eğitmen bu adresle giriş yapar ve sözleşmeleri bu adrese gelir.",
+    "photo": "Profil fotoğrafı",
+    "photoHint": "Kare bir fotoğraf en iyi sonucu verir. Kırpma ve optimizasyonu biz yaparız.",
+    "bio": "Kısa tanıtım",
+    "bioHint": "Eğitmenin çalışmalarını ve tarzını anlatan birkaç cümle.",
+    "teachingLanguages": "Eğitim dilleri",
+    "teachingLanguagesHint": "Atölye verebildiği diller.",
+    "website": "Instagram veya web sitesi",
+    "websiteHint": "Tam bağlantı ya da Instagram için yalnızca @kullaniciadi.",
+    "inviteLocale": "E-posta dili",
+    "inviteLocaleHint": "Davet e-postası ve açtığı sayfa bu dilde olur."
+  },
+  "languages": {
+    "placeholder": "Dil seçin",
+    "search": "Dil arayın…",
+    "empty": "Dil bulunamadı.",
+    "remove": "Kaldır: {language}",
+    "selected": "Seçili"
+  },
+  "status": {
+    "active": "Aktif",
+    "inactive": "Pasif",
+    "invited": "Davet edildi"
+  },
+  "table": {
+    "name": "Eğitmen",
+    "teachingField": "Uzmanlık alanı",
+    "languages": "Diller",
+    "status": "Durum",
+    "workshops": "Atölyeler",
+    "createdAt": "Eklenme",
+    "actions": "İşlemler",
+    "searchPlaceholder": "Ad veya e-postayla arayın…",
+    "workshopsCount": "{count, plural, =0 {Henüz yok} other {# atölye}}",
+    "moreLanguages": "+{count}",
+    "view": "Profili görüntüle"
+  },
+  "empty": {
+    "title": "Henüz eğitmen yok",
+    "description": "İlk eğitmeninizi ekleyin; davetini e-postayla gönderelim."
+  },
+  "detail": {
+    "publicTitle": "Herkese açık profil",
+    "publicDescription": "Sitede görünür.",
+    "privateTitle": "Özel bilgiler",
+    "privateDescription": "Yalnızca yöneticiler ve sözleşmeler için. Sitede asla görünmez.",
+    "publicBadge": "Herkese açık",
+    "privateBadge": "Özel",
+    "accountTitle": "Hesap",
+    "displayName": "Görünen ad",
+    "teachingField": "Uzmanlık alanı",
+    "bio": "Tanıtım",
+    "languages": "Eğitim dilleri",
+    "website": "Instagram veya web sitesi",
+    "notSet": "Henüz eklenmedi",
+    "officialName": "Resmî ad soyad",
+    "idNumber": "Kimlik numarası",
+    "mobile": "Cep telefonu",
+    "email": "E-posta",
+    "status": "Durum",
+    "signIn": "Giriş",
+    "signedUp": "Şifresini belirledi",
+    "inviteSent": "Davet tarihi: {sent}. Bağlantı şu tarihe kadar geçerli: {expires}.",
+    "inviteExpired": "Davetin süresi doldu ({expires}). Hazır olduğunuzda yenisini gönderebilirsiniz.",
+    "notInvited": "Bekleyen davet yok. Hesabını kurabilmesi için bir davet gönderin.",
+    "emailVerified": "E-posta doğrulandı",
+    "emailNotVerified": "E-posta henüz doğrulanmadı",
+    "added": "Eklenme",
+    "workshops": {
+      "title": "Atölyeler",
+      "empty": "Henüz atölye yok.",
+      "name": "Atölye",
+      "date": "Tarih",
+      "status": "Durum"
+    },
+    "contracts": {
+      "title": "Sözleşmeler",
+      "empty": "Henüz sözleşme yok.",
+      "workshop": "Atölye",
+      "version": "Sürüm",
+      "versionValue": "v{version}",
+      "status": "Durum",
+      "signedAt": "İmza tarihi",
+      "notSigned": "İmzalanmadı"
+    }
+  },
+  "workshopStatus": {
+    "awaiting_signature": "İmza bekliyor",
+    "published": "Yayında",
+    "confirmed": "Kesinleşti",
+    "cancelled": "İptal edildi",
+    "closed": "Kapandı"
+  },
+  "contractStatus": {
+    "sent": "İmza bekliyor",
+    "signed": "İmzalandı",
+    "void": "Yenisiyle değiştirildi"
+  },
+  "reveal": {
+    "show": "Göster",
+    "hide": "Gizle",
+    "showLabel": "Kimlik numarasının tamamını göster",
+    "note": "Her görüntüleme işlem geçmişine kaydedilir.",
+    "unavailable": "Okunamıyor. Lütfen düzenleme sayfasında yeniden girin."
+  },
+  "invite": {
+    "send": "Davet gönder",
+    "resend": "Daveti yeniden gönder",
+    "choose": "E-posta dili",
+    "sent": "Davet gönderildi."
+  },
+  "activation": {
+    "title": "Aktiflik durumu",
+    "activeDescription": "Aktif eğitmenler giriş yapabilir ve yeni atölyeler için seçilebilir.",
+    "inactiveDescription": "Bu eğitmen pasif: giriş yapamaz ve yeni atölyelerde seçenek olarak çıkmaz.",
+    "deactivate": "Pasife al",
+    "activate": "Aktifleştir",
+    "deactivateTitle": "{name} pasife alınsın mı?",
+    "deactivateDescription": "Giriş yapamaz ve yeni bir atölye oluştururken seçenek olarak çıkmaz. Atölyeleri ve sözleşmeleri olduğu gibi kalır. İstediğiniz zaman yeniden aktifleştirebilirsiniz.",
+    "deactivateConfirm": "Evet, pasife al",
+    "activateTitle": "{name} yeniden aktifleştirilsin mi?",
+    "activateDescription": "Yeniden giriş yapabilir ve yeni atölyeler için seçilebilir.",
+    "activateConfirm": "Aktifleştir",
+    "deactivated": "Eğitmen pasife alındı.",
+    "activated": "Eğitmen yeniden aktifleştirildi."
+  },
+  "delete": {
+    "action": "Eğitmeni sil",
+    "title": "{name} silinsin mi?",
+    "description": "Profil kalıcı olarak silinir. Bu işlem geri alınamaz.",
+    "confirm": "Evet, sil",
+    "dangerTitle": "Bu eğitmeni sil",
+    "dangerDescription": "Yalnızca hiç atölyesi ve sözleşmesi olmayan eğitmenler silinebilir.",
+    "inUse": "Bu eğitmenin atölyeleri veya sözleşmeleri olduğu için silinemez. Bunun yerine pasife alabilirsiniz."
+  },
+  "toast": {
+    "created": "Eğitmen eklendi ve davet e-postası gönderildi.",
+    "createdNoEmail": "Eğitmen eklendi, ancak davet e-postası gönderilemedi. Eğitmenin sayfasındaki “Daveti yeniden gönder” düğmesini kullanın.",
+    "updated": "Değişiklikler kaydedildi.",
+    "inviteCancelled": "Değişiklikler kaydedildi. E-posta değiştiği için önceki davet artık geçerli değil. Bu sayfadan yeni bir davet gönderin.",
+    "deleted": "Eğitmen silindi."
+  },
+  "errors": {
+    "emailTaken": "Bu e-posta adresini başka bir eğitmen kullanıyor.",
+    "mobile": "Lütfen numarayı ülke koduyla birlikte girin, örneğin +90 532 123 45 67.",
+    "idNumber": "Lütfen boşluksuz, 5 ile 20 arasında harf ve rakam kullanın.",
+    "photo": "Bu fotoğraf kaydedilemedi. Lütfen yeniden yükleyin.",
+    "notFound": "Bu eğitmen artık yok. Az önce silinmiş olabilir.",
+    "inUse": "Bu eğitmenin atölyeleri veya sözleşmeleri olduğu için silinemez. Bunun yerine pasife alabilirsiniz.",
+    "idUnreadable": "Bu kimlik numarası okunamadı. Lütfen düzenleme sayfasında yeniden girin.",
+    "inviteInactive": "Bu eğitmen pasif. Önce aktifleştirin, sonra daveti gönderin.",
+    "alreadySetUp": "Bu eğitmen şifresini zaten belirlemiş, davete ihtiyacı yok.",
+    "inviteNotSent": "Davet e-postası gönderilemedi. Lütfen biraz sonra yeniden deneyin."
+  }
+}

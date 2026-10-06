@@ -1,1 +1,95 @@
-{}
+{
+  "layout": {
+    "greeting": "Hello {name},",
+    "linkHint": "If the button doesn’t work, copy this link into your browser:",
+    "signoff": "Warmly,",
+    "team": "The {brand} team",
+    "footer": "You’re receiving this email from {brand}."
+  },
+  "details": {
+    "workshop": "Workshop",
+    "instructor": "Instructor",
+    "date": "Date",
+    "time": "Time",
+    "venue": "Place",
+    "amount": "Paid",
+    "bring": "Please bring",
+    "registrations": "Registered",
+    "minimum": "Minimum needed",
+    "decisionAt": "Decide by",
+    "refund": "Refund"
+  },
+  "welcome_verify": {
+    "subject": "Welcome to {brand}! Please confirm your email",
+    "preview": "Just one small step left: confirm your email address.",
+    "heading": "Welcome to {brand}!",
+    "intro": "We’re so happy you joined us. Just one small step is left: please confirm your email address with the button below.",
+    "cta": "Confirm my email",
+    "note": "If you didn’t create an account, you can simply ignore this email."
+  },
+  "instructor_invite": {
+    "subject": "Welcome to {brand}: you’re now one of our instructors",
+    "preview": "Choose a password to open your instructor panel.",
+    "heading": "Welcome to the team!",
+    "intro": "We’re delighted to work with you. We’ve added you as an instructor at {brand}, so you can see your workshops, contracts and participants in your own panel.",
+    "intro2": "To get started, please choose a password for your account.",
+    "cta": "Choose my password",
+    "note": "This link is just for you, so please don’t share it. If you weren’t expecting this email, you can ignore it."
+  },
+  "contract_ready": {
+    "subject": "Your contract for “{workshopTitle}” is ready to sign",
+    "preview": "Read and sign it, and your workshop goes live.",
+    "heading": "Your contract is ready",
+    "intro": "Good news! The contract for your workshop is ready. Please read it carefully and sign it in your panel. As soon as you sign, your workshop appears on the site and registration opens.",
+    "cta": "Read and sign",
+    "note": "Have a question about the contract? Please talk to us before you sign."
+  },
+  "contract_signed": {
+    "subject": "{instructorName} signed the contract for “{workshopTitle}”",
+    "preview": "The workshop is now live and registration is open.",
+    "heading": "Contract signed",
+    "intro": "{instructorName} has signed the contract for “{workshopTitle}”. The workshop is now live on the site and registration is open.",
+    "cta": "View workshop",
+    "note": "The signed contract is saved with the workshop."
+  },
+  "decision_due": {
+    "subject": "Time to decide: “{workshopTitle}”",
+    "preview": "{registrations} registered, {minimum} needed.",
+    "heading": "Go or no-go?",
+    "intro": "{status, select, reached {Good news: “{workshopTitle}” has reached its minimum number of participants. Please confirm the workshop so everyone knows it’s going ahead.} other {“{workshopTitle}” hasn’t reached its minimum number of participants yet. Please decide whether to hold it or cancel it. If you cancel, every participant gets a friendly email and a full refund.}}",
+    "cta": "Make the decision"
+  },
+  "registration_confirmed": {
+    "subject": "You’re registered for “{workshopTitle}”",
+    "preview": "See you on {date} at {time}.",
+    "heading": "Your place is booked!",
+    "intro": "Thank you for registering! Your place in “{workshopTitle}” is confirmed. Here are the details:",
+    "cta": "View workshop",
+    "note": "If your plans change, please let us know as early as you can. You’ll find the cancellation terms on the workshop page."
+  },
+  "workshop_reminder": {
+    "subject": "See you soon at “{workshopTitle}”",
+    "preview": "A friendly reminder: {date} at {time}.",
+    "heading": "Your workshop is almost here",
+    "intro": "Just a friendly reminder: “{workshopTitle}” is coming up soon, and we can’t wait to see you!",
+    "cta": "View workshop",
+    "note": "Please try to arrive a few minutes early, so we can all start together."
+  },
+  "workshop_cancelled": {
+    "subject": "“{workshopTitle}” has been cancelled",
+    "preview": "We’re so sorry. You’ll get your money back.",
+    "heading": "We’re sorry, this workshop is cancelled",
+    "intro": "We’re really sorry to tell you that “{workshopTitle}” has been cancelled. We know you were looking forward to it.",
+    "intro2": "You don’t need to do anything. We’ll refund {refundAmount} to you within five business days.",
+    "cta": "See upcoming workshops",
+    "note": "We’d love to see you at another workshop soon."
+  },
+  "password_reset": {
+    "subject": "Reset your {brand} password",
+    "preview": "Choose a new password in just a moment.",
+    "heading": "Choose a new password",
+    "intro": "We received a request to reset your password. Tap the button below to choose a new one.",
+    "cta": "Choose a new password",
+    "note": "If you didn’t ask for this, you can ignore this email. Your password won’t change."
+  }
+}

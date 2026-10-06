@@ -1,1 +1,405 @@
-{}
+{
+  "title": "Workshops",
+  "description": "Plan workshops, send contracts and follow each one from signature to gallery.",
+  "new": "New workshop",
+  "newTitle": "New workshop",
+  "newDescription": "Fill in the workshop once. The contract is made from it and emailed to the instructor when you save.",
+  "editTitle": "Edit “{title}”",
+  "editDescription": "Changes to fields marked with the link icon also change the contract.",
+  "backToList": "All workshops",
+  "backToWorkshop": "Back to the workshop",
+  "views": {
+    "label": "Workshop lists",
+    "upcoming": "Upcoming",
+    "awaiting_signature": "Awaiting signature",
+    "published": "Open for registration",
+    "confirmed": "Confirmed",
+    "cancelled": "Cancelled",
+    "closed": "Closed",
+    "all": "All"
+  },
+  "status": {
+    "awaiting_signature": "Awaiting signature",
+    "published": "Open for registration",
+    "confirmed": "Confirmed",
+    "cancelled": "Cancelled",
+    "closed": "Closed"
+  },
+  "contractStatus": {
+    "sent": "Waiting for signature",
+    "signed": "Signed",
+    "void": "No longer valid"
+  },
+  "tabs": {
+    "label": "Workshop sections",
+    "overview": "Overview",
+    "contract": "Contract",
+    "registrations": "Registrations",
+    "gallery": "Gallery",
+    "finances": "Finances"
+  },
+  "table": {
+    "workshop": "Workshop",
+    "date": "Date",
+    "instructor": "Instructor",
+    "fill": "Registered",
+    "price": "Price",
+    "status": "Status",
+    "searchPlaceholder": "Search by title, instructor or place…",
+    "fillValue": "{confirmed} of {max}"
+  },
+  "empty": {
+    "first": {
+      "title": "No workshops yet",
+      "description": "Create your first workshop. We’ll prepare the contract and email it to the instructor for you."
+    },
+    "views": {
+      "upcoming": { "title": "Nothing coming up", "description": "There are no upcoming workshops right now. How about planning the next one?" },
+      "awaiting_signature": { "title": "No contracts waiting", "description": "Every instructor has signed. Nice work!" },
+      "published": { "title": "No open registrations", "description": "Workshops appear here once their instructor signs the contract." },
+      "confirmed": { "title": "No confirmed workshops", "description": "Workshops appear here after you confirm them at the go / no-go decision." },
+      "cancelled": { "title": "No cancelled workshops", "description": "Good news: nothing has been cancelled." },
+      "closed": { "title": "No closed workshops yet", "description": "Workshops appear here after they are closed on their finances page." },
+      "all": { "title": "No workshops", "description": "Create your first workshop to get started." }
+    }
+  },
+  "prerequisites": {
+    "title": "A few things first",
+    "description": "Every workshop needs a category, an instructor and the contract text. Once these are ready, you can create workshops.",
+    "category": "Add at least one category",
+    "instructor": "Add at least one instructor",
+    "contract": "Set the default contract text",
+    "go": "Set up",
+    "done": "done",
+    "todo": "still to do"
+  },
+  "form": {
+    "lockedTitle": "Contract terms can’t change any more",
+    "lockedDescription": "This workshop is cancelled or closed, so the date, place, capacity and fee stay as they are. You can still edit the texts and photos.",
+    "createAndSend": "Create and send contract",
+    "basics": {
+      "title": "The workshop",
+      "description": "Its name in every language, its category and who teaches it."
+    },
+    "when": {
+      "title": "Date and time",
+      "description": "When it takes place, until when people can register, and when you decide whether it goes ahead."
+    },
+    "where": {
+      "title": "Place and participants",
+      "description": "Where it happens, who it’s for and how many people can join."
+    },
+    "price": {
+      "title": "Price and terms",
+      "description": "What one place costs and which registration terms people accept."
+    },
+    "about": {
+      "title": "About the workshop",
+      "description": "What visitors read on the workshop page. Short, friendly sentences work best."
+    },
+    "photos": {
+      "title": "Photos",
+      "description": "A cover photo and a few pictures of work made in this workshop."
+    },
+    "contract": {
+      "title": "Instructor contract",
+      "description": "How the instructor is paid. These details go into the contract with the workshop details.",
+      "markHint": "Fields with this mark appear in the contract.",
+      "mark": "Also in the contract"
+    },
+    "reissue": {
+      "title": "These changes update the contract",
+      "sent": "Contract version {version} hasn’t been signed yet. When you save, it is replaced by a new version and emailed to the instructor again.",
+      "signed": "Contract version {version} is already signed. When you save, it is replaced by a new version, and the workshop is hidden from the site until the instructor signs again.",
+      "confirmTitle": "Send a new contract?",
+      "confirmDescription": "We’ll replace the current contract with version {version} and email it to {name}. Until it’s signed, the workshop waits for the signature and doesn’t show on the site. People who already registered keep their places.",
+      "confirm": "Yes, save and send"
+    }
+  },
+  "fields": {
+    "title": "Workshop name",
+    "titlePlaceholder": "e.g. Soy candle making",
+    "category": "Category",
+    "categoryPlaceholder": "Choose a category",
+    "instructor": "Instructor",
+    "instructorPlaceholder": "Choose an instructor",
+    "instructorHint": "The contract is emailed to this instructor.",
+    "slug": "Page address",
+    "slugHint": "Part of the workshop’s link. It’s made from the Turkish name; change it only if you need to.",
+    "dateTime": "Date and time",
+    "registrationDeadline": "Registration closes",
+    "registrationDeadlineHint": "Registration closes on its own at this time",
+    "decisionAt": "Go / no-go decision",
+    "decisionAtHint": "We’ll email you then with the number of registrations",
+    "venue": "Place",
+    "venuePlaceholder": "e.g. Moda Art House, Kadıköy",
+    "ageGroup": "Who is it for?",
+    "adults": "Adults",
+    "adultsHint": "For grown-ups.",
+    "children": "Children",
+    "childrenHint": "For a children’s age range.",
+    "ageMin": "From age",
+    "ageMax": "To age",
+    "minCapacity": "Minimum participants",
+    "maxCapacity": "Maximum participants",
+    "price": "Price per person",
+    "priceHint": "In Turkish lira, for one place.",
+    "priceLocked": "{count, plural, one {# person has} other {# people have}} already registered at this price, so it can’t be changed.",
+    "terms": "Registration terms",
+    "termsHint": "People accept these terms when they register.",
+    "termsDefault": "Default terms",
+    "intro": "Short introduction",
+    "introPlaceholder": "What will participants make or learn?",
+    "includes": "What the price includes",
+    "includesPlaceholder": "Materials, tools, refreshments…",
+    "bringNothing": "Nothing needed",
+    "bringNothingHint": "Participants don’t need to bring anything.",
+    "bring": "What to bring",
+    "bringPlaceholder": "e.g. An apron and a small towel",
+    "bringHint": "Also sent in the reminder email.",
+    "experience": "Previous experience needed",
+    "experienceHint": "Turn on if participants need to know something already.",
+    "experienceNote": "What should they know?",
+    "experienceNotePlaceholder": "e.g. Basic knitting stitches",
+    "notes": "Additional notes",
+    "notesHint": "Only for anything that doesn’t fit above.",
+    "cover": "Cover photo",
+    "coverHint": "Shown at the top of the workshop page and in lists. A wide photo works best.",
+    "samples": "Sample work",
+    "samplesHint": "Up to 12 photos of pieces made in this workshop.",
+    "feeType": "How the instructor is paid",
+    "feeTypes": {
+      "per_participant": "Per participant",
+      "per_participantHint": "An amount for each participant, counted at the go / no-go decision.",
+      "fixed": "Fixed for the workshop",
+      "fixedHint": "One amount for the whole workshop, however many people come."
+    },
+    "feeAmountPerParticipant": "Amount per participant",
+    "feeAmountFixed": "Amount for the whole workshop",
+    "feeAtFullCapacity": "With a full workshop this comes to {amount}.",
+    "hasAdvance": "Advance payment",
+    "hasAdvanceHint": "Part of the fee paid before the workshop, deducted at settlement.",
+    "advanceAmount": "Advance amount",
+    "advanceMax": "At most {amount}."
+  },
+  "validation": {
+    "chooseCategory": "Please choose a category.",
+    "chooseInstructor": "Please choose an instructor.",
+    "maxBelowMin": "The maximum can’t be less than the minimum.",
+    "deadlineBeforeStart": "Registration has to close before the workshop starts.",
+    "decisionBeforeStart": "The decision has to come before the workshop starts.",
+    "ageRange": "The upper age can’t be less than the lower age.",
+    "advanceRequired": "Please enter the advance amount, or turn off the advance payment.",
+    "advanceTooBig": "The advance can’t be more than the total fee (for a per-participant fee: the amount times the maximum participants).",
+    "startInFuture": "Please choose a date and time in the future."
+  },
+  "toast": {
+    "created": "Workshop created. The contract is on its way to {name}.",
+    "createdNoEmail": "Workshop created, but we couldn’t email the contract. You can send it again from the Contract tab.",
+    "reissued": "Changes saved. Contract version {version} is on its way to {name}.",
+    "reissuedNoEmail": "Changes saved and contract version {version} is ready, but we couldn’t email it. You can send it again from the Contract tab.",
+    "updated": "Changes saved."
+  },
+  "errors": {
+    "slugTaken": "Another workshop already uses this page address. Please choose a different one.",
+    "choiceGone": "One of the options you chose no longer exists. Please choose again.",
+    "noContractTemplate": "There’s no default contract text yet. Please set it in Templates first.",
+    "instructorUnavailable": "This instructor isn’t active. Please choose another one.",
+    "notFound": "This workshop no longer exists.",
+    "contractLocked": "This workshop is cancelled or closed, so its date, place, capacity, instructor and fee can’t change.",
+    "priceLocked": "People have already registered at this price, so it can’t be changed.",
+    "capacityBelowRegistrations": "{count, plural, one {# person has} other {# people have}} already registered, so the maximum can’t be lower than that.",
+    "cannotConfirm": "Only a workshop that is open for registration can be confirmed.",
+    "alreadyStarted": "This workshop has already started, so it can’t be confirmed any more.",
+    "cannotCancel": "This workshop is already cancelled or closed.",
+    "galleryClosedOnly": "Photos and videos can be added once the workshop is closed.",
+    "mediaInUse": "One of these files is already used elsewhere. Please upload it again."
+  },
+  "overview": {
+    "edit": "Edit",
+    "details": "Details",
+    "when": "When",
+    "decisionNotified": "Reminder sent {date}",
+    "childrenRange": "Children, ages {min}–{max}",
+    "capacity": "Participants",
+    "capacityRange": "{min} to {max} people",
+    "about": "About",
+    "notWritten": "Not written yet",
+    "experienceYes": "Yes",
+    "experienceNo": "No, beginners are welcome",
+    "participants": "Registered",
+    "minimum": "{count, plural, one {Needs at least # person} other {Needs at least # people}}",
+    "pending": "{count, plural, one {# more is paying} other {# more are paying}}",
+    "final": "{count, plural, one {Final number: # participant} other {Final number: # participants}}",
+    "seeRegistrations": "See registrations",
+    "contract": "Contract",
+    "contractVersion": "Version {version}",
+    "noAdvance": "None",
+    "noContract": "No contract yet.",
+    "openContract": "Open the contract",
+    "instructor": "Instructor",
+    "privateHint": "Private details, only for admins.",
+    "photos": "Photos",
+    "noCover": "No cover photo yet"
+  },
+  "next": {
+    "viewContract": "View contract",
+    "awaiting": {
+      "title": "Waiting for {name} to sign",
+      "text": "Contract version {version} was emailed on {date}. The workshop goes live on the site as soon as it’s signed.",
+      "noContract": "There’s no contract to sign. Edit the workshop and save to send a new one."
+    },
+    "published": {
+      "title": "Registration is open",
+      "dueTitle": "Time for the go / no-go decision",
+      "text": "Registration closes {deadline}, and the decision is due {decision}. So far {confirmed, plural, =0 {nobody has} one {# person has} other {# people have}} registered; the minimum is {minimum}."
+    },
+    "confirmed": {
+      "title": "Confirmed: it’s happening!",
+      "text": "{count, plural, one {# participant is} other {# participants are}} coming on {date}."
+    },
+    "held": {
+      "title": "Time to close the workshop",
+      "text": "Add the expenses and close the workshop on its finances page. The figures are locked when you close it.",
+      "action": "Go to finances"
+    },
+    "cancelled": {
+      "title": "This workshop was cancelled",
+      "text": "Cancelled on {date}. {count, plural, =0 {There were no registrations to cancel.} one {# registration was cancelled; if they had paid, they get a full refund.} other {# registrations were cancelled; everyone who paid gets a full refund.}}"
+    },
+    "closed": {
+      "title": "Closed. Now the photos!",
+      "titleDone": "Closed and in the gallery",
+      "text": "Add the photos and videos, and the workshop appears among the past workshops.",
+      "textDone": "{count, plural, one {# photo or video is} other {# photos and videos are}} in the gallery.",
+      "action": "Open the gallery"
+    }
+  },
+  "timeline": {
+    "label": "Workshop progress",
+    "sent": "Contract sent",
+    "signed": "Signed",
+    "decision": "Confirmed",
+    "held": "Held",
+    "closed": "Closed",
+    "gallery": "Gallery",
+    "done": "done",
+    "current": "current step",
+    "todo": "to come",
+    "cancelled": "Cancelled"
+  },
+  "lifecycle": {
+    "confirm": {
+      "trigger": "Confirm workshop",
+      "title": "Confirm “{title}”?",
+      "description": "{count, plural, =0 {Nobody has registered yet.} one {# person has registered.} other {# people have registered.}} This becomes the final number of participants, and the instructor’s fee is based on it.",
+      "belowMinimum": "This is below the minimum of {minimum}.",
+      "action": "Yes, it goes ahead",
+      "done": "Workshop confirmed."
+    },
+    "cancel": {
+      "trigger": "Cancel workshop",
+      "title": "Cancel “{title}”?",
+      "description": "{count, plural, =0 {Nobody has registered yet.} one {# registration will be cancelled.} other {# registrations will be cancelled.}} Everyone who paid gets a full refund and a friendly email. This can’t be undone.",
+      "action": "Yes, cancel it",
+      "done": "Workshop cancelled."
+    },
+    "resend": {
+      "trigger": "Email the contract again",
+      "done": "The contract was emailed again."
+    }
+  },
+  "contractPage": {
+    "metaTitle": "Contract · {title}",
+    "print": "Print",
+    "preview": "Not signed yet. This is the text as the instructor sees it now.",
+    "language": "Contract language",
+    "languages": { "fa": "فارسی", "tr": "Türkçe", "en": "English" },
+    "signedLine": "Signed electronically by {name} on {date}.",
+    "none": {
+      "title": "No contract yet",
+      "description": "A contract is made automatically when the workshop is saved."
+    },
+    "noText": {
+      "title": "This version wasn’t signed",
+      "description": "It stopped being valid before the instructor signed it (a newer version was sent, or the workshop was cancelled), so there’s no signed text to show."
+    },
+    "version": "Version {version}",
+    "sentAt": "Sent",
+    "signedAt": "Signed",
+    "signedName": "Name typed",
+    "signedLanguage": "Language",
+    "signedIp": "IP address",
+    "signedDevice": "Device",
+    "voidedAt": "No longer valid since",
+    "fingerprint": "Fingerprint of the signed text (SHA-256)",
+    "history": "All versions",
+    "howToChange": "The contract is made from the workshop details. To change it, edit the workshop: a new version is sent to the instructor."
+  },
+  "registrations": {
+    "metaTitle": "Registrations · {title}",
+    "stats": {
+      "confirmed": "Paid",
+      "pending": "Paying",
+      "cancelled": "Cancelled",
+      "photos": "Photos allowed",
+      "videos": "Videos allowed"
+    },
+    "empty": {
+      "title": "No registrations yet",
+      "description": "People who register for this workshop appear here.",
+      "awaiting": "Registration opens once the instructor signs the contract."
+    },
+    "table": {
+      "participant": "Participant",
+      "member": "Registered by",
+      "status": "Status",
+      "consent": "Photo / video",
+      "paid": "Payment",
+      "registeredOn": "Registered {date}",
+      "refund": "Refund",
+      "noRefund": "No refund",
+      "notPaid": "Not paid yet"
+    },
+    "status": {
+      "pending": "Paying",
+      "confirmed": "Paid",
+      "cancelled": "Cancelled"
+    },
+    "consent": {
+      "photoYes": "Photos may be published",
+      "photoNo": "No photos",
+      "videoYes": "Videos may be published",
+      "videoNo": "No videos"
+    },
+    "readOnly": "To change a registration or a refund, use the Registrations section."
+  },
+  "gallery": {
+    "metaTitle": "Gallery · {title}",
+    "title": "Photos and videos",
+    "description": "Photos get the watermark automatically. Drag to change the order.",
+    "notYet": {
+      "title": "The gallery opens after the workshop is closed",
+      "description": "Close the workshop on its finances page first. Then add photos and videos here.",
+      "action": "Go to finances"
+    },
+    "cancelled": {
+      "title": "No gallery for a cancelled workshop",
+      "description": "This workshop didn’t take place, so it has no photos or videos."
+    },
+    "consent": {
+      "title": "Who may be recognisable",
+      "description": "Only publish photos or videos where people can be recognised if they agreed to it when they registered.",
+      "nobody": "Nobody attended through a paid registration.",
+      "summary": "{photos} of {total} agreed to photos, {videos} of {total} to videos.",
+      "photoYes": "Photos: yes",
+      "photoNo": "Photos: no",
+      "videoYes": "Videos: yes",
+      "videoNo": "Videos: no"
+    },
+    "saving": "Saving…",
+    "saved": "All changes saved",
+    "notSaved": "Not saved",
+    "retry": "Try again"
+  }
+}

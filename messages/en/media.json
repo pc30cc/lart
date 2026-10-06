@@ -1,0 +1,56 @@
+{
+  "upload": {
+    "chooseImage": "Drag a photo here, or click to choose one",
+    "chooseVideo": "Drag a video here, or click to choose one",
+    "chooseMany": "Drag photos and videos here, or click to choose them",
+    "chooseManyImages": "Drag photos here, or click to choose them",
+    "imageHint": "JPG, PNG, WebP or HEIC, up to {size}",
+    "videoHint": "MP4, MOV or WebM, up to {size}",
+    "logoHint": "A PNG with a transparent background works best, up to {size}",
+    "dropToUpload": "Drop to upload",
+    "uploading": "Uploading… {progress, number, percent}",
+    "processingImage": "Optimizing the photo…",
+    "processingVideo": "Saving the video…",
+    "waiting": "Waiting…",
+    "replace": "Replace",
+    "remove": "Remove",
+    "cancel": "Cancel",
+    "retry": "Try again",
+    "dismiss": "Dismiss",
+    "add": "Add",
+    "uploaded": "Uploaded",
+    "photoAlt": "Uploaded photo",
+    "photoN": "Photo {index}",
+    "videoN": "Video {index}",
+    "moveEarlier": "Move earlier",
+    "moveLater": "Move later",
+    "reorder": "Drag to reorder",
+    "count": "{count, plural, =0 {Nothing yet} one {# item} other {# items}}",
+    "limitReached": "You can add up to {max} items. The extra files were left out.",
+    "noWatermark": "Uploaded without a watermark, because no watermark logo has been set yet. You can add one in Settings."
+  },
+  "errors": {
+    "unauthorized": "Your session has ended. Please sign in again, then try once more.",
+    "bad_request": "Something went wrong with this upload. Please try again.",
+    "too_large": "This file is too big. The limit is {size}.",
+    "unsupported_type": "{kind, select, video {This file isn't a video we can use. Please choose an MP4, MOV or WebM video.} other {This file isn't a photo we can use. Please choose a JPG, PNG, WebP or HEIC photo.}}",
+    "heic_unsupported": "This HEIC photo can't be opened here. Please save it as a JPG and try again (on iPhone: Settings → Camera → Formats → Most Compatible).",
+    "too_many_pixels": "This photo's dimensions are too large. Please use one under {megapixels, number} megapixels.",
+    "invalid_image": "This photo seems to be damaged and can't be opened. Please try another file.",
+    "watermark_unavailable": "The watermark logo couldn't be loaded, so the photo wasn't published. Please upload the logo again in Settings.",
+    "storage": "The file couldn't be saved to storage. Please check the CDN settings, or try again in a moment.",
+    "server": "Something went wrong on our side. Please try again.",
+    "network": "The connection was interrupted. Please check your internet connection and try again."
+  },
+  "storageTest": {
+    "ok": "Connected. Files can be saved, read and deleted.",
+    "config": "The saved keys couldn't be read. Please enter them again.",
+    "write": "A test file couldn't be saved to {zone, select, private {private storage} other {public storage}}. Please check the zone or bucket name and its key.",
+    "read": "A test file was saved to {zone, select, private {private storage} other {public storage}} but couldn't be read back. Please check the key's permissions.",
+    "url": "Files are saved, but they don't open from the public address. Please check the CDN hostname.",
+    "delete": "The test file couldn't be deleted from {zone, select, private {private storage} other {public storage}}. Please check that the key is allowed to delete files."
+  },
+  "preview": {
+    "alt": "Watermark preview on a sample photo"
+  }
+}

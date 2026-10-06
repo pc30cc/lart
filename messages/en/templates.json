@@ -1,1 +1,136 @@
-{}
+{
+  "title": "Templates",
+  "description": "The registration terms people accept and the contract instructors sign, in three languages.",
+  "default": "Default",
+  "languages": "Languages",
+  "updated": "Updated {date}",
+  "newTitle": "New template",
+  "newDescription": "Choose what it is for, give it a name, then write the text in all three languages.",
+  "copyTitle": "Copy of a template",
+  "copyDescription": "Starts with the text of “{name}”. The original doesn’t change.",
+  "copyName": "{name} (copy)",
+  "backToList": "All templates",
+  "create": "Create template",
+  "kinds": {
+    "terms": {
+      "title": "Registration terms",
+      "plural": "Registration terms",
+      "description": "What people accept when they register: cancellations, refunds and the rest. Each workshop uses the default, unless you choose another one for it.",
+      "hint": "Accepted by participants when they register.",
+      "new": "New terms",
+      "emptyTitle": "No registration terms yet",
+      "emptyDescription": "Registration needs terms to accept. Create the first one; it becomes the default."
+    },
+    "contract": {
+      "title": "Instructor contract",
+      "plural": "Instructor contracts",
+      "description": "The fixed clauses of the contract an instructor signs for each workshop. New contracts use the default.",
+      "hint": "Signed by the instructor for each workshop.",
+      "new": "New contract",
+      "emptyTitle": "No contract template yet",
+      "emptyDescription": "Workshops can’t be created without one. Create the first one; it becomes the default."
+    }
+  },
+  "usage": {
+    "workshops": "{count, plural, one {Chosen by # workshop} other {Chosen by # workshops}}",
+    "contracts": "{count, plural, one {# contract} other {# contracts}} ({signed, plural, =0 {none signed yet} other {# signed}})",
+    "registrations": "{count, plural, one {Accepted in # registration} other {Accepted in # registrations}}",
+    "none": "Not used yet",
+    "default": {
+      "terms": "Used by every workshop that doesn’t choose its own terms",
+      "contract": "Used for every new contract"
+    }
+  },
+  "actions": {
+    "copy": "Make a copy",
+    "makeDefault": "Make default"
+  },
+  "makeDefault": {
+    "title": "Make “{name}” the default?",
+    "description": {
+      "terms": "Workshops without their own terms will use this text from now on. People who have already registered keep what they accepted.",
+      "contract": "Contracts sent from now on will use this text. Contracts already sent or signed don’t change."
+    },
+    "confirm": "Yes, make default"
+  },
+  "delete": {
+    "action": "Delete template",
+    "title": "Delete “{name}”?",
+    "description": "This can’t be undone. Its earlier versions stay in the activity log.",
+    "confirm": "Yes, delete",
+    "dangerTitle": "Delete this template",
+    "dangerDescription": "Only a template that is not the default and that nothing uses can be deleted.",
+    "isDefault": "This is the default, so it can’t be deleted. Make another template the default first.",
+    "inUse": "Workshops, contracts or registrations refer to this template, so it’s kept as a record and can’t be deleted."
+  },
+  "toast": {
+    "created": "Template created.",
+    "updated": "Changes saved.",
+    "deleted": "Template deleted.",
+    "defaultChanged": "The default has been changed."
+  },
+  "notice": {
+    "terms": "People who have already registered keep a record of the terms they accepted, so your changes only apply to new registrations. Earlier versions stay in the activity log.",
+    "contract": "Signed contracts keep the exact text that was signed, so your changes never alter them. They apply to contracts signed from now on, including any still waiting for a signature. Earlier versions stay in the activity log."
+  },
+  "fields": {
+    "kind": "Used for",
+    "name": "Name",
+    "nameHint": "Only admins see this name, for example “Summer terms” or “Contract for children’s workshops”.",
+    "body": "Text"
+  },
+  "form": {
+    "aboutTitle": "About this template",
+    "aboutDescription": "What the text is for, and a name to recognise it by.",
+    "textTitle": "Text",
+    "textDescription": {
+      "terms": "Shown on the registration page, above the checkbox people tick to accept. Write it in all three languages.",
+      "contract": "The clauses of the contract. The top part (the two parties, the workshop details, the fee and the advance payment) is added automatically from the workshop, so write only the clauses here, in all three languages."
+    },
+    "placeholdersTitle": "Placeholders",
+    "placeholdersHint": "Click one to add it where the cursor is. It is filled in automatically when the text is shown.",
+    "insert": "Add {token} to the text",
+    "formatTitle": "Formatting",
+    "formatHeading": "at the start of a line: a section heading",
+    "formatItem": "at the start of a line: a list item",
+    "formatParagraph": "an empty line: a new paragraph",
+    "unknownTitle": "Some placeholders aren’t recognised",
+    "unknownItem": "{token} ({language}): check the spelling, or remove it."
+  },
+  "placeholders": {
+    "brand": "Your brand name, from Settings",
+    "instructor_name": "The instructor’s official full name",
+    "instructor_id_number": "The instructor’s ID number",
+    "workshop_title": "The workshop’s name",
+    "date": "The workshop date",
+    "weekday": "The day of the week",
+    "start_time": "Start time",
+    "end_time": "End time",
+    "venue": "The venue",
+    "min_participants": "Minimum number of participants",
+    "max_participants": "Maximum number of participants",
+    "fee_type": "Fee type: per participant or fixed",
+    "fee_amount": "The agreed fee",
+    "advance_amount": "The advance payment",
+    "decision_deadline": "Date and time of the go / no-go decision"
+  },
+  "preview": {
+    "open": "Preview",
+    "title": "Preview",
+    "description": "How the text will look, with your brand name and example details. Highlighted parts are filled in automatically.",
+    "hint": "See the text as people will read it, with example details filled in.",
+    "empty": "Nothing to show yet. Write some text in this language first.",
+    "sample": {
+      "instructorName": "Ayşe Demir",
+      "idNumber": "12345678901",
+      "workshopTitle": "Candle making for beginners",
+      "venue": "Moda Art Studio, Kadıköy, Istanbul"
+    }
+  },
+  "errors": {
+    "notFound": "This template no longer exists. It may have just been deleted.",
+    "unknownPlaceholder": "This text has a placeholder we don’t recognise. Please check the spelling inside the curly brackets.",
+    "deleteDefault": "The default template can’t be deleted. Make another template the default first.",
+    "inUse": "This template is in use, so it can’t be deleted."
+  }
+}

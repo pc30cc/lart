@@ -1,0 +1,385 @@
+"use server"
+
+import { and, count, desc, eq, inArray, sql } from "drizzle-orm"
+import { refresh, revalidatePath } from "next/cache"
+import { after } from "next/server"
+
+import { db, type Tx } from "@/db"
+import { contracts, courses, instructors, members, registrations, templates } from "@/db/schema"
+import { sendContractReady } from "@/features/contracts/notify"
+import { adminAction, UserError } from "@/lib/action"
+import { changes } from "@/lib/audit"
+import { PG, pgError } from "@/lib/errors"
+import { localized } from "@/lib/format"
+import { formatLira } from "@/lib/money"
+import { getSetting } from "@/lib/settings"
+import { sendEmail } from "@/lib/email"
+import { removeFiles, syncMedia, type MediaFile } from "./media"
+import {
+  contractCourseFields,
+  courseValues,
+  feeValues,
+  gallerySchema,
+  workshopIdSchema,
+  workshopSchema,
+  workshopUpdateSchema,
+} from "./schema"
+
+/** Turn database constraint errors into friendly messages. */
+function friendly(err: unknown): never {
+  const pg = pgError(err)
+  if (pg?.code === PG.uniqueViolation && pg.constraint?.includes("slug")) {
+    throw new UserError("workshops.errors.slugTaken", { field: "slug" })
+  }
+  if (pg?.code === PG.foreignKeyViolation) throw new UserError("workshops.errors.choiceGone")
+  throw err
+}
+
+function revalidate() {
+  revalidatePath("/[locale]/admin/workshops", "page")
+}
+
+/** The default contract template (fixed clauses); a workshop can't be created without one. */
+async function defaultContractTemplate(tx: Tx): Promise<string> {
+  const [row] = await tx
+    .select({ id: templates.id })
+    .from(templates)
+    .where(and(eq(templates.kind, "contract"), eq(templates.isDefault, true)))
+    .limit(1)
+  if (!row) throw new UserError("workshops.errors.noContractTemplate")
+  return row.id
+}
+
+/** The chosen instructor must be active (unless unchanged) and the terms template must be a terms template. */
+async function checkChoices(
+  tx: Tx,
+  values: { instructorId: string; termsTemplateId: string | null },
+  before?: { instructorId: string; termsTemplateId: string | null },
+) {
+  if (values.instructorId !== before?.instructorId) {
+    const [person] = await tx
+      .select({ active: instructors.active })
+      .from(instructors)
+      .where(eq(instructors.id, values.instructorId))
+    if (!person?.active) throw new UserError("workshops.errors.instructorUnavailable", { field: "instructorId" })
+  }
+  if (values.termsTemplateId && values.termsTemplateId !== before?.termsTemplateId) {
+    const [terms] = await tx
+      .select({ id: templates.id })
+      .from(templates)
+      .where(and(eq(templates.id, values.termsTemplateId), eq(templates.kind, "terms")))
+    if (!terms) throw new UserError("workshops.errors.choiceGone", { field: "termsTemplateId" })
+  }
+}
+
+const activeRegistrations = (tx: Tx, courseId: string) =>
+  tx
+    .select({ n: count() })
+    .from(registrations)
+    .where(and(eq(registrations.courseId, courseId), inArray(registrations.status, ["pending", "confirmed"])))
+    .then(([row]) => row.n)
+
+/** The contract email never blocks saving: the result only tells the admin whether it went out. */
+async function emailContract(contractId: string): Promise<boolean> {
+  return sendContractReady(contractId).catch((err) => {
+    console.error("[workshops] contract_ready email failed", err)
+    return false
+  })
+}
+
+/**
+ * Create a workshop and its contract (version 1, "sent", default contract
+ * template) in one transaction, then email the contract to the instructor.
+ */
+export const createWorkshop = adminAction(workshopSchema, async (input, ctx) => {
+  const values = courseValues(input)
+  const fee = feeValues(input)
+  const { id, contractId } = await db
+    .transaction(async (tx) => {
+      await checkChoices(tx, values)
+      const templateId = await defaultContractTemplate(tx)
+      const [course] = await tx
+        .insert(courses)
+        .values({ ...values, status: "awaiting_signature", createdBy: ctx.admin.id })
+        .returning({ id: courses.id })
+      await syncMedia(
+        tx,
+        course.id,
+        "sample",
+        input.samples.map((s) => ({ ...s, kind: "sample" as const })),
+      )
+      const [contract] = await tx
+        .insert(contracts)
+        .values({ courseId: course.id, version: 1, instructorId: values.instructorId, templateId, status: "sent", ...fee })
+        .returning({ id: contracts.id })
+      await ctx.audit(
+        {
+          action: "workshop.create",
+          entity: "workshop",
+          entityId: course.id,
+          data: {
+            slug: values.slug,
+            title: values.title,
+            startsAt: values.startsAt,
+            instructorId: values.instructorId,
+            price: values.price,
+            contract: { id: contract.id, version: 1, ...fee },
+          },
+        },
+        tx,
+      )
+      return { id: course.id, contractId: contract.id }
+    })
+    .catch(friendly)
+
+  const emailSent = await emailContract(contractId)
+  revalidate()
+  return { id, contractVersion: 1 as number | null, emailSent: emailSent as boolean | null }
+})
+
+/**
+ * Edit a workshop. A change to a field that appears in the contract voids the
+ * live contract and sends a new version; the workshop waits for the signature
+ * again. The price is locked once people have registered.
+ */
+export const updateWorkshop = adminAction(workshopUpdateSchema, async ({ id, ...input }, ctx) => {
+  const values = courseValues(input)
+  const fee = feeValues(input)
+
+  const outcome = await db
+    .transaction(async (tx) => {
+      const [before] = await tx.select().from(courses).where(eq(courses.id, id)).for("update")
+      if (!before) throw new UserError("workshops.errors.notFound")
+      const [current] = await tx
+        .select()
+        .from(contracts)
+        .where(eq(contracts.courseId, id))
+        .orderBy(sql`${contracts.status} = 'void'`, desc(contracts.version))
+        .limit(1)
+        .for("update")
+
+      const courseDiff = changes(before, values)
+      const feeDiff = changes((current ?? {}) as Partial<typeof fee>, fee)
+      const contractDiff = Object.keys(courseDiff).filter((k) => (contractCourseFields as readonly string[]).includes(k))
+      const contractChanged = contractDiff.length > 0 || Object.keys(feeDiff).length > 0
+      const locked = before.status === "cancelled" || before.status === "closed"
+      if (contractChanged && locked) throw new UserError("workshops.errors.contractLocked")
+
+      const registered = await activeRegistrations(tx, id)
+      if ("price" in courseDiff && registered > 0) throw new UserError("workshops.errors.priceLocked", { field: "price" })
+      if (values.maxCapacity < registered) {
+        throw new UserError("workshops.errors.capacityBelowRegistrations", {
+          field: "maxCapacity",
+          values: { count: registered },
+        })
+      }
+      await checkChoices(tx, values, before)
+
+      const now = new Date()
+      if (Object.keys(courseDiff).length || contractChanged) {
+        await tx
+          .update(courses)
+          .set({
+            ...values,
+            ...(contractChanged ? { status: "awaiting_signature" as const, finalParticipants: null } : {}),
+            ...("decisionAt" in courseDiff ? { decisionNotifiedAt: null } : {}),
+            updatedAt: now,
+          })
+          .where(eq(courses.id, id))
+      }
+      const samples = await syncMedia(
+        tx,
+        id,
+        "sample",
+        input.samples.map((s) => ({ ...s, kind: "sample" as const })),
+      )
+
+      let reissued: { id: string; version: number; voided: number | null } | null = null
+      if (contractChanged) {
+        const live = current && current.status !== "void" ? current : null
+        if (live) await tx.update(contracts).set({ status: "void", voidedAt: now }).where(eq(contracts.id, live.id))
+        const templateId = await defaultContractTemplate(tx)
+        const version = (current?.version ?? 0) + 1
+        const [row] = await tx
+          .insert(contracts)
+          .values({ courseId: id, version, instructorId: values.instructorId, templateId, status: "sent", ...fee })
+          .returning({ id: contracts.id })
+        reissued = { id: row.id, version, voided: live?.version ?? null }
+      }
+
+      const data = {
+        ...courseDiff,
+        ...feeDiff,
+        ...(samples.added || samples.removed.length || samples.reordered
+          ? { samples: { added: samples.added, removed: samples.removed.filter((f) => f.zone === "public").length } }
+          : {}),
+        ...(reissued ? { contract: { voidedVersion: reissued.voided, newVersion: reissued.version } } : {}),
+        ...(contractChanged && before.status !== "awaiting_signature" ? { status: { from: before.status, to: "awaiting_signature" } } : {}),
+      }
+      if (Object.keys(data).length) {
+        await ctx.audit({ action: "workshop.update", entity: "workshop", entityId: id, data }, tx)
+      }
+
+      const removed: MediaFile[] = [...samples.removed]
+      if ("coverPath" in courseDiff && before.coverPath) removed.push({ path: before.coverPath, zone: "public" })
+      return { reissued, removed }
+    })
+    .catch(friendly)
+
+  await removeFiles(outcome.removed)
+  const emailSent = outcome.reissued ? await emailContract(outcome.reissued.id) : null
+  revalidate()
+  return { id, contractVersion: outcome.reissued?.version ?? null, emailSent }
+})
+
+/** Go decision: the workshop takes place; the number of participants is fixed now. */
+export const confirmWorkshop = adminAction(workshopIdSchema, async ({ id }, ctx) => {
+  const finalParticipants = await db.transaction(async (tx) => {
+    const [course] = await tx
+      .select({ status: courses.status, startsAt: courses.startsAt, minCapacity: courses.minCapacity })
+      .from(courses)
+      .where(eq(courses.id, id))
+      .for("update")
+    if (!course) throw new UserError("workshops.errors.notFound")
+    if (course.status !== "published") throw new UserError("workshops.errors.cannotConfirm")
+    if (course.startsAt <= new Date()) throw new UserError("workshops.errors.alreadyStarted")
+    const [{ n }] = await tx
+      .select({ n: count() })
+      .from(registrations)
+      .where(and(eq(registrations.courseId, id), eq(registrations.status, "confirmed")))
+    await tx
+      .update(courses)
+      .set({ status: "confirmed", finalParticipants: n, updatedAt: new Date() })
+      .where(eq(courses.id, id))
+    await ctx.audit(
+      {
+        action: "workshop.confirm",
+        entity: "workshop",
+        entityId: id,
+        data: { finalParticipants: n, minimum: course.minCapacity },
+      },
+      tx,
+    )
+    return n
+  })
+  revalidate()
+  refresh()
+  return { id, finalParticipants }
+})
+
+/**
+ * No-go / cancel: the workshop and every open registration are cancelled.
+ * Paid registrations get a full refund (refund_amount = amount; the refund
+ * payment itself is posted with payments in phase 2) and a friendly email.
+ * An unsigned contract is voided; a signed one stays as the record.
+ */
+export const cancelWorkshop = adminAction(workshopIdSchema, async ({ id }, ctx) => {
+  const { title, refunds } = await db.transaction(async (tx) => {
+    const [course] = await tx
+      .select({ status: courses.status, title: courses.title })
+      .from(courses)
+      .where(eq(courses.id, id))
+      .for("update")
+    if (!course) throw new UserError("workshops.errors.notFound")
+    if (course.status === "cancelled" || course.status === "closed") throw new UserError("workshops.errors.cannotCancel")
+
+    const now = new Date()
+    await tx.update(courses).set({ status: "cancelled", cancelledAt: now, updatedAt: now }).where(eq(courses.id, id))
+    const voided = await tx
+      .update(contracts)
+      .set({ status: "void", voidedAt: now })
+      .where(and(eq(contracts.courseId, id), eq(contracts.status, "sent")))
+      .returning({ version: contracts.version })
+    // SET expressions see the old row, so the CASE reads the status before the update.
+    const cancelled = await tx
+      .update(registrations)
+      .set({
+        status: "cancelled",
+        cancelledAt: now,
+        refundAmount: sql`case when ${registrations.status} = 'confirmed' then ${registrations.amount} else 0 end`,
+      })
+      .where(and(eq(registrations.courseId, id), inArray(registrations.status, ["pending", "confirmed"])))
+      .returning({ id: registrations.id, memberId: registrations.memberId, refundAmount: registrations.refundAmount })
+
+    const refundTotal = cancelled.reduce((sum, r) => sum + (r.refundAmount ?? 0), 0)
+    await ctx.audit(
+      {
+        action: "workshop.cancel",
+        entity: "workshop",
+        entityId: id,
+        data: {
+          from: course.status,
+          registrations: cancelled.length,
+          refundTotal,
+          ...(voided.length ? { voidedContractVersion: voided[0].version } : {}),
+        },
+      },
+      tx,
+    )
+    return { title: course.title, refunds: cancelled }
+  })
+
+  // One email per member (a parent may have registered two children), after the response.
+  const perMember = new Map<string, number>()
+  for (const r of refunds) if (r.refundAmount) perMember.set(r.memberId, (perMember.get(r.memberId) ?? 0) + r.refundAmount)
+  if (perMember.size) after(() => emailCancellation(id, title, perMember))
+
+  revalidate()
+  refresh()
+  return { id, cancelledRegistrations: refunds.length, emailed: perMember.size }
+})
+
+async function emailCancellation(courseId: string, title: Record<string, string | undefined>, refunds: Map<string, number>) {
+  const locale = await getSetting("defaultLocale")
+  const people = await db
+    .select({ id: members.id, name: members.name, email: members.email })
+    .from(members)
+    .where(inArray(members.id, [...refunds.keys()]))
+  for (const person of people) {
+    await sendEmail({
+      to: person.email,
+      template: "workshop_cancelled",
+      locale,
+      idempotencyKey: `workshop_cancelled:${courseId}:${person.id}`,
+      props: {
+        name: person.name,
+        workshopTitle: localized(title, locale),
+        refundAmount: formatLira(refunds.get(person.id) ?? 0, locale),
+      },
+    })
+  }
+}
+
+/** Save the gallery of a closed workshop: photos and videos in order (adds, removes, re-sorts). */
+export const saveGallery = adminAction(gallerySchema, async ({ id, items }, ctx) => {
+  const removed = await db.transaction(async (tx) => {
+    const [course] = await tx.select({ status: courses.status }).from(courses).where(eq(courses.id, id)).for("update")
+    if (!course) throw new UserError("workshops.errors.notFound")
+    if (course.status !== "closed") throw new UserError("workshops.errors.galleryClosedOnly")
+    const result = await syncMedia(
+      tx,
+      id,
+      "gallery",
+      items.map((item) =>
+        item.kind === "image"
+          ? { ...item, kind: "gallery_photo" as const }
+          : { path: item.path, kind: "gallery_video" as const },
+      ),
+    )
+    const removedItems = result.removed.filter((f) => f.zone === "public").length
+    if (result.added || removedItems || result.reordered) {
+      await ctx.audit(
+        {
+          action: "workshop.gallery",
+          entity: "workshop",
+          entityId: id,
+          data: { added: result.added, removed: removedItems, reordered: result.reordered, total: items.length },
+        },
+        tx,
+      )
+    }
+    return result.removed
+  })
+  await removeFiles(removed)
+  return { id, count: items.length }
+})

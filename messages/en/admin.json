@@ -1,1 +1,28 @@
-{}
+{
+  "meta": { "title": "Admin" },
+  "brandSubtitle": "Admin panel",
+  "nav": {
+    "groups": { "overview": "Overview", "workshops": "Workshops", "money": "Money", "system": "System" },
+    "dashboard": "Dashboard",
+    "workshops": "Workshops",
+    "instructors": "Instructors",
+    "categories": "Categories",
+    "wallet": "Wallet",
+    "partners": "Partners",
+    "transactions": "Transactions",
+    "reports": "Reports",
+    "templates": "Templates",
+    "settings": "Settings",
+    "audit": "Activity log"
+  },
+  "shell": {
+    "toggleSidebar": "Show or hide the menu",
+    "skipToContent": "Skip to content",
+    "userMenu": "Your account",
+    "breadcrumb": "You are here"
+  },
+  "home": {
+    "greeting": "Hello, {name}",
+    "intro": "Where would you like to start today?"
+  }
+}

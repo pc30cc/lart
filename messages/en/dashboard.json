@@ -1,1 +1,158 @@
-{}
+{
+  "greeting": {
+    "morning": "Good morning, {name}",
+    "afternoon": "Good afternoon, {name}",
+    "evening": "Good evening, {name}"
+  },
+  "intro": "{date}. Here’s how things are going.",
+  "newWorkshop": "New workshop",
+  "loading": "Getting the latest figures…",
+  "setup": {
+    "progress": "{done} of {total} steps done",
+    "title": "Welcome! Let’s get your first workshop ready",
+    "description": "Just a few short steps. As soon as things get going, your figures and charts will appear right here.",
+    "cta": "Create your first workshop",
+    "done": "Done",
+    "steps": {
+      "category": {
+        "title": "Add a category",
+        "description": "Group your workshops, for example candle making or ceramics.",
+        "action": "Add a category"
+      },
+      "instructor": {
+        "title": "Add an instructor",
+        "description": "Their profile is shown on the site and used in the contract.",
+        "action": "Add an instructor"
+      },
+      "contract": {
+        "title": "Set the contract text",
+        "description": "This contract is emailed to the instructor for every workshop.",
+        "action": "Open templates"
+      },
+      "workshop": {
+        "title": "Create a workshop",
+        "description": "Date, venue, number of places and price. The contract goes out by email.",
+        "action": "Create a workshop"
+      },
+      "capital": {
+        "title": "Record the starting capital",
+        "description": "Add what each partner puts into the shared wallet.",
+        "action": "Open the wallet"
+      }
+    }
+  },
+  "attention": {
+    "title": "Needs your attention",
+    "decisions": "{count, plural, one {# go / no-go decision is due} other {# go / no-go decisions are due}}",
+    "signatures": "{count, plural, one {# contract is waiting to be signed} other {# contracts are waiting to be signed}}",
+    "toClose": "{count, plural, one {# workshop is ready to close} other {# workshops are ready to close}}"
+  },
+  "kpi": {
+    "wallet": "In the wallet",
+    "walletHint": "Cash in the shared wallet right now",
+    "walletNegative": "The wallet is below zero. Please check the latest entries.",
+    "revenue": "Revenue this month",
+    "moreThanLastMonth": "more than last month",
+    "lessThanLastMonth": "less than last month",
+    "sameAsLastMonth": "the same as last month",
+    "noRevenueLastMonth": "No revenue last month",
+    "lastMonth": "Last month: {amount}",
+    "net": "Net profit in {year}",
+    "netHint": "Income minus all expenses since 1 January",
+    "upcoming": "Upcoming workshops",
+    "upcomingSeats": "{taken} of {seats} places taken",
+    "upcomingNotOpen": "Waiting for contracts to be signed",
+    "upcomingNone": "Nothing planned yet",
+    "fill": "Average fill rate",
+    "fillHint": "{taken} of {seats} places taken in {count, plural, one {# workshop} other {# workshops}} over the last 12 months",
+    "fillNone": "No workshops held in the last 12 months yet"
+  },
+  "revenue": {
+    "title": "Revenue, expenses and profit",
+    "description": "The last 12 months, by the date each entry was recorded",
+    "report": "Reports",
+    "totals": "Totals for the last 12 months",
+    "revenue": "Revenue",
+    "expenses": "Expenses",
+    "net": "Net profit",
+    "month": "Month",
+    "tableCaption": "Revenue, expenses and net profit per month",
+    "empty": {
+      "title": "No income or expenses yet",
+      "description": "As soon as money comes in or goes out, you’ll see it here month by month."
+    }
+  },
+  "partners": {
+    "title": "Partners",
+    "description": "Each partner’s share of the profit and their capital",
+    "manage": "Partners",
+    "listLabel": "Partners, their share and capital",
+    "share": "Share",
+    "shareOf": "{share} share",
+    "capital": "Capital",
+    "totalCapital": "Total capital",
+    "former": "No longer a partner",
+    "sharesOff": "The shares add up to {total}, not 100%. Workshops can’t be closed until this is fixed.",
+    "empty": {
+      "title": "No profit shares yet",
+      "description": "Set each partner’s share, so every workshop’s profit can be split fairly.",
+      "action": "Set the shares"
+    }
+  },
+  "upcoming": {
+    "title": "Upcoming workshops",
+    "description": "The next workshops at a glance",
+    "all": "All workshops",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "now": "Happening now",
+    "seats": "{taken} of {max} places",
+    "pending": "{count, plural, one {# more awaiting payment} other {# more awaiting payment}}",
+    "notOpen": "Registration opens after signing",
+    "alerts": {
+      "awaitingSignature": "Waiting for the instructor to sign the contract",
+      "decisionDue": "Time for the go / no-go decision",
+      "decisionSoon": "Decision due {when}",
+      "missing": "{count, plural, one {# more person needed for the minimum} other {# more people needed for the minimum}}",
+      "minimumReached": "minimum reached"
+    },
+    "empty": {
+      "title": "No upcoming workshops",
+      "description": "Plan the next one, and it will show up here with its registrations.",
+      "action": "New workshop"
+    }
+  },
+  "seats": {
+    "title": "Registrations and fill rate",
+    "description": "Recent and upcoming workshops",
+    "registered": "Registered",
+    "capacity": "Places",
+    "minimum": "Minimum",
+    "fill": "Fill rate",
+    "held": "Held",
+    "upcoming": "Upcoming",
+    "heldArea": "Already held",
+    "workshop": "Workshop",
+    "date": "Date",
+    "tableCaption": "Registrations and fill rate per workshop",
+    "empty": {
+      "title": "No registrations to show yet",
+      "description": "Once a workshop is open for registration, you’ll see how full it is here."
+    }
+  },
+  "profit": {
+    "title": "Profit by workshop and instructor",
+    "description": "Workshops closed in the last 12 months",
+    "view": "Show profit",
+    "byWorkshop": "By workshop",
+    "byInstructor": "By instructor",
+    "workshop": "Workshop",
+    "instructor": "Instructor",
+    "net": "Net profit",
+    "workshops": "{count, plural, one {# workshop} other {# workshops}}",
+    "empty": {
+      "title": "No closed workshops yet",
+      "description": "When you close a workshop, its final profit shows up here, per workshop and per instructor."
+    }
+  }
+}

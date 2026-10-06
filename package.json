@@ -11,7 +11,10 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:test:migrate": "DATABASE_URL=${TEST_DATABASE_URL:-postgres://lart:lart@127.0.0.1:5432/lart_test} drizzle-kit migrate"
+    "db:test:migrate": "DATABASE_URL=${TEST_DATABASE_URL:-postgres://lart:lart@127.0.0.1:5432/lart_test} drizzle-kit migrate",
+    "jobs": "tsx scripts/jobs.ts",
+    "admin:create": "tsx scripts/create-admin.ts",
+    "db:seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

@@ -1,1 +1,136 @@
-{}
+{
+  "title": "Şablonlar",
+  "description": "Katılımcıların kabul ettiği kayıt koşulları ve eğitmenlerin imzaladığı sözleşme, üç dilde.",
+  "default": "Varsayılan",
+  "languages": "Diller",
+  "updated": "Güncellendi: {date}",
+  "newTitle": "Yeni şablon",
+  "newDescription": "Ne için kullanılacağını seçin, bir ad verin ve metni üç dilde yazın.",
+  "copyTitle": "Şablon kopyası",
+  "copyDescription": "“{name}” şablonunun metniyle başlar. Asıl şablon değişmez.",
+  "copyName": "{name} (kopya)",
+  "backToList": "Tüm şablonlar",
+  "create": "Şablonu oluştur",
+  "kinds": {
+    "terms": {
+      "title": "Kayıt koşulları",
+      "plural": "Kayıt koşulları",
+      "description": "Katılımcıların kayıt olurken kabul ettiği koşullar: iptal, iade ve diğerleri. Her atölye, siz başka bir şablon seçmedikçe varsayılanı kullanır.",
+      "hint": "Katılımcılar kayıt olurken kabul eder.",
+      "new": "Yeni koşullar",
+      "emptyTitle": "Henüz kayıt koşulu yok",
+      "emptyDescription": "Kayıt için kabul edilecek koşullar gerekir. İlk şablonu oluşturun; varsayılan o olur."
+    },
+    "contract": {
+      "title": "Eğitmen sözleşmesi",
+      "plural": "Eğitmen sözleşmeleri",
+      "description": "Eğitmenin her atölye için imzaladığı sözleşmenin sabit maddeleri. Yeni sözleşmeler varsayılanı kullanır.",
+      "hint": "Eğitmen her atölye için imzalar.",
+      "new": "Yeni sözleşme",
+      "emptyTitle": "Henüz sözleşme şablonu yok",
+      "emptyDescription": "Sözleşme şablonu olmadan atölye oluşturulamaz. İlk şablonu oluşturun; varsayılan o olur."
+    }
+  },
+  "usage": {
+    "workshops": "{count, plural, one {# atölyede seçili} other {# atölyede seçili}}",
+    "contracts": "{count, plural, one {# sözleşme} other {# sözleşme}} ({signed, plural, =0 {henüz imzalanan yok} other {# imzalı}})",
+    "registrations": "{count, plural, one {# kayıtta kabul edildi} other {# kayıtta kabul edildi}}",
+    "none": "Henüz kullanılmıyor",
+    "default": {
+      "terms": "Kendi koşulları seçilmemiş tüm atölyelerde kullanılır",
+      "contract": "Tüm yeni sözleşmelerde kullanılır"
+    }
+  },
+  "actions": {
+    "copy": "Kopyasını oluştur",
+    "makeDefault": "Varsayılan yap"
+  },
+  "makeDefault": {
+    "title": "“{name}” varsayılan yapılsın mı?",
+    "description": {
+      "terms": "Kendi koşulları olmayan atölyeler bundan sonra bu metni kullanır. Daha önce kayıt olanlar, kabul ettikleri koşulları korur.",
+      "contract": "Bundan sonra gönderilecek sözleşmeler bu metni kullanır. Daha önce gönderilmiş veya imzalanmış sözleşmeler değişmez."
+    },
+    "confirm": "Evet, varsayılan yap"
+  },
+  "delete": {
+    "action": "Şablonu sil",
+    "title": "“{name}” silinsin mi?",
+    "description": "Bu işlem geri alınamaz. Önceki sürümleri işlem geçmişinde kalır.",
+    "confirm": "Evet, sil",
+    "dangerTitle": "Bu şablonu sil",
+    "dangerDescription": "Yalnızca varsayılan olmayan ve hiçbir yerde kullanılmayan şablonlar silinebilir.",
+    "isDefault": "Bu şablon varsayılan olduğu için silinemez. Önce başka bir şablonu varsayılan yapın.",
+    "inUse": "Atölyeler, sözleşmeler veya kayıtlar bu şablona bağlı; bu yüzden kayıt olarak saklanır ve silinemez."
+  },
+  "toast": {
+    "created": "Şablon oluşturuldu.",
+    "updated": "Değişiklikler kaydedildi.",
+    "deleted": "Şablon silindi.",
+    "defaultChanged": "Varsayılan şablon değiştirildi."
+  },
+  "notice": {
+    "terms": "Daha önce kayıt olanların kabul ettiği koşulların kaydı saklanır; değişiklikleriniz yalnızca yeni kayıtlar için geçerlidir. Önceki sürümler işlem geçmişinde kalır.",
+    "contract": "İmzalanmış sözleşmeler imzalanan metni aynen korur; değişiklikleriniz onları asla değiştirmez. Değişiklikler, imza bekleyenler dahil, bundan sonra imzalanacak sözleşmeler için geçerlidir. Önceki sürümler işlem geçmişinde kalır."
+  },
+  "fields": {
+    "kind": "Kullanım amacı",
+    "name": "Ad",
+    "nameHint": "Bu adı yalnızca yöneticiler görür; örneğin “Yaz koşulları” veya “Çocuk atölyeleri sözleşmesi”.",
+    "body": "Metin"
+  },
+  "form": {
+    "aboutTitle": "Şablon hakkında",
+    "aboutDescription": "Metnin ne için kullanılacağı ve onu tanımanızı sağlayacak bir ad.",
+    "textTitle": "Metin",
+    "textDescription": {
+      "terms": "Kayıt sayfasında, katılımcıların kabul etmek için işaretlediği kutunun üstünde gösterilir. Üç dilde de yazın.",
+      "contract": "Sözleşmenin maddeleri. Üst kısım (taraflar, atölye bilgileri, ücret ve ön ödeme) atölyeden otomatik olarak eklenir; burada yalnızca maddeleri, üç dilde de yazın."
+    },
+    "placeholdersTitle": "Otomatik alanlar",
+    "placeholdersHint": "İmlecin bulunduğu yere eklemek için birine tıklayın. Metin gösterilirken otomatik olarak doldurulur.",
+    "insert": "{token} alanını metne ekle",
+    "formatTitle": "Biçimlendirme",
+    "formatHeading": "satır başında: bölüm başlığı",
+    "formatItem": "satır başında: liste maddesi",
+    "formatParagraph": "boş satır: yeni paragraf",
+    "unknownTitle": "Bazı otomatik alanlar tanınmadı",
+    "unknownItem": "{token} ({language}): yazımını kontrol edin ya da silin."
+  },
+  "placeholders": {
+    "brand": "Ayarlardaki marka adınız",
+    "instructor_name": "Eğitmenin resmî adı soyadı",
+    "instructor_id_number": "Eğitmenin kimlik numarası",
+    "workshop_title": "Atölyenin adı",
+    "date": "Atölye tarihi",
+    "weekday": "Haftanın günü",
+    "start_time": "Başlangıç saati",
+    "end_time": "Bitiş saati",
+    "venue": "Mekân",
+    "min_participants": "En az katılımcı sayısı",
+    "max_participants": "En fazla katılımcı sayısı",
+    "fee_type": "Ücret türü: katılımcı başına veya sabit",
+    "fee_amount": "Kararlaştırılan ücret",
+    "advance_amount": "Ön ödeme tutarı",
+    "decision_deadline": "Atölyenin yapılıp yapılmayacağına karar verilecek tarih ve saat"
+  },
+  "preview": {
+    "open": "Önizleme",
+    "title": "Önizleme",
+    "description": "Metnin marka adınız ve örnek bilgilerle nasıl görüneceği. Vurgulanan kısımlar otomatik olarak doldurulur.",
+    "hint": "Metni, okuyanların göreceği şekilde örnek bilgilerle görün.",
+    "empty": "Henüz gösterilecek bir şey yok. Önce bu dildeki metni yazın.",
+    "sample": {
+      "instructorName": "Ayşe Demir",
+      "idNumber": "12345678901",
+      "workshopTitle": "Yeni başlayanlar için mum yapımı",
+      "venue": "Moda Sanat Atölyesi, Kadıköy, İstanbul"
+    }
+  },
+  "errors": {
+    "notFound": "Bu şablon artık yok. Az önce silinmiş olabilir.",
+    "unknownPlaceholder": "Bu metinde tanınmayan bir otomatik alan var. Lütfen süslü parantez içindeki yazımı kontrol edin.",
+    "deleteDefault": "Varsayılan şablon silinemez. Önce başka bir şablonu varsayılan yapın.",
+    "inUse": "Bu şablon kullanımda olduğu için silinemez."
+  }
+}

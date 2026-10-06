@@ -1,1 +1,96 @@
-{}
+{
+  "locales": {
+    "fa": "فارسی",
+    "tr": "Türkçe",
+    "en": "English"
+  },
+  "language": "Language",
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "Same as device"
+  },
+  "actions": {
+    "save": "Save",
+    "saveChanges": "Save changes",
+    "create": "Create",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "close": "Close",
+    "more": "More actions",
+    "new": "New"
+  },
+  "toast": {
+    "saved": "Saved.",
+    "created": "Created.",
+    "deleted": "Deleted."
+  },
+  "errors": {
+    "generic": "Something went wrong on our side. Please try again in a moment.",
+    "network": "We couldn’t reach the server. Please check your connection and try again.",
+    "invalidInput": "Please check the highlighted fields.",
+    "notFound": "We couldn’t find this. It may have been removed.",
+    "unauthorized": "Please sign in again to continue."
+  },
+  "validation": {
+    "required": "Please fill this in.",
+    "tooShort": "Please use at least {min} characters.",
+    "tooLong": "Please use {max} characters or fewer.",
+    "tooSmall": "Please enter {min} or more.",
+    "tooBig": "Please enter {max} or less.",
+    "number": "Please enter a number.",
+    "integer": "Please enter a whole number.",
+    "email": "Please enter a valid email address.",
+    "url": "Please enter a full web address, like https://example.com.",
+    "date": "Please choose a date and time.",
+    "time": "Please choose a time.",
+    "choose": "Please choose one of the options.",
+    "invalid": "This doesn’t look right. Please check it.",
+    "slug": "Use only lowercase letters, numbers and hyphens (for example: candle-making).",
+    "endAfterStart": "The end time must be after the start time."
+  },
+  "form": {
+    "required": "Required",
+    "optional": "Optional",
+    "filled": "Filled in",
+    "missing": "Not filled in yet",
+    "hasError": "Needs attention",
+    "languagesFilled": "{count} of {total} languages"
+  },
+  "date": {
+    "pickDate": "Pick a date",
+    "start": "Start time",
+    "end": "End time",
+    "timezone": "Times are in Istanbul time."
+  },
+  "table": {
+    "all": "All",
+    "searchPlaceholder": "Search…",
+    "clearSearch": "Clear search",
+    "clearFilters": "Clear search and filters",
+    "noResults": "Nothing matches",
+    "noResultsHint": "Try a different search, or clear the filters.",
+    "showing": "{from}–{to} of {total}",
+    "previous": "Previous",
+    "next": "Next",
+    "pagination": "Pages"
+  },
+  "notFound": {
+    "title": "This page isn’t here",
+    "description": "The link may be old, or the page may have moved.",
+    "home": "Go to the home page"
+  },
+  "ui": {
+    "menu": "Menu",
+    "menuDescription": "Main panel menu",
+    "toggleSidebar": "Toggle the menu"
+  },
+  "panelError": {
+    "title": "Something went wrong",
+    "description": "This page could not be opened right now. Please try again; if it still fails, check back in a few minutes.",
+    "retry": "Try again"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "upload": {
+    "chooseImage": "Fotoğrafı buraya sürükleyin veya seçmek için tıklayın",
+    "chooseVideo": "Videoyu buraya sürükleyin veya seçmek için tıklayın",
+    "chooseMany": "Fotoğrafları ve videoları buraya sürükleyin veya seçmek için tıklayın",
+    "chooseManyImages": "Fotoğrafları buraya sürükleyin veya seçmek için tıklayın",
+    "imageHint": "JPG, PNG, WebP veya HEIC, en fazla {size}",
+    "videoHint": "MP4, MOV veya WebM, en fazla {size}",
+    "logoHint": "En iyi sonuç için şeffaf arka planlı bir PNG kullanın, en fazla {size}",
+    "dropToUpload": "Yüklemek için bırakın",
+    "uploading": "Yükleniyor… {progress, number, percent}",
+    "processingImage": "Fotoğraf hazırlanıyor…",
+    "processingVideo": "Video kaydediliyor…",
+    "waiting": "Sırada…",
+    "replace": "Değiştir",
+    "remove": "Kaldır",
+    "cancel": "İptal",
+    "retry": "Tekrar dene",
+    "dismiss": "Kapat",
+    "add": "Ekle",
+    "uploaded": "Yüklendi",
+    "photoAlt": "Yüklenen fotoğraf",
+    "photoN": "Fotoğraf {index}",
+    "videoN": "Video {index}",
+    "moveEarlier": "Bir öne taşı",
+    "moveLater": "Bir sonraya taşı",
+    "reorder": "Sırayı değiştirmek için sürükleyin",
+    "count": "{count, plural, =0 {Henüz bir şey yok} other {# öğe}}",
+    "limitReached": "En fazla {max} öğe ekleyebilirsiniz. Fazla dosyalar eklenmedi.",
+    "noWatermark": "Henüz filigran logosu ayarlanmadığı için bu fotoğraf filigransız yüklendi. Logoyu Ayarlar'dan ekleyebilirsiniz."
+  },
+  "errors": {
+    "unauthorized": "Oturumunuz sona erdi. Lütfen yeniden giriş yapıp tekrar deneyin.",
+    "bad_request": "Bu dosya yüklenirken bir sorun oluştu. Lütfen tekrar deneyin.",
+    "too_large": "Bu dosya çok büyük. En fazla {size} olabilir.",
+    "unsupported_type": "{kind, select, video {Bu dosya kullanılabilir bir video değil. Lütfen MP4, MOV veya WebM biçiminde bir video seçin.} other {Bu dosya kullanılabilir bir fotoğraf değil. Lütfen JPG, PNG, WebP veya HEIC biçiminde bir fotoğraf seçin.}}",
+    "heic_unsupported": "Bu HEIC fotoğraf burada açılamıyor. Lütfen JPG olarak kaydedip tekrar deneyin (iPhone'da: Ayarlar → Kamera → Formatlar → En Uyumlu).",
+    "too_many_pixels": "Bu fotoğrafın boyutları çok büyük. Lütfen {megapixels, number} megapikselden küçük bir fotoğraf kullanın.",
+    "invalid_image": "Bu fotoğraf bozuk görünüyor ve açılamıyor. Lütfen başka bir dosya deneyin.",
+    "watermark_unavailable": "Filigran logosu yüklenemediği için fotoğraf yayınlanmadı. Lütfen logoyu Ayarlar'dan yeniden yükleyin.",
+    "storage": "Dosya depolama alanına kaydedilemedi. Lütfen CDN ayarlarını kontrol edin veya biraz sonra tekrar deneyin.",
+    "server": "Bizim tarafımızda bir sorun oluştu. Lütfen tekrar deneyin.",
+    "network": "Bağlantı kesildi. Lütfen internet bağlantınızı kontrol edip tekrar deneyin."
+  },
+  "storageTest": {
+    "ok": "Bağlantı başarılı. Dosyalar kaydedilebiliyor, okunabiliyor ve silinebiliyor.",
+    "config": "Kayıtlı anahtarlar okunamadı. Lütfen anahtarları yeniden girin.",
+    "write": "{zone, select, private {Özel depolamaya} other {Genel depolamaya}} test dosyası kaydedilemedi. Lütfen alan ya da bucket adını ve anahtarını kontrol edin.",
+    "read": "Test dosyası {zone, select, private {özel depolamaya} other {genel depolamaya}} kaydedildi ancak geri okunamadı. Lütfen anahtarın izinlerini kontrol edin.",
+    "url": "Dosyalar kaydediliyor ancak genel adresten açılmıyor. Lütfen CDN alan adını kontrol edin.",
+    "delete": "Test dosyası {zone, select, private {özel depolamadan} other {genel depolamadan}} silinemedi. Lütfen anahtarın dosya silme izni olduğunu kontrol edin."
+  },
+  "preview": {
+    "alt": "Örnek bir fotoğraf üzerinde filigran önizlemesi"
+  }
+}

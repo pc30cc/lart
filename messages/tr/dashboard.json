@@ -1,1 +1,158 @@
-{}
+{
+  "greeting": {
+    "morning": "Günaydın, {name}",
+    "afternoon": "İyi günler, {name}",
+    "evening": "İyi akşamlar, {name}"
+  },
+  "intro": "{date}. İşte işlerin son durumu.",
+  "newWorkshop": "Yeni atölye",
+  "loading": "Güncel rakamlar hazırlanıyor…",
+  "setup": {
+    "progress": "{total} adımdan {done} tanesi tamamlandı",
+    "title": "Hoş geldiniz! İlk atölyenizi birlikte hazırlayalım",
+    "description": "Yalnızca birkaç kısa adım kaldı. İşler başladığında rakamlarınız ve grafikleriniz tam burada görünecek.",
+    "cta": "İlk atölyenizi oluşturun",
+    "done": "Tamamlandı",
+    "steps": {
+      "category": {
+        "title": "Bir kategori ekleyin",
+        "description": "Atölyelerinizi gruplayın; örneğin mum yapımı veya seramik.",
+        "action": "Kategori ekle"
+      },
+      "instructor": {
+        "title": "Bir eğitmen ekleyin",
+        "description": "Eğitmenin bilgileri sitede görünür ve sözleşmede kullanılır.",
+        "action": "Eğitmen ekle"
+      },
+      "contract": {
+        "title": "Sözleşme metnini belirleyin",
+        "description": "Bu sözleşme her atölye için eğitmene e-postayla gönderilir.",
+        "action": "Şablonları aç"
+      },
+      "workshop": {
+        "title": "Bir atölye oluşturun",
+        "description": "Tarih, yer, kontenjan ve ücret. Sözleşme e-postayla gönderilir.",
+        "action": "Atölye oluştur"
+      },
+      "capital": {
+        "title": "Başlangıç sermayesini kaydedin",
+        "description": "Her ortağın ortak kasaya koyduğu tutarı ekleyin.",
+        "action": "Ortak kasayı aç"
+      }
+    }
+  },
+  "attention": {
+    "title": "İlginizi bekleyenler",
+    "decisions": "{count, plural, one {# atölye için karar zamanı geldi} other {# atölye için karar zamanı geldi}}",
+    "signatures": "{count, plural, one {# sözleşme imza bekliyor} other {# sözleşme imza bekliyor}}",
+    "toClose": "{count, plural, one {# atölye kapanmaya hazır} other {# atölye kapanmaya hazır}}"
+  },
+  "kpi": {
+    "wallet": "Kasadaki para",
+    "walletHint": "Şu anda ortak kasadaki nakit",
+    "walletNegative": "Kasa eksiye düştü. Lütfen son kayıtları kontrol edin.",
+    "revenue": "Bu ayın geliri",
+    "moreThanLastMonth": "geçen aya göre artış",
+    "lessThanLastMonth": "geçen aya göre düşüş",
+    "sameAsLastMonth": "geçen ayla aynı",
+    "noRevenueLastMonth": "Geçen ay gelir olmadı",
+    "lastMonth": "Geçen ay: {amount}",
+    "net": "Net kâr ({year})",
+    "netHint": "1 Ocak’tan bu yana gelirler eksi tüm giderler",
+    "upcoming": "Yaklaşan atölyeler",
+    "upcomingSeats": "{seats} yerin {taken} tanesi dolu",
+    "upcomingNotOpen": "Sözleşmelerin imzalanması bekleniyor",
+    "upcomingNone": "Henüz planlanmış atölye yok",
+    "fill": "Ortalama doluluk",
+    "fillHint": "Son 12 ayda {count, plural, one {# atölye} other {# atölye}}: {seats} yerin {taken} tanesi doldu",
+    "fillNone": "Son 12 ayda henüz atölye yapılmadı"
+  },
+  "revenue": {
+    "title": "Gelir, gider ve kâr",
+    "description": "Son 12 ay, her kaydın tarihine göre",
+    "report": "Raporlar",
+    "totals": "Son 12 ayın toplamları",
+    "revenue": "Gelir",
+    "expenses": "Gider",
+    "net": "Net kâr",
+    "month": "Ay",
+    "tableCaption": "Aylara göre gelir, gider ve net kâr",
+    "empty": {
+      "title": "Henüz gelir veya gider yok",
+      "description": "Kasaya para girip çıktıkça burada ay ay göreceksiniz."
+    }
+  },
+  "partners": {
+    "title": "Ortaklar",
+    "description": "Her ortağın kârdaki payı ve sermayesi",
+    "manage": "Ortaklar",
+    "listLabel": "Ortaklar, payları ve sermayeleri",
+    "share": "Pay",
+    "shareOf": "Pay: {share}",
+    "capital": "Sermaye",
+    "totalCapital": "Toplam sermaye",
+    "former": "Artık ortak değil",
+    "sharesOff": "Payların toplamı {total}, oysa %100 olmalı. Bu düzeltilene kadar atölyeler kapatılamaz.",
+    "empty": {
+      "title": "Henüz kâr payı belirlenmedi",
+      "description": "Her atölyenin kârı adil paylaşılsın diye her ortağın payını belirleyin.",
+      "action": "Payları belirle"
+    }
+  },
+  "upcoming": {
+    "title": "Yaklaşan atölyeler",
+    "description": "Sıradaki atölyelere kısa bir bakış",
+    "all": "Tüm atölyeler",
+    "today": "Bugün",
+    "tomorrow": "Yarın",
+    "now": "Şu anda sürüyor",
+    "seats": "Dolu: {taken} / {max}",
+    "pending": "{count, plural, one {# kişi daha ödeme bekliyor} other {# kişi daha ödeme bekliyor}}",
+    "notOpen": "Kayıtlar imzadan sonra açılır",
+    "alerts": {
+      "awaitingSignature": "Eğitmenin sözleşmeyi imzalaması bekleniyor",
+      "decisionDue": "Karar zamanı geldi",
+      "decisionSoon": "Karar zamanı: {when}",
+      "missing": "{count, plural, one {en az sayıya # kişi kaldı} other {en az sayıya # kişi kaldı}}",
+      "minimumReached": "en az sayıya ulaşıldı"
+    },
+    "empty": {
+      "title": "Yaklaşan atölye yok",
+      "description": "Bir sonrakini planlayın; kayıtlarıyla birlikte burada görünür.",
+      "action": "Yeni atölye"
+    }
+  },
+  "seats": {
+    "title": "Kayıtlar ve doluluk",
+    "description": "Son ve yaklaşan atölyeler",
+    "registered": "Kayıtlı",
+    "capacity": "Kontenjan",
+    "minimum": "En az",
+    "fill": "Doluluk",
+    "held": "Yapıldı",
+    "upcoming": "Yaklaşıyor",
+    "heldArea": "Yapılmış olanlar",
+    "workshop": "Atölye",
+    "date": "Tarih",
+    "tableCaption": "Atölyelere göre kayıtlar ve doluluk",
+    "empty": {
+      "title": "Henüz gösterilecek kayıt yok",
+      "description": "Bir atölye kayda açıldığında ne kadar dolduğunu burada görürsünüz."
+    }
+  },
+  "profit": {
+    "title": "Atölye ve eğitmene göre kâr",
+    "description": "Son 12 ayda kapanan atölyeler",
+    "view": "Kârı göster",
+    "byWorkshop": "Atölyeye göre",
+    "byInstructor": "Eğitmene göre",
+    "workshop": "Atölye",
+    "instructor": "Eğitmen",
+    "net": "Net kâr",
+    "workshops": "{count, plural, one {# atölye} other {# atölye}}",
+    "empty": {
+      "title": "Henüz kapanan atölye yok",
+      "description": "Bir atölyeyi kapattığınızda kesin kârı burada atölye ve eğitmen bazında görünür."
+    }
+  }
+}

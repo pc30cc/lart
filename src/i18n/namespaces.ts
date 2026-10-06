@@ -15,4 +15,5 @@ export const namespaces = [
   "settings",
   "templates",
   "emails",
+  "media",
 ] as const

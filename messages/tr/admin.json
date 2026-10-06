@@ -1,1 +1,28 @@
-{}
+{
+  "meta": { "title": "Yönetim" },
+  "brandSubtitle": "Yönetim paneli",
+  "nav": {
+    "groups": { "overview": "Genel bakış", "workshops": "Atölyeler", "money": "Finans", "system": "Sistem" },
+    "dashboard": "Pano",
+    "workshops": "Atölyeler",
+    "instructors": "Eğitmenler",
+    "categories": "Kategoriler",
+    "wallet": "Ortak kasa",
+    "partners": "Ortaklar",
+    "transactions": "İşlemler",
+    "reports": "Raporlar",
+    "templates": "Şablonlar",
+    "settings": "Ayarlar",
+    "audit": "İşlem geçmişi"
+  },
+  "shell": {
+    "toggleSidebar": "Menüyü göster veya gizle",
+    "skipToContent": "İçeriğe geç",
+    "userMenu": "Hesabınız",
+    "breadcrumb": "Bulunduğunuz yer"
+  },
+  "home": {
+    "greeting": "Merhaba {name}",
+    "intro": "Bugün nereden başlamak istersiniz?"
+  }
+}

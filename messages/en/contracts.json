@@ -1,1 +1,32 @@
-{}
+{
+  "document": {
+    "title": "Instructor agreement",
+    "subtitle": "{workshop_title} · Version {version}",
+    "parties": "Parties",
+    "partiesText": "This agreement is made between {brand} and the instructor, {instructor_name} (ID number {instructor_id_number}), for the workshop described below.",
+    "workshop": "Workshop details",
+    "workshopTitle": "Workshop: {workshop_title}",
+    "date": "Date: {weekday}, {date}",
+    "time": "Time: {start_time} to {end_time} (Istanbul time)",
+    "venue": "Venue: {venue}",
+    "capacity": "Participants: at least {min_participants}, at most {max_participants}",
+    "decision": "Go / no-go decision: {decision_deadline}",
+    "fee": "Instructor fee",
+    "feeLine": "{kind, select, per_participant {The instructor receives {fee_amount} for each participant. The number of participants is the final number fixed at the go / no-go decision.} other {The instructor receives a fixed fee of {fee_amount} for the whole workshop, whatever the number of participants.}}",
+    "advance": "Advance payment",
+    "advanceLine": "{has, select, yes {{brand} pays the instructor an advance of {advance_amount}. It is deducted from the fee at settlement.} other {There is no advance payment.}}",
+    "feeType": {
+      "per_participant": "per participant",
+      "fixed": "fixed for the whole workshop"
+    }
+  },
+  "errors": {
+    "notFound": "We couldn’t find this contract. Please open it again from your email or your panel.",
+    "alreadySigned": "This contract is already signed. Thank you!",
+    "replaced": "A newer version of this contract was sent. Please sign the latest version.",
+    "notSignable": "This contract can’t be signed any more. Please get in touch with us.",
+    "nameRequired": "Please type your full name to sign.",
+    "nothingToResend": "There’s no contract waiting for a signature right now.",
+    "emailFailed": "We couldn’t send the email just now. Please check the email settings, or try again in a moment."
+  }
+}

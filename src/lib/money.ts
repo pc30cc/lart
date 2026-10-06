@@ -26,6 +26,7 @@ export function formatLira(kurus: number, locale: string = "tr"): string {
   return new Intl.NumberFormat(locale === "fa" ? "fa-IR" : locale === "en" ? "en-US" : "tr-TR", {
     style: "currency",
     currency: "TRY",
+    currencyDisplay: "narrowSymbol",
     minimumFractionDigits: kurus % 100 === 0 ? 0 : 2,
     maximumFractionDigits: 2,
   }).format(kurus / 100)

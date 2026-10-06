@@ -1,1 +1,248 @@
-{}
+{
+  "title": "Ayarlar",
+  "description": "Markanız, diller, arama motorları için varsayılan bilgiler ve fotoğraflarla videoların saklandığı yer.",
+  "tabs": {
+    "label": "Ayar bölümleri",
+    "general": "Genel",
+    "storage": "Depolama",
+    "watermark": "Filigran"
+  },
+  "toast": {
+    "saved": "Ayarlar kaydedildi."
+  },
+  "general": {
+    "brandTitle": "Marka adı",
+    "brandDescription": "Sitenin her yerinde, e-postalarda, koşullarda ve sözleşmelerde, yani metinde {token} geçen her yerde gösterilir. Burada değiştirdiğinizde her yerde değişir.",
+    "brand": "Marka adı",
+    "languageTitle": "Varsayılan dil",
+    "languageDescription": "Siteyi dil seçmeden açan ziyaretçilerin gördüğü dil. Birinin dili bilinmediğinde e-postalar da bu dilde gönderilir.",
+    "defaultLocale": "Dil",
+    "seoTitle": "Arama motorları",
+    "seoDescription": "Kendi başlığı ve açıklaması olmayan sayfalar için Google’ın ve sosyal medyanın gösterdiği başlık ve açıklama.",
+    "seoPageTitle": "Başlık",
+    "seoPageTitleHint": "50–60 karakter civarı en iyi sonucu verir.",
+    "seoPageDescription": "Açıklama",
+    "seoPageDescriptionHint": "Bir iki cümle, 150–160 karakter civarı.",
+    "themeTitle": "Site teması",
+    "themeDescription": "Herkese açık sitenin görünümü. Yönetim paneli ve eğitmen paneli her zaman kendi tasarımlarını korur.",
+    "theme": "Tema",
+    "themeHint": "Yeni temalar eklendikçe burada görünür.",
+    "themes": {
+      "default": "Varsayılan"
+    }
+  },
+  "storage": {
+    "providerTitle": "Dosyaların saklandığı yer",
+    "providerDescription": "Fotoğraflar ve videolar, hızlı açılmaları için bir CDN üzerinde dosya olarak saklanır. Orijinal fotoğraflar ve filigran logosu, dışarıdan açılamayan ayrı bir özel alanda durur.",
+    "provider": "Depolama",
+    "providers": {
+      "local": {
+        "title": "Bu sunucu",
+        "hint": "Yalnızca denemek için."
+      },
+      "bunny": {
+        "title": "Bunny CDN",
+        "hint": "Pull zone ile Bunny Storage."
+      },
+      "cloudflare": {
+        "title": "Cloudflare R2",
+        "hint": "Cloudflare CDN ile R2 bucket’ları."
+      }
+    },
+    "switchWarning": "Daha önce yüklenen dosyalar şu anki yerlerinde kalır, taşınmaz. Bu ayarı dosya yüklemeden önce değiştirin ya da dosyaları kendiniz taşıyın.",
+    "localNote": "Dosyalar bu sunucudaki .data klasöründe tutulur. Geliştirme için uygundur; ancak canlı site için Bunny’yi veya Cloudflare’ı seçin ki dosyalar hızlı olsun ve yeni bir yayına almada kaybolmasın.",
+    "bunnyTitle": "Bunny Storage",
+    "bunnyDescription": "Bu bilgileri Bunny panelinde, Storage bölümünde bulabilirsiniz. Herkese açık dosyalar için bir storage zone, özel dosyalar için de pull zone bağlanmamış ayrı bir storage zone kullanın.",
+    "cloudflareTitle": "Cloudflare R2",
+    "cloudflareDescription": "Bu bilgileri Cloudflare panelinde, R2 bölümünde bulabilirsiniz. Herkese açık dosyalar için bir bucket, özel dosyalar için de herkese açık erişimi olmayan ayrı bir bucket kullanın.",
+    "publicGroup": "Herkese açık dosyalar",
+    "publicGroupHint": "Sitede gösterilen fotoğraflar, videolar ve kapak görselleri.",
+    "privateGroup": "Özel dosyalar",
+    "privateGroupHint": "Galerideki orijinal fotoğraflar ve filigran logosu. Bunları yalnızca yöneticiler görebilir.",
+    "fields": {
+      "storageHost": "Depolama adresi",
+      "publicZone": "Storage zone adı",
+      "publicZoneKey": "Storage zone parolası",
+      "publicHost": "CDN alan adı",
+      "privateZone": "Storage zone adı",
+      "privateZoneKey": "Storage zone parolası",
+      "accountId": "Hesap kimliği (Account ID)",
+      "accessKeyId": "Access Key ID",
+      "secretAccessKey": "Secret Access Key",
+      "publicBucket": "Bucket adı",
+      "privateBucket": "Bucket adı"
+    },
+    "hints": {
+      "storageHost": "Zone’un ana bölgesine göre değişir; örneğin storage.bunnycdn.com veya uk.storage.bunnycdn.com.",
+      "bunnyKey": "Storage zone → FTP & API Access → Password.",
+      "bunnyHost": "Bu storage zone’a bağlı pull zone’un alan adı; örneğin cdn.example.com.",
+      "accountId": "R2 genel bakış sayfasındaki 32 karakterlik kimlik.",
+      "r2Keys": "İki bucket’a da okuma ve yazma izni olan bir R2 API token’ı oluşturun.",
+      "r2Host": "Herkese açık bucket’a bağlı özel alan adı; örneğin cdn.example.com."
+    },
+    "keySaved": "Güvenli şekilde kaydedildi",
+    "replaceKey": "Değiştir",
+    "keepSaved": "Kayıtlı olan kalsın",
+    "keyPlaceholderReplace": "Yeni anahtarı yapıştırın",
+    "test": {
+      "action": "Bağlantıyı test et",
+      "running": "Test ediliyor…",
+      "ok": "Bağlantı kuruldu. Dosyalar iki alanda da kaydedilebiliyor, okunabiliyor ve silinebiliyor.",
+      "config": "Kayıtlı anahtarlar okunamadı. Lütfen yeniden girin.",
+      "write": "Test dosyası {zone, select, private {özel depolamaya} other {herkese açık depolamaya}} kaydedilemedi. Lütfen adını ve anahtarını kontrol edin.",
+      "read": "Test dosyası {zone, select, private {özel depolamaya} other {herkese açık depolamaya}} kaydedildi ama geri okunamadı. Lütfen anahtarın izinlerini kontrol edin.",
+      "url": "Dosyalar kaydediliyor ama CDN alan adından açılmıyor. Lütfen alan adını kontrol edin.",
+      "delete": "Test dosyası {zone, select, private {özel depolamadan} other {herkese açık depolamadan}} silinemedi. Lütfen anahtarın dosya silme izni olduğunu kontrol edin."
+    },
+    "errors": {
+      "host": "Lütfen cdn.example.com gibi bir alan adı yazın (https:// olmadan).",
+      "bunnyHost": "Lütfen storage.bunnycdn.com gibi bir Bunny depolama adresi yazın.",
+      "bucket": "Yalnızca küçük harf, rakam ve kısa çizgi kullanın.",
+      "sameZone": "Özel dosyalar için herkese açık olandan farklı, ayrı bir zone veya bucket gerekir.",
+      "accountId": "Hesap kimliği 32 karakterdir; yalnızca 0–9 rakamlarını ve a–f harflerini içerir.",
+      "key": "Anahtar boşluk içeremez.",
+      "keyRequired": "Lütfen anahtarı yapıştırın. Şifrelenmiş olarak saklanır ve bir daha gösterilmez."
+    }
+  },
+  "watermark": {
+    "enabledTitle": "Filigran",
+    "enabledDescription": "Logonuz, galeri fotoğraflarına yüklenirken eklenir. Logosuz orijinal, yöneticiler için özel olarak saklanır.",
+    "enabled": "Galeri fotoğraflarına filigran ekle",
+    "enabledHint": "Daha önce yüklenen fotoğraflar değişmez.",
+    "logoTitle": "Logo",
+    "logoDescription": "Arka planı şeffaf bir PNG en iyi sonucu verir.",
+    "logo": "Filigran logosu",
+    "noLogo": "Henüz logo yok, bu yüzden fotoğraflar filigransız yükleniyor. Logoyu buradan ekleyin.",
+    "placementTitle": "Konum ve boyut",
+    "placementDescription": "Ayarlarken önizlemeyi izleyin.",
+    "position": "Konum",
+    "positions": {
+      "top-left": "Sol üst",
+      "top": "Üst orta",
+      "top-right": "Sağ üst",
+      "left": "Sol orta",
+      "center": "Orta",
+      "right": "Sağ orta",
+      "bottom-left": "Sol alt",
+      "bottom": "Alt orta",
+      "bottom-right": "Sağ alt",
+      "tiled": "Fotoğrafın tamamında tekrarla"
+    },
+    "size": "Boyut",
+    "sizeHint": "Logonun genişliği, fotoğraf genişliğine oranla.",
+    "opacity": "Opaklık",
+    "opacityHint": "Düşük değer daha saydamdır.",
+    "margin": "Kenar boşluğu",
+    "marginHint": "Fotoğrafın kenarına uzaklık (tekrarlandığında logolar arasındaki boşluk).",
+    "previewAlt": "Filigranlı örnek bir fotoğraf",
+    "previewNoLogo": "Önizlemeyi görmek için bir logo ekleyin.",
+    "previewCaption": "Şu anki seçimlerinizle örnek bir fotoğraf (henüz kaydedilmedi).",
+    "previewCaptionOff": "Filigran kapalı, bu yüzden fotoğraflar filigransız yükleniyor. Açık olsaydı böyle görünürdü.",
+    "errors": {
+      "logo": "Lütfen logoyu yeniden yükleyin."
+    }
+  },
+  "audit": {
+    "title": "İşlem geçmişi",
+    "description": "Yönetim panelinde kimin, ne zaman, ne yaptığı. Kayıtlar değiştirilemez ve silinemez.",
+    "system": "Sistem",
+    "showDetails": "Tüm ayrıntıları göster",
+    "table": {
+      "when": "Zaman",
+      "who": "Kim",
+      "what": "Ne",
+      "record": "Kayıt",
+      "details": "Ayrıntılar",
+      "ip": "IP adresi",
+      "search": "İşlemlerde ara…"
+    },
+    "empty": {
+      "title": "Henüz işlem yok",
+      "description": "Yönetim panelinde yapılan her değişiklik burada listelenir."
+    },
+    "range": {
+      "all": "Tüm tarihler",
+      "between": "{from} – {to}",
+      "since": "Başlangıç: {date}",
+      "until": "Bitiş: {date}",
+      "today": "Bugün",
+      "last7": "Son 7 gün",
+      "last30": "Son 30 gün",
+      "thisMonth": "Bu ay",
+      "timezone": "İstanbul saati",
+      "apply": "Göster",
+      "clear": "Tüm tarihleri göster"
+    },
+    "entities": {
+      "admin": "Yönetici",
+      "category": "Kategori",
+      "contract": "Sözleşme",
+      "instructor": "Eğitmen",
+      "ledger_transaction": "İşlem",
+      "media": "Dosya",
+      "report": "Rapor",
+      "setting": "Ayar",
+      "template": "Şablon",
+      "workshop": "Atölye"
+    },
+    "actions": {
+      "admin": {
+        "create": "Yönetici eklendi"
+      },
+      "auth": {
+        "login": "Giriş yapıldı",
+        "logout": "Çıkış yapıldı",
+        "lockout": "Hatalı girişler nedeniyle hesap kilitlendi"
+      },
+      "category": {
+        "create": "Kategori oluşturuldu",
+        "update": "Kategori düzenlendi",
+        "delete": "Kategori silindi"
+      },
+      "contract": {
+        "sign": "Sözleşme imzalandı",
+        "resend": "Sözleşme e-postası yeniden gönderildi"
+      },
+      "instructor": {
+        "create": "Eğitmen eklendi",
+        "update": "Eğitmen düzenlendi",
+        "delete": "Eğitmen silindi",
+        "invite": "Davet gönderildi",
+        "reveal_id": "Kimlik numarası görüntülendi"
+      },
+      "media": {
+        "upload": "Dosya yüklendi"
+      },
+      "money": {
+        "contribution": "Sermaye eklendi",
+        "withdrawal": "Sermaye çekildi",
+        "expense": "Gider kaydedildi",
+        "advance_paid": "Ön ödeme yapıldı",
+        "advance_returned": "Ön ödeme iade edildi",
+        "instructor_payment": "Eğitmene ödeme yapıldı",
+        "reverse": "İşlem ters kayıtla iptal edildi",
+        "export": "Rapor dışa aktarıldı"
+      },
+      "partner": {
+        "shares": "Ortaklık payları değiştirildi"
+      },
+      "setting": {
+        "update": "Ayarlar değiştirildi"
+      },
+      "template": {
+        "create": "Şablon oluşturuldu",
+        "update": "Şablon düzenlendi",
+        "set_default": "Varsayılan şablon değiştirildi",
+        "delete": "Şablon silindi"
+      },
+      "workshop": {
+        "create": "Atölye oluşturuldu",
+        "update": "Atölye düzenlendi",
+        "confirm": "Atölye kesinleşti",
+        "cancel": "Atölye iptal edildi",
+        "close": "Atölye kapatıldı",
+        "gallery": "Galeri güncellendi"
+      }
+    }
+  }
+}

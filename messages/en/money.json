@@ -1,1 +1,365 @@
-{}
+{
+  "kinds": {
+    "capital_contribution": "Capital contribution",
+    "capital_withdrawal": "Withdrawal",
+    "expense": "Expense",
+    "registration_payment": "Registration payment",
+    "registration_refund": "Refund",
+    "instructor_advance": "Instructor advance",
+    "instructor_payment": "Instructor payment",
+    "course_settlement": "Instructor fee at closing",
+    "course_close": "Workshop result to partners",
+    "reversal": "Correction",
+    "reversalOf": "Correction of: {kind}"
+  },
+  "accounts": {
+    "wallet": "Wallet",
+    "instructor_advance": "Advances to instructors",
+    "instructor_payable": "Owed to instructors",
+    "partner_capital": "Partner capital",
+    "revenue": "Revenue",
+    "instructor_fees": "Instructor fees",
+    "course_expenses": "Workshop expenses",
+    "general_expenses": "General expenses"
+  },
+  "columns": {
+    "date": "Date",
+    "period": "Period",
+    "entry": "Entry",
+    "type": "Type",
+    "description": "Description",
+    "workshop": "Workshop",
+    "workshops": "Workshops",
+    "instructor": "Instructor",
+    "status": "Status",
+    "participants": "Participants",
+    "partner": "Partner",
+    "account": "Account",
+    "amount": "Amount",
+    "balance": "Balance",
+    "debit": "Debit",
+    "credit": "Credit",
+    "revenue": "Revenue",
+    "instructorFees": "Instructor fee",
+    "courseExpenses": "Workshop expenses",
+    "generalExpenses": "General expenses",
+    "net": "Net profit",
+    "total": "Total",
+    "opening": "Opening balance",
+    "closing": "Closing balance"
+  },
+  "wallet": {
+    "title": "Wallet",
+    "description": "The shared wallet of the business: what is in it, what is owed, and what happened lately.",
+    "balance": "In the wallet",
+    "balanceHint": "Cash in the shared wallet right now.",
+    "negative": "The wallet is below zero. A payment was probably made by a partner personally: record it as paid by them.",
+    "advances": "Advances out",
+    "advancesHint": "Paid to instructors ahead of their workshops.",
+    "owed": "Owed to instructors",
+    "owedHint": "Fees of closed workshops not paid yet.",
+    "open": "Not shared out yet",
+    "openHint": "Result of workshops not closed yet, minus general expenses.",
+    "recent": "Recent activity",
+    "allTransactions": "All transactions",
+    "empty": {
+      "title": "Nothing recorded yet",
+      "description": "Start with a capital contribution: the money the partners put into the wallet."
+    },
+    "toClose": {
+      "title": "Ready to close",
+      "description": "Workshops that are over or cancelled.",
+      "none": "No workshop is waiting to be closed."
+    },
+    "instructors": {
+      "title": "With instructors",
+      "description": "Advances out and fees still to pay.",
+      "holds": "Holds",
+      "owed": "Owed"
+    }
+  },
+  "forms": {
+    "amount": "Amount",
+    "date": "Date",
+    "pickDate": "Pick a date",
+    "note": "Note",
+    "noteHint": "Optional. Anything that will help you remember it later.",
+    "partner": "Partner",
+    "paidFrom": "Paid from",
+    "paidBackTo": "Paid back to",
+    "chooseSource": "Choose who paid",
+    "sourceWallet": "The shared wallet",
+    "sourcePartner": "{name}, personally",
+    "sourceAdvance": "The instructor’s advance ({amount} left)",
+    "advanceHint": "Choose the advance if the instructor bought this with the advance money.",
+    "category": "What was it for?",
+    "categoryHint": "A few words, for example: venue, materials, catering.",
+    "categories": {
+      "venue": "Venue rent",
+      "materials": "Materials",
+      "catering": "Catering",
+      "advertising": "Advertising",
+      "transport": "Transport",
+      "printing": "Printing"
+    },
+    "save": "Save"
+  },
+  "capital": {
+    "contribution": {
+      "trigger": "Add contribution",
+      "title": "Add a capital contribution",
+      "description": "Money a partner puts into the shared wallet.",
+      "done": "Contribution saved."
+    },
+    "withdrawal": {
+      "trigger": "Withdrawal",
+      "title": "Record a withdrawal",
+      "description": "Money a partner takes out of the shared wallet.",
+      "done": "Withdrawal saved."
+    }
+  },
+  "expense": {
+    "trigger": "Add expense",
+    "title": "Add a workshop expense",
+    "description": "Something this workshop needed, like the venue, materials or catering.",
+    "generalTrigger": "General expense",
+    "generalTitle": "Add a general expense",
+    "generalDescription": "A cost of the business that belongs to no single workshop, like the website or accounting.",
+    "done": "Expense saved."
+  },
+  "advance": {
+    "paid": {
+      "trigger": "Advance paid",
+      "title": "Record an advance paid",
+      "description": "Money paid to the instructor before the workshop. It is set off against their fee when the workshop is closed.",
+      "done": "Advance saved."
+    },
+    "returned": {
+      "trigger": "Advance returned",
+      "title": "Record a returned advance",
+      "description": "Money the instructor paid back. They hold {amount} now.",
+      "done": "Saved. Thank you."
+    }
+  },
+  "pay": {
+    "trigger": "Pay instructor",
+    "title": "Pay the instructor",
+    "description": "{name} is still owed {amount} for this workshop.",
+    "submit": "Save payment",
+    "done": "Payment saved."
+  },
+  "reverse": {
+    "action": "Reverse",
+    "title": "Reverse this entry?",
+    "description": "“{what}” stays in the history, and a correction entry cancels its amounts. Use this for mistakes, then record the right entry again.",
+    "confirm": "Reverse entry",
+    "done": "Entry reversed."
+  },
+  "range": {
+    "label": "Dates",
+    "allDates": "All dates",
+    "clear": "Show all dates",
+    "thisMonth": "This month",
+    "lastMonth": "Last month",
+    "thisQuarter": "This quarter",
+    "thisYear": "This year",
+    "lastYear": "Last year"
+  },
+  "partners": {
+    "title": "Partners",
+    "description": "Each partner’s share of the profit, and their capital account.",
+    "sharesWarning": {
+      "title": "The shares don’t add up to 100%.",
+      "description": "Workshops can’t be closed until they do. Fix them below."
+    },
+    "empty": {
+      "title": "No partners yet",
+      "description": "Partners are the super admins. Add the first one with the setup command."
+    },
+    "card": {
+      "share": "share",
+      "inactive": "No longer active",
+      "contributions": "Put in",
+      "withdrawals": "Taken out",
+      "paidForBusiness": "Paid personally for the business",
+      "profitShares": "Share of workshop results",
+      "capital": "Capital",
+      "openShare": "Part of the result not shared out yet",
+      "equity": "If settled today"
+    },
+    "shares": {
+      "title": "Profit shares",
+      "description": "How the result of each workshop is shared when it is closed. Workshops closed earlier keep the shares they were closed with.",
+      "total": "Together: {total}. All good.",
+      "missing": "{rest} still to share.",
+      "tooMuch": "{rest} too much.",
+      "unreadable": "Please write each share as a number, for example 33.33.",
+      "splitEqually": "Split equally",
+      "save": "Save shares",
+      "done": "Shares saved."
+    },
+    "explain": {
+      "title": "How this works",
+      "capital": "A partner’s capital grows with the money they put in, the costs they pay personally and their share of each closed workshop. It goes down with what they take out.",
+      "open": "Workshops that are not closed yet and general expenses are not shared out yet. This is each partner’s part of them, by today’s shares:",
+      "openLabel": "Result not shared out yet",
+      "settled": "“If settled today” is the capital plus that part: what each partner would get if the business settled up today.",
+      "statement": "See a partner’s full statement"
+    },
+    "sumError": "The shares must add up to exactly 100%.",
+    "partnerGone": "One of these people is no longer an active admin. Please reload the page."
+  },
+  "ledger": {
+    "title": "Transactions",
+    "description": "Every movement of money, in double entry. Nothing is ever edited or deleted: mistakes are reversed.",
+    "search": "Search descriptions and workshops…",
+    "details": "Show the debit and credit lines",
+    "wallet": "wallet",
+    "reversed": "Reversed",
+    "correction": "Correction",
+    "recordedBy": "Recorded by {name} on {date}",
+    "recordedAuto": "Recorded automatically on {date}",
+    "openWorkshop": "Open the workshop’s finances",
+    "showing": "{from}–{to} of {total}",
+    "noResults": "Nothing matches",
+    "noResultsHint": "Try other dates, a different search, or clear the filters.",
+    "empty": {
+      "title": "No transactions yet",
+      "description": "Contributions, expenses and workshop payments will appear here as you record them."
+    }
+  },
+  "reports": {
+    "title": "Reports",
+    "description": "Profit and loss by period, workshop and instructor, and each partner’s statement.",
+    "exportCsv": "Export CSV",
+    "print": "Print or PDF",
+    "groupBy": "Group by",
+    "groups": { "month": "Month", "quarter": "Quarter", "year": "Year" },
+    "tabs": {
+      "pnl": "Profit and loss",
+      "workshops": "By workshop",
+      "instructors": "By instructor",
+      "partner": "Partner statement"
+    },
+    "quarter": "Q{quarter} {year}",
+    "costs": "Costs",
+    "margin": "Margin",
+    "change": "Change in the period",
+    "openingOn": "Balance on {date}",
+    "closingOn": "Balance on {date}",
+    "pnlNote": "Entries count on the day they happened. The closing entries, which only pass a workshop’s result to the partners, are left out.",
+    "partnerNote": "Positive amounts add to the partner’s capital; negative ones (withdrawals, a share of a loss) reduce it.",
+    "empty": {
+      "title": "Nothing in these dates",
+      "description": "Choose other dates to see the figures."
+    }
+  },
+  "finances": {
+    "metaTitle": "Finances · {title}",
+    "print": "Print or PDF",
+    "registrations": "Registrations",
+    "registrationsHint": "Paid places.",
+    "registrationsPending": "{count, plural, one {# more waiting for payment} other {# more waiting for payment}}",
+    "finalNumber": "Final number at the go decision: {count}",
+    "revenueHint": "Paid registrations, minus refunds.",
+    "revenueInBooks": "{amount} of it is in the books so far.",
+    "feeEstimate": "Instructor fee (estimate)",
+    "fee": {
+      "fixed": "Fixed fee from the contract.",
+      "perParticipant": "{count} participants × {amount}",
+      "cancelled": "No fee: the workshop was cancelled.",
+      "noContract": "No valid contract yet."
+    },
+    "expensesCount": "{count, plural, =0 {No expenses yet.} one {# expense} other {# expenses}}",
+    "advanceHeld": "Advance with the instructor",
+    "advanceAgreed": "Agreed in the contract: {amount}",
+    "noAdvanceAgreed": "No advance in the contract.",
+    "projectedNet": "Expected net profit",
+    "projectedHint": "If the workshop closed with these figures.",
+    "paidBy": "paid by {name}",
+    "fromWallet": "from the wallet",
+    "fromAdvance": "from the instructor’s advance",
+    "expenses": {
+      "title": "Expenses",
+      "description": "Everything this workshop cost, and who paid for it.",
+      "empty": "No expenses yet."
+    },
+    "advance": {
+      "title": "Instructor advance",
+      "description": "Paid before the workshop and set off against the fee at closing. Whatever is left must come back, or be recorded as an expense paid from it.",
+      "empty": "No advance paid.",
+      "paid": "Advance paid",
+      "returned": "Advance returned"
+    },
+    "split": {
+      "title": "Each partner’s share",
+      "description": "Of the expected net profit, by today’s shares."
+    },
+    "settlement": {
+      "title": "Settlement with {name}",
+      "advanceUsed": "Set off from the advance",
+      "paid": "Paid since closing",
+      "owed": "Still to pay",
+      "toPay": "Pay the instructor when you can, then record it here.",
+      "settled": "The instructor is fully paid."
+    },
+    "closed": {
+      "title": "Closed on {date}.",
+      "description": "These figures are final and can’t change any more.",
+      "participants": "{count, plural, =0 {No participants} one {# participant} other {# participants}}",
+      "nothingShared": "There was nothing to share.",
+      "entries": "Expenses and advance"
+    }
+  },
+  "errors": {
+    "workshopGone": "We couldn’t find this workshop. It may have been removed.",
+    "workshopClosed": "This workshop is already closed, so its figures can’t change any more.",
+    "partnerGone": "We couldn’t find this partner. Please reload the page and try again.",
+    "partnerInactive": "This person is no longer an active partner. Please choose someone else.",
+    "moreThanAdvance": "That is more than the advance the instructor still holds.",
+    "advanceNotNow": "An advance can only be paid for a workshop that is still going ahead.",
+    "moreThanOwed": "That is more than the instructor is still owed for this workshop.",
+    "nothingToPay": "This registration has nothing to pay.",
+    "alreadyPaid": "This registration is already paid.",
+    "moreThanPaid": "That is more than was paid for this registration and not yet refunded.",
+    "registrationGone": "We couldn’t find this registration. It may have been removed.",
+    "entryGone": "We couldn’t find this entry. Please reload the page.",
+    "cannotReverseReversal": "This entry is itself a correction, so it can’t be reversed. If needed, record the original again.",
+    "closingIsFinal": "Closing entries are final and can’t be reversed.",
+    "alreadyReversed": "This entry has already been reversed.",
+    "reverseLaterFirst": "Later entries depend on this one. Please reverse those first."
+  },
+  "validation": {
+    "amountPositive": "Please enter an amount above zero.",
+    "amountTooBig": "This amount is too large. Please check it.",
+    "date": "Please choose a date.",
+    "notInFuture": "The date can’t be in the future.",
+    "chooseSource": "Please choose who paid.",
+    "choosePartner": "Please choose a partner."
+  },
+  "close": {
+    "panelTitle": "Close the workshop",
+    "panelDescription": "Closing locks the figures, sets off the advance against the fee and shares the result between the partners.",
+    "ready": "Everything is ready.",
+    "trigger": "Close workshop…",
+    "title": "Close “{title}”?",
+    "description": "These are the final figures. Once closed, they are locked and can’t be changed.",
+    "profitTo": "Profit to the partners",
+    "lossTo": "Loss shared by the partners",
+    "instructorWithAdvance": "The instructor’s advance of {advance} is set off against the fee. Still to pay them: {owed}.",
+    "instructorOwed": "Still to pay the instructor: {owed}.",
+    "confirm": "Close and lock",
+    "done": "Workshop closed. The figures are locked.",
+    "fixShares": "Fix the shares",
+    "changed": "The figures changed while you were looking. Please check the new figures and close again.",
+    "issues": {
+      "closed": "This workshop is already closed.",
+      "notClosable": "A workshop can be closed once it is confirmed and has taken place, or when it is cancelled.",
+      "notEnded": "The workshop hasn’t finished yet. You can close it after it ends.",
+      "noContract": "This workshop has no valid contract, so the instructor’s fee is unknown.",
+      "revenueMismatch": "Some payments or refunds of this workshop aren’t in the books yet.",
+      "advanceTooBig": "The instructor still holds more advance than their fee. Record what they returned, or what they spent on the workshop, first.",
+      "sharesNot100": "The partners’ shares don’t add up to 100%."
+    }
+  }
+}

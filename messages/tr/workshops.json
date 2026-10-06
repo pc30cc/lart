@@ -1,1 +1,405 @@
-{}
+{
+  "title": "Atölyeler",
+  "description": "Atölyeleri planlayın, sözleşmeleri gönderin ve her atölyeyi imzadan galeriye kadar takip edin.",
+  "new": "Yeni atölye",
+  "newTitle": "Yeni atölye",
+  "newDescription": "Atölye bilgilerini bir kez girin. Kaydettiğinizde sözleşme bu bilgilerden hazırlanır ve eğitmene e-postayla gönderilir.",
+  "editTitle": "“{title}” atölyesini düzenle",
+  "editDescription": "Bağlantı simgesiyle işaretli alanlardaki değişiklikler sözleşmeyi de değiştirir.",
+  "backToList": "Tüm atölyeler",
+  "backToWorkshop": "Atölyeye dön",
+  "views": {
+    "label": "Atölye listeleri",
+    "upcoming": "Yaklaşanlar",
+    "awaiting_signature": "İmza bekleyenler",
+    "published": "Kayda açık",
+    "confirmed": "Kesinleşenler",
+    "cancelled": "İptal edilenler",
+    "closed": "Kapananlar",
+    "all": "Tümü"
+  },
+  "status": {
+    "awaiting_signature": "İmza bekliyor",
+    "published": "Kayda açık",
+    "confirmed": "Kesinleşti",
+    "cancelled": "İptal edildi",
+    "closed": "Kapandı"
+  },
+  "contractStatus": {
+    "sent": "İmza bekliyor",
+    "signed": "İmzalandı",
+    "void": "Geçersiz"
+  },
+  "tabs": {
+    "label": "Atölye bölümleri",
+    "overview": "Genel bakış",
+    "contract": "Sözleşme",
+    "registrations": "Kayıtlar",
+    "gallery": "Galeri",
+    "finances": "Finans"
+  },
+  "table": {
+    "workshop": "Atölye",
+    "date": "Tarih",
+    "instructor": "Eğitmen",
+    "fill": "Kayıtlı",
+    "price": "Fiyat",
+    "status": "Durum",
+    "searchPlaceholder": "Ad, eğitmen ya da yere göre arayın…",
+    "fillValue": "{confirmed} / {max}"
+  },
+  "empty": {
+    "first": {
+      "title": "Henüz atölye yok",
+      "description": "İlk atölyenizi oluşturun. Sözleşmeyi biz hazırlayıp eğitmene e-postayla göndereceğiz."
+    },
+    "views": {
+      "upcoming": { "title": "Yaklaşan atölye yok", "description": "Şu anda yaklaşan bir atölye yok. Bir sonrakini planlamaya ne dersiniz?" },
+      "awaiting_signature": { "title": "İmza bekleyen sözleşme yok", "description": "Tüm eğitmenler sözleşmelerini imzaladı. Harika!" },
+      "published": { "title": "Kayda açık atölye yok", "description": "Eğitmen sözleşmeyi imzaladığında atölye burada görünür." },
+      "confirmed": { "title": "Kesinleşen atölye yok", "description": "Karar zamanında onayladığınız atölyeler burada görünür." },
+      "cancelled": { "title": "İptal edilen atölye yok", "description": "Güzel haber: Hiçbir atölye iptal edilmedi." },
+      "closed": { "title": "Henüz kapanan atölye yok", "description": "Finans sayfasından kapatılan atölyeler burada görünür." },
+      "all": { "title": "Atölye yok", "description": "Başlamak için ilk atölyenizi oluşturun." }
+    }
+  },
+  "prerequisites": {
+    "title": "Önce birkaç hazırlık",
+    "description": "Her atölyenin bir kategorisi, bir eğitmeni ve bir sözleşme metni olmalı. Bunlar hazır olduğunda atölye oluşturabilirsiniz.",
+    "category": "En az bir kategori ekleyin",
+    "instructor": "En az bir eğitmen ekleyin",
+    "contract": "Varsayılan sözleşme metnini belirleyin",
+    "go": "Hazırla",
+    "done": "tamamlandı",
+    "todo": "yapılacak"
+  },
+  "form": {
+    "lockedTitle": "Sözleşme koşulları artık değiştirilemez",
+    "lockedDescription": "Bu atölye iptal edildi ya da kapandı; bu yüzden tarih, yer, kontenjan ve ücret olduğu gibi kalır. Metinleri ve fotoğrafları yine de düzenleyebilirsiniz.",
+    "createAndSend": "Oluştur ve sözleşmeyi gönder",
+    "basics": {
+      "title": "Atölye",
+      "description": "Her dildeki adı, kategorisi ve kimin vereceği."
+    },
+    "when": {
+      "title": "Tarih ve saat",
+      "description": "Ne zaman yapılacağı, kayıtların ne zamana kadar açık kalacağı ve yapılıp yapılmayacağına ne zaman karar vereceğiniz."
+    },
+    "where": {
+      "title": "Yer ve katılımcılar",
+      "description": "Nerede yapılacağı, kimler için olduğu ve kaç kişinin katılabileceği."
+    },
+    "price": {
+      "title": "Fiyat ve koşullar",
+      "description": "Bir kişilik kaydın ücreti ve katılımcıların kabul edeceği kayıt koşulları."
+    },
+    "about": {
+      "title": "Atölye hakkında",
+      "description": "Ziyaretçilerin atölye sayfasında okuyacağı bilgiler. Kısa ve sıcak cümleler en iyisi."
+    },
+    "photos": {
+      "title": "Fotoğraflar",
+      "description": "Bir kapak fotoğrafı ve bu atölyede yapılan işlerden birkaç örnek."
+    },
+    "contract": {
+      "title": "Eğitmen sözleşmesi",
+      "description": "Eğitmene nasıl ödeme yapılacağı. Bu bilgiler, atölye bilgileriyle birlikte sözleşmede yer alır.",
+      "markHint": "Bu işareti taşıyan alanlar sözleşmede de yer alır.",
+      "mark": "Sözleşmede de yer alır"
+    },
+    "reissue": {
+      "title": "Bu değişiklikler sözleşmeyi günceller",
+      "sent": "Sözleşmenin {version}. sürümü henüz imzalanmadı. Kaydettiğinizde yerine yeni bir sürüm hazırlanır ve eğitmene yeniden e-postayla gönderilir.",
+      "signed": "Sözleşmenin {version}. sürümü zaten imzalandı. Kaydettiğinizde yerine yeni bir sürüm hazırlanır ve eğitmen yeniden imzalayana kadar atölye sitede görünmez.",
+      "confirmTitle": "Yeni sözleşme gönderilsin mi?",
+      "confirmDescription": "Mevcut sözleşmenin yerine {version}. sürüm hazırlanıp {name} adlı eğitmene e-postayla gönderilecek. İmzalanana kadar atölye imza bekler ve sitede görünmez. Kayıt yaptıranların yerleri korunur.",
+      "confirm": "Evet, kaydet ve gönder"
+    }
+  },
+  "fields": {
+    "title": "Atölye adı",
+    "titlePlaceholder": "ör. Soya mumu yapımı",
+    "category": "Kategori",
+    "categoryPlaceholder": "Bir kategori seçin",
+    "instructor": "Eğitmen",
+    "instructorPlaceholder": "Bir eğitmen seçin",
+    "instructorHint": "Sözleşme bu eğitmene e-postayla gönderilir.",
+    "slug": "Sayfa adresi",
+    "slugHint": "Atölye bağlantısının bir parçasıdır ve Türkçe addan oluşturulur. Yalnızca gerekirse değiştirin.",
+    "dateTime": "Tarih ve saat",
+    "registrationDeadline": "Son kayıt zamanı",
+    "registrationDeadlineHint": "Kayıtlar bu saatte kendiliğinden kapanır",
+    "decisionAt": "Karar zamanı",
+    "decisionAtHint": "Bu saatte kayıt sayısını size e-postayla bildiririz; atölyenin yapılıp yapılmayacağına o zaman karar verirsiniz",
+    "venue": "Yer",
+    "venuePlaceholder": "ör. Moda Sanat Evi, Kadıköy",
+    "ageGroup": "Kimler için?",
+    "adults": "Yetişkinler",
+    "adultsHint": "Yetişkinlere yönelik.",
+    "children": "Çocuklar",
+    "childrenHint": "Belirli bir yaş aralığındaki çocuklar için.",
+    "ageMin": "En küçük yaş",
+    "ageMax": "En büyük yaş",
+    "minCapacity": "En az katılımcı",
+    "maxCapacity": "En fazla katılımcı",
+    "price": "Kişi başı fiyat",
+    "priceHint": "Bir kişilik kayıt için, Türk lirası olarak.",
+    "priceLocked": "Bu fiyattan {count, plural, one {# kişi} other {# kişi}} kayıt yaptırdı, bu yüzden fiyat değiştirilemez.",
+    "terms": "Kayıt koşulları",
+    "termsHint": "Katılımcılar kayıt olurken bu koşulları kabul eder.",
+    "termsDefault": "Varsayılan koşullar",
+    "intro": "Kısa tanıtım",
+    "introPlaceholder": "Katılımcılar ne yapacak ya da ne öğrenecek?",
+    "includes": "Fiyata dahil olanlar",
+    "includesPlaceholder": "Malzemeler, araç gereçler, ikramlar…",
+    "bringNothing": "Bir şey getirmeye gerek yok",
+    "bringNothingHint": "Katılımcıların yanlarında bir şey getirmesi gerekmiyor.",
+    "bring": "Yanınızda getirin",
+    "bringPlaceholder": "ör. Bir önlük ve küçük bir havlu",
+    "bringHint": "Hatırlatma e-postasında da gönderilir.",
+    "experience": "Ön deneyim gerekli",
+    "experienceHint": "Katılımcıların önceden bir şey bilmesi gerekiyorsa açın.",
+    "experienceNote": "Ne bilmeleri gerekiyor?",
+    "experienceNotePlaceholder": "ör. Temel örgü ilmekleri",
+    "notes": "Ek notlar",
+    "notesHint": "Yalnızca yukarıdaki alanlara sığmayan bilgiler için.",
+    "cover": "Kapak fotoğrafı",
+    "coverHint": "Atölye sayfasının üstünde ve listelerde görünür. Yatay bir fotoğraf en iyi sonucu verir.",
+    "samples": "Örnek çalışmalar",
+    "samplesHint": "Bu atölyede yapılan işlerden en fazla 12 fotoğraf.",
+    "feeType": "Eğitmen ücreti nasıl ödenecek?",
+    "feeTypes": {
+      "per_participant": "Katılımcı başına",
+      "per_participantHint": "Her katılımcı için bir tutar; sayı, karar zamanında kesinleşir.",
+      "fixed": "Atölye için sabit",
+      "fixedHint": "Katılımcı sayısı ne olursa olsun, atölyenin tamamı için tek bir tutar."
+    },
+    "feeAmountPerParticipant": "Katılımcı başına tutar",
+    "feeAmountFixed": "Atölyenin tamamı için tutar",
+    "feeAtFullCapacity": "Atölye tamamen dolarsa toplam {amount} olur.",
+    "hasAdvance": "Ön ödeme",
+    "hasAdvanceHint": "Ücretin bir kısmı atölyeden önce ödenir ve hesap kapatılırken düşülür.",
+    "advanceAmount": "Ön ödeme tutarı",
+    "advanceMax": "En fazla {amount}."
+  },
+  "validation": {
+    "chooseCategory": "Lütfen bir kategori seçin.",
+    "chooseInstructor": "Lütfen bir eğitmen seçin.",
+    "maxBelowMin": "En fazla katılımcı sayısı, en az sayıdan küçük olamaz.",
+    "deadlineBeforeStart": "Kayıtlar atölye başlamadan önce kapanmalı.",
+    "decisionBeforeStart": "Karar zamanı, atölye başlamadan önce olmalı.",
+    "ageRange": "Üst yaş, alt yaştan küçük olamaz.",
+    "advanceRequired": "Lütfen ön ödeme tutarını girin ya da ön ödemeyi kapatın.",
+    "advanceTooBig": "Ön ödeme toplam ücreti geçemez (katılımcı başına ücrette: tutar × en fazla katılımcı).",
+    "startInFuture": "Lütfen ileri bir tarih ve saat seçin."
+  },
+  "toast": {
+    "created": "Atölye oluşturuldu. Sözleşme e-postayla gönderildi: {name}",
+    "createdNoEmail": "Atölye oluşturuldu ama sözleşme e-postayla gönderilemedi. Sözleşme sekmesinden yeniden gönderebilirsiniz.",
+    "reissued": "Değişiklikler kaydedildi. Sözleşmenin {version}. sürümü e-postayla gönderildi: {name}",
+    "reissuedNoEmail": "Değişiklikler kaydedildi ve sözleşmenin {version}. sürümü hazır, ama e-postayla gönderilemedi. Sözleşme sekmesinden yeniden gönderebilirsiniz.",
+    "updated": "Değişiklikler kaydedildi."
+  },
+  "errors": {
+    "slugTaken": "Bu sayfa adresini başka bir atölye kullanıyor. Lütfen farklı bir adres seçin.",
+    "choiceGone": "Seçtiğiniz seçeneklerden biri artık yok. Lütfen yeniden seçin.",
+    "noContractTemplate": "Henüz varsayılan bir sözleşme metni yok. Lütfen önce Şablonlar bölümünden belirleyin.",
+    "instructorUnavailable": "Bu eğitmen aktif değil. Lütfen başka bir eğitmen seçin.",
+    "notFound": "Bu atölye artık yok.",
+    "contractLocked": "Bu atölye iptal edildi ya da kapandı; bu yüzden tarihi, yeri, kontenjanı, eğitmeni ve ücreti değiştirilemez.",
+    "priceLocked": "Bu fiyattan kayıt yaptıranlar var, bu yüzden fiyat değiştirilemez.",
+    "capacityBelowRegistrations": "Şimdiden {count, plural, one {# kişi} other {# kişi}} kayıt yaptırdı; en fazla katılımcı sayısı bundan az olamaz.",
+    "cannotConfirm": "Yalnızca kayda açık bir atölye onaylanabilir.",
+    "alreadyStarted": "Bu atölye başladı, artık onaylanamaz.",
+    "cannotCancel": "Bu atölye zaten iptal edildi ya da kapandı.",
+    "galleryClosedOnly": "Fotoğraf ve videolar, atölye kapandıktan sonra eklenebilir.",
+    "mediaInUse": "Bu dosyalardan biri başka bir yerde kullanılıyor. Lütfen yeniden yükleyin."
+  },
+  "overview": {
+    "edit": "Düzenle",
+    "details": "Bilgiler",
+    "when": "Ne zaman",
+    "decisionNotified": "Hatırlatma gönderildi: {date}",
+    "childrenRange": "Çocuklar, {min}–{max} yaş",
+    "capacity": "Katılımcılar",
+    "capacityRange": "{min}–{max} kişi",
+    "about": "Hakkında",
+    "notWritten": "Henüz yazılmadı",
+    "experienceYes": "Evet",
+    "experienceNo": "Hayır, yeni başlayanlar da katılabilir",
+    "participants": "Kayıtlı",
+    "minimum": "{count, plural, one {En az # kişi gerekiyor} other {En az # kişi gerekiyor}}",
+    "pending": "{count, plural, one {# kişi daha ödeme yapıyor} other {# kişi daha ödeme yapıyor}}",
+    "final": "{count, plural, one {Kesin sayı: # katılımcı} other {Kesin sayı: # katılımcı}}",
+    "seeRegistrations": "Kayıtları gör",
+    "contract": "Sözleşme",
+    "contractVersion": "{version}. sürüm",
+    "noAdvance": "Yok",
+    "noContract": "Henüz sözleşme yok.",
+    "openContract": "Sözleşmeyi aç",
+    "instructor": "Eğitmen",
+    "privateHint": "Gizli bilgiler; yalnızca yöneticiler görür.",
+    "photos": "Fotoğraflar",
+    "noCover": "Henüz kapak fotoğrafı yok"
+  },
+  "next": {
+    "viewContract": "Sözleşmeyi gör",
+    "awaiting": {
+      "title": "İmza bekleniyor: {name}",
+      "text": "Sözleşmenin {version}. sürümü {date} tarihinde e-postayla gönderildi. İmzalandığı anda atölye sitede yayına girer.",
+      "noContract": "İmzalanacak bir sözleşme yok. Yenisini göndermek için atölyeyi düzenleyip kaydedin."
+    },
+    "published": {
+      "title": "Kayıtlar açık",
+      "dueTitle": "Karar zamanı geldi",
+      "text": "Son kayıt: {deadline}. Karar zamanı: {decision}. {confirmed, plural, =0 {Henüz kimse kayıt yaptırmadı} one {Şu ana kadar # kişi kayıt yaptırdı} other {Şu ana kadar # kişi kayıt yaptırdı}}; en az {minimum} kişi gerekiyor."
+    },
+    "confirmed": {
+      "title": "Kesinleşti: atölye yapılıyor!",
+      "text": "{count, plural, one {# katılımcı} other {# katılımcı}} bekleniyor. Tarih: {date}."
+    },
+    "held": {
+      "title": "Atölyeyi kapatma zamanı",
+      "text": "Giderleri ekleyin ve atölyeyi finans sayfasından kapatın. Kapattığınızda rakamlar kilitlenir.",
+      "action": "Finansa git"
+    },
+    "cancelled": {
+      "title": "Bu atölye iptal edildi",
+      "text": "İptal tarihi: {date}. {count, plural, =0 {İptal edilecek kayıt yoktu.} one {# kayıt iptal edildi; ödeme yapıldıysa tutarın tamamı iade edilir.} other {# kayıt iptal edildi; ödeme yapan herkese tutarın tamamı iade edilir.}}"
+    },
+    "closed": {
+      "title": "Kapandı. Sıra fotoğraflarda!",
+      "titleDone": "Kapandı ve galeride",
+      "text": "Fotoğraf ve videoları ekleyin; atölye geçmiş atölyeler arasında yer alsın.",
+      "textDone": "Galeride {count, plural, one {# fotoğraf ya da video} other {# fotoğraf ve video}} var.",
+      "action": "Galeriyi aç"
+    }
+  },
+  "timeline": {
+    "label": "Atölyenin aşamaları",
+    "sent": "Sözleşme gönderildi",
+    "signed": "İmzalandı",
+    "decision": "Kesinleşti",
+    "held": "Yapıldı",
+    "closed": "Kapandı",
+    "gallery": "Galeri",
+    "done": "tamamlandı",
+    "current": "şu anki aşama",
+    "todo": "sırada",
+    "cancelled": "İptal edildi"
+  },
+  "lifecycle": {
+    "confirm": {
+      "trigger": "Atölyeyi onayla",
+      "title": "“{title}” onaylansın mı?",
+      "description": "{count, plural, =0 {Henüz kimse kayıt yaptırmadı.} one {# kişi kayıt yaptırdı.} other {# kişi kayıt yaptırdı.}} Bu sayı kesin katılımcı sayısı olur ve eğitmen ücreti buna göre hesaplanır.",
+      "belowMinimum": "Bu sayı, gereken en az {minimum} kişinin altında.",
+      "action": "Evet, yapılıyor",
+      "done": "Atölye onaylandı."
+    },
+    "cancel": {
+      "trigger": "Atölyeyi iptal et",
+      "title": "“{title}” iptal edilsin mi?",
+      "description": "{count, plural, =0 {Henüz kayıt yok.} one {# kayıt iptal edilecek.} other {# kayıt iptal edilecek.}} Ödeme yapan herkese tutarın tamamı iade edilir ve nazik bir e-posta gönderilir. Bu işlem geri alınamaz.",
+      "action": "Evet, iptal et",
+      "done": "Atölye iptal edildi."
+    },
+    "resend": {
+      "trigger": "Sözleşmeyi yeniden gönder",
+      "done": "Sözleşme yeniden e-postayla gönderildi."
+    }
+  },
+  "contractPage": {
+    "metaTitle": "Sözleşme · {title}",
+    "print": "Yazdır",
+    "preview": "Henüz imzalanmadı. Bu, eğitmenin şu anda göreceği metindir.",
+    "language": "Sözleşme dili",
+    "languages": { "fa": "فارسی", "tr": "Türkçe", "en": "English" },
+    "signedLine": "{name} tarafından {date} tarihinde elektronik olarak imzalandı.",
+    "none": {
+      "title": "Henüz sözleşme yok",
+      "description": "Atölye kaydedildiğinde sözleşme kendiliğinden hazırlanır."
+    },
+    "noText": {
+      "title": "Bu sürüm imzalanmadı",
+      "description": "Eğitmen imzalamadan önce geçersiz hale geldi (yeni bir sürüm gönderildi ya da atölye iptal edildi), bu yüzden gösterilecek imzalı bir metin yok."
+    },
+    "version": "{version}. sürüm",
+    "sentAt": "Gönderildi",
+    "signedAt": "İmzalandı",
+    "signedName": "Yazılan ad",
+    "signedLanguage": "Dil",
+    "signedIp": "IP adresi",
+    "signedDevice": "Cihaz",
+    "voidedAt": "Geçersiz oldu",
+    "fingerprint": "İmzalı metnin parmak izi (SHA-256)",
+    "history": "Tüm sürümler",
+    "howToChange": "Sözleşme, atölye bilgilerinden hazırlanır. Değiştirmek için atölyeyi düzenleyin; eğitmene yeni bir sürüm gönderilir."
+  },
+  "registrations": {
+    "metaTitle": "Kayıtlar · {title}",
+    "stats": {
+      "confirmed": "Ödendi",
+      "pending": "Ödeme bekliyor",
+      "cancelled": "İptal",
+      "photos": "Fotoğraf izni",
+      "videos": "Video izni"
+    },
+    "empty": {
+      "title": "Henüz kayıt yok",
+      "description": "Bu atölyeye kayıt yaptıranlar burada görünür.",
+      "awaiting": "Kayıtlar, eğitmen sözleşmeyi imzaladığında açılır."
+    },
+    "table": {
+      "participant": "Katılımcı",
+      "member": "Kaydı yapan",
+      "status": "Durum",
+      "consent": "Fotoğraf / video",
+      "paid": "Ödeme",
+      "registeredOn": "Kayıt: {date}",
+      "refund": "İade",
+      "noRefund": "İade yok",
+      "notPaid": "Henüz ödenmedi"
+    },
+    "status": {
+      "pending": "Ödeme bekliyor",
+      "confirmed": "Ödendi",
+      "cancelled": "İptal edildi"
+    },
+    "consent": {
+      "photoYes": "Fotoğrafları yayımlanabilir",
+      "photoNo": "Fotoğraf yok",
+      "videoYes": "Videoları yayımlanabilir",
+      "videoNo": "Video yok"
+    },
+    "readOnly": "Bir kaydı ya da iadeyi değiştirmek için Kayıtlar bölümünü kullanın."
+  },
+  "gallery": {
+    "metaTitle": "Galeri · {title}",
+    "title": "Fotoğraflar ve videolar",
+    "description": "Fotoğraflara filigran kendiliğinden eklenir. Sırayı değiştirmek için sürükleyin.",
+    "notYet": {
+      "title": "Galeri, atölye kapandıktan sonra açılır",
+      "description": "Önce atölyeyi finans sayfasından kapatın. Ardından fotoğraf ve videoları buraya ekleyin.",
+      "action": "Finansa git"
+    },
+    "cancelled": {
+      "title": "İptal edilen atölyenin galerisi olmaz",
+      "description": "Bu atölye yapılmadı, bu yüzden fotoğrafı ya da videosu yok."
+    },
+    "consent": {
+      "title": "Kimler tanınabilir?",
+      "description": "İnsanların tanınabildiği fotoğraf ve videoları yalnızca kayıt sırasında izin verdilerse yayımlayın.",
+      "nobody": "Ödemeli bir kayıtla katılan kimse olmadı.",
+      "summary": "{total} kişiden {photos} kişi fotoğrafa, {videos} kişi videoya izin verdi.",
+      "photoYes": "Fotoğraf: evet",
+      "photoNo": "Fotoğraf: hayır",
+      "videoYes": "Video: evet",
+      "videoNo": "Video: hayır"
+    },
+    "saving": "Kaydediliyor…",
+    "saved": "Tüm değişiklikler kaydedildi",
+    "notSaved": "Kaydedilemedi",
+    "retry": "Yeniden dene"
+  }
+}

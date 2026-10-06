@@ -1,1 +1,32 @@
-{}
+{
+  "document": {
+    "title": "Eğitmen sözleşmesi",
+    "subtitle": "{workshop_title} · Sürüm {version}",
+    "parties": "Taraflar",
+    "partiesText": "Bu sözleşme, aşağıda bilgileri yer alan atölye için {brand} ile eğitmen {instructor_name} (kimlik numarası: {instructor_id_number}) arasında yapılmıştır.",
+    "workshop": "Atölye bilgileri",
+    "workshopTitle": "Atölye: {workshop_title}",
+    "date": "Tarih: {date}, {weekday}",
+    "time": "Saat: {start_time} – {end_time} (İstanbul saati)",
+    "venue": "Yer: {venue}",
+    "capacity": "Katılımcı sayısı: en az {min_participants}, en fazla {max_participants}",
+    "decision": "Atölyenin yapılıp yapılmayacağına dair son karar zamanı: {decision_deadline}",
+    "fee": "Eğitmen ücreti",
+    "feeLine": "{kind, select, per_participant {Eğitmen, her katılımcı için {fee_amount} alır. Katılımcı sayısı olarak, atölyenin yapılmasına karar verildiğinde belirlenen kesin sayı esas alınır.} other {Eğitmen, katılımcı sayısından bağımsız olarak atölyenin tamamı için sabit {fee_amount} alır.}}",
+    "advance": "Ön ödeme",
+    "advanceLine": "{has, select, yes {Eğitmene {advance_amount} tutarında ön ödeme yapılır. Bu tutar, hesap kapatılırken ücretten düşülür.} other {Ön ödeme yapılmaz.}}",
+    "feeType": {
+      "per_participant": "katılımcı başına",
+      "fixed": "atölyenin tamamı için sabit"
+    }
+  },
+  "errors": {
+    "notFound": "Bu sözleşmeyi bulamadık. Lütfen e-postanızdaki ya da panelinizdeki bağlantıdan yeniden açın.",
+    "alreadySigned": "Bu sözleşme zaten imzalanmış. Teşekkür ederiz!",
+    "replaced": "Bu sözleşmenin daha yeni bir sürümü gönderildi. Lütfen en son sürümü imzalayın.",
+    "notSignable": "Bu sözleşme artık imzalanamıyor. Lütfen bizimle iletişime geçin.",
+    "nameRequired": "İmzalamak için lütfen adınızı ve soyadınızı yazın.",
+    "nothingToResend": "Şu anda imza bekleyen bir sözleşme yok.",
+    "emailFailed": "E-posta şu anda gönderilemedi. Lütfen e-posta ayarlarını kontrol edin ya da biraz sonra yeniden deneyin."
+  }
+}
