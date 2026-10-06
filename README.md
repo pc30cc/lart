@@ -1,70 +1,101 @@
 # Lart
 
-Lart is a professional landing website for arts and educational classes. Its
-main focus is a **workshop tour**: a series of workshops held in different
-cities and venues, which visitors can browse and register for.
+Lart is a professional landing website for arts and educational classes, with
+a focus on a **workshop tour**. Visitors browse the latest workshops, create an
+account, choose a class and register. A separate super-admin panel runs the
+business: classes, instructors, contracts, a shared partner wallet and full
+accounting.
 
 > Status: project brief. No code has been written yet.
 
-## Goals
+## Principles
 
-- A polished, fast, mobile-first public landing site that presents the
-  classes and the workshop tour and turns visitors into registrations.
-- An admin panel where the team manages all site content and registrations
-  without touching code.
-- PostgreSQL as the database.
-- A modern React-based stack chosen for performance, SEO and maintainability.
+- **Three languages everywhere**: Persian (RTL), Turkish and English. Every
+  menu, page, email and admin label is translated. The **default language can
+  be changed** from the admin panel in one setting.
+- **Best-possible SEO, always**: server rendering, per-language URLs
+  (`/fa`, `/tr`, `/en`) with `hreflang`, translated metadata and Open Graph,
+  structured data (`Course`, `Event`, `Person`, `Organization`), sitemap,
+  canonical URLs, fast Core Web Vitals and optimized images.
+- **A lean database**: only the tables and columns that are needed, no
+  duplicated data, no premature features.
+- **Premium, mobile-first design** with polished navigation.
 
 ## Public site
 
-- **Hero**: headline, call to action, featured upcoming workshop.
-- **Workshop tour**: list/timeline of tour stops (city, venue, dates, seats
-  left), each with a detail page.
-- **Classes and courses**: art and educational classes with category,
-  level, schedule, price and instructor.
-- **Instructors**: profiles with bio, photo and their classes.
-- **Gallery**: photos and videos from past workshops.
-- **Testimonials** and **FAQ**.
-- **Registration / booking** form for a class or tour stop, with email
-  confirmation.
-- **Contact** form and newsletter sign-up.
-- SEO (server rendering, metadata, Open Graph, sitemap), accessibility and
-  multilingual support (English and Persian, including RTL layout).
+- **Home page**: refined navigation menu, hero, and the **latest workshops**
+  and classes (a class appears here once its instructor contract is signed).
+- **Classes and workshops**: list and detail pages with instructor, schedule,
+  capacity, seats left and price.
+- **Instructors**: list with photo and biography, each with their classes.
+- **Gallery**, **FAQ**, **About**, **Contact**.
+- **Language switcher** (FA / TR / EN) on every page.
 
-## Admin panel
+## Members
 
-- Secure login with roles (admin, editor).
-- Dashboard: upcoming workshops, recent registrations, seats filled.
-- Create, edit and publish: workshops / tour stops, classes, instructors,
-  gallery media, testimonials, FAQ and page content.
-- Manage registrations: view, filter, change status, export to CSV.
-- View contact messages and newsletter subscribers.
-- Media uploads (images, video).
+- Sign up and log in (email and password; social login optional).
+- Choose a class and register for it.
+- Personal dashboard: my registrations and their status.
 
-## Proposed technology
+## Super-admin panel
+
+A completely separate application area with its **own login**, not shared with
+site members.
+
+- **Partners**: one to three super admins, who are also the business
+  partners.
+- **Content**: classes and workshops, instructors (photo, bio), gallery, FAQ,
+  pages, all in three languages.
+- **Members and registrations**: view, filter, change status, export.
+- **Instructor contracts**: when a course is created with an instructor, a
+  contract is generated automatically from a template with that course's
+  details (dates, sessions, fee or revenue share). The instructor signs it
+  electronically through a secure link. After signing, the class is published
+  on the home page.
+- **Settings**: default language, site details, SEO defaults.
+
+## Shared wallet and accounting
+
+- One **shared wallet** for the whole business.
+- Each partner can record **capital contributions** and the **expenses** they
+  paid on behalf of the partnership.
+- Income from class registrations and payouts to instructors go through the
+  same wallet.
+- Professional accounting built on a **double-entry ledger** (every
+  transaction balanced; entries are never edited, only reversed):
+  - wallet balance and transaction history,
+  - each partner's capital, expenses paid and **ownership share**,
+  - income and expense reports by period, class and instructor,
+  - profit and loss, and per-partner settlement,
+  - CSV / PDF export and an audit trail of who did what.
+
+## Technology
 
 | Layer | Choice |
 | --- | --- |
 | Framework | Next.js (App Router), React, TypeScript |
 | Styling / UI | Tailwind CSS, shadcn/ui, Framer Motion |
 | Database | PostgreSQL |
-| ORM / migrations | Drizzle ORM (or Prisma) |
-| Auth | Auth.js (NextAuth) with role-based access |
+| ORM / migrations | Drizzle ORM |
+| Auth | Auth.js; separate sessions for members and super admins, 2FA for admins |
+| i18n | next-intl (fa, tr, en; RTL for Persian) |
 | Validation / forms | Zod, React Hook Form |
-| Media storage | S3-compatible object storage |
+| Contracts | PDF generation and e-signature with a signed audit record |
+| Media | S3-compatible object storage, Next.js image optimization |
 | Email | Transactional email provider (e.g. Resend) |
-| i18n | next-intl (English, Persian with RTL) |
 | Testing | Vitest, Playwright |
 | Deployment | Docker (e.g. on Coolify) with managed PostgreSQL |
 
-## Core data model (draft)
+## Data model (draft, kept minimal)
 
-- `users` (admin accounts, role)
-- `instructors`
-- `categories`
-- `classes` (category, instructor, level, price, schedule)
-- `workshops` / `tour_stops` (city, venue, start/end date, capacity)
-- `registrations` (person, contact, class or tour stop, status)
-- `media` (gallery items)
-- `testimonials`, `faqs`, `pages`
-- `contact_messages`, `newsletter_subscribers`
+| Table | Purpose |
+| --- | --- |
+| `admins` | super admins / partners (separate login) |
+| `members` | site users |
+| `instructors` | photo, bio |
+| `courses` | class or workshop, instructor, dates, capacity, price, status |
+| `registrations` | member ↔ course, status |
+| `contracts` | course ↔ instructor, terms, signature, signed date |
+| `translations` | text for fa / tr / en, keyed by entity and field |
+| `ledger_entries` | double-entry wallet accounting (contributions, expenses, income, payouts) |
+| `media`, `faqs`, `settings` | gallery, FAQ, site settings incl. default language |
