@@ -1,21 +1,75 @@
 # Lart
 
-Lart is a professional landing website for arts and educational classes, with
-a focus on a **workshop tour**. Visitors browse the latest workshops, create an
-account, choose a class and register. A separate super-admin panel runs the
-business: classes, instructors, contracts, a shared partner wallet and full
-accounting.
+Lart is a professional website for **arts and educational workshops**.
+Visitors browse the latest workshops, create an account and register for a
+class. Instructors work in their own private panel, and a separate
+super-admin panel runs the business: workshops, instructors, contracts,
+course finances, a shared partner wallet and full accounting.
 
 > **Status:** project brief. No code has been written yet.
 
-## Design reference
+## Contents
+
+1. [Principles](#1-principles)
+2. [Design](#2-design)
+3. [Public site](#3-public-site)
+4. [Students](#4-students)
+5. [Instructors](#5-instructors)
+6. [Super-admin panel](#6-super-admin-panel)
+7. [Workshop lifecycle](#7-workshop-lifecycle)
+8. [Money: course finances, wallet and accounting](#8-money-course-finances-wallet-and-accounting)
+9. [Emails](#9-emails)
+10. [Media, CDN and watermark](#10-media-cdn-and-watermark)
+11. [Security](#11-security)
+12. [Technology](#12-technology)
+13. [Data model](#13-data-model)
+14. [Build order](#14-build-order)
+
+Related document: [instructor contract, fixed clauses](docs/CONTRACT_TEMPLATE.md).
+
+---
+
+## 1. Principles
+
+- **Security comes first, always.** Every feature is reviewed for security
+  before it ships ([Security](#11-security)).
+- **Minimal code.** No unnecessary code, dependencies or abstractions; the
+  simplest solution that is correct and secure wins.
+- **A lean database.** Only the tables and columns that are needed, no
+  duplicated data, no premature features. A value is entered once and used
+  everywhere it is needed.
+- **Simple and friendly for everyone.** Almost all students and instructors
+  are women, many of them not technical. Every screen must be simple, warm
+  and obvious:
+  - one clear action per screen, large buttons, short plain sentences,
+  - as few form fields and steps as possible,
+  - friendly messages that say what to do next, never technical errors,
+  - works perfectly on a phone.
+- **Three languages everywhere.** Persian (RTL), Turkish and English: every
+  menu, page, email and panel label. The **default language** is one
+  setting in the super-admin panel.
+- **Best-possible SEO, always.** Server rendering, per-language URLs
+  (`/fa`, `/tr`, `/en`) with `hreflang`, translated metadata and Open Graph,
+  structured data (`Course`, `Event`, `Person`, `Organization`), sitemap,
+  canonical URLs, fast Core Web Vitals and optimized images.
+- **Everything is editable, nothing is hard-coded.** Content, menus, terms,
+  contract text, emails and the brand name all come from the database.
+- **Brand name from settings.** The brand name is stored once and set in
+  the super-admin settings (per language if needed). Everywhere it appears
+  (terms, contracts, emails, pages, SEO titles, menus, footer) it is written
+  as `{brand}` and filled in automatically, so renaming the brand changes it
+  across the whole site at once.
+
+## 2. Design
+
+### Reference
 
 The look and feel follows the owner's previous project,
 **[throttlehaus.ca](https://throttlehaus.ca/)**: the same layout, the same
 premium feel and an animated (video) hero, rebuilt for Lart in three
-languages.
+languages. Premium, mobile-first, with polished navigation.
 
-## Typography
+### Typography
 
 All fonts are **self-hosted** (served from the site / CDN, never from Google
 Fonts or any third party), subset and preloaded for speed.
@@ -26,106 +80,74 @@ Fonts or any third party), subset and preloaded for speed.
 | Turkish | **Inter** | full Turkish set (ç ğ ı İ ö ş ü), excellent on screen |
 | English | **Inter** | same family as Turkish for a consistent look |
 
-## Simple and friendly for everyone
+### Swappable landing theme
 
-Almost all students and instructors are women, many of them not technical.
-Every screen they use must be **simple, warm and obvious**:
+The public site is built so its **theme can be replaced quickly**, for
+example when a new design reference is given:
 
-- one clear action per screen, large buttons, short plain sentences,
-- as few form fields and steps as possible,
-- friendly messages that say what to do next, never technical errors,
-- works perfectly on a phone.
+- **Data and logic are separate from design.** Content, courses, SEO and
+  forms live in a shared core; a theme only decides how they look.
+- A theme is one folder (`themes/<name>`) with its layout, sections and
+  design tokens (colours, fonts, spacing). The rest of the code never
+  changes when a theme is added.
+- Every home-page section (hero, latest workshops, instructors, past
+  workshops, ...) has a fixed data contract, so a new theme just implements
+  the same sections in a new style.
+- The active theme is chosen in the super-admin settings.
+- The instructor and super-admin panels keep their own design and are not
+  affected by a theme change.
 
-## Brand name from settings
+## 3. Public site
 
-The brand name is **never hard-coded**. It is stored once in the database
-and set in the super-admin settings (per language if needed). Everywhere it
-appears (terms, contracts, emails, pages, SEO titles, menus, footer,
-watermark text) it is written as `{brand}` and filled in automatically, so
-renaming the brand changes it across the whole site at once.
+| Page | Content |
+| --- | --- |
+| **Home** | refined menu, animated hero, **latest workshops**, instructors, past workshops |
+| **Workshops** | list and detail pages: instructor, date, time, venue, seats left, price, registration |
+| **Instructors** | photo, name and introduction, with their workshops |
+| **Past workshops** | elegant gallery of finished workshops (photos and videos) |
+| **About, FAQ, Contact** | editable pages |
 
-## Everything is editable
+- A **language switcher** (FA / TR / EN) on every page.
+- A workshop appears on the home page only after its instructor has signed
+  the contract.
 
-Nothing on the site is hard-coded. From the super-admin panel:
+### Editable from the super-admin panel
 
-- **Hero**: replace the moving hero video or image, headline, subtitle and
+- **Hero**: the moving hero video or image, headline, subtitle and
   call-to-action button, per language.
-- **Every page and section** (home, about, contact, FAQ, footer, menus) is
-  editable in FA / TR / EN, with its own SEO title and description.
-- Sections on the home page can be shown, hidden and reordered.
+- **Every page and section** (home, about, contact, FAQ, footer, menus) in
+  FA / TR / EN, each with its own SEO title and description.
+- Home-page sections can be shown, hidden and reordered.
 
-## Principles
+## 4. Students
 
-- **Security comes first, always.** Every feature is reviewed for security
-  before it ships. Details in [Security](#security).
-- **Minimal code.** No unnecessary code, dependencies or abstractions; the
-  simplest solution that is correct and secure wins.
-
-- **Three languages everywhere**: Persian (RTL), Turkish and English. Every
-  menu, page, email and admin label is translated. The **default language can
-  be changed** from the admin panel in one setting.
-- **Best-possible SEO, always**: server rendering, per-language URLs
-  (`/fa`, `/tr`, `/en`) with `hreflang`, translated metadata and Open Graph,
-  structured data (`Course`, `Event`, `Person`, `Organization`), sitemap,
-  canonical URLs, fast Core Web Vitals and optimized images.
-- **A lean database**: only the tables and columns that are needed, no
-  duplicated data, no premature features.
-- **Premium, mobile-first design** with polished navigation.
-
-## Public site
-
-- **Home page**: refined navigation menu, hero, and the **latest workshops**
-  and classes (a class appears here once its instructor contract is signed).
-- **Classes and workshops**: list and detail pages with instructor, schedule,
-  capacity, seats left and price.
-- **Instructors**: list with photo and biography, each with their classes.
-- **Gallery**, **FAQ**, **About**, **Contact**.
-- **Language switcher** (FA / TR / EN) on every page.
-
-## Shop (planned for a later phase)
-
-> Not part of the first release. Planned for a later phase.
-
-A built-in, lightweight, professional store inside the site, not a separate
-hosted platform, so members, the three languages, SEO and the shared wallet
-stay in one place:
-
-- Products with photos, variants (size, colour), price, stock and
-  descriptions in three languages.
-- Cart, checkout and order confirmation emails.
-- **Turkish payment gateways: iyzico and PayTR** (choose in admin settings);
-  the same gateways also take class registration payments.
-- Members see their orders in their dashboard.
-- Admin: products, categories, stock, orders and order status.
-- Shop sales go into the shared wallet and show up in the accounting
-  reports.
-
-## Students, instructors and admins
-
-Instructors and super admins each have their own panel and login.
-**Students have no panel**: everything happens on the public site itself.
-
-### Students (no panel)
+**Students have no panel.** Everything happens on the public site itself.
 
 - Sign up and log in right on the site (small account button in the menu).
-- Browse courses, choose a class and register on the course page.
-- The course page shows "You are registered" for classes they joined; the
-  account menu lists their classes. Nothing more.
+- Choose a workshop and register on its page.
+- The workshop page shows "You are registered" for workshops they joined;
+  the account menu lists their workshops. Nothing more.
 
-#### Terms and conditions at registration
+### Sign-up and email verification
 
-- Registering for a class requires ticking **"I have read and accept the
-  terms and conditions"**; registration is blocked until it is ticked.
-- Admins manage **terms templates** in the panel (three languages), one
-  marked as the **default**. Each course uses the default or a template
-  chosen for that course.
+- After signing up, the student goes **straight back to the site**; no
+  waiting.
+- A gentle, always-visible banner says **"Please confirm your email"**,
+  with a button to resend the email, until the email is verified.
+- Registering and paying for a workshop needs a verified email; the site
+  asks for it in plain words.
+
+### Registration terms
+
+- Registering requires ticking the terms checkbox; registration is blocked
+  until it is ticked.
+- Super admins manage **terms templates** (three languages); one is the
+  **default**, and each workshop uses the default or a template chosen for
+  it.
 - The accepted version and the time of acceptance are stored with the
   registration as proof.
 
-##### Default terms: registration and cancellation
-
-The default template (shown in three languages; `{brand}` is the site name
-from settings):
+#### Default terms: registration and cancellation
 
 > Please read the workshop details and the terms below before registering.
 >
@@ -146,11 +168,11 @@ from settings):
 > ☐ **I have read and accept the registration and cancellation terms.**
 > *(required to register)*
 
-The refund rules are applied automatically: when a participant cancels, the
-system calculates the refund (100 %, 50 % or 0 %) from the time left before
-the workshop starts, and the admin confirms it.
+**Automatic refunds:** when a participant cancels, the system calculates
+the refund (100 %, 50 % or 0 %) from the time left before the start, and an
+admin confirms it.
 
-##### Photo and video consent
+#### Photo and video consent
 
 > Photos and videos may be taken during the workshop. The choices below are
 > only about publishing **identifiable** images of the participant on the
@@ -167,223 +189,225 @@ the workshop starts, and the admin confirms it.
 Both choices are saved with the registration and shown to admins next to
 each participant, so the gallery team knows whose face may be published.
 
+## 5. Instructors
+
 ### Instructor panel
 
 - **No link to it anywhere on the site.** Instructors reach it only through
   a private address sent to them; the page is `noindex` and excluded from
   the sitemap.
-- Profile (photo, bio) in three languages.
-- My courses, participant lists and schedule.
-- My contracts: review and sign; my earnings per course.
+- Own login. After sign-up the instructor goes **straight into the panel**,
+  with the same "Please confirm your email" banner until verified.
+- Profile in three languages.
+- My workshops, participant lists and schedule.
+- My contracts: read and sign; my earnings per workshop.
 
-#### Instructor profile fields
+### Profile fields
 
-⭐ = required. 🔒 = private: used only for contracts and admins, never shown
-on the public site.
+⭐ = required. 🔒 = private: used only for contracts and by admins, never
+shown on the public site.
 
 | Field | Required | Visibility | Notes |
 | --- | :---: | --- | --- |
 | Official full name | ⭐ | 🔒 | exactly as on ID; used in contracts |
-| Display name (Turkish) | ⭐ | public | name shown on the Turkish site |
-| Display name (English) | ⭐ | public | name shown on the English site (and Persian site) |
+| Display name (Turkish) | ⭐ | public | shown on the Turkish site |
+| Display name (English) | ⭐ | public | shown on the English and Persian sites |
 | ID number | ⭐ | 🔒 | stored **encrypted**; used in contracts |
 | Mobile number | ⭐ | 🔒 | with country code |
 | Email | ⭐ | 🔒 | login and contract emails; must be verified |
-| Teaching field | ⭐ | public | e.g. painting, ceramics, calligraphy |
-| Short introduction | | public | a few sentences for the public page, three languages |
-| Teaching languages | | public | dropdown, multiple choice (Persian, Turkish, English, ...) |
+| Teaching field | ⭐ | public | e.g. painting, ceramics, candle making |
+| Short introduction | | public | a few sentences, three languages |
+| Teaching languages | | public | dropdown, multiple choice |
 | Instagram or website | | public | link |
-| Profile photo | | public | cropped square, optimized, sent to the CDN |
+| Profile photo | | public | cropped square, optimized, on the CDN |
 
 The form is one short, friendly page; the required fields come first.
 
-### Super-admin panel
+## 6. Super-admin panel
 
-Described below; it has its own separate login as well.
-
-## Super-admin panel
-
-A completely separate application area with its **own login**, not shared with
-site members or instructors.
-
-**A premium dashboard with beautiful charts**: clean cards, smooth animated
-charts and a dark / light theme:
-
-- revenue, expenses and net profit over time,
-- registrations per course and fill rate,
-- profit per course and per instructor,
-- wallet balance and each partner's capital and share,
-- upcoming courses at a glance.
+A completely separate application area with its **own login**, not shared
+with students or instructors.
 
 - **Partners**: one to three super admins, who are also the business
   partners.
-- **Content**: classes and workshops, instructors (photo, bio), gallery, FAQ,
-  pages, all in three languages.
-- **Members and registrations**: view, filter, change status, export.
-- **Instructor contracts**: when a course is created with an instructor, a
-  contract is generated automatically from a template with that course's
-  details (dates, sessions, fee or revenue share). The instructor signs it
-  electronically through a secure link. After signing, the class is published
-  on the home page.
-- **Settings**: default language, site details, SEO defaults, and the
-  **media CDN**: choose **Bunny CDN** (Bunny Storage) or **Cloudflare**
-  (R2 + Cloudflare CDN), with their keys. Every uploaded image **and video**
-  is stored as a plain file on the selected CDN and served from it (no
-  streaming service). The database stores only the file path.
 
-## Creating a course: contract first
+### Dashboard
 
-When a super admin creates a course, the **first step is the instructor
-contract**:
+A premium dashboard with beautiful, smooth animated charts, clean cards and
+a dark / light theme:
 
-1. Admin fills in the course details and picks the instructor and fee.
+- revenue, expenses and net profit over time,
+- registrations per workshop and fill rate,
+- profit per workshop and per instructor,
+- wallet balance and each partner's capital and share,
+- upcoming workshops at a glance.
+
+### Sections
+
+| Section | What it does |
+| --- | --- |
+| **Workshops** | create and manage workshops ([lifecycle](#7-workshop-lifecycle)), categories |
+| **Instructors** | profiles and contracts |
+| **Registrations** | view, filter, change status, refunds, export; photo / video consent per participant |
+| **Money** | course finances, shared wallet, accounting reports ([money](#8-money-course-finances-wallet-and-accounting)) |
+| **Content** | hero, pages, menus, home sections, FAQ, past-workshop galleries |
+| **Templates** | registration terms, contract text, emails |
+| **Settings** | brand name, default language, SEO defaults, active theme, CDN, watermark, payment gateway |
+
+## 7. Workshop lifecycle
+
+```
+1. Create workshop  →  2. Contract emailed  →  3. Instructor signs
+        →  4. Published, registration open  →  5. Go / no-go decision
+        →  6. Workshop held  →  7. Close workshop (final figures)
+        →  8. Photos and videos  →  Past workshops
+```
+
+1. A super admin fills in the workshop and contract fields.
 2. The contract is generated and **emailed to the instructor**.
-3. The instructor opens it in their panel and signs.
-4. Only then is the course published on the home page and open for
-   registration.
+3. The instructor reads and signs it in their panel.
+4. Only then is the workshop published on the home page and registration
+   opens. Registration closes automatically at the registration deadline.
+5. **Go / no-go decision**: at the decision time the admins are notified
+   with the number of registrations against the minimum. They confirm the
+   workshop or cancel it; on cancellation every participant gets a
+   friendly email and a full refund automatically.
+6. The workshop takes place. Admins record course expenses.
+7. An admin presses **Close workshop**: final figures are locked
+   ([course finances](#course-finances)).
+8. Admins upload photos and videos; the workshop moves to **Past
+   workshops**.
 
-### Workshop definition
+### Workshop fields
 
-What students see on the course page. Text fields are in three languages.
-Fields marked 🔗 are **shared with the contract**: entered once, used in both.
+Text fields are in three languages. Fields marked 🔗 are **shared with the
+contract**: entered once, used in both. Amounts are in **Turkish lira (₺)**.
 
 | Field | Input |
 | --- | --- |
 | Workshop name 🔗 | text |
 | Category | dropdown, managed by admins (e.g. candle making) |
-| Instructor | chosen from instructor profiles |
+| Instructor 🔗 | chosen from instructor profiles |
 | Date 🔗 | date picker; weekday shown automatically |
-| Start and end time 🔗 | time pickers |
+| Start and end time 🔗 | time pickers; end after start |
 | Venue 🔗 | text |
 | Age group | adults, or a children's age range (e.g. 7–12) |
-| Minimum and maximum capacity 🔗 | two numbers |
+| Minimum and maximum capacity 🔗 | two numbers; maximum ≥ minimum |
 | Price per person | number, ₺ |
-| Registration deadline | date and time; registration closes automatically |
-| Go / no-go decision time | date and time to check whether the minimum was reached |
+| Registration deadline | date and time |
+| Go / no-go decision time 🔗 | date and time to check the minimum was reached |
 | Short introduction | what will participants make or learn? |
 | What the price includes | materials, tools, refreshments, other |
 | What to bring | or "Nothing needed" |
 | Previous experience needed? | yes / no, with a short note |
-| Cover photo and sample work photos | images, sent to the CDN |
+| Cover photo and sample work photos | images, on the CDN |
+| Terms template | default or a specific one |
 | Additional notes | only for what does not fit above |
-
-**Go / no-go decision**: at the decision time the admins are notified with
-the number of registrations against the minimum. They either confirm the
-workshop or cancel it; on cancellation every registered participant gets a
-friendly email automatically.
 
 ### Contract fields
 
-Filled in by the super admin; the contract text is generated from them.
-Fields shared with the workshop definition (🔗) are not entered twice.
-All amounts are in **Turkish lira (₺)**.
-
-**Workshop**
-
-| Field | Input |
-| --- | --- |
-| Workshop title / subject | text |
-| Date | date picker; the **weekday is shown automatically** |
-| Start time | time picker |
-| End time | time picker (must be after start) |
-| Venue | text |
-| Minimum participants | number |
-| Maximum participants | number (≥ minimum); also the course capacity |
-
-**Fee and settlement**
+Besides the shared 🔗 fields above, the contract adds:
 
 | Field | Input |
 | --- | --- |
 | Instructor fee type | **per participant** or **fixed for the whole workshop** |
 | Agreed amount | number, ₺ (per person or total, depending on the type) |
-| Advance payment? | yes / no; if yes, the advance amount in ₺ (≤ total) |
+| Advance payment? | yes / no; if yes, the amount in ₺ (≤ total) |
 
-The fixed clauses of the contract (responsibilities, joint advertising,
-payments, settlement, cancellations, participant data) are in
-[docs/CONTRACT_TEMPLATE.md](docs/CONTRACT_TEMPLATE.md).
+The fixed clauses (responsibilities, joint advertising, payments,
+settlement, cancellations, participant data) are in
+[docs/CONTRACT_TEMPLATE.md](docs/CONTRACT_TEMPLATE.md). The contract text
+is an editable template in three languages; each signed contract keeps the
+exact text that was signed.
 
-The same values feed the course page and the course finances, so nothing is
-entered twice. An advance payment is recorded in the shared wallet and
-deducted from the final settlement when the course is closed.
+## 8. Money: course finances, wallet and accounting
 
-## Emails
+### Course finances
 
-- Sent with **Resend**.
-- **Beautiful branded templates** (React Email): logo, brand colours,
-  clean layout, readable on phones and in dark mode.
-- Written in **Turkish** by default (Persian and English versions use the
-  same templates).
-- Emails:
-  - **welcome** after sign-up, with an **email verification** button,
-  - contract ready to sign (instructor), contract signed (admins),
-  - class registration confirmed, class reminder,
-  - password reset.
+Every workshop has its own finances:
 
-## Sign-up and email verification
-
-Kept as easy as possible:
-
-- After signing up, a student goes **straight back to the site** and an
-  instructor **straight into their panel**; no waiting.
-- A gentle, always-visible banner says **"Please confirm your email"**
-  with a button to resend the email, until the email is verified.
-- Actions that need a verified email (for example registering and paying
-  for a class) ask for it in plain words.
-
-## Course finances and closing
-
-Every course has its own finances:
-
-- **Customer price**: the price shown on the public site.
-- **Instructor fee**, chosen per course: a fixed fee for the whole course,
-  or a fee per participant.
+- **Revenue**: registrations × price per person, minus refunds.
+- **Instructor fee**: from the contract, fixed or per participant.
 - **Course expenses** (venue, materials, catering, advertising, ...): any
   super admin can add them, with the partner who paid.
-- A live course summary: registrations, revenue, instructor fee, expenses.
+- **Advance payment** to the instructor, deducted at settlement.
+- A live summary while the workshop is running.
 
-When the course ends, an admin presses **Close course**. The system then
-locks the figures and shows exactly:
+When the workshop ends, an admin presses **Close workshop**. The figures
+are locked and the system shows exactly:
 
 - total revenue, instructor fee and every expense,
-- **net profit** of the course,
+- **net profit** of the workshop,
 - **each partner's share** of that profit,
 
-and posts the result to the shared wallet ledger.
+and posts the result to the shared wallet.
 
-### Past courses
-
-After closing, admins upload the course photos and videos. The course then
-moves to an elegant **Past courses** section (gallery with lightbox, photos
-and video, course story), which also helps SEO.
-
-
-#### Watermark
-
-Every gallery photo is **watermarked automatically on upload**, before it is
-sent to the CDN (the original is kept private for admins only). In the
-super-admin settings:
-
-- **Watermark logo** (PNG with transparency) upload.
-- **Position**: any of the nine positions (corners, edges, centre) or tiled.
-- **Size** (percentage of the photo width), **opacity** and **margin**.
-- Live preview on a sample photo before saving.
-
-## Shared wallet and accounting
+### Shared wallet and accounting
 
 - One **shared wallet** for the whole business.
-- Each partner can record **capital contributions** and the **expenses** they
-  paid on behalf of the partnership.
-- Income from class registrations and payouts to instructors go through the
-  same wallet.
-- Professional accounting built on a **double-entry ledger** (every
-  transaction balanced; entries are never edited, only reversed):
+- Each partner records their **capital contributions** and the
+  **expenses** they paid for the partnership.
+- Registration income, refunds and instructor payouts go through the same
+  wallet.
+- Professional accounting on a **double-entry ledger**: every transaction
+  balances; entries are never edited, only reversed.
+- Reports:
   - wallet balance and transaction history,
   - each partner's capital, expenses paid and **ownership share**,
-  - income and expense reports by period, class and instructor,
+  - income and expenses by period, workshop and instructor,
   - profit and loss, and per-partner settlement,
   - CSV / PDF export and an audit trail of who did what.
 
-## Security
+### Payments
+
+Online payments through the Turkish gateways **iyzico** and **PayTR**,
+chosen in the settings.
+
+## 9. Emails
+
+- Sent with **Resend**.
+- **Beautiful branded templates** (React Email): logo, brand colours, clean
+  layout, readable on phones and in dark mode.
+- **Turkish** by default; Persian and English use the same templates.
+
+| Email | To |
+| --- | --- |
+| Welcome + verify your email | student, instructor |
+| Contract ready to sign | instructor |
+| Contract signed | super admins |
+| Go / no-go decision due | super admins |
+| Registration confirmed | student |
+| Workshop reminder | student |
+| Workshop cancelled + refund | student |
+| Password reset | everyone |
+
+## 10. Media, CDN and watermark
+
+### CDN
+
+Chosen in the super-admin settings: **Bunny CDN** (Bunny Storage) or
+**Cloudflare** (R2 + Cloudflare CDN), with their keys. Every uploaded image
+**and video** is stored as a plain file on the selected CDN and served from
+it (no streaming service). The database stores only the file path.
+
+### Past workshops gallery
+
+After a workshop is closed, admins upload its photos and videos. It then
+appears in the **Past workshops** section: gallery with lightbox, photos,
+videos and the workshop story, which also helps SEO. Only participants who
+gave consent may be identifiable in published media.
+
+### Watermark
+
+Every gallery photo is **watermarked automatically on upload**, before it
+is sent to the CDN; the original stays private for admins. Settings:
+
+- watermark logo (PNG with transparency),
+- position: any of nine positions (corners, edges, centre) or tiled,
+- size (percentage of the photo width), opacity and margin,
+- live preview on a sample photo before saving.
+
+## 11. Security
 
 Security is the first requirement of every feature and is checked carefully
 before each release.
@@ -398,6 +422,8 @@ before each release.
   queries only (Drizzle), no raw SQL from user input.
 - **Web protections**: CSRF protection, strict Content Security Policy,
   secure HTTP-only SameSite cookies, HSTS and security headers.
+- **Personal data**: instructor ID numbers encrypted; private fields never
+  reach the public site.
 - **Uploads**: type and size checked, images re-encoded (removes hidden
   content and metadata), random file names, no executable files.
 - **Payments**: gateway callbacks verified by signature; amounts always
@@ -410,68 +436,61 @@ before each release.
 - **Review**: dependency vulnerability scanning and a security review of
   every change before deployment.
 
-## Swappable landing theme
-
-The public landing site is built so its **theme can be replaced quickly**,
-for example when a new design reference is given:
-
-- **Data and logic are separate from design.** Content, courses, SEO and
-  forms live in a shared core; a theme only decides how they look.
-- A theme is one folder (`themes/<name>`) with its layout, sections and
-  design tokens (colours, fonts, spacing). The rest of the code never
-  changes when a theme is added.
-- Every home-page section (hero, latest workshops, instructors, past
-  courses, ...) has a fixed data contract, so a new theme just implements
-  the same sections in a new style.
-- The active theme is chosen in the super-admin settings.
-- Admin, instructor and student panels keep their own design and are not
-  affected by a theme change.
-
-## Build order
-
-1. **Super-admin panel first**: database, admin login, courses,
-   instructors, contracts, course finances, shared wallet and accounting,
-   settings, charts dashboard.
-2. Instructor panel and student sign-up / registration on the site.
-3. Public landing site on top of the theme system (first theme after the
-   throttlehaus.ca reference).
-4. Later phase: shop, two-factor login (2FA) for super admins.
-
-## Technology
+## 12. Technology
 
 | Layer | Choice |
 | --- | --- |
 | Framework | Next.js (App Router), React, TypeScript |
 | Styling / UI | Tailwind CSS, shadcn/ui, Framer Motion |
 | Charts | Recharts (via shadcn/ui charts) |
-| Fonts | Self-hosted with `next/font/local`: IRANSans, Inter |
+| Fonts | self-hosted with `next/font/local`: IRANSans, Inter |
 | Database | PostgreSQL |
 | ORM / migrations | Drizzle ORM |
-| Auth | Auth.js; separate logins and sessions for students, instructors and super admins; 2FA in a later phase |
+| Auth | Auth.js; separate logins for students, instructors and super admins |
 | i18n | next-intl (fa, tr, en; RTL for Persian) |
 | Validation / forms | Zod, React Hook Form |
 | Contracts | PDF generation and e-signature with a signed audit record |
-| Image processing | sharp (resize, WebP/AVIF, watermark) |
-| Media | Bunny CDN or Cloudflare R2 for images and videos (plain CDN files, no streaming service) |
-| Email | Resend + React Email templates (Turkish by default) |
+| Image processing | sharp (resize, WebP / AVIF, watermark) |
+| Media | Bunny CDN or Cloudflare R2 (plain files, no streaming service) |
+| Email | Resend + React Email |
+| Payments | iyzico, PayTR |
 | Testing | Vitest, Playwright |
-| Payments | iyzico and PayTR (Turkish gateways) |
 | Deployment | **Coolify** on the owner's server: Docker, PostgreSQL alongside with daily backups, auto-deploy on push |
 
-## Data model (draft, kept minimal)
+## 13. Data model
+
+Draft, kept minimal.
 
 | Table | Purpose |
 | --- | --- |
 | `admins` | super admins / partners (separate login) |
-| `members` | site users |
-| `instructors` | photo, bio |
-| `courses` | class or workshop, terms template, instructor, dates, capacity, price, instructor fee type and amount, status, closed totals |
-| `registrations` | member ↔ course, status, accepted terms and time, photo / video consent, refund |
-| `contracts` | course ↔ instructor, terms, signature, signed date |
+| `members` | students |
+| `instructors` | profile; private fields encrypted where needed |
+| `categories` | workshop categories |
+| `courses` | workshop fields, status, terms template, closed totals |
+| `contracts` | course ↔ instructor: fee type, amount, advance, signed text, signature, signed time |
+| `registrations` | member ↔ course: status, accepted terms and time, photo / video consent, refund |
+| `course_expenses` | expenses of a workshop and the partner who paid |
+| `ledger_entries` | double-entry wallet accounting |
 | `translations` | text for fa / tr / en, keyed by entity and field |
-| `course_expenses` | expenses of a course, who paid |
-| `ledger_entries` | double-entry wallet accounting (contributions, expenses, income, payouts) |
-| `products`, `orders`, `order_items` | shop (later phase) |
+| `terms` | terms templates, one default |
 | `pages`, `sections` | editable pages, hero and home sections |
-| `terms` | terms and conditions templates, one default |
-| `media`, `faqs`, `settings` | gallery, FAQ, site settings incl. default language |
+| `media` | photos and videos (CDN paths) |
+| `faqs` | FAQ |
+| `settings` | brand name, default language, theme, CDN, watermark, gateway |
+| `products`, `orders`, `order_items` | shop (later phase) |
+
+## 14. Build order
+
+1. **Super-admin panel first**: project setup, database, admin login,
+   instructors, workshops, contracts, course finances, shared wallet and
+   accounting, settings, charts dashboard.
+2. Instructor panel; student sign-up and registration on the site.
+3. Public site on top of the theme system (first theme after the
+   throttlehaus.ca reference).
+4. **Later phase**:
+   - **Shop**: a built-in, lightweight, professional store (products with
+     variants and stock in three languages, cart, checkout with iyzico /
+     PayTR, orders in the student's account menu, sales in the shared
+     wallet and reports).
+   - Two-factor login (2FA) for super admins.
