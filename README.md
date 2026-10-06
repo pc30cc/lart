@@ -204,8 +204,9 @@ Security is the first requirement of every feature and is checked carefully
 before each release.
 
 - **Authentication**: separate logins and sessions for students,
-  instructors and super admins; passwords hashed with Argon2; mandatory 2FA
-  for super admins; login rate limiting and lockout.
+  instructors and super admins; passwords hashed with Argon2; login rate
+  limiting and lockout. Two-factor login (2FA) for super admins is planned
+  for a later phase.
 - **Authorization**: every request is checked on the server for role and
   ownership; nothing is trusted from the browser.
 - **Input**: every input validated with Zod on the server; parameterized
@@ -249,7 +250,7 @@ for example when a new design reference is given:
 2. Student and instructor panels.
 3. Public landing site on top of the theme system (first theme after the
    throttlehaus.ca reference).
-4. Later phase: shop.
+4. Later phase: shop, two-factor login (2FA) for super admins.
 
 ## Technology
 
@@ -261,7 +262,7 @@ for example when a new design reference is given:
 | Fonts | Self-hosted with `next/font/local`: IRANSans, Inter |
 | Database | PostgreSQL |
 | ORM / migrations | Drizzle ORM |
-| Auth | Auth.js; separate logins and sessions for students, instructors and super admins; 2FA for admins |
+| Auth | Auth.js; separate logins and sessions for students, instructors and super admins; 2FA in a later phase |
 | i18n | next-intl (fa, tr, en; RTL for Persian) |
 | Validation / forms | Zod, React Hook Form |
 | Contracts | PDF generation and e-signature with a signed audit record |
