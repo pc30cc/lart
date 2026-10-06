@@ -41,4 +41,9 @@ export const WORKSHOPS = {
     title: { fa: `کارگاه سفال ${RUN}`, tr: `Çömlek atölyesi ${RUN}`, en: `Pottery workshop ${RUN}` },
     slug: `comlek-atolyesi-${RUN}`,
   },
+  /** Per-participant fee; signed and open for registration (an upcoming workshop for the dashboard and screenshots). */
+  open: {
+    title: { fa: `کارگاه آبرنگ ${RUN}`, tr: `Suluboya atölyesi ${RUN}`, en: `Watercolour workshop ${RUN}` },
+    slug: `suluboya-atolyesi-${RUN}`,
+  },
 }

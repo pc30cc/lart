@@ -14,8 +14,7 @@ export const PROBLEMS_FILE = path.join(E2E_DIR, "problems.jsonl")
 export const FIXTURES = path.resolve(__dirname, "../fixtures")
 
 /** The server's output, where emails are printed without a Resend key. */
-export const SERVER_LOG =
-  process.env.E2E_SERVER_LOG ?? "/tmp/claude-0/-home-user/35c26ae8-c1fd-541d-b2e8-faa7107ffd4a/scratchpad/server-e2e.log"
+export const SERVER_LOG = process.env.E2E_SERVER_LOG ?? path.join(E2E_DIR, "server.log")
 
 export type Problem = {
   test: string
@@ -70,8 +69,8 @@ export { expect }
 // ─── Small UI helpers ─────────────────────────────────────────────────────────
 
 /** Wait until the page is settled (no pending requests) and fonts are ready. */
-export async function settle(page: Page) {
-  await page.waitForLoadState("networkidle").catch(() => {})
+export async function settle(page: Page, timeout = 10_000) {
+  await page.waitForLoadState("networkidle", { timeout }).catch(() => {})
   await page.evaluate(() => document.fonts.ready).catch(() => {})
 }
 
@@ -82,9 +81,11 @@ export function toast(page: Page, text: string | RegExp) {
 
 /** The <Field> block (label + control + hint) whose label contains `label`. */
 export function field(scope: Page | Locator, label: string | RegExp) {
+  // The inner `has` locator is matched inside each field, so it must start from the page, not from `scope`.
+  const root = "page" in scope && typeof scope.page === "function" ? (scope as Locator).page() : (scope as Page)
   return scope
     .locator('[data-slot="field"]')
-    .filter({ has: scope.locator('[data-slot="field-label"]', { hasText: label }) })
+    .filter({ has: root.locator('[data-slot="field-label"]', { hasText: label }) })
     .first()
 }
 

@@ -78,13 +78,20 @@ test.describe("sign in and out", () => {
     expect(headers["content-security-policy"]).toContain("frame-ancestors 'none'")
     expect(headers["x-content-type-options"]).toBe("nosniff")
 
-    // 3. Sign out from the user menu.
+    // 3. Sign out from the user menu. The old cookie must stop working on the server too.
+    const oldToken = (await context.cookies()).find((c) => c.name === "__Host-admin_session")!.value
     await page.getByRole("button", { name: "Your account" }).click()
     await expect(page.getByRole("menu")).toContainText(ADMIN.email)
     await page.getByRole("menuitem", { name: "Sign out" }).click()
     await expect(page).toHaveURL(/\/en\/admin\/login$/)
     expect((await context.cookies()).find((c) => c.name === "__Host-admin_session")).toBeUndefined()
-    // The old session no longer opens the panel.
+    // The old session no longer opens the panel, even when the cookie is sent again.
+    const replay = await page.request.get("/en/admin/workshops", {
+      headers: { cookie: `__Host-admin_session=${oldToken}` },
+      maxRedirects: 0,
+    })
+    expect(replay.status()).toBe(307)
+    expect(replay.headers()["location"]).toMatch(/\/en\/admin\/login/)
     await page.goto("/en/admin/workshops")
     await expect(page).toHaveURL(/\/en\/admin\/login\?next=/)
 

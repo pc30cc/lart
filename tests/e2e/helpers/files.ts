@@ -9,7 +9,7 @@ import { E2E_DIR } from "./app"
 /** Generated test files live in the git-ignored scratch folder. */
 const DIR = path.join(E2E_DIR, "fixtures")
 
-const FFMPEG = ["/opt/pw-browsers/ffmpeg-1011/ffmpeg-linux", "/usr/bin/ffmpeg"]
+const FFMPEG = ["/usr/bin/ffmpeg", "/opt/pw-browsers/ffmpeg-1011/ffmpeg-linux"]
 
 /**
  * A JPEG photo (a soft gradient with a few shapes), with EXIF orientation and
@@ -45,30 +45,24 @@ export async function makeLogo(name = "logo.png"): Promise<string> {
   return file
 }
 
-/** A 2-second 320x240 MP4 (H.264), or null when no ffmpeg is available. */
+/** A 2-second 320x240 MP4 (H.264), a WebM (VP8) when no ffmpeg here can encode H.264, or null without ffmpeg. */
 export function makeVideo(name = "clip.mp4"): string | null {
   fs.mkdirSync(DIR, { recursive: true })
   const file = path.join(DIR, name)
   if (fs.existsSync(file)) return file
-  for (const bin of FFMPEG) {
-    if (!fs.existsSync(bin)) continue
-    try {
-      execFileSync(
-        bin,
-        ["-y", "-f", "lavfi", "-i", "testsrc=duration=2:size=320x240:rate=15", "-pix_fmt", "yuv420p", "-c:v", "libx264", "-movflags", "+faststart", file],
-        { stdio: "ignore" },
-      )
-      return file
-    } catch {
+  const source = ["-f", "lavfi", "-i", "testsrc=duration=2:size=320x240:rate=15"]
+  const attempts: [string, string[]][] = [
+    [file, [...source, "-pix_fmt", "yuv420p", "-c:v", "libx264", "-movflags", "+faststart"]],
+    // The Playwright ffmpeg build has no libx264: VP8 in WebM instead.
+    [file.replace(/\.mp4$/, ".webm"), [...source, "-c:v", "libvpx"]],
+  ]
+  for (const [out, args] of attempts) {
+    for (const bin of FFMPEG.filter((b) => fs.existsSync(b))) {
       try {
-        // The Playwright ffmpeg build has no libx264: fall back to VP8 in WebM.
-        const webm = file.replace(/\.mp4$/, ".webm")
-        execFileSync(bin, ["-y", "-f", "lavfi", "-i", "testsrc=duration=2:size=320x240:rate=15", "-c:v", "libvpx", webm], {
-          stdio: "ignore",
-        })
-        return webm
+        execFileSync(bin, ["-y", ...args, out], { stdio: "ignore" })
+        return out
       } catch {
-        // try the next binary
+        // try the next binary / format
       }
     }
   }

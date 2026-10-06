@@ -48,7 +48,7 @@ async function addRegistrations(courseId: string, prefix: string, people: { name
     const [reg] = await sql<{ id: string }>(
       `insert into registrations (course_id, member_id, participant_name, status, amount, terms_template_id, terms_sha256,
          terms_accepted_at, photo_consent, video_consent, paid_at)
-       values ($1, $2, $3, $4, $5, $6, repeat('a', 64), now(), $7, $8, case when $4 = 'confirmed' then now() end) returning id`,
+       values ($1, $2, $3, $4::registration_status, $5, $6, repeat('a', 64), now(), $7, $8, case when $4::text = 'confirmed' then now() end) returning id`,
       [courseId, member.id, p.name, p.status, Number(course.price), terms, Boolean(p.photo), Boolean(p.video)],
     )
     ids.push({ id: reg.id, status: p.status })
@@ -376,5 +376,35 @@ test.describe.serial("workshops", () => {
     await expect(page.getByRole("link", { name: new RegExp(WORKSHOPS.cancelled.title.en) }).first()).toBeVisible()
     await page.goto(`/en/admin/workshops?view=all&q=${encodeURIComponent(WORKSHOPS.held.title.en)}`)
     await expect(page.getByRole("link", { name: new RegExp(WORKSHOPS.cancelled.title.en) })).toHaveCount(0)
+  })
+
+  test("a third workshop stays open for registration (upcoming)", async ({ page }) => {
+    const w = WORKSHOPS.open
+    await page.goto("/en/admin/workshops/new")
+    await fillLocalized(page, /^Workshop name/, w.title)
+    await chooseSelect(page, /^Category/, CATEGORIES.ceramics.en.replace("Ceramics", "Ceramics and pottery"))
+    await chooseSelect(page, /^Instructor/, INSTRUCTORS.sara.displayName.en)
+    await fillDateTime(page, /^Date and time/, inDays(21), "11:00", "14:00")
+    await fillDateTime(page, /^Registration closes/, inDays(19), "20:00")
+    await fillDateTime(page, /^Go \/ no-go decision/, inDays(19), "21:00")
+    await field(page, /^Place/).getByRole("textbox").fill("Karaköy Atelier, Beyoğlu")
+    await field(page, /^Minimum participants/).getByRole("spinbutton").fill("2")
+    await field(page, /^Maximum participants/).getByRole("spinbutton").fill("10")
+    await field(page, /^Price per person/).getByRole("textbox").fill("1200")
+    await fillLocalized(page, /^Short introduction/, { fa: "نقاشی با آبرنگ.", tr: "Suluboya ile manzara.", en: "Landscapes in watercolour." })
+    await field(page, /^Amount per participant/).getByRole("textbox").fill("450")
+    await page.getByRole("button", { name: "Create and send contract" }).click()
+    await expect(toast(page, /Workshop created\./)).toBeVisible()
+    const id = await workshopId(w.slug)
+    signContract((await liveContract(id)).id, INSTRUCTORS.sara.officialName, "en")
+    const regs = await addRegistrations(id, "water", [
+      { name: "Nilufar Ahmadi", status: "confirmed", photo: true, video: true },
+      { name: "Selin Öztürk", status: "confirmed" },
+      { name: "Parisa Moradi", status: "pending" },
+    ])
+    payRegistrations(regs.filter((r) => r.status === "confirmed").map((r) => r.id))
+    await page.goto(`/en/admin/workshops/${id}`)
+    await expect(page.getByText("Registration is open")).toBeVisible()
+    await expect(page.getByText("2 of 10").first()).toBeVisible()
   })
 })

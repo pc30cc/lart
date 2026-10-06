@@ -13,6 +13,8 @@ function runScript<T>(script: string, args: string[]): T {
     env: {
       ...process.env,
       DATABASE_URL: E2E_DATABASE_URL,
+      // Links in emails sent by the script point at the server under test.
+      APP_URL: process.env.E2E_APP_URL ?? process.env.E2E_BASE_URL ?? "http://localhost:3100",
       // Emails from the script go to the same fake Resend API as the server's, when it runs.
       ...(process.env.E2E_RESEND_BASE_URL !== "off"
         ? { RESEND_API_KEY: "re_e2e_fake", RESEND_BASE_URL: process.env.E2E_RESEND_BASE_URL ?? "http://127.0.0.1:3199", EMAIL_FROM: "Lart <noreply@lart.test>" }
@@ -36,4 +38,9 @@ export function signContract(contractId: string, signedName: string, locale = "e
 /** Post the payments of these registrations to the ledger (phase-2 payment stand-in). */
 export function payRegistrations(ids: string[]): string[] {
   return runScript<string[]>("pay-registrations.ts", ids)
+}
+
+/** Post the refunds of these cancelled registrations to the ledger (phase-2 stand-in). */
+export function refundRegistrations(ids: string[]): string[] {
+  return runScript<string[]>("refund-registrations.ts", ids)
 }
