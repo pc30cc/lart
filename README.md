@@ -48,13 +48,19 @@ Nothing on the site is hard-coded. From the super-admin panel:
 - **Gallery**, **FAQ**, **About**, **Contact**.
 - **Language switcher** (FA / TR / EN) on every page.
 
-## Shop
+## Shop (planned for a later phase)
 
-A built-in store, no third-party shop platform:
+> Not part of the first release. Planned for a later phase.
+
+A built-in, lightweight, professional store inside the site, not a separate
+hosted platform, so members, the three languages, SEO and the shared wallet
+stay in one place:
 
 - Products with photos, variants (size, colour), price, stock and
   descriptions in three languages.
-- Cart, checkout and online payment; order confirmation emails.
+- Cart, checkout and order confirmation emails.
+- **Turkish payment gateways: iyzico and PayTR** (choose in admin settings);
+  the same gateways also take class registration payments.
 - Members see their orders in their dashboard.
 - Admin: products, categories, stock, orders and order status.
 - Shop sales go into the shared wallet and show up in the accounting
@@ -143,7 +149,7 @@ and video, course story), which also helps SEO.
 | Media | Bunny CDN or Cloudflare R2 for images and videos (plain CDN files, no streaming service) |
 | Email | Transactional email provider (e.g. Resend) |
 | Testing | Vitest, Playwright |
-| Payments | Online payment gateway for the shop and class registrations |
+| Payments | iyzico and PayTR (Turkish gateways) |
 | Deployment | **Coolify** on the owner's server: Docker, PostgreSQL alongside with daily backups, auto-deploy on push |
 
 ## Data model (draft, kept minimal)
@@ -159,6 +165,6 @@ and video, course story), which also helps SEO.
 | `translations` | text for fa / tr / en, keyed by entity and field |
 | `course_expenses` | expenses of a course, who paid |
 | `ledger_entries` | double-entry wallet accounting (contributions, expenses, income, payouts) |
-| `products`, `orders`, `order_items` | shop |
+| `products`, `orders`, `order_items` | shop (later phase) |
 | `pages`, `sections` | editable pages, hero and home sections |
 | `media`, `faqs`, `settings` | gallery, FAQ, site settings incl. default language |
