@@ -123,6 +123,25 @@ Instructors and super admins each have their own panel and login.
 - My courses, participant lists and schedule.
 - My contracts: review and sign; my earnings per course.
 
+#### Instructor profile fields
+
+⭐ = required. 🔒 = private: used only for contracts and admins, never shown
+on the public site.
+
+| Field | Required | Visibility | Notes |
+| --- | :---: | --- | --- |
+| Official full name | ⭐ | 🔒 | exactly as on ID; used in contracts |
+| ID number | ⭐ | 🔒 | stored **encrypted**; used in contracts |
+| Mobile number | ⭐ | 🔒 | with country code |
+| Email | ⭐ | 🔒 | login and contract emails; must be verified |
+| Teaching field | ⭐ | public | e.g. painting, ceramics, calligraphy |
+| Short introduction | | public | a few sentences for the public page, three languages |
+| Teaching languages | | public | dropdown, multiple choice (Persian, Turkish, English, ...) |
+| Instagram or website | | public | link |
+| Profile photo | | public | cropped square, optimized, sent to the CDN |
+
+The form is one short, friendly page; the required fields come first.
+
 ### Super-admin panel
 
 Described below; it has its own separate login as well.
