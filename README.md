@@ -6,7 +6,24 @@ account, choose a class and register. A separate super-admin panel runs the
 business: classes, instructors, contracts, a shared partner wallet and full
 accounting.
 
-> Status: project brief. No code has been written yet.
+> **Status:** project brief. No code has been written yet.
+
+## Design reference
+
+The look and feel follows the owner's previous project,
+**[throttlehaus.ca](https://throttlehaus.ca/)**: the same layout, the same
+premium feel and an animated (video) hero, rebuilt for Lart in three
+languages.
+
+## Everything is editable
+
+Nothing on the site is hard-coded. From the super-admin panel:
+
+- **Hero**: replace the moving hero video or image, headline, subtitle and
+  call-to-action button, per language.
+- **Every page and section** (home, about, contact, FAQ, footer, menus) is
+  editable in FA / TR / EN, with its own SEO title and description.
+- Sections on the home page can be shown, hidden and reordered.
 
 ## Principles
 
@@ -31,6 +48,18 @@ accounting.
 - **Gallery**, **FAQ**, **About**, **Contact**.
 - **Language switcher** (FA / TR / EN) on every page.
 
+## Shop
+
+A built-in store, no third-party shop platform:
+
+- Products with photos, variants (size, colour), price, stock and
+  descriptions in three languages.
+- Cart, checkout and online payment; order confirmation emails.
+- Members see their orders in their dashboard.
+- Admin: products, categories, stock, orders and order status.
+- Shop sales go into the shared wallet and show up in the accounting
+  reports.
+
 ## Members
 
 - Sign up and log in (email and password; social login optional).
@@ -53,10 +82,10 @@ site members.
   electronically through a secure link. After signing, the class is published
   on the home page.
 - **Settings**: default language, site details, SEO defaults, and the
-  **media CDN**: choose **Bunny CDN** (Bunny Storage + Bunny Stream for
-  video) or **Cloudflare** (R2 storage + Cloudflare CDN / Stream), with their
-  keys. Every uploaded image and video goes straight to the selected CDN;
-  the database stores only the file path.
+  **media CDN**: choose **Bunny CDN** (Bunny Storage) or **Cloudflare**
+  (R2 + Cloudflare CDN), with their keys. Every uploaded image **and video**
+  is stored as a plain file on the selected CDN and served from it (no
+  streaming service). The database stores only the file path.
 
 ## Course finances and closing
 
@@ -111,10 +140,11 @@ and video, course story), which also helps SEO.
 | i18n | next-intl (fa, tr, en; RTL for Persian) |
 | Validation / forms | Zod, React Hook Form |
 | Contracts | PDF generation and e-signature with a signed audit record |
-| Media | Bunny CDN or Cloudflare (R2 / Stream), chosen in admin settings |
+| Media | Bunny CDN or Cloudflare R2 for images and videos (plain CDN files, no streaming service) |
 | Email | Transactional email provider (e.g. Resend) |
 | Testing | Vitest, Playwright |
-| Deployment | Docker on Coolify (own server), PostgreSQL on the same server with daily backups; CDN in front |
+| Payments | Online payment gateway for the shop and class registrations |
+| Deployment | **Coolify** on the owner's server: Docker, PostgreSQL alongside with daily backups, auto-deploy on push |
 
 ## Data model (draft, kept minimal)
 
@@ -129,4 +159,6 @@ and video, course story), which also helps SEO.
 | `translations` | text for fa / tr / en, keyed by entity and field |
 | `course_expenses` | expenses of a course, who paid |
 | `ledger_entries` | double-entry wallet accounting (contributions, expenses, income, payouts) |
+| `products`, `orders`, `order_items` | shop |
+| `pages`, `sections` | editable pages, hero and home sections |
 | `media`, `faqs`, `settings` | gallery, FAQ, site settings incl. default language |
