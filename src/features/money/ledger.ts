@@ -43,8 +43,9 @@ import { isIsoDate } from "./schema"
  * | Instructor paid                             | instructor_payment   | instructor_payable               | wallet / partner_capital (p)              |
  * | Correction                                  | reversal             | the mirror image of the original transaction                                 |
  *
- * Closing entries (settlement, close) are final: they are never reversed, and
- * once a workshop is closed nothing more is posted to its revenue, fees,
+ * Closing entries (settlement, close) are dated on the day of closing and are
+ * final: they are never reversed, and once a workshop is closed (`closed_at`
+ * set, also for a cancelled one) nothing more is posted to its revenue, fees,
  * expenses or advance. Only paying out the instructor's payable stays open.
  */
 
@@ -128,17 +129,24 @@ export function checkPosting(p: Posting): void {
 
 /**
  * Lock the workshop row against other money postings and closing (they all
- * take the same lock, so balance checks cannot race). Returns its status.
+ * take the same lock, so balance checks cannot race). Returns its status and
+ * when its books were closed.
+ * Lock order: workshop before registration; reverseTransaction (FK KEY SHARE on
+ * the registration) and cancelWorkshop (UPDATE registrations) rely on it.
  */
 export async function lockCourse(tx: Tx, courseId: string) {
   const [course] = await tx
-    .select({ status: courses.status })
+    .select({ status: courses.status, closedAt: courses.closedAt })
     .from(courses)
     .where(eq(courses.id, courseId))
     .for("no key update")
   if (!course) throw new UserError("money.errors.workshopGone")
-  return course.status
+  return course
 }
+
+/** A closed workshop's books are locked; a cancelled one keeps its status but has `closedAt` once closed. */
+export const booksClosed = (course: { status: string; closedAt: Date | null }) =>
+  course.status === "closed" || course.closedAt !== null
 
 /**
  * Post one balanced transaction. Must run inside `db.transaction`: the
@@ -159,8 +167,8 @@ export async function postTransaction(tx: Tx, p: Posting & { reversalOf?: string
   }
 
   if (p.courseId) {
-    const status = await lockCourse(tx, p.courseId)
-    if (status === "closed" && p.lines.some((l) => lockedWhenClosed.includes(l.account))) {
+    const course = await lockCourse(tx, p.courseId)
+    if (booksClosed(course) && p.lines.some((l) => lockedWhenClosed.includes(l.account))) {
       throw new UserError("money.errors.workshopClosed")
     }
   }
@@ -254,7 +262,7 @@ export async function postAdvance(
   input: Common & { courseId: string; amount: number; direction: "paid" | "returned"; source: Source },
 ) {
   positive(input.amount)
-  const status = await lockCourse(tx, input.courseId)
+  const { status } = await lockCourse(tx, input.courseId)
   const sign = input.direction === "paid" ? 1 : -1
   if (input.direction === "paid" && (status === "cancelled" || status === "closed")) {
     throw new UserError("money.errors.advanceNotNow")
@@ -338,7 +346,14 @@ export async function postRegistrationRefund(
   })
 }
 
+/**
+ * Lock a registration, its workshop first (see `lockCourse`). Its workshop is
+ * read without a lock: a registration never moves to another workshop.
+ */
 async function lockRegistration(tx: Tx, id: string) {
+  const [row] = await tx.select({ courseId: registrations.courseId }).from(registrations).where(eq(registrations.id, id))
+  if (!row) throw new UserError("money.errors.registrationGone")
+  await lockCourse(tx, row.courseId)
   const [reg] = await tx
     .select({ courseId: registrations.courseId, amount: registrations.amount })
     .from(registrations)
@@ -551,8 +566,10 @@ export async function partnerCapitals(exec: Exec = db, before?: string): Promise
 }
 
 /**
- * Result not yet shared out to the partners: revenue − fees − expenses of
- * workshops that are not closed yet, and all general expenses.
+ * Result in the ledger not yet shared out to the partners: revenue − fees −
+ * expenses of workshops that are not closed yet, and all general expenses.
+ * A workshop's instructor fee is booked only when it is closed: add
+ * `projectedFees` (closing.ts) for what confirmed workshops will owe.
  */
 export async function openResult(exec: Exec = db): Promise<number> {
   const [row] = await exec

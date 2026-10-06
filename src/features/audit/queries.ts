@@ -1,5 +1,6 @@
 import "server-only"
-import { and, asc, count, desc, eq, gte, ilike, lt, or, sql, type SQL } from "drizzle-orm"
+import { and, asc, count, desc, eq, gte, ilike, inArray, lt, or, sql, type SQL } from "drizzle-orm"
+import { getTranslations } from "next-intl/server"
 
 import { likePattern, type TableParams } from "@/components/admin/data-table/params"
 import { db } from "@/db"
@@ -27,13 +28,39 @@ export async function getAuditFilterOptions() {
 /** Start of an Istanbul calendar day as an instant. */
 const dayStart = (date: string) => new Date(zonedToIso(date, "00:00")!)
 
+/** Text for matching a search against labels: lower case for the language, without the Persian half-space (ZWNJ). */
+const fold = (text: string, locale: string) => text.replace(/\u200c/g, "").toLocaleLowerCase(locale)
+
+/** `{ money: { reverse: "Transaction reversed" } }` → `[["money.reverse", "Transaction reversed"]]`. */
+function flattenLabels(labels: unknown, prefix = ""): [code: string, label: string][] {
+  if (typeof labels === "string") return prefix ? [[prefix, labels]] : []
+  if (!labels || typeof labels !== "object") return []
+  return Object.entries(labels).flatMap(([key, value]) => flattenLabels(value, prefix ? `${prefix}.${key}` : key))
+}
+
+/**
+ * The codes whose translated label contains the search text, so people find
+ * what they see in the table ("Transaction reversed" → "money.reverse").
+ * `labels` is a message map such as `settings.audit.actions` or `.entities`.
+ */
+export function codesByLabel(query: string, labels: unknown, locale: string): string[] {
+  const q = fold(query.trim(), locale)
+  if (!q) return []
+  return flattenLabels(labels)
+    .filter(([, label]) => fold(label, locale).includes(q))
+    .map(([code]) => code)
+}
+
 /** One page of the activity log: search, filters, date range (Istanbul days, inclusive), sort. */
-export async function listAudit(params: TableParams<Sort, Filter>, range: DateRange) {
+export async function listAudit(params: TableParams<Sort, Filter>, range: DateRange, locale: string) {
   await requireAdmin()
 
   const conditions: (SQL | undefined)[] = []
   if (params.q) {
     const pattern = likePattern(params.q)
+    const t = await getTranslations({ locale, namespace: "settings.audit" })
+    const actions = codesByLabel(params.q, t.raw("actions"), locale)
+    const entities = codesByLabel(params.q, t.raw("entities"), locale)
     conditions.push(
       or(
         ilike(auditLog.action, pattern),
@@ -42,6 +69,9 @@ export async function listAudit(params: TableParams<Sort, Filter>, range: DateRa
         ilike(auditLog.ip, pattern),
         ilike(admins.name, pattern),
         ilike(sql`${auditLog.data}::text`, pattern),
+        // The labels shown in the "What" and "Record" columns, in the page's language.
+        actions.length ? inArray(auditLog.action, actions) : undefined,
+        entities.length ? inArray(auditLog.entity, entities) : undefined,
       ),
     )
   }
@@ -78,7 +108,7 @@ export async function listAudit(params: TableParams<Sort, Filter>, range: DateRa
 
   // Only a summary and a size-limited copy of `data` go to the page.
   return {
-    rows: rows.map(({ data, ...row }) => ({ ...row, summary: auditSummary(data), detail: auditDetail(data) })),
+    rows: rows.map(({ data, ...row }) => ({ ...row, summary: auditSummary(data, locale), detail: auditDetail(data) })),
     total,
   }
 }

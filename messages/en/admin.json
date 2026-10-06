@@ -2,7 +2,7 @@
   "meta": { "title": "Admin" },
   "brandSubtitle": "Admin panel",
   "nav": {
-    "groups": { "overview": "Overview", "workshops": "Workshops", "money": "Money", "system": "System" },
+    "groups": { "overview": "Overview", "workshops": "Teaching", "money": "Money", "system": "System" },
     "dashboard": "Dashboard",
     "workshops": "Workshops",
     "instructors": "Instructors",

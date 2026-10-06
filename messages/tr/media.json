@@ -26,8 +26,7 @@
     "moveLater": "Bir sonraya taşı",
     "reorder": "Sırayı değiştirmek için sürükleyin",
     "count": "{count, plural, =0 {Henüz bir şey yok} other {# öğe}}",
-    "limitReached": "En fazla {max} öğe ekleyebilirsiniz. Fazla dosyalar eklenmedi.",
-    "noWatermark": "Henüz filigran logosu ayarlanmadığı için bu fotoğraf filigransız yüklendi. Logoyu Ayarlar'dan ekleyebilirsiniz."
+    "limitReached": "En fazla {max} öğe ekleyebilirsiniz. Fazla dosyalar eklenmedi."
   },
   "errors": {
     "unauthorized": "Oturumunuz sona erdi. Lütfen yeniden giriş yapıp tekrar deneyin.",
@@ -37,6 +36,7 @@
     "heic_unsupported": "Bu HEIC fotoğraf burada açılamıyor. Lütfen JPG olarak kaydedip tekrar deneyin (iPhone'da: Ayarlar → Kamera → Formatlar → En Uyumlu).",
     "too_many_pixels": "Bu fotoğrafın boyutları çok büyük. Lütfen {megapixels, number} megapikselden küçük bir fotoğraf kullanın.",
     "invalid_image": "Bu fotoğraf bozuk görünüyor ve açılamıyor. Lütfen başka bir dosya deneyin.",
+    "watermark_missing": "Galeri fotoğrafları her zaman filigranınızla yayınlanır. Lütfen önce Ayarlar'dan bir filigran logosu ekleyin.",
     "watermark_unavailable": "Filigran logosu yüklenemediği için fotoğraf yayınlanmadı. Lütfen logoyu Ayarlar'dan yeniden yükleyin.",
     "storage": "Dosya depolama alanına kaydedilemedi. Lütfen CDN ayarlarını kontrol edin veya biraz sonra tekrar deneyin.",
     "server": "Bizim tarafımızda bir sorun oluştu. Lütfen tekrar deneyin.",

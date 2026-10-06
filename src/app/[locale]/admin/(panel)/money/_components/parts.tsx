@@ -55,8 +55,8 @@ export function Stat({
 }) {
   return (
     <div className={cn("bg-card ring-foreground/8 flex min-w-0 flex-col gap-2 rounded-xl p-4 shadow-xs ring-1 md:p-5", className)}>
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-muted-foreground text-sm">{label}</span>
+      <div className="flex min-h-8 items-center justify-between gap-3">
+        <span className="text-muted-foreground min-w-0 text-sm text-pretty">{label}</span>
         {Icon && (
           <span
             aria-hidden
@@ -101,7 +101,7 @@ export function Panel({
   className?: string
 }) {
   return (
-    <section className={cn("bg-card ring-foreground/8 rounded-xl shadow-xs ring-1", className)}>
+    <section className={cn("bg-card ring-foreground/8 min-w-0 rounded-xl shadow-xs ring-1", className)}>
       <header className="flex flex-wrap items-start justify-between gap-3 px-4 pt-4 md:px-5 md:pt-5">
         <div className="min-w-0 space-y-0.5">
           <h2 className="text-base font-semibold">{title}</h2>

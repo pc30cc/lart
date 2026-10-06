@@ -88,14 +88,15 @@ async function build(
     }
     case "workshops": {
       const { workshops, total } = await workshopResults(params)
-      const cols = ["revenue", "instructorFees", "courseExpenses", "net"] as const
+      // The fee of a confirmed workshop not closed yet is estimated (included in instructorFees): its own column says how much.
+      const cols = ["revenue", "instructorFees", "courseExpenses", "net", "estimatedFee"] as const
       return [
         [c("date"), c("workshop"), c("instructor"), c("status"), c("participants"), ...cols.map(c)],
         ...workshops.map((w) => [
           zonedParts(w.startsAt).date,
           localized(w.title, locale),
           localized(w.instructor, locale),
-          t(`workshops.status.${w.status}`),
+          w.status === "cancelled" && w.closed ? t("money.reports.cancelledClosed") : t(`workshops.status.${w.status}`),
           w.participants,
           ...cols.map((k) => lira(w[k])),
         ]),
@@ -104,7 +105,7 @@ async function build(
     }
     case "instructors": {
       const { instructors, total } = await instructorResults(params)
-      const cols = ["revenue", "instructorFees", "courseExpenses", "net"] as const
+      const cols = ["revenue", "instructorFees", "courseExpenses", "net", "estimatedFee"] as const
       return [
         [c("instructor"), c("workshops"), c("participants"), ...cols.map(c)],
         ...instructors.map((i) => [localized(i.instructor, locale), i.workshops, i.participants, ...cols.map((k) => lira(i[k]))]),

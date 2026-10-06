@@ -4,6 +4,7 @@ import { asc, eq, sql } from "drizzle-orm"
 import { db } from "@/db"
 import { contracts, type Locale } from "@/db/schema"
 import { requireAdmin } from "@/lib/auth/admin"
+import { decrypt } from "@/lib/crypto"
 import { renderContract } from "./render"
 
 /** Every version of a workshop's contract, oldest first (metadata only). */
@@ -33,7 +34,8 @@ export type ContractVersion = Awaited<ReturnType<typeof listContractVersions>>[n
 
 /**
  * The text of one contract version for the admin view: the exact signed text
- * when it was signed, otherwise the text as it would be signed today (in `locale`).
+ * when it was signed (stored encrypted: it contains the ID number), otherwise
+ * the text as it would be signed today (in `locale`).
  */
 export async function getContractText(
   contractId: string,
@@ -47,7 +49,9 @@ export async function getContractText(
     .limit(1)
   if (row?.signedText) {
     const signedLocale = (["fa", "tr", "en"] as const).find((l) => l === row.signedLocale) ?? locale
-    return { text: row.signedText, locale: signedLocale, signed: true }
+    // A value that isn't ciphertext ("v1.…", e.g. signed before the text was encrypted) is shown as it is.
+    const text = row.signedText.startsWith("v1.") ? decrypt(row.signedText) : row.signedText
+    return { text, locale: signedLocale, signed: true }
   }
   return { text: await renderContract(contractId, locale), locale, signed: false }
 }

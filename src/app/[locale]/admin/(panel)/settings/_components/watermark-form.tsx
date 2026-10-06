@@ -20,7 +20,7 @@ import {
 } from "@/features/settings/schema"
 import { formatPercent } from "@/lib/format"
 import { cn } from "@/lib/utils"
-import { Panel, SwitchRow } from "./fields"
+import { Panel } from "./fields"
 
 type Saved = WatermarkSettingsValues & { logoUrl: string | null }
 type Values = WatermarkSettingsValues
@@ -40,30 +40,13 @@ export function WatermarkSettingsForm({ saved }: { saved: Saved }) {
     successMessage: ts("toast.saved"),
     onSuccess: () => form.reset(form.getValues()),
   })
-  const [enabled, logoPath] = useWatch({ control: form.control, name: ["enabled", "logoPath"] })
+  const logoPath = useWatch({ control: form.control, name: "logoPath" })
   const percent = (fraction: number) => formatPercent(fraction, locale, 1)
 
   return (
     <Form form={form} onSubmit={submit}>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start">
         <div className="min-w-0 space-y-6">
-          <Panel title={t("enabledTitle")} description={t("enabledDescription")}>
-            <FormField<Values> name="enabled">
-              {(field) => (
-                <SwitchRow
-                  id={field.id}
-                  checked={Boolean(field.value)}
-                  onChange={(checked) => {
-                    field.onChange(checked)
-                    field.onBlur()
-                  }}
-                  label={t("enabled")}
-                  description={t("enabledHint")}
-                />
-              )}
-            </FormField>
-          </Panel>
-
           <Panel title={t("logoTitle")} description={t("logoDescription")}>
             <FormField<Values> name="logoPath" label={t("logo")}>
               {({ value, onChange, ...field }) => (
@@ -76,7 +59,8 @@ export function WatermarkSettingsForm({ saved }: { saved: Saved }) {
                 />
               )}
             </FormField>
-            {enabled && !logoPath && (
+            {/* Gallery photo uploads are refused (watermark_missing) until a logo is saved. */}
+            {!logoPath && (
               <p className="text-warning flex items-start gap-2 text-sm">
                 <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
                 {t("noLogo")}
@@ -131,7 +115,8 @@ function PositionPicker({ id, value, onChange }: { id: string; value: WatermarkP
       onValueChange={(v) => onChange(v as WatermarkPosition)}
       aria-label={t("position")}
       dir="ltr"
-      className="flex flex-wrap items-stretch gap-3"
+      // `dir="ltr"` keeps the grid physical; in RTL the row still sits at the start (right), under its label.
+      className="flex flex-wrap items-stretch gap-3 rtl:justify-end"
     >
       <div className="bg-muted/60 grid aspect-[3/2] w-48 grid-cols-3 grid-rows-3 gap-1 rounded-xl border p-1.5">
         {grid.map((p) => (
@@ -204,9 +189,9 @@ function RangeField({
 function Preview() {
   const t = useTranslations("settings.watermark")
   const id = useId()
-  const [position, sizePct, opacity, marginPct, logoPath, enabled] = useWatch<Values>({
-    name: ["position", "sizePct", "opacity", "marginPct", "logoPath", "enabled"],
-  }) as [WatermarkPosition, number, number, number, string | null, boolean]
+  const [position, sizePct, opacity, marginPct, logoPath] = useWatch<Values>({
+    name: ["position", "sizePct", "opacity", "marginPct", "logoPath"],
+  }) as [WatermarkPosition, number, number, number, string | null]
 
   const query = logoPath
     ? new URLSearchParams({
@@ -247,7 +232,7 @@ function Preview() {
         )}
       </div>
       <figcaption id={id} className="text-muted-foreground px-1 pb-1 text-xs text-pretty">
-        {enabled ? t("previewCaption") : t("previewCaptionOff")}
+        {t("previewCaption")}
       </figcaption>
     </figure>
   )

@@ -76,9 +76,11 @@ export function InstructorForm({ instructor }: { instructor?: EditableInstructor
     },
   })
 
+  // The mask is wrapped in an LTR isolate (LRI…PDI) so an RTL sentence cannot
+  // reorder its bullets and digits away from how the input shows it.
   const idHint = instructor
     ? instructor.idNumberMasked
-      ? t("fields.idNumberKeep", { masked: instructor.idNumberMasked })
+      ? t("fields.idNumberKeep", { masked: `⁦${instructor.idNumberMasked}⁩` })
       : t("fields.idNumberKeepPlain")
     : t("fields.idNumberHint")
 

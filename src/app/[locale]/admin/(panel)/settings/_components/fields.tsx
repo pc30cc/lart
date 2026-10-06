@@ -2,7 +2,6 @@
 
 import { Field, FieldContent, FieldDescription, FieldLabel, FieldTitle } from "@/components/ui/field"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 
 /** Radio choices shown as cards (icon, title, one line of help). */
@@ -42,34 +41,6 @@ export function ChoiceCards<V extends string>({
         </FieldLabel>
       ))}
     </RadioGroup>
-  )
-}
-
-/** A labelled on/off switch in a bordered row. */
-export function SwitchRow({
-  id,
-  checked,
-  onChange,
-  label,
-  description,
-}: {
-  id: string
-  checked: boolean
-  onChange: (checked: boolean) => void
-  label: string
-  description?: string
-}) {
-  return (
-    <label
-      htmlFor={id}
-      className="hover:bg-muted/40 flex cursor-pointer items-center justify-between gap-4 rounded-lg border px-3.5 py-3 transition-colors"
-    >
-      <span className="space-y-0.5">
-        <span className="block text-sm font-medium">{label}</span>
-        {description && <span className="text-muted-foreground block text-sm text-pretty">{description}</span>}
-      </span>
-      <Switch id={id} checked={checked} onCheckedChange={onChange} />
-    </label>
   )
 }
 

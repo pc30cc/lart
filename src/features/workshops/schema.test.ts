@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest"
 
-import { courseValues, feeValues, gallerySchema, maxAdvance, workshopEditSchema, workshopSchema } from "./schema"
+import {
+  contractLocked,
+  courseValues,
+  displayStatus,
+  feeValues,
+  gallerySchema,
+  isCancelled,
+  maxAdvance,
+  workshopEditSchema,
+  workshopSchema,
+} from "./schema"
 import { text, workshopInput } from "./test-fixtures"
 
 const refs = { categoryId: crypto.randomUUID(), instructorId: crypto.randomUUID() }
@@ -128,5 +138,31 @@ describe("workshop schema", () => {
       gallerySchema.safeParse({ id, items: [{ kind: "image", path: "gallery/2026-10/a.webp", originalPath: "gallery/x/a.webp" }] })
         .success,
     ).toBe(false)
+  })
+})
+
+describe("workshop lifecycle helpers", () => {
+  const now = new Date("2026-10-06T12:00:00Z")
+  const before = new Date(now.getTime() - HOUR)
+  const after = new Date(now.getTime() + HOUR)
+
+  it("locks the contract once cancelled or closed, or once started after the go decision", () => {
+    expect(contractLocked({ status: "awaiting_signature", startsAt: after, finalParticipants: null }, now)).toBe(false)
+    expect(contractLocked({ status: "published", startsAt: before, finalParticipants: null }, now)).toBe(false)
+    expect(contractLocked({ status: "confirmed", startsAt: after, finalParticipants: 3 }, now)).toBe(false)
+    expect(contractLocked({ status: "confirmed", startsAt: before, finalParticipants: 3 }, now)).toBe(true)
+    // Re-issued after the go decision and still waiting for the signature when it starts.
+    expect(contractLocked({ status: "awaiting_signature", startsAt: before, finalParticipants: 3 }, now)).toBe(true)
+    expect(contractLocked({ status: "cancelled", startsAt: after, finalParticipants: null }, now)).toBe(true)
+    expect(contractLocked({ status: "closed", startsAt: after, finalParticipants: null }, now)).toBe(true)
+  })
+
+  it("keeps a cancelled workshop cancelled after its books are closed", () => {
+    expect(isCancelled({ status: "closed", cancelledAt: now })).toBe(true)
+    expect(displayStatus({ status: "closed", cancelledAt: now })).toBe("cancelled")
+    expect(displayStatus({ status: "cancelled", cancelledAt: now })).toBe("cancelled")
+    expect(isCancelled({ status: "closed", cancelledAt: null })).toBe(false)
+    expect(displayStatus({ status: "closed", cancelledAt: null })).toBe("closed")
+    expect(displayStatus({ status: "confirmed", cancelledAt: null })).toBe("confirmed")
   })
 })

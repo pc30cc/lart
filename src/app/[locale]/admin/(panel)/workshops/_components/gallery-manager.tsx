@@ -13,10 +13,21 @@ import { saveGallery } from "@/features/workshops/actions"
 type SaveState = "idle" | "saving" | "saved" | "error"
 
 /**
- * The gallery of a closed workshop. Every change (an upload finishing, a
- * reorder, a removal) is saved right away; the latest list always wins.
+ * The gallery of a closed workshop, with its card header (the save status sits
+ * beside the title). Every change (an upload finishing, a reorder, a removal)
+ * is saved right away; the latest list always wins.
  */
-export function GalleryManager({ id, initial }: { id: string; initial: MediaItem[] }) {
+export function GalleryManager({
+  id,
+  initial,
+  title,
+  description,
+}: {
+  id: string
+  initial: MediaItem[]
+  title: string
+  description: string
+}) {
   const t = useTranslations("workshops.gallery")
   const tc = useTranslations("common")
   const [items, setItems] = useState(initial)
@@ -50,33 +61,40 @@ export function GalleryManager({ id, initial }: { id: string; initial: MediaItem
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex min-h-8 items-center justify-end gap-2 text-sm" aria-live="polite">
-        {state === "saving" && (
-          <span className="text-muted-foreground inline-flex items-center gap-1.5">
-            <Spinner aria-hidden className="size-3.5" />
-            {t("saving")}
-          </span>
-        )}
-        {state === "saved" && (
-          <span className="text-success inline-flex items-center gap-1.5">
-            <CheckIcon className="size-4" />
-            {t("saved")}
-          </span>
-        )}
-        {state === "error" && (
-          <>
-            <span className="text-destructive inline-flex items-center gap-1.5">
-              <CloudAlertIcon className="size-4" />
-              {t("notSaved")}
+    <>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <h2 className="font-semibold">{title}</h2>
+          <p className="text-muted-foreground text-sm text-pretty">{description}</p>
+        </div>
+        {/* Always mounted, so screen readers hear every change of the save status. */}
+        <div className="flex shrink-0 items-center gap-2 text-sm" aria-live="polite">
+          {state === "saving" && (
+            <span className="text-muted-foreground inline-flex items-center gap-1.5">
+              <Spinner aria-hidden className="size-3.5" />
+              {t("saving")}
             </span>
-            <Button size="sm" variant="outline" onClick={() => void save(items)}>
-              {t("retry")}
-            </Button>
-          </>
-        )}
+          )}
+          {state === "saved" && (
+            <span className="text-success inline-flex items-center gap-1.5">
+              <CheckIcon className="size-4" />
+              {t("saved")}
+            </span>
+          )}
+          {state === "error" && (
+            <>
+              <span className="text-destructive inline-flex items-center gap-1.5">
+                <CloudAlertIcon className="size-4" />
+                {t("notSaved")}
+              </span>
+              <Button size="sm" variant="outline" onClick={() => void save(items)}>
+                {t("retry")}
+              </Button>
+            </>
+          )}
+        </div>
       </div>
       <MediaGrid value={items} onChange={(next) => void save(next)} imagePurpose="gallery_photo" allowVideos max={200} />
-    </div>
+    </>
   )
 }

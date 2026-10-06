@@ -90,36 +90,41 @@ function TipBox({ title, subtitle, rows }: { title: string; subtitle?: string; r
   )
 }
 
-/** The values of a chart for screen readers (the chart itself is visual). */
+/**
+ * The values of a chart for screen readers (the chart itself is visual). The
+ * sr-only box is a div: a table ignores the 1px width and would widen the page.
+ */
 function ChartTable({ caption, head, rows }: { caption: string; head: string[]; rows: string[][] }) {
   return (
-    <table className="sr-only">
-      <caption>{caption}</caption>
-      <thead>
-        <tr>
-          {head.map((h) => (
-            <th key={h} scope="col">
-              {h}
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row, i) => (
-          <tr key={i}>
-            {row.map((cell, j) =>
-              j === 0 ? (
-                <th key={j} scope="row">
-                  {cell}
-                </th>
-              ) : (
-                <td key={j}>{cell}</td>
-              ),
-            )}
+    <div className="sr-only">
+      <table>
+        <caption>{caption}</caption>
+        <thead>
+          <tr>
+            {head.map((h) => (
+              <th key={h} scope="col">
+                {h}
+              </th>
+            ))}
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map((row, i) => (
+            <tr key={i}>
+              {row.map((cell, j) =>
+                j === 0 ? (
+                  <th key={j} scope="row">
+                    {cell}
+                  </th>
+                ) : (
+                  <td key={j}>{cell}</td>
+                ),
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }
 
@@ -223,7 +228,8 @@ export function SeatsChart({ data }: { data: SeatPoint[] }) {
   const t = useTranslations("dashboard.seats")
   const { locale, rtl } = useDirection()
   const config = { registered: { label: t("registered"), color: slot(1) } } satisfies ChartConfig
-  const rows = data.map((w) => ({ ...w, fill: w.max > 0 ? w.registered / w.max : 0 }))
+  // Not `fill`: Recharts reads a data row's `fill` (and `stroke`) as its colour.
+  const rows = data.map((w) => ({ ...w, rate: w.max > 0 ? w.registered / w.max : 0 }))
   const byId = new Map(rows.map((r) => [r.id, r]))
   const held = rows.filter((r) => !r.upcoming)
   const pct = (v: number) => formatPercent(v, locale, 0)
@@ -286,7 +292,7 @@ export function SeatsChart({ data }: { data: SeatPoint[] }) {
                     { label: t("registered"), value: num(row.registered), color: config.registered.color },
                     { label: t("capacity"), value: num(row.max) },
                     { label: t("minimum"), value: num(row.min) },
-                    { label: t("fill"), value: pct(row.fill) },
+                    { label: t("fill"), value: pct(row.rate) },
                   ]}
                 />
               )
@@ -302,10 +308,11 @@ export function SeatsChart({ data }: { data: SeatPoint[] }) {
             animationDuration={700}
           >
             <LabelList
-              dataKey="fill"
+              dataKey="rate"
               position="top"
               offset={6}
               fontSize={11}
+              fill="var(--muted-foreground)"
               className="fill-muted-foreground"
               formatter={(v) => pct(Number(v))}
             />
@@ -324,7 +331,7 @@ export function SeatsChart({ data }: { data: SeatPoint[] }) {
       <ChartTable
         caption={t("tableCaption")}
         head={[t("workshop"), t("date"), t("registered"), t("capacity"), t("fill")]}
-        rows={rows.map((r) => [r.title, r.date, num(r.registered), num(r.max), pct(r.fill)])}
+        rows={rows.map((r) => [r.title, r.date, num(r.registered), num(r.max), pct(r.rate)])}
       />
     </div>
   )
@@ -372,7 +379,8 @@ function RankChart({ rows, label, caption, nameHead }: { rows: RankPoint[]; labe
               return <TipBox title={row.name} subtitle={row.detail} rows={[{ label, value: lira(row.value), color: config.value.color }]} />
             }}
           />
-          <Bar dataKey="value" fill="var(--color-value)" radius={[0, 4, 4, 0]} maxBarSize={16} animationDuration={900}>
+          {/* minPointSize: a workshop that broke even (e.g. cancelled, nothing spent) still gets its "₺0". */}
+          <Bar dataKey="value" fill="var(--color-value)" radius={[0, 4, 4, 0]} maxBarSize={16} minPointSize={2} animationDuration={900}>
             <LabelList
               dataKey="value"
               content={(p) => {

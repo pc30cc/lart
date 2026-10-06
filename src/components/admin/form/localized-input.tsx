@@ -22,7 +22,8 @@ type Props = {
   description?: React.ReactNode
   /** Locales that must be filled (marked with *). Match the schema's `localizedText({ required })`. */
   required?: readonly Locale[]
-  placeholder?: string
+  /** One placeholder, or one per language (e.g. the default text an empty field falls back to). */
+  placeholder?: string | Partial<Record<Locale, string>>
   maxLength?: number
   className?: string
 }
@@ -129,7 +130,7 @@ function LocalizedField({
                   onBlur: field.onBlur,
                   lang: l,
                   dir: l === "fa" ? "rtl" : "ltr",
-                  placeholder,
+                  placeholder: typeof placeholder === "string" ? placeholder : placeholder?.[l],
                   maxLength,
                   required: required.includes(l),
                   "aria-invalid": Boolean(fieldState.error),

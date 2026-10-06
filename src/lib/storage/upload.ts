@@ -56,11 +56,15 @@ export async function storeImage({
   return { path, url: storage.publicUrl(path), ...size }
 }
 
+/**
+ * Every gallery photo reaches the CDN watermarked (README §10): without a
+ * logo, or when it cannot be read, nothing is stored.
+ */
 async function storeGalleryPhoto(storage: Storage, input: Buffer, settings: WatermarkSettings): Promise<UploadResult> {
-  // Without a logo yet the photo goes up unwatermarked and the answer says so.
-  const logo = settings.enabled && settings.logoPath ? await readLogo(storage, settings.logoPath) : null
+  if (!settings.logoPath) throw new UploadError("watermark_missing")
+  const logo = await readLogo(storage, settings.logoPath)
   const original = await processOriginal(input)
-  const photo = await processImage(input, "gallery_photo", logo && { settings, logo })
+  const photo = await processImage(input, "gallery_photo", { settings, logo })
 
   const originalPath = newObjectPath("originals", original.ext)
   const path = newObjectPath(prefixes.gallery_photo, photo.ext)
@@ -77,7 +81,6 @@ async function storeGalleryPhoto(storage: Storage, input: Buffer, settings: Wate
     width: photo.width,
     height: photo.height,
     originalPath,
-    watermarked: !!logo,
   }
 }
 

@@ -3,7 +3,7 @@ import { and, eq, inArray, or } from "drizzle-orm"
 
 import { db, type Tx } from "@/db"
 import { courses, media } from "@/db/schema"
-import { UserError } from "@/lib/errors"
+import { errorForLog, UserError } from "@/lib/errors"
 import { getStorage, type Zone } from "@/lib/storage"
 
 export type MediaInput = {
@@ -92,9 +92,9 @@ export async function removeFiles(files: MediaFile[]): Promise<void> {
         .limit(1)
       const [asCover] = await db.select({ id: courses.id }).from(courses).where(eq(courses.coverPath, file.path)).limit(1)
       if (inMedia || asCover) continue
-      await storage.remove(file.path, file.zone).catch((err) => console.error("[workshops] could not remove", file.path, err))
+      await storage.remove(file.path, file.zone).catch((err) => console.error("[workshops] could not remove", file.path, errorForLog(err)))
     }
   } catch (err) {
-    console.error("[workshops] file clean-up failed", err)
+    console.error("[workshops] file clean-up failed", errorForLog(err))
   }
 }

@@ -1,5 +1,5 @@
 import "server-only"
-import { and, asc, count, desc, eq, gte, inArray, lt, lte, ne, or, sql, type SQL } from "drizzle-orm"
+import { and, asc, count, desc, eq, gte, inArray, isNotNull, isNull, lt, lte, ne, or, sql, type SQL } from "drizzle-orm"
 
 import { db, type Tx } from "@/db"
 import {
@@ -20,11 +20,13 @@ import { addMonths, change, fillMonths, fillRate, lastMonths, workshopAlert } fr
 /**
  * Everything the dashboard shows, in a handful of SQL aggregates.
  *
- * Money figures follow the accounting reports (features/money/reports): ledger
- * amounts are debit-positive, so revenue is minus the sum of its lines;
+ * Money figures follow profit and loss by period (features/money/reports):
+ * ledger amounts are debit-positive, so revenue is minus the sum of its lines;
  * closing entries are left out (they only move a closed workshop's result to
- * the partners' capital), so a workshop counts the same before and after it is
- * closed. "Last 12 months" is the current month and the 11 before it, in
+ * the partners' capital). An instructor fee is booked by the settlement, dated
+ * on the day its workshop is closed, so a past month never changes, but the
+ * fee of a confirmed workshop not closed yet is not counted anywhere (the UI
+ * says so). "Last 12 months" is the current month and the 11 before it, in
  * Istanbul time.
  */
 
@@ -35,6 +37,12 @@ const HELD = 4
 const RANKED = 8
 
 const active = ["awaiting_signature", "published", "confirmed"] as const
+/**
+ * Took place: confirmed or closed, and over. A cancelled workshop keeps its
+ * cancelled_at when it is closed (to book its costs), so it never counts as held.
+ */
+const tookPlace = (now: Date) =>
+  and(inArray(courses.status, ["confirmed", "closed"]), isNull(courses.cancelledAt), lt(courses.endsAt, now))
 const amount = ledgerLines.amount
 const n = (cond: SQL | undefined) => sql<number>`count(*) filter (where ${cond})`.mapWith(Number)
 const total = (expr: unknown, cond: SQL | undefined) => sql<number>`coalesce(sum(${expr}) filter (where ${cond}), 0)`.mapWith(Number)
@@ -100,7 +108,7 @@ async function summary(exec: Exec, now: Date, windowStart: Date) {
   const taken = participants(regs.confirmed)
   const upcoming = and(inArray(courses.status, active), gte(courses.endsAt, now))
   const open = and(upcoming, ne(courses.status, "awaiting_signature"))
-  const held = and(inArray(courses.status, ["confirmed", "closed"]), lt(courses.endsAt, now), gte(courses.startsAt, windowStart))
+  const held = and(tookPlace(now), gte(courses.startsAt, windowStart))
 
   const [row] = await exec
     .select({
@@ -113,7 +121,8 @@ async function summary(exec: Exec, now: Date, windowStart: Date) {
       heldTaken: total(taken, held),
       awaitingSignature: n(eq(courses.status, "awaiting_signature")),
       decisionsDue: n(and(eq(courses.status, "published"), lte(courses.decisionAt, now))),
-      toClose: n(or(and(eq(courses.status, "confirmed"), lte(courses.endsAt, now)), eq(courses.status, "cancelled"))),
+      // As workshopsToClose: a cancelled workshop stays "cancelled" once closed, with closed_at set.
+      toClose: n(or(and(eq(courses.status, "confirmed"), lte(courses.endsAt, now)), and(eq(courses.status, "cancelled"), isNull(courses.closedAt)))),
       categories: sql<number>`(select count(*) from ${categories})`.mapWith(Number),
       instructors: sql<number>`(select count(*) from ${instructors})`.mapWith(Number),
       contract: sql<boolean>`exists (select 1 from ${templates} where kind = 'contract' and is_default)`,
@@ -159,12 +168,13 @@ function heldWorkshops(exec: Exec, now: Date) {
       registered: participants(registered("confirmed")).mapWith(Number),
     })
     .from(courses)
-    .where(and(inArray(courses.status, ["confirmed", "closed"]), lt(courses.endsAt, now)))
+    .where(tookPlace(now))
     .orderBy(desc(courses.startsAt), desc(courses.id))
     .limit(HELD)
 }
 
-const closedSince = (windowStart: Date) => and(eq(courses.status, "closed"), gte(courses.startsAt, windowStart))
+/** Closed in the window: held ("closed") or cancelled with its costs booked ("cancelled", closed_at set). */
+const closedSince = (windowStart: Date) => and(isNotNull(courses.closedAt), gte(courses.startsAt, windowStart))
 
 /** Locked results of the workshops closed in the window, most recent first. */
 function profitByWorkshop(exec: Exec, windowStart: Date) {

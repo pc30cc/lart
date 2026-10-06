@@ -41,6 +41,7 @@
     "credit": "Credit",
     "revenue": "Revenue",
     "instructorFees": "Instructor fee",
+    "estimatedFee": "Fee not booked yet",
     "courseExpenses": "Workshop expenses",
     "generalExpenses": "General expenses",
     "net": "Net profit",
@@ -58,8 +59,8 @@
     "advancesHint": "Paid to instructors ahead of their workshops.",
     "owed": "Owed to instructors",
     "owedHint": "Fees of closed workshops not paid yet.",
-    "open": "Not shared out yet",
-    "openHint": "Result of workshops not closed yet, minus general expenses.",
+    "open": "Not shared yet",
+    "openHint": "Result of workshops not closed yet, after their instructor fees, minus general expenses.",
     "recent": "Recent activity",
     "allTransactions": "All transactions",
     "empty": {
@@ -201,7 +202,7 @@
     "explain": {
       "title": "How this works",
       "capital": "A partner’s capital grows with the money they put in, the costs they pay personally and their share of each closed workshop. It goes down with what they take out.",
-      "open": "Workshops that are not closed yet and general expenses are not shared out yet. This is each partner’s part of them, by today’s shares:",
+      "open": "Workshops that are not closed yet (after the fees confirmed ones owe their instructors) and general expenses are not shared out yet. This is each partner’s part of them, by today’s shares:",
       "openLabel": "Result not shared out yet",
       "settled": "“If settled today” is the capital plus that part: what each partner would get if the business settled up today.",
       "statement": "See a partner’s full statement"
@@ -234,7 +235,11 @@
     "exportCsv": "Export CSV",
     "print": "Print or PDF",
     "groupBy": "Group by",
-    "groups": { "month": "Month", "quarter": "Quarter", "year": "Year" },
+    "groups": {
+      "month": "Month",
+      "quarter": "Quarter",
+      "year": "Year"
+    },
     "tabs": {
       "pnl": "Profit and loss",
       "workshops": "By workshop",
@@ -247,7 +252,10 @@
     "change": "Change in the period",
     "openingOn": "Balance on {date}",
     "closingOn": "Balance on {date}",
-    "pnlNote": "Entries count on the day they happened. The closing entries, which only pass a workshop’s result to the partners, are left out.",
+    "pnlNote": "Entries count on the day they happened, and an instructor’s fee on the day its workshop is closed, so workshops not closed yet appear without their fee. The closing entry, which only passes a workshop’s result to the partners, is left out.",
+    "estimated": "estimated",
+    "estimatedNote": "* Estimated: the fee a confirmed workshop will owe its instructor under the contract. It is booked when the workshop is closed.",
+    "cancelledClosed": "Cancelled · closed",
     "partnerNote": "Positive amounts add to the partner’s capital; negative ones (withdrawals, a share of a loss) reduce it.",
     "empty": {
       "title": "Nothing in these dates",

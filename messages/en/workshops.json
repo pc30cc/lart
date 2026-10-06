@@ -54,13 +54,34 @@
       "description": "Create your first workshop. We’ll prepare the contract and email it to the instructor for you."
     },
     "views": {
-      "upcoming": { "title": "Nothing coming up", "description": "There are no upcoming workshops right now. How about planning the next one?" },
-      "awaiting_signature": { "title": "No contracts waiting", "description": "Every instructor has signed. Nice work!" },
-      "published": { "title": "No open registrations", "description": "Workshops appear here once their instructor signs the contract." },
-      "confirmed": { "title": "No confirmed workshops", "description": "Workshops appear here after you confirm them at the go / no-go decision." },
-      "cancelled": { "title": "No cancelled workshops", "description": "Good news: nothing has been cancelled." },
-      "closed": { "title": "No closed workshops yet", "description": "Workshops appear here after they are closed on their finances page." },
-      "all": { "title": "No workshops", "description": "Create your first workshop to get started." }
+      "upcoming": {
+        "title": "Nothing coming up",
+        "description": "There are no upcoming workshops right now. How about planning the next one?"
+      },
+      "awaiting_signature": {
+        "title": "No contracts waiting",
+        "description": "Every instructor has signed. Nice work!"
+      },
+      "published": {
+        "title": "No open registrations",
+        "description": "Workshops appear here once their instructor signs the contract."
+      },
+      "confirmed": {
+        "title": "No confirmed workshops",
+        "description": "Workshops appear here after you confirm them at the go / no-go decision."
+      },
+      "cancelled": {
+        "title": "No cancelled workshops",
+        "description": "Good news: nothing has been cancelled."
+      },
+      "closed": {
+        "title": "No closed workshops yet",
+        "description": "Workshops appear here after they are closed on their finances page."
+      },
+      "all": {
+        "title": "No workshops",
+        "description": "Create your first workshop to get started."
+      }
     }
   },
   "prerequisites": {
@@ -75,7 +96,7 @@
   },
   "form": {
     "lockedTitle": "Contract terms can’t change any more",
-    "lockedDescription": "This workshop is cancelled or closed, so the date, place, capacity and fee stay as they are. You can still edit the texts and photos.",
+    "lockedDescription": "This workshop is cancelled or closed, or it has started after it was confirmed, so the date, place, capacity, instructor and fee stay as they are. You can still edit the texts and photos.",
     "createAndSend": "Create and send contract",
     "basics": {
       "title": "The workshop",
@@ -110,9 +131,9 @@
     "reissue": {
       "title": "These changes update the contract",
       "sent": "Contract version {version} hasn’t been signed yet. When you save, it is replaced by a new version and emailed to the instructor again.",
-      "signed": "Contract version {version} is already signed. When you save, it is replaced by a new version, and the workshop is hidden from the site until the instructor signs again.",
+      "signed": "Contract version {version} is already signed. When you save, it is replaced by a new version, and the workshop is hidden from the site until the instructor signs again. A confirmed workshop keeps its go decision and final number.",
       "confirmTitle": "Send a new contract?",
-      "confirmDescription": "We’ll replace the current contract with version {version} and email it to {name}. Until it’s signed, the workshop waits for the signature and doesn’t show on the site. People who already registered keep their places.",
+      "confirmDescription": "We’ll replace the current contract with version {version} and email it to {name}. Until it’s signed, the workshop waits for the signature and doesn’t show on the site. People who already registered keep their places, and a confirmed workshop is confirmed again with the same final number once it’s signed.",
       "confirm": "Yes, save and send"
     }
   },
@@ -206,13 +227,14 @@
     "noContractTemplate": "There’s no default contract text yet. Please set it in Templates first.",
     "instructorUnavailable": "This instructor isn’t active. Please choose another one.",
     "notFound": "This workshop no longer exists.",
-    "contractLocked": "This workshop is cancelled or closed, so its date, place, capacity, instructor and fee can’t change.",
+    "contractLocked": "This workshop is cancelled or closed, or it has started after it was confirmed, so its date, place, capacity, instructor and fee can’t change.",
     "priceLocked": "People have already registered at this price, so it can’t be changed.",
     "capacityBelowRegistrations": "{count, plural, one {# person has} other {# people have}} already registered, so the maximum can’t be lower than that.",
     "cannotConfirm": "Only a workshop that is open for registration can be confirmed.",
     "alreadyStarted": "This workshop has already started, so it can’t be confirmed any more.",
     "cannotCancel": "This workshop is already cancelled or closed.",
     "galleryClosedOnly": "Photos and videos can be added once the workshop is closed.",
+    "galleryCancelled": "This workshop was cancelled, so it has no gallery.",
     "mediaInUse": "One of these files is already used elsewhere. Please upload it again."
   },
   "overview": {
@@ -314,7 +336,11 @@
     "print": "Print",
     "preview": "Not signed yet. This is the text as the instructor sees it now.",
     "language": "Contract language",
-    "languages": { "fa": "فارسی", "tr": "Türkçe", "en": "English" },
+    "languages": {
+      "fa": "فارسی",
+      "tr": "Türkçe",
+      "en": "English"
+    },
     "signedLine": "Signed electronically by {name} on {date}.",
     "none": {
       "title": "No contract yet",
@@ -372,12 +398,12 @@
       "videoYes": "Videos may be published",
       "videoNo": "No videos"
     },
-    "readOnly": "To change a registration or a refund, use the Registrations section."
+    "readOnly": "This list is view-only. Changing a single registration or refunding it isn’t available yet."
   },
   "gallery": {
     "metaTitle": "Gallery · {title}",
     "title": "Photos and videos",
-    "description": "Photos get the watermark automatically. Drag to change the order.",
+    "description": "Photos get the watermark automatically. Changes are saved right away.",
     "notYet": {
       "title": "The gallery opens after the workshop is closed",
       "description": "Close the workshop on its finances page first. Then add photos and videos here.",
@@ -400,6 +426,10 @@
     "saving": "Saving…",
     "saved": "All changes saved",
     "notSaved": "Not saved",
-    "retry": "Try again"
+    "retry": "Try again",
+    "noWatermark": {
+      "text": "Add a watermark logo first: gallery photos are always published with it, so they can’t be uploaded until there is one.",
+      "action": "Open watermark settings"
+    }
   }
 }

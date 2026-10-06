@@ -37,10 +37,10 @@
   },
   "validation": {
     "required": "لطفاً این بخش را پر کنید.",
-    "tooShort": "لطفاً دست‌کم {min} حرف بنویسید.",
-    "tooLong": "لطفاً حداکثر {max} حرف بنویسید.",
-    "tooSmall": "لطفاً عددی برابر یا بیشتر از {min} وارد کنید.",
-    "tooBig": "لطفاً عددی برابر یا کمتر از {max} وارد کنید.",
+    "tooShort": "لطفاً دست‌کم {min, number} حرف بنویسید.",
+    "tooLong": "لطفاً حداکثر {max, number} حرف بنویسید.",
+    "tooSmall": "لطفاً عددی برابر یا بیشتر از {min, number} وارد کنید.",
+    "tooBig": "لطفاً عددی برابر یا کمتر از {max, number} وارد کنید.",
     "number": "لطفاً یک عدد وارد کنید.",
     "integer": "لطفاً یک عدد بدون اعشار وارد کنید.",
     "email": "لطفاً یک نشانی ایمیل درست وارد کنید.",
@@ -58,7 +58,7 @@
     "filled": "پر شده",
     "missing": "هنوز پر نشده",
     "hasError": "نیاز به بررسی",
-    "languagesFilled": "{count} از {total} زبان"
+    "languagesFilled": "{count, number} از {total, number} زبان"
   },
   "date": {
     "pickDate": "انتخاب تاریخ",

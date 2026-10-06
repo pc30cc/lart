@@ -5,6 +5,7 @@ import { getLocale, getTranslations } from "next-intl/server"
 import { EmptyState } from "@/components/admin/empty-state"
 import { Money } from "@/components/admin/money"
 import { PageHeader } from "@/components/admin/page-header"
+import { StatusBadge } from "@/components/admin/status-badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { getLedgerFilterOptions } from "@/features/money/queries"
@@ -177,12 +178,23 @@ function FigureHeads({ t }: { t: T }) {
   ))
 }
 
-function FigureCells({ row }: { row: Figures }) {
+/** `estimated`: the fee includes the projected fee of a workshop not closed yet (marked, see `EstimatedNote`). */
+function FigureCells({ row, t, estimated = 0 }: { row: Figures; t: T; estimated?: number }) {
   return figureKeys.map((k) => (
     <TableCell key={k} className={cn(num, k !== "net" && k !== "revenue" && "hidden sm:table-cell", k === "net" && "font-semibold")}>
       <Money value={row[k]} tone={k === "net" ? "signed" : "plain"} />
+      {k === "instructorFees" && estimated > 0 && (
+        <>
+          <sup aria-hidden className="text-muted-foreground ms-0.5">*</sup>
+          <span className="sr-only"> ({t("reports.estimated")})</span>
+        </>
+      )}
     </TableCell>
   ))
+}
+
+function EstimatedNote({ t, estimated }: { t: T; estimated: number }) {
+  return estimated > 0 ? <p className="text-muted-foreground text-xs text-pretty">{t("reports.estimatedNote")}</p> : null
 }
 
 // ─── Reports ──────────────────────────────────────────────────────────────────
@@ -269,45 +281,52 @@ async function WorkshopsReport({ params, t, locale }: { params: ReportParams; t:
   const { workshops, total } = await workshopResults(params)
   if (!workshops.length) return <NoData t={t} />
   return (
-    <Frame>
-      <Table>
-        <TableHeader className="bg-muted/40">
-          <TableRow className="hover:bg-transparent">
-            <TableHead className={cn(head, "text-start")}>{t("columns.workshop")}</TableHead>
-            <TableHead className={cn(head, "hidden text-start lg:table-cell")}>{t("columns.status")}</TableHead>
-            <TableHead className={cn(head, "hidden text-end md:table-cell")}>{t("columns.participants")}</TableHead>
-            <FigureHeads t={t} />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {workshops.map((w) => (
-            <TableRow key={w.id}>
-              <TableCell className="max-w-64 px-4 py-3">
-                <Link href={`/admin/workshops/${w.id}/finances`} className="hover:text-primary block truncate font-medium transition-colors">
-                  {localized(w.title, locale)}
-                </Link>
-                <span className="text-muted-foreground block truncate text-xs">
-                  {formatDate(w.startsAt, locale, "medium")} · {localized(w.instructor, locale)}
-                </span>
-              </TableCell>
-              <TableCell className="hidden px-4 py-3 lg:table-cell">
-                <WorkshopStatusBadge status={w.status} />
-              </TableCell>
-              <TableCell className={cn(num, "hidden md:table-cell")}>{formatNumber(w.participants, locale)}</TableCell>
-              <FigureCells row={w} />
+    <div className="space-y-4">
+      <Frame>
+        <Table>
+          <TableHeader className="bg-muted/40">
+            <TableRow className="hover:bg-transparent">
+              <TableHead className={cn(head, "text-start")}>{t("columns.workshop")}</TableHead>
+              <TableHead className={cn(head, "hidden text-start lg:table-cell")}>{t("columns.status")}</TableHead>
+              <TableHead className={cn(head, "hidden text-end md:table-cell")}>{t("columns.participants")}</TableHead>
+              <FigureHeads t={t} />
             </TableRow>
-          ))}
-        </TableBody>
-        <TableFooter className="bg-muted/40">
-          <TableRow className="hover:bg-transparent">
-            <TableCell className="px-4 py-3 font-semibold">{t("columns.total")}</TableCell>
-            <TableCell className="hidden lg:table-cell" />
-            <TableCell className={cn(num, "hidden font-semibold md:table-cell")}>{formatNumber(total.participants, locale)}</TableCell>
-            <FigureCells row={total} />
-          </TableRow>
-        </TableFooter>
-      </Table>
-    </Frame>
+          </TableHeader>
+          <TableBody>
+            {workshops.map((w) => (
+              <TableRow key={w.id}>
+                <TableCell className="max-w-64 px-4 py-3">
+                  <Link href={`/admin/workshops/${w.id}/finances`} className="hover:text-primary block truncate font-medium transition-colors">
+                    {localized(w.title, locale)}
+                  </Link>
+                  <span className="text-muted-foreground block truncate text-xs">
+                    {formatDate(w.startsAt, locale, "medium")} · {localized(w.instructor, locale)}
+                  </span>
+                </TableCell>
+                <TableCell className="hidden px-4 py-3 lg:table-cell">
+                  {w.status === "cancelled" && w.closed ? (
+                    <StatusBadge tone="danger">{t("reports.cancelledClosed")}</StatusBadge>
+                  ) : (
+                    <WorkshopStatusBadge status={w.status} />
+                  )}
+                </TableCell>
+                <TableCell className={cn(num, "hidden md:table-cell")}>{formatNumber(w.participants, locale)}</TableCell>
+                <FigureCells row={w} t={t} estimated={w.estimatedFee} />
+              </TableRow>
+            ))}
+          </TableBody>
+          <TableFooter className="bg-muted/40">
+            <TableRow className="hover:bg-transparent">
+              <TableCell className="px-4 py-3 font-semibold">{t("columns.total")}</TableCell>
+              <TableCell className="hidden lg:table-cell" />
+              <TableCell className={cn(num, "hidden font-semibold md:table-cell")}>{formatNumber(total.participants, locale)}</TableCell>
+              <FigureCells row={total} t={t} estimated={total.estimatedFee} />
+            </TableRow>
+          </TableFooter>
+        </Table>
+      </Frame>
+      <EstimatedNote t={t} estimated={total.estimatedFee} />
+    </div>
   )
 }
 
@@ -315,40 +334,43 @@ async function InstructorsReport({ params, t, locale }: { params: ReportParams; 
   const { instructors, total } = await instructorResults(params)
   if (!instructors.length) return <NoData t={t} />
   return (
-    <Frame>
-      <Table>
-        <TableHeader className="bg-muted/40">
-          <TableRow className="hover:bg-transparent">
-            <TableHead className={cn(head, "text-start")}>{t("columns.instructor")}</TableHead>
-            <TableHead className={cn(head, "hidden text-end md:table-cell")}>{t("columns.workshops")}</TableHead>
-            <TableHead className={cn(head, "hidden text-end md:table-cell")}>{t("columns.participants")}</TableHead>
-            <FigureHeads t={t} />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {instructors.map((i) => (
-            <TableRow key={i.instructorId}>
-              <TableCell className="px-4 py-3 font-medium">
-                <Link href={`/admin/instructors/${i.instructorId}`} className="hover:text-primary transition-colors">
-                  {localized(i.instructor, locale)}
-                </Link>
-              </TableCell>
-              <TableCell className={cn(num, "hidden md:table-cell")}>{formatNumber(i.workshops, locale)}</TableCell>
-              <TableCell className={cn(num, "hidden md:table-cell")}>{formatNumber(i.participants, locale)}</TableCell>
-              <FigureCells row={i} />
+    <div className="space-y-4">
+      <Frame>
+        <Table>
+          <TableHeader className="bg-muted/40">
+            <TableRow className="hover:bg-transparent">
+              <TableHead className={cn(head, "text-start")}>{t("columns.instructor")}</TableHead>
+              <TableHead className={cn(head, "hidden text-end md:table-cell")}>{t("columns.workshops")}</TableHead>
+              <TableHead className={cn(head, "hidden text-end md:table-cell")}>{t("columns.participants")}</TableHead>
+              <FigureHeads t={t} />
             </TableRow>
-          ))}
-        </TableBody>
-        <TableFooter className="bg-muted/40">
-          <TableRow className="hover:bg-transparent">
-            <TableCell className="px-4 py-3 font-semibold">{t("columns.total")}</TableCell>
-            <TableCell className={cn(num, "hidden font-semibold md:table-cell")}>{formatNumber(total.workshops, locale)}</TableCell>
-            <TableCell className={cn(num, "hidden font-semibold md:table-cell")}>{formatNumber(total.participants, locale)}</TableCell>
-            <FigureCells row={total} />
-          </TableRow>
-        </TableFooter>
-      </Table>
-    </Frame>
+          </TableHeader>
+          <TableBody>
+            {instructors.map((i) => (
+              <TableRow key={i.instructorId}>
+                <TableCell className="px-4 py-3 font-medium">
+                  <Link href={`/admin/instructors/${i.instructorId}`} className="hover:text-primary transition-colors">
+                    {localized(i.instructor, locale)}
+                  </Link>
+                </TableCell>
+                <TableCell className={cn(num, "hidden md:table-cell")}>{formatNumber(i.workshops, locale)}</TableCell>
+                <TableCell className={cn(num, "hidden md:table-cell")}>{formatNumber(i.participants, locale)}</TableCell>
+                <FigureCells row={i} t={t} estimated={i.estimatedFee} />
+              </TableRow>
+            ))}
+          </TableBody>
+          <TableFooter className="bg-muted/40">
+            <TableRow className="hover:bg-transparent">
+              <TableCell className="px-4 py-3 font-semibold">{t("columns.total")}</TableCell>
+              <TableCell className={cn(num, "hidden font-semibold md:table-cell")}>{formatNumber(total.workshops, locale)}</TableCell>
+              <TableCell className={cn(num, "hidden font-semibold md:table-cell")}>{formatNumber(total.participants, locale)}</TableCell>
+              <FigureCells row={total} t={t} estimated={total.estimatedFee} />
+            </TableRow>
+          </TableFooter>
+        </Table>
+      </Frame>
+      <EstimatedNote t={t} estimated={total.estimatedFee} />
+    </div>
   )
 }
 

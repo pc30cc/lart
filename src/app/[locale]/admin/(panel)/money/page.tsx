@@ -52,7 +52,7 @@ export default async function WalletPage() {
         }
       />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,2fr)]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,2fr)]">
         <div className="from-primary/12 to-primary/3 ring-primary/15 relative flex flex-col justify-between gap-6 overflow-hidden rounded-2xl bg-linear-to-br p-5 shadow-xs ring-1 md:p-6">
           <WalletIcon aria-hidden className="text-primary/10 absolute -end-6 -bottom-8 size-40 rtl:-scale-x-100" />
           <div className="flex items-center gap-2">
@@ -96,7 +96,7 @@ export default async function WalletPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <Panel
           title={t("wallet.recent")}
           actions={

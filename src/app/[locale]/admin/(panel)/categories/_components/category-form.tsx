@@ -71,7 +71,7 @@ export function CategoryForm({ category }: { category?: Category }) {
           min={0}
           max={10000}
           dir="ltr"
-          className="max-w-40"
+          className="[&_input]:max-w-40"
         />
       </FormSection>
 

@@ -1,6 +1,6 @@
 {
   "title": "Templates",
-  "description": "The registration terms people accept and the contract instructors sign, in three languages.",
+  "description": "The registration terms people accept, the contract instructors sign and the emails that go out, in three languages.",
   "default": "Default",
   "languages": "Languages",
   "updated": "Updated {date}",
@@ -132,5 +132,93 @@
     "unknownPlaceholder": "This text has a placeholder we don’t recognise. Please check the spelling inside the curly brackets.",
     "deleteDefault": "The default template can’t be deleted. Make another template the default first.",
     "inUse": "This template is in use, so it can’t be deleted."
+  },
+  "emails": {
+    "title": "Emails",
+    "description": "Sent automatically, for example the contract to sign or a registration confirmation. Change any text in any language; what you leave empty keeps the default text.",
+    "edit": "Edit texts",
+    "defaultTexts": "Default texts",
+    "edited": "Edited",
+    "to": "To: {who}",
+    "fields": {
+      "subject": "Subject",
+      "preview": "Inbox preview",
+      "previewHint": "The short line most inboxes show after the subject.",
+      "heading": "Heading",
+      "intro": "Main text",
+      "intro2": "Second paragraph",
+      "cta": "Button",
+      "note": "Note at the end",
+      "optional": "Optional."
+    },
+    "form": {
+      "textsTitle": "Texts",
+      "textsDescription": "Leave a language empty to keep the default text, shown in grey. The greeting, the details and the signature are added automatically.",
+      "placeholdersTitle": "Placeholders",
+      "placeholdersHint": "Filled in when the email is sent. Write them exactly like this, with the curly brackets.",
+      "previewTitle": "Preview",
+      "previewDescription": "With example details. Nothing is sent.",
+      "previewSubject": "Subject",
+      "previewLoading": "Updating the preview…",
+      "previewFailed": "The preview can’t be shown yet.",
+      "previewFrame": "Preview of the email"
+    },
+    "reset": {
+      "action": "Use the default texts",
+      "title": "Use the default texts again?",
+      "description": "Your texts for this email are removed in all three languages. The activity log keeps a copy.",
+      "confirm": "Yes, use the default texts"
+    },
+    "toast": {
+      "saved": "Email texts saved.",
+      "reset": "The default texts are used again."
+    },
+    "sample": {
+      "person": "Zeynep Arslan",
+      "bring": "An apron and comfortable clothes"
+    },
+    "errors": {
+      "syntax": "Check the curly brackets: each '{' needs a '}', and they are only for placeholders.",
+      "placeholder": "{name} isn’t a placeholder of this email. Use one from the list, or remove it.",
+      "number": "A text placeholder can’t be used as a number or a plural here."
+    },
+    "names": {
+      "welcome_verify": {
+        "title": "Welcome + verify your email",
+        "to": "Participants and instructors"
+      },
+      "instructor_invite": {
+        "title": "Instructor invitation",
+        "to": "Instructors"
+      },
+      "contract_ready": {
+        "title": "Contract ready to sign",
+        "to": "Instructors"
+      },
+      "contract_signed": {
+        "title": "Contract signed",
+        "to": "Admins"
+      },
+      "decision_due": {
+        "title": "Go / no-go decision due",
+        "to": "Admins"
+      },
+      "registration_confirmed": {
+        "title": "Registration confirmed",
+        "to": "Participants"
+      },
+      "workshop_reminder": {
+        "title": "Workshop reminder",
+        "to": "Participants"
+      },
+      "workshop_cancelled": {
+        "title": "Workshop cancelled + refund",
+        "to": "Participants"
+      },
+      "password_reset": {
+        "title": "Password reset",
+        "to": "Everyone"
+      }
+    }
   }
 }

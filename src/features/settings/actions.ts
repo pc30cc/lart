@@ -5,6 +5,7 @@ import { refresh } from "next/cache"
 import { db } from "@/db"
 import { adminAction } from "@/lib/action"
 import { changes } from "@/lib/audit"
+import { errorForLog } from "@/lib/errors"
 import { getSetting, setSetting, type SettingKey, type SettingValue } from "@/lib/settings"
 import { remove, testStorage } from "@/lib/storage"
 import { buildCdnConfig, cdnView } from "./cdn"
@@ -73,7 +74,7 @@ export const saveWatermarkSettings = adminAction(watermarkSettingsSchema, async 
     await ctx.audit(settingAudit("watermark", diff), tx)
   })
   if (before.logoPath && before.logoPath !== input.logoPath) {
-    await remove(before.logoPath, "private").catch((err) => console.warn("[settings] old watermark logo not removed", err))
+    await remove(before.logoPath, "private").catch((err) => console.warn("[settings] old watermark logo not removed", errorForLog(err)))
   }
   refresh()
   return { changed: true }

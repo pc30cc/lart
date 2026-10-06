@@ -45,8 +45,6 @@ export type UploadResult = {
   height?: number
   /** gallery_photo only: the unwatermarked original in private storage. */
   originalPath?: string
-  /** gallery_photo only: false when no watermark logo is set yet. */
-  watermarked?: boolean
 }
 
 /** Answer for a video part that is not the last one (HTTP 202), or after an offset mismatch (409). */
@@ -60,6 +58,8 @@ export const uploadErrorStatus = {
   heic_unsupported: 415,
   too_many_pixels: 422,
   invalid_image: 422,
+  /** A gallery photo while no watermark logo is set: it is never published unwatermarked. */
+  watermark_missing: 409,
   watermark_unavailable: 503,
   storage: 502,
   server: 500,

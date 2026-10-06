@@ -48,7 +48,7 @@ export function DateField<T extends FieldValues>({ name, label }: { name: Path<T
                 className={cn("h-9 w-full justify-start gap-2 px-2.5 font-normal", !iso && "text-muted-foreground")}
               >
                 <CalendarIcon className="text-muted-foreground" />
-                <span className="truncate">{iso ? formatDate(`${iso}T09:00:00Z`, locale, "full") : t("pickDate")}</span>
+                <span className="truncate" suppressHydrationWarning>{iso ? formatDate(`${iso}T09:00:00Z`, locale, "full") : t("pickDate")}</span>
               </Button>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-auto p-0">

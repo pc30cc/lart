@@ -5,13 +5,18 @@ import { alias } from "drizzle-orm/pg-core"
 import { db } from "@/db"
 import { admins, courses, instructors, ledgerLines, ledgerTransactions, registrations, type LocalizedText } from "@/db/schema"
 import { requireAdmin } from "@/lib/auth/admin"
+import { projectedFees } from "./closing"
 import { partnerCapitals, type TransactionKind } from "./ledger"
 import type { PeriodGroup } from "./schema"
 
 /**
- * Accounting reports. Profit and loss figures leave out the closing entries
- * (which only move a closed workshop's result to the partners' capital), so a
- * workshop counts the same before and after it is closed.
+ * Accounting reports. Profit and loss figures leave out the closing entry
+ * (`course_close`, which only moves a closed workshop's result to the
+ * partners' capital). The instructor fee is booked by the settlement, dated on
+ * the day the workshop is closed: profit and loss by period counts it then
+ * (periods already reported never change), while the reports by workshop and
+ * by instructor add the projected fee of confirmed workshops not closed yet
+ * (`estimatedFee`), so a workshop's result does not jump at closing.
  */
 
 const t = ledgerTransactions
@@ -67,7 +72,10 @@ export function periodStarts(from: string, to: string, group: PeriodGroup): stri
   return out
 }
 
-/** Income and expenses per month, quarter or year, by the date each entry happened. */
+/**
+ * Income and expenses per month, quarter or year, by the date each entry
+ * happened; an instructor fee counts on the day its workshop was closed.
+ */
 export async function profitAndLoss(range: { from: string; to: string; group: PeriodGroup }) {
   await requireAdmin()
   const period = sql<string>`to_char(date_trunc(${units[range.group]}, ${t.occurredOn}::timestamp), 'YYYY-MM-DD')`
@@ -107,7 +115,11 @@ export async function profitAndLoss(range: { from: string; to: string; group: Pe
 
 // ─── By workshop and by instructor ────────────────────────────────────────────
 
-/** Workshops that started in the range, with their figures (all time, closing entries left out). */
+/**
+ * Workshops that started in the range, with their figures (all time, the
+ * closing entry left out). A confirmed workshop not closed yet counts the fee
+ * it will owe its instructor (`estimatedFee`, included in `instructorFees`).
+ */
 export async function workshopResults(range: { from: string; to: string }) {
   await requireAdmin()
   const totals = db
@@ -124,11 +136,13 @@ export async function workshopResults(range: { from: string; to: string }) {
     .as("totals")
   const confirmed = sql<number>`(select count(*) from ${registrations} r where r.course_id = ${courses}.${sql.identifier("id")} and r.status = 'confirmed')`.mapWith(Number)
 
-  const rows = await db
+  const query = db
     .select({
       id: courses.id,
       title: courses.title,
       status: courses.status,
+      cancelledAt: courses.cancelledAt,
+      closedAt: courses.closedAt,
       startsAt: courses.startsAt,
       finalParticipants: courses.finalParticipants,
       closedTotals: courses.closedTotals,
@@ -144,24 +158,39 @@ export async function workshopResults(range: { from: string; to: string }) {
     .leftJoin(totals, eq(totals.courseId, courses.id))
     .where(sql`(${courses.startsAt} at time zone 'Europe/Istanbul')::date between ${range.from} and ${range.to}`)
     .orderBy(asc(courses.startsAt), asc(courses.id))
+  const [rows, projected] = await Promise.all([query, projectedFees(db)])
 
-  const workshops = rows.map((r) => ({
-    id: r.id,
-    title: r.title,
-    status: r.status,
-    startsAt: r.startsAt,
-    instructorId: r.instructorId,
-    instructor: r.instructor,
-    participants:
-      r.status === "cancelled" ? 0 : (r.closedTotals?.participants ?? r.finalParticipants ?? Number(r.confirmed)),
-    ...withNet({
-      revenue: Number(r.revenue ?? 0),
-      instructorFees: Number(r.instructorFees ?? 0),
-      courseExpenses: Number(r.courseExpenses ?? 0),
-      generalExpenses: 0,
-    }),
-  }))
-  return { workshops, total: { ...addTotals(workshops), participants: workshops.reduce((s, w) => s + w.participants, 0) } }
+  const workshops = rows.map((r) => {
+    const estimatedFee = projected.get(r.id) ?? 0
+    const cancelled = r.status === "cancelled" || r.cancelledAt !== null
+    return {
+      id: r.id,
+      title: r.title,
+      /** "cancelled" also once its costs are booked (`closed`); older rows were closed as "closed" with `cancelledAt`. */
+      status: cancelled ? ("cancelled" as const) : r.status,
+      closed: r.closedAt !== null || r.status === "closed",
+      startsAt: r.startsAt,
+      instructorId: r.instructorId,
+      instructor: r.instructor,
+      participants: cancelled ? 0 : (r.closedTotals?.participants ?? r.finalParticipants ?? Number(r.confirmed)),
+      /** Not booked yet: the fee a confirmed workshop will owe when it is closed (part of `instructorFees`). */
+      estimatedFee,
+      ...withNet({
+        revenue: Number(r.revenue ?? 0),
+        instructorFees: Number(r.instructorFees ?? 0) + estimatedFee,
+        courseExpenses: Number(r.courseExpenses ?? 0),
+        generalExpenses: 0,
+      }),
+    }
+  })
+  return {
+    workshops,
+    total: {
+      ...addTotals(workshops),
+      participants: workshops.reduce((s, w) => s + w.participants, 0),
+      estimatedFee: workshops.reduce((s, w) => s + w.estimatedFee, 0),
+    },
+  }
 }
 
 export type WorkshopResult = Awaited<ReturnType<typeof workshopResults>>["workshops"][number]
@@ -169,11 +198,22 @@ export type WorkshopResult = Awaited<ReturnType<typeof workshopResults>>["worksh
 /** The same figures per instructor (workshops that started in the range). */
 export async function instructorResults(range: { from: string; to: string }) {
   const { workshops, total } = await workshopResults(range)
-  const groups = new Map<string, { instructorId: string; instructor: LocalizedText; workshops: number; participants: number; figures: WorkshopResult[] }>()
+  const groups = new Map<
+    string,
+    { instructorId: string; instructor: LocalizedText; workshops: number; participants: number; estimatedFee: number; figures: WorkshopResult[] }
+  >()
   for (const w of workshops) {
-    const g = groups.get(w.instructorId) ?? { instructorId: w.instructorId, instructor: w.instructor, workshops: 0, participants: 0, figures: [] }
+    const g = groups.get(w.instructorId) ?? {
+      instructorId: w.instructorId,
+      instructor: w.instructor,
+      workshops: 0,
+      participants: 0,
+      estimatedFee: 0,
+      figures: [],
+    }
     g.workshops += 1
     g.participants += w.participants
+    g.estimatedFee += w.estimatedFee
     g.figures.push(w)
     groups.set(w.instructorId, g)
   }

@@ -2,9 +2,9 @@
   "meta": { "title": "مدیریت" },
   "brandSubtitle": "پنل مدیریت",
   "nav": {
-    "groups": { "overview": "نمای کلی", "workshops": "کارگاه‌ها", "money": "امور مالی", "system": "سیستم" },
+    "groups": { "overview": "نمای کلی", "workshops": "آموزش", "money": "امور مالی", "system": "سیستم" },
     "dashboard": "داشبورد",
-    "workshops": "کارگاه‌ها",
+    "workshops": "ورکشاپ‌ها",
     "instructors": "مدرس‌ها",
     "categories": "دسته‌بندی‌ها",
     "wallet": "کیف پول مشترک",

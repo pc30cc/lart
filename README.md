@@ -446,7 +446,7 @@ before each release.
 | Fonts | self-hosted with `next/font/local`: IRANSans, Inter |
 | Database | PostgreSQL |
 | ORM / migrations | Drizzle ORM |
-| Auth | Auth.js; separate logins for students, instructors and super admins |
+| Auth | Own session code (src/lib/auth): database sessions, Argon2id, lockout; separate logins for students, instructors and super admins |
 | i18n | next-intl (fa, tr, en; RTL for Persian) |
 | Validation / forms | Zod, React Hook Form |
 | Contracts | PDF generation and e-signature with a signed audit record |

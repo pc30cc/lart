@@ -37,10 +37,10 @@
   },
   "validation": {
     "required": "Lütfen bu alanı doldurun.",
-    "tooShort": "Lütfen en az {min} karakter girin.",
-    "tooLong": "Lütfen en fazla {max} karakter kullanın.",
-    "tooSmall": "Lütfen {min} veya daha büyük bir değer girin.",
-    "tooBig": "Lütfen {max} veya daha küçük bir değer girin.",
+    "tooShort": "Lütfen en az {min, number} karakter girin.",
+    "tooLong": "Lütfen en fazla {max, number} karakter kullanın.",
+    "tooSmall": "Lütfen {min, number} veya daha büyük bir değer girin.",
+    "tooBig": "Lütfen {max, number} veya daha küçük bir değer girin.",
     "number": "Lütfen bir sayı girin.",
     "integer": "Lütfen küsuratsız bir sayı girin.",
     "email": "Lütfen geçerli bir e-posta adresi girin.",
@@ -58,7 +58,7 @@
     "filled": "Dolduruldu",
     "missing": "Henüz doldurulmadı",
     "hasError": "Kontrol edilmeli",
-    "languagesFilled": "{count}/{total} dil dolu"
+    "languagesFilled": "{count, number}/{total, number} dil dolu"
   },
   "date": {
     "pickDate": "Tarih seçin",

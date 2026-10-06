@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto"
-import { eq } from "drizzle-orm"
+import { eq, inArray } from "drizzle-orm"
 import { TransactionRollbackError } from "drizzle-orm/errors"
 import { describe, expect, it, vi } from "vitest"
 
@@ -83,6 +83,7 @@ async function seed(tx: Tx) {
         decisionAt: o.decision ? at(o.decision) : startsAt,
         finalParticipants: o.finalParticipants ?? null,
         closedTotals: o.closedTotals ?? null,
+        closedAt: o.status === "closed" ? NOW : null,
         createdBy: a.id,
       })
       .returning({ id: courses.id })
@@ -136,11 +137,11 @@ async function seed(tx: Tx) {
       { account: "partner_capital", partnerId: b.id, amount: -4_000 },
     ],
   })
-  await tx.update(courses).set({ status: "closed", closedTotals: totals(-20_000, 4) }).where(eq(courses.id, w.w2))
-  await tx.update(courses).set({ status: "closed", closedTotals: totals(999, 2) }).where(eq(courses.id, w.w3))
+  await tx.update(courses).set({ status: "closed", closedAt: NOW, closedTotals: totals(-20_000, 4) }).where(eq(courses.id, w.w2))
+  await tx.update(courses).set({ status: "closed", closedAt: NOW, closedTotals: totals(999, 2) }).where(eq(courses.id, w.w3))
   await tx.update(admins).set({ active: false }).where(eq(admins.id, c.id))
 
-  return { partners: { a: a.id, b: b.id, c: c.id, gone: gone.id }, instructors: { i1: i1.id, i2: i2.id }, w }
+  return { partners: { a: a.id, b: b.id, c: c.id, gone: gone.id }, instructors: { i1: i1.id, i2: i2.id }, w, course, totals }
 }
 
 const month = (d: Dashboard, m: string) => d.months.find((x) => x.month === m)!
@@ -242,6 +243,40 @@ describe("dashboard queries", () => {
       expect(d.setup.categories - before.setup.categories).toBe(1)
       expect(d.setup.ledger).toBe(true)
       expect(typeof d.setup.contract).toBe("boolean")
+    })
+  })
+
+  it("never counts a cancelled workshop as held, even once its books are closed", async () => {
+    await rolledBack(async (tx) => {
+      const { course, totals } = await seed(tx)
+      const before = await getDashboard(NOW, tx)
+      const held = (d: Dashboard) => ({
+        held: d.kpis.held,
+        heldSeats: d.kpis.heldSeats,
+        heldTaken: d.kpis.heldTaken,
+        seats: d.seats.filter((x) => !x.upcoming).map((x) => x.id),
+      })
+
+      // Two cancelled workshops of 20 places whose dates have passed, not closed yet.
+      const cancelled = (title: string) => course(title, { status: "cancelled", starts: "2026-09-28T10:00:00", max: 20 })
+      const x = await cancelled("X")
+      const y = await cancelled("Y")
+      await tx.update(courses).set({ cancelledAt: at("2026-09-20T10:00:00") }).where(inArray(courses.id, [x, y]))
+      const open = await getDashboard(NOW, tx)
+      expect(held(open)).toEqual(held(before))
+      expect(open.attention.toClose - before.attention.toClose).toBe(2)
+
+      // Closed to book its costs: X as closeCourse does it (stays cancelled, closed_at set),
+      // Y as it once did (status closed, cancelled_at kept).
+      const lock = { closedAt: NOW, closedTotals: totals(-30_000, 0) }
+      await tx.update(courses).set(lock).where(eq(courses.id, x))
+      await tx.update(courses).set({ ...lock, status: "closed" }).where(eq(courses.id, y))
+      const d = await getDashboard(NOW, tx)
+      expect(held(d)).toEqual(held(before))
+      expect(d.seats.some((s) => s.id === x || s.id === y)).toBe(false)
+      expect(d.attention.toClose).toBe(before.attention.toClose)
+      // Their booked costs still show in the profit rankings.
+      expect(d.profit.workshops.filter((r) => r.id === x || r.id === y).map((r) => r.netProfit)).toEqual([-30_000, -30_000])
     })
   })
 

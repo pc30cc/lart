@@ -22,6 +22,7 @@ import { Money } from "@/components/admin/money"
 import { Button } from "@/components/ui/button"
 import type { LocalizedText } from "@/db/schema"
 import { getWorkshop, type Workshop } from "@/features/workshops/queries"
+import { displayStatus, isCancelled } from "@/features/workshops/schema"
 import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
 import { formatDate, formatDateTime, formatNumber, formatTimeRange, localized } from "@/lib/format"
@@ -224,17 +225,19 @@ async function NextStep({ workshop: w }: { workshop: Workshop }) {
   const title = localized(w.title, locale)
   const open = w.registered.pending + w.registered.confirmed
   const name = localized(w.instructor.displayName, locale)
+  const n = (v: number) => formatNumber(v, locale)
   const cancel = <CancelWorkshopButton id={w.id} title={title} registrations={open} variant="ghost" />
 
   let step: { icon: LucideIcon; tone: Tone; title: string; text: string; actions?: React.ReactNode }
-  switch (w.status) {
+  // A cancelled workshop stays cancelled after its books are closed (no gallery).
+  switch (displayStatus(w)) {
     case "awaiting_signature":
       step = {
         icon: FileSignatureIcon,
         tone: "warning",
         title: t("next.awaiting.title", { name }),
         text: w.contract
-          ? t("next.awaiting.text", { version: w.contract.version, date: formatDate(w.contract.sentAt, locale, "long") })
+          ? t("next.awaiting.text", { version: n(w.contract.version), date: formatDate(w.contract.sentAt, locale, "long") })
           : t("next.awaiting.noContract"),
         actions: (
           <>
@@ -257,7 +260,7 @@ async function NextStep({ workshop: w }: { workshop: Workshop }) {
           deadline: formatDateTime(w.registrationDeadline, locale, "long"),
           decision: formatDateTime(w.decisionAt, locale, "long"),
           confirmed: w.registered.confirmed,
-          minimum: w.minCapacity,
+          minimum: n(w.minCapacity),
         }),
         actions: (
           <>
@@ -350,22 +353,27 @@ const toneClass: Record<Tone, string> = {
 
 /** The lifecycle as a row of steps: done, current, still to come. */
 async function Timeline({ workshop: w }: { workshop: Workshop }) {
-  const t = await getTranslations("workshops.timeline")
+  const [t, locale] = await Promise.all([getTranslations("workshops.timeline"), getLocale()])
   const now = new Date()
   const s = w.status
+  // Cancelled, also after its books were closed: nothing after the signature happened.
+  const cancelled = isCancelled(w)
+  const going = !cancelled && (s === "confirmed" || s === "closed")
   const done = [
     true, // created + contract sent
-    s === "published" || s === "confirmed" || s === "closed" || (s === "cancelled" && w.publishedAt !== null),
-    s === "confirmed" || s === "closed",
-    (s === "confirmed" || s === "closed") && w.endsAt <= now,
-    s === "closed",
-    s === "closed" && w.galleryCount > 0,
+    cancelled ? w.publishedAt !== null : s === "published" || s === "confirmed" || s === "closed",
+    // A contract re-issued after the go decision waits for the signature, but the decision stands.
+    going || (!cancelled && w.finalParticipants !== null),
+    going && w.endsAt <= now,
+    !cancelled && s === "closed",
+    !cancelled && s === "closed" && w.galleryCount > 0,
   ]
   const labels = [t("sent"), t("signed"), t("decision"), t("held"), t("closed"), t("gallery")]
-  const current = s === "cancelled" ? -1 : done.indexOf(false)
+  const current = cancelled ? -1 : done.indexOf(false)
 
   return (
-    <ol className="bg-muted/35 flex overflow-x-auto border-b px-3 py-3 md:px-5" aria-label={t("label")}>
+    // `relative`: the sr-only labels (position: absolute) are clipped by this scroller, not the page.
+    <ol className="bg-muted/35 relative flex overflow-x-auto border-b px-3 py-3 md:px-5" aria-label={t("label")}>
       {labels.map((label, i) => {
         const isDone = done[i]
         const isCurrent = i === current
@@ -381,7 +389,7 @@ async function Timeline({ workshop: w }: { workshop: Workshop }) {
                     : "bg-foreground/8 text-muted-foreground",
               )}
             >
-              {isDone ? <CheckIcon className="size-3 stroke-3" /> : i + 1}
+              {isDone ? <CheckIcon className="size-3 stroke-3" /> : formatNumber(i + 1, locale)}
             </span>
             <span
               className={cn("text-xs whitespace-nowrap", isCurrent ? "text-foreground font-medium" : "text-muted-foreground")}
@@ -394,7 +402,7 @@ async function Timeline({ workshop: w }: { workshop: Workshop }) {
           </li>
         )
       })}
-      {s === "cancelled" && (
+      {cancelled && (
         <li className="text-destructive ms-2 flex min-w-max items-center gap-1.5 text-xs font-medium">
           <BanIcon className="size-3.5" />
           {t("cancelled")}

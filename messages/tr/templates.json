@@ -1,6 +1,6 @@
 {
   "title": "Şablonlar",
-  "description": "Katılımcıların kabul ettiği kayıt koşulları ve eğitmenlerin imzaladığı sözleşme, üç dilde.",
+  "description": "Katılımcıların kabul ettiği kayıt koşulları, eğitmenlerin imzaladığı sözleşme ve gönderilen e-postalar, üç dilde.",
   "default": "Varsayılan",
   "languages": "Diller",
   "updated": "Güncellendi: {date}",
@@ -132,5 +132,93 @@
     "unknownPlaceholder": "Bu metinde tanınmayan bir otomatik alan var. Lütfen süslü parantez içindeki yazımı kontrol edin.",
     "deleteDefault": "Varsayılan şablon silinemez. Önce başka bir şablonu varsayılan yapın.",
     "inUse": "Bu şablon kullanımda olduğu için silinemez."
+  },
+  "emails": {
+    "title": "E-postalar",
+    "description": "Otomatik gönderilir, örneğin imzalanacak sözleşme veya kayıt onayı. Her metni her dilde değiştirebilirsiniz; boş bıraktığınız alanlarda varsayılan metin kullanılır.",
+    "edit": "Metinleri düzenle",
+    "defaultTexts": "Varsayılan metinler",
+    "edited": "Düzenlendi",
+    "to": "Alıcı: {who}",
+    "fields": {
+      "subject": "Konu",
+      "preview": "Gelen kutusu önizlemesi",
+      "previewHint": "Çoğu gelen kutusunun konudan sonra gösterdiği kısa satır.",
+      "heading": "Başlık",
+      "intro": "Ana metin",
+      "intro2": "İkinci paragraf",
+      "cta": "Düğme",
+      "note": "Sondaki not",
+      "optional": "İsteğe bağlı."
+    },
+    "form": {
+      "textsTitle": "Metinler",
+      "textsDescription": "Varsayılan metni (gri) korumak için bir dili boş bırakın. Selamlama, ayrıntılar ve imza otomatik eklenir.",
+      "placeholdersTitle": "Yer tutucular",
+      "placeholdersHint": "E-posta gönderilirken doldurulur. Süslü parantezleriyle birlikte tam olarak böyle yazın.",
+      "previewTitle": "Önizleme",
+      "previewDescription": "Örnek bilgilerle. Hiçbir şey gönderilmez.",
+      "previewSubject": "Konu",
+      "previewLoading": "Önizleme güncelleniyor…",
+      "previewFailed": "Önizleme henüz gösterilemiyor.",
+      "previewFrame": "E-postanın önizlemesi"
+    },
+    "reset": {
+      "action": "Varsayılan metinleri kullan",
+      "title": "Varsayılan metinlere dönülsün mü?",
+      "description": "Bu e-posta için yazdığınız metinler üç dilde de kaldırılır. Etkinlik kaydında bir kopyası kalır.",
+      "confirm": "Evet, varsayılan metinleri kullan"
+    },
+    "toast": {
+      "saved": "E-posta metinleri kaydedildi.",
+      "reset": "Varsayılan metinler yeniden kullanılıyor."
+    },
+    "sample": {
+      "person": "Zeynep Arslan",
+      "bring": "Bir önlük ve rahat kıyafetler"
+    },
+    "errors": {
+      "syntax": "Süslü parantezleri kontrol edin: her '{' için bir '}' gerekir ve bunlar yalnızca yer tutucular içindir.",
+      "placeholder": "{name} bu e-postanın yer tutucularından biri değil. Listeden birini kullanın veya kaldırın.",
+      "number": "Metin olan bir yer tutucu burada sayı veya çoğul olarak kullanılamaz."
+    },
+    "names": {
+      "welcome_verify": {
+        "title": "Hoş geldiniz + e-posta doğrulama",
+        "to": "Katılımcılar ve eğitmenler"
+      },
+      "instructor_invite": {
+        "title": "Eğitmen daveti",
+        "to": "Eğitmenler"
+      },
+      "contract_ready": {
+        "title": "Sözleşme imzaya hazır",
+        "to": "Eğitmenler"
+      },
+      "contract_signed": {
+        "title": "Sözleşme imzalandı",
+        "to": "Yöneticiler"
+      },
+      "decision_due": {
+        "title": "Yapılacak mı? Karar zamanı",
+        "to": "Yöneticiler"
+      },
+      "registration_confirmed": {
+        "title": "Kayıt onaylandı",
+        "to": "Katılımcılar"
+      },
+      "workshop_reminder": {
+        "title": "Atölye hatırlatması",
+        "to": "Katılımcılar"
+      },
+      "workshop_cancelled": {
+        "title": "Atölye iptali + iade",
+        "to": "Katılımcılar"
+      },
+      "password_reset": {
+        "title": "Şifre sıfırlama",
+        "to": "Herkes"
+      }
+    }
   }
 }

@@ -103,8 +103,8 @@ export const isLogoPath = (path: string) => isSafePath(path) && path.startsWith(
 
 const range = (r: { min: number; max: number }) => z.number().min(r.min).max(r.max)
 
+/** Every gallery photo is watermarked: there is no on/off switch, uploads wait for a logo. */
 export const watermarkSettingsSchema = z.object({
-  enabled: z.boolean(),
   logoPath: z.string().refine(isLogoPath, { error: "settings.watermark.errors.logo" }).nullable(),
   position: z.enum(watermarkPositions),
   sizePct: range(watermarkRange.sizePct),

@@ -20,7 +20,7 @@ import { getInstructor, getInstructorContracts, getInstructorWorkshops } from "@
 import { languageName, profileText } from "@/features/instructors/schema"
 import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
-import { formatDate, formatDateTime, formatTime, localized } from "@/lib/format"
+import { formatDate, formatDateTime, formatNumber, formatTime, localized } from "@/lib/format"
 import { IdNumberReveal } from "../_components/id-number-reveal"
 import { InstructorAvatar } from "../_components/instructor-avatar"
 import { InstructorStatus } from "../_components/instructor-status"
@@ -286,7 +286,7 @@ export default async function InstructorPage({ params }: PageProps<"/[locale]/ad
                   <TableRow key={c.id}>
                     <TableCell className="px-5 py-3 font-medium md:px-6">{localized(c.workshopTitle, locale)}</TableCell>
                     <TableCell className="text-muted-foreground hidden px-4 py-3 tabular-nums sm:table-cell">
-                      {t("detail.contracts.versionValue", { version: c.version })}
+                      {t("detail.contracts.versionValue", { version: formatNumber(c.version, locale) })}
                     </TableCell>
                     <TableCell className="px-4 py-3">
                       <StatusBadge tone={contractTones[c.status]}>{t(`contractStatus.${c.status}`)}</StatusBadge>

@@ -4,12 +4,23 @@ import { and, count, eq, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 import { db, type Tx } from "@/db"
-import { contracts, courses, registrations, templates, type Locale } from "@/db/schema"
+import { contracts, courses, registrations, settings, templates, type Locale, type LocalizedText } from "@/db/schema"
+import { checkEmailText, renderEmail, type EmailTexts } from "@/emails"
+import { emailTextFields, type EmailTemplate, type EmailTextField } from "@/emails/names"
 import { adminAction, UserError } from "@/lib/action"
 import { changes } from "@/lib/audit"
 import { PG, pgError } from "@/lib/errors"
+import { setSetting, settingDefaults, settingSchemas } from "@/lib/settings"
+import { sampleEmailProps } from "./emails"
 import { unknownPlaceholders, type TemplateKind } from "./placeholders"
-import { templateIdSchema, templateSchema, templateUpdateSchema } from "./schema"
+import {
+  emailPreviewSchema,
+  emailTemplateSchema,
+  emailTextsSchema,
+  templateIdSchema,
+  templateSchema,
+  templateUpdateSchema,
+} from "./schema"
 
 const LOCALES: Locale[] = ["fa", "tr", "en"]
 
@@ -146,4 +157,73 @@ export const deleteTemplate = adminAction(templateIdSchema, async ({ id }, ctx) 
     .catch(friendly)
   revalidate()
   return { id }
+})
+
+// ─── Email texts ──────────────────────────────────────────────────────────────
+
+/** The admin's non-empty texts, after checking each one (braces, placeholders), else a field error. */
+function checkedTexts(template: EmailTemplate, texts: Record<EmailTextField, LocalizedText>): EmailTexts {
+  const out: EmailTexts = {}
+  for (const field of emailTextFields) {
+    for (const l of LOCALES) {
+      const text = texts[field][l]
+      if (!text) continue
+      const issue = checkEmailText(template, text, l)
+      if (issue) {
+        throw new UserError(`templates.emails.errors.${issue.problem}`, {
+          field: `texts.${field}.${l}`,
+          ...(issue.problem === "placeholder" ? { values: { name: `{${issue.name}}` } } : {}),
+        })
+      }
+    }
+    if (Object.keys(texts[field]).length) out[field] = texts[field]
+  }
+  return out
+}
+
+/** Change the `emailTexts` setting for one email (null: back to the default texts), read and written under a lock. */
+async function writeEmailTexts(tx: Tx, template: EmailTemplate, texts: EmailTexts | null) {
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtext('settings:emailTexts'))`)
+  const [row] = await tx.select({ value: settings.value }).from(settings).where(eq(settings.key, "emailTexts"))
+  const parsed = row ? settingSchemas.emailTexts.safeParse(row.value) : null
+  const all = parsed?.success ? parsed.data : settingDefaults.emailTexts
+  const before = all[template] ?? {}
+  const next = { ...all }
+  if (texts && Object.keys(texts).length) next[template] = texts
+  else delete next[template]
+  await setSetting("emailTexts", next, tx)
+  return before
+}
+
+/** Save the admin's texts of one email; empty languages keep the default text. */
+export const saveEmailTexts = adminAction(emailTextsSchema, async ({ template, texts }, ctx) => {
+  const own = checkedTexts(template, texts)
+  const changed = await db.transaction(async (tx) => {
+    const before = await writeEmailTexts(tx, template, own)
+    // Every field on either side, so a text set back to the default is recorded too.
+    const fields = [...new Set([...Object.keys(before), ...Object.keys(own)])] as EmailTextField[]
+    const side = (texts: EmailTexts) => Object.fromEntries(fields.map((f) => [f, texts[f] ?? null]))
+    const diff = changes(side(before), side(own))
+    if (Object.keys(diff).length) await ctx.audit({ action: "email.update", entity: "email", entityId: template, data: diff }, tx)
+    return Object.keys(diff).length > 0
+  })
+  revalidate()
+  return { changed }
+})
+
+/** Remove the admin's texts of one email: the default texts are used again. */
+export const resetEmailTexts = adminAction(emailTemplateSchema, async ({ template }, ctx) => {
+  await db.transaction(async (tx) => {
+    const before = await writeEmailTexts(tx, template, null)
+    if (Object.keys(before).length) await ctx.audit({ action: "email.reset", entity: "email", entityId: template, data: before }, tx)
+  })
+  revalidate()
+})
+
+/** The email with unsaved texts and example details, in one language (nothing is saved or sent). */
+export const previewEmailTexts = adminAction(emailPreviewSchema, async ({ template, locale, texts }, ctx) => {
+  const own = checkedTexts(template, texts)
+  const props = await sampleEmailProps(template, locale, ctx.admin.name)
+  const { subject, html } = await renderEmail(template, props, locale, { texts: own })
+  return { subject, html }
 })

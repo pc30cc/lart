@@ -6,7 +6,7 @@ import { z } from "zod"
 import { PageHeader } from "@/components/admin/page-header"
 import type { LocalizedText } from "@/db/schema"
 import { getWorkshop, getWorkshopFormOptions, type Workshop } from "@/features/workshops/queries"
-import type { WorkshopFormValues } from "@/features/workshops/schema"
+import { contractLocked, type WorkshopFormValues } from "@/features/workshops/schema"
 import { requireAdmin } from "@/lib/auth/admin"
 import { localized } from "@/lib/format"
 import { WorkshopForm } from "../../_components/workshop-form"
@@ -82,6 +82,7 @@ export default async function EditWorkshopPage({ params }: PageProps<"/[locale]/
         workshop={{
           id: workshop.id,
           status: workshop.status,
+          contractLocked: contractLocked(workshop),
           values: formValues(workshop),
           coverUrl: workshop.coverUrl,
           registered: workshop.registered.pending + workshop.registered.confirmed,

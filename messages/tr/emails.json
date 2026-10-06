@@ -46,15 +46,15 @@
   },
   "contract_signed": {
     "subject": "{instructorName}, “{workshopTitle}” sözleşmesini imzaladı",
-    "preview": "Atölye artık yayında ve kayıtlar açık.",
+    "preview": "Atölye sitede yayında.",
     "heading": "Sözleşme imzalandı",
-    "intro": "{instructorName}, “{workshopTitle}” için sözleşmeyi imzaladı. Atölye artık sitede yayında ve kayıtlar açık.",
+    "intro": "{instructorName}, “{workshopTitle}” için sözleşmeyi imzaladı. Atölye sitede yayında.",
     "cta": "Atölyeyi görüntüle",
     "note": "İmzalı sözleşme atölyenin kayıtlarında saklanıyor."
   },
   "decision_due": {
     "subject": "Karar zamanı: “{workshopTitle}”",
-    "preview": "{registrations} kayıt var, en az {minimum} kişi gerekiyor.",
+    "preview": "{registrations, number} kayıt var, en az {minimum, number} kişi gerekiyor.",
     "heading": "Atölye yapılsın mı?",
     "intro": "{status, select, reached {Güzel haber: “{workshopTitle}” gereken en az katılımcı sayısına ulaştı. Herkes atölyenin yapılacağını bilsin diye lütfen atölyeyi onaylayın.} other {“{workshopTitle}” henüz gereken en az katılımcı sayısına ulaşmadı. Lütfen atölyenin yapılıp yapılmayacağına karar verin. İptal ederseniz her katılımcıya nazik bir e-posta gider ve ödemesinin tamamı iade edilir.}}",
     "cta": "Karar ver"

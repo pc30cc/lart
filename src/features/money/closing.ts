@@ -4,9 +4,8 @@ import { and, asc, desc, eq, ne, sql } from "drizzle-orm"
 import { db, type Tx } from "@/db"
 import { admins, contracts, courses, registrations, type ClosedTotals } from "@/db/schema"
 import { UserError } from "@/lib/errors"
-import { zonedParts } from "@/lib/format"
 import { splitByShares } from "@/lib/money"
-import { courseBalances, postTransaction, type CourseBalances, type Line } from "./ledger"
+import { courseBalances, postTransaction, today, type CourseBalances, type Line } from "./ledger"
 
 /**
  * Closing a workshop. The figures are computed in one place (`closingPlan`),
@@ -17,6 +16,9 @@ import { courseBalances, postTransaction, type CourseBalances, type Line } from 
  *   (b) close: the workshop's revenue, fees and expenses go to the partners'
  *       capital by share (a profit is credited, a loss debited), so those
  *       workshop balances become zero.
+ * Both are dated on the day of closing, so periods already reported never change.
+ * Until then the ledger has no instructor fee for the workshop: `projectedFees`
+ * gives what confirmed workshops will owe, for the figures that need it.
  */
 
 export type FeeBasis = { type: "fixed" | "per_participant"; amount: number } | null
@@ -118,14 +120,18 @@ async function liveContract(exec: Exec, courseId: string) {
   return row ?? null
 }
 
-/** Active partners with their shares, in a stable order. `lock`: hold the shares until commit. */
+/**
+ * Active partners with their shares, in a stable order. `lock`: hold the shares
+ * until commit; the rows are locked in id order, like `updateShares` does, so the
+ * two never deadlock.
+ */
 export async function activePartners(exec: Exec, lock = false): Promise<Partner[]> {
-  const query = exec
+  if (lock) await exec.select({ id: admins.id }).from(admins).where(eq(admins.active, true)).orderBy(asc(admins.id)).for("share")
+  return exec
     .select({ adminId: admins.id, name: admins.name, shareBp: admins.shareBp })
     .from(admins)
     .where(eq(admins.active, true))
     .orderBy(desc(admins.shareBp), asc(admins.createdAt), asc(admins.id))
-  return lock ? query.for("share") : query
 }
 
 /**
@@ -138,7 +144,6 @@ export async function prepareClosing(exec: Exec, courseId: string, now: Date = n
     .select({
       status: courses.status,
       endsAt: courses.endsAt,
-      cancelledAt: courses.cancelledAt,
       finalParticipants: courses.finalParticipants,
       closedAt: courses.closedAt,
       closedTotals: courses.closedTotals,
@@ -182,7 +187,8 @@ export async function prepareClosing(exec: Exec, courseId: string, now: Date = n
   }).figures
 
   const issues: ClosingIssue[] = []
-  if (course.status === "closed") issues.push("closed")
+  // A cancelled workshop keeps its status when closed: `closedAt` says its books are locked.
+  if (course.status === "closed" || course.closedAt) issues.push("closed")
   else if (course.status !== "confirmed" && !cancelled) issues.push("notClosable")
   else if (course.status === "confirmed" && course.endsAt > now) issues.push("notEnded")
   if (course.status === "confirmed" && !contract) issues.push("noContract")
@@ -200,24 +206,44 @@ export async function prepareClosing(exec: Exec, courseId: string, now: Date = n
     plan,
     projection,
     issues,
-    /** Closing entries are dated when the workshop ended (or was cancelled), in Istanbul. */
-    occurredOn: zonedParts(cancelled ? (course.cancelledAt ?? now) : course.endsAt).date,
   }
 }
 
 export type ClosingPreview = NonNullable<Awaited<ReturnType<typeof prepareClosing>>>
 
+/** What the admin saw in the closing preview: the result, the instructor's settlement and each partner's part. */
+export type SeenFigures = Pick<ClosingFigures, "revenue" | "instructorFee" | "expenses" | "owedToInstructor"> & {
+  partners: { adminId: string; shareBp: number; amount: number }[]
+}
+
+/** Anything different from the preview? Partners by position: `activePartners` keeps a stable order. */
+function changedSince(seen: SeenFigures, now: ClosingFigures): boolean {
+  return (
+    seen.revenue !== now.revenue ||
+    seen.instructorFee !== now.instructorFee ||
+    seen.expenses !== now.expenses ||
+    seen.owedToInstructor !== now.owedToInstructor ||
+    seen.partners.length !== now.partners.length ||
+    seen.partners.some((p, i) => {
+      const q = now.partners[i]
+      return p.adminId !== q.adminId || p.shareBp !== q.shareBp || p.amount !== q.amount
+    })
+  )
+}
+
 /**
- * Close a workshop: posts the settlement and the close, locks the figures in
- * `closed_totals` and sets the status. Run inside a transaction (audit in the
- * same one). `expected`: the figures the admin saw in the preview; if anything
- * changed meanwhile, nothing is posted and they are asked to look again.
+ * Close a workshop: posts the settlement and the close (dated today, in
+ * Istanbul), locks the figures in `closed_totals` and sets `closed_at`; a
+ * confirmed workshop becomes "closed", a cancelled one stays "cancelled". Run
+ * inside a transaction (audit in the same one). `expected`: the figures the
+ * admin saw in the preview; if anything changed meanwhile (a payment, an
+ * advance, the shares), nothing is posted and they are asked to look again.
  */
 export async function closeCourse(
   tx: Tx,
   courseId: string,
   adminId: string,
-  expected?: { revenue: number; instructorFee: number; expenses: number },
+  expected?: SeenFigures,
   now: Date = new Date(),
 ): Promise<ClosedTotals> {
   // The strongest lock first: postings and edits of this workshop wait for us.
@@ -228,16 +254,9 @@ export async function closeCourse(
   if (!prep) throw new UserError("money.errors.workshopGone")
   if (prep.issues.length) throw new UserError(`money.close.issues.${prep.issues[0]}`)
   const { figures, settlement, close } = prep.plan
-  if (
-    expected &&
-    (expected.revenue !== figures.revenue ||
-      expected.instructorFee !== figures.instructorFee ||
-      expected.expenses !== figures.expenses)
-  ) {
-    throw new UserError("money.close.changed")
-  }
+  if (expected && changedSince(expected, figures)) throw new UserError("money.close.changed")
 
-  const base = { occurredOn: prep.occurredOn, description: "", courseId, createdBy: adminId }
+  const base = { occurredOn: today(now), description: "", courseId, createdBy: adminId }
   if (settlement.length) await postTransaction(tx, { ...base, kind: "course_settlement", lines: settlement })
   if (close.length) await postTransaction(tx, { ...base, kind: "course_close", lines: close })
 
@@ -251,18 +270,53 @@ export async function closeCourse(
   }
   await tx
     .update(courses)
-    .set({ status: "closed", closedAt: now, closedTotals: totals, updatedAt: now })
+    .set({ status: prep.status === "cancelled" ? "cancelled" : "closed", closedAt: now, closedTotals: totals, updatedAt: now })
     .where(eq(courses.id, courseId))
   return totals
 }
 
-/** Workshops that can be closed now (confirmed and over, or cancelled), oldest first. */
+/** Workshops that can be closed now (confirmed and over, or cancelled and not closed yet), oldest first. */
 export async function workshopsToClose(exec: Exec = db, now: Date = new Date()) {
   return exec
     .select({ id: courses.id, title: courses.title, status: courses.status, endsAt: courses.endsAt })
     .from(courses)
     .where(
-      sql`(${courses.status} = 'confirmed' and ${courses.endsAt} <= ${now}) or ${courses.status} = 'cancelled'`,
+      sql`(${courses.status} = 'confirmed' and ${courses.endsAt} <= ${now}) or (${courses.status} = 'cancelled' and ${courses.closedAt} is null)`,
     )
     .orderBy(asc(courses.endsAt))
 }
+
+/**
+ * The instructor fee each confirmed workshop will book when it is closed, by
+ * workshop id: `instructorFee` on its live contract and final number, as the
+ * closing preview counts it. The ledger has no fee for a workshop until then,
+ * so the reports and the result not yet shared out add these.
+ */
+export async function projectedFees(exec: Exec = db): Promise<Map<string, number>> {
+  const id = sql`${courses}.${sql.identifier(courses.id.name)}`
+  const live = exec
+    .selectDistinctOn([contracts.courseId], { courseId: contracts.courseId, feeType: contracts.feeType, feeAmount: contracts.feeAmount })
+    .from(contracts)
+    .where(ne(contracts.status, "void"))
+    .orderBy(contracts.courseId, desc(contracts.version))
+    .as("live")
+  const rows = await exec
+    .select({
+      id: courses.id,
+      participants: sql<number>`coalesce(${courses.finalParticipants}, (select count(*) from ${registrations} r where r.course_id = ${id} and r.status = 'confirmed'))`.mapWith(Number),
+      feeType: live.feeType,
+      feeAmount: live.feeAmount,
+    })
+    .from(courses)
+    .leftJoin(live, eq(live.courseId, courses.id))
+    .where(eq(courses.status, "confirmed"))
+  return new Map(
+    rows.map((r) => [
+      r.id,
+      instructorFee(false, r.feeType && r.feeAmount !== null ? { type: r.feeType, amount: r.feeAmount } : null, r.participants),
+    ]),
+  )
+}
+
+/** The sum of a map's amounts. */
+export const totalOf = (amounts: Map<string, number>) => [...amounts.values()].reduce((s, a) => s + a, 0)

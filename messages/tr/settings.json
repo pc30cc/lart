@@ -105,14 +105,10 @@
     }
   },
   "watermark": {
-    "enabledTitle": "Filigran",
-    "enabledDescription": "Logonuz, galeri fotoğraflarına yüklenirken eklenir. Logosuz orijinal, yöneticiler için özel olarak saklanır.",
-    "enabled": "Galeri fotoğraflarına filigran ekle",
-    "enabledHint": "Daha önce yüklenen fotoğraflar değişmez.",
-    "logoTitle": "Logo",
-    "logoDescription": "Arka planı şeffaf bir PNG en iyi sonucu verir.",
+    "logoTitle": "Filigran",
+    "logoDescription": "Logonuz, galeri fotoğraflarına yüklenirken eklenir. Logosuz orijinal, yöneticiler için özel olarak saklanır. Arka planı şeffaf bir PNG en iyi sonucu verir.",
     "logo": "Filigran logosu",
-    "noLogo": "Henüz logo yok, bu yüzden fotoğraflar filigransız yükleniyor. Logoyu buradan ekleyin.",
+    "noLogo": "Bir logo ekleyin: logo olmadan galeri fotoğrafları yüklenemez.",
     "placementTitle": "Konum ve boyut",
     "placementDescription": "Ayarlarken önizlemeyi izleyin.",
     "position": "Konum",
@@ -137,7 +133,6 @@
     "previewAlt": "Filigranlı örnek bir fotoğraf",
     "previewNoLogo": "Önizlemeyi görmek için bir logo ekleyin.",
     "previewCaption": "Şu anki seçimlerinizle örnek bir fotoğraf (henüz kaydedilmedi).",
-    "previewCaptionOff": "Filigran kapalı, bu yüzden fotoğraflar filigransız yükleniyor. Açık olsaydı böyle görünürdü.",
     "errors": {
       "logo": "Lütfen logoyu yeniden yükleyin."
     }
@@ -177,6 +172,7 @@
       "admin": "Yönetici",
       "category": "Kategori",
       "contract": "Sözleşme",
+      "email": "E-posta",
       "instructor": "Eğitmen",
       "ledger_transaction": "İşlem",
       "media": "Dosya",
@@ -192,7 +188,10 @@
       "auth": {
         "login": "Giriş yapıldı",
         "logout": "Çıkış yapıldı",
-        "lockout": "Hatalı girişler nedeniyle hesap kilitlendi"
+        "lockout": "Hatalı girişler nedeniyle hesap kilitlendi",
+        "password_change": "Şifre değiştirildi",
+        "password_reset_request": "Şifre sıfırlama istendi",
+        "password_reset": "Şifre e-posta bağlantısıyla sıfırlandı"
       },
       "category": {
         "create": "Kategori oluşturuldu",
@@ -202,6 +201,10 @@
       "contract": {
         "sign": "Sözleşme imzalandı",
         "resend": "Sözleşme e-postası yeniden gönderildi"
+      },
+      "email": {
+        "update": "E-posta metinleri değiştirildi",
+        "reset": "E-posta metinleri varsayılana döndürüldü"
       },
       "instructor": {
         "create": "Eğitmen eklendi",

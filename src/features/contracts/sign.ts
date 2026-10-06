@@ -5,8 +5,8 @@ import { z } from "zod"
 import { db } from "@/db"
 import { contracts, courses } from "@/db/schema"
 import { audit } from "@/lib/audit"
-import { sha256 } from "@/lib/crypto"
-import { UserError } from "@/lib/errors"
+import { encrypt, sha256 } from "@/lib/crypto"
+import { errorForLog, UserError } from "@/lib/errors"
 import { sendContractSigned } from "./notify"
 import { renderContract } from "./render"
 
@@ -25,9 +25,12 @@ export type SignResult = { contractId: string; courseId: string; sha256: string;
  * The instructor signs a contract (called by the instructor panel, phase 2,
  * after its own login check). Only the instructor of the contract can sign,
  * only a contract that is still "sent", and only while the workshop awaits
- * the signature. Stores the exact text signed (in `locale`), its SHA-256 and
- * the evidence (name typed, time, IP, browser), publishes the workshop, and
- * tells the super admins. Expected failures throw `UserError("contracts.errors.*")`.
+ * the signature. Stores the exact text signed (in `locale`), encrypted like
+ * the ID number it contains (`lib/crypto.ts`), the SHA-256 of the plain text
+ * and the evidence (name typed, time, IP, browser). The workshop is then
+ * published, or confirmed again when the go decision was already taken (a
+ * contract re-issued after it keeps that decision and its final number), and
+ * the super admins are told. Expected failures throw `UserError("contracts.errors.*")`.
  */
 export async function signContract(
   contractId: string,
@@ -54,7 +57,7 @@ export async function signContract(
       .where(eq(contracts.id, v.contractId))
     if (!courseId) throw new UserError("contracts.errors.notFound")
     const [course] = await tx
-      .select({ status: courses.status })
+      .select({ status: courses.status, finalParticipants: courses.finalParticipants })
       .from(courses)
       .where(eq(courses.id, courseId))
       .for("update")
@@ -74,7 +77,7 @@ export async function signContract(
         signedAt: now,
         signedName: v.signedName,
         signedLocale: v.locale,
-        signedText: text,
+        signedText: encrypt(text),
         signedTextSha256: hash,
         signedIp: v.ip,
         signedUserAgent: v.userAgent?.slice(0, 500) || null,
@@ -82,7 +85,11 @@ export async function signContract(
       .where(eq(contracts.id, v.contractId))
     await tx
       .update(courses)
-      .set({ status: "published", publishedAt: sql`coalesce(${courses.publishedAt}, ${now})`, updatedAt: now })
+      .set({
+        status: course.finalParticipants === null ? "published" : "confirmed",
+        publishedAt: sql`coalesce(${courses.publishedAt}, ${now})`,
+        updatedAt: now,
+      })
       .where(eq(courses.id, courseId))
     await audit(
       {
@@ -98,7 +105,7 @@ export async function signContract(
   })
 
   const adminsNotified = await sendContractSigned(result.contractId).catch((err) => {
-    console.error("[contracts] contract_signed emails failed", err)
+    console.error("[contracts] contract_signed emails failed", errorForLog(err))
     return 0
   })
   return { ...result, adminsNotified }

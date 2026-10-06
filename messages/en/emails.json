@@ -46,15 +46,15 @@
   },
   "contract_signed": {
     "subject": "{instructorName} signed the contract for “{workshopTitle}”",
-    "preview": "The workshop is now live and registration is open.",
+    "preview": "The workshop is live on the site.",
     "heading": "Contract signed",
-    "intro": "{instructorName} has signed the contract for “{workshopTitle}”. The workshop is now live on the site and registration is open.",
+    "intro": "{instructorName} has signed the contract for “{workshopTitle}”. The workshop is live on the site.",
     "cta": "View workshop",
     "note": "The signed contract is saved with the workshop."
   },
   "decision_due": {
     "subject": "Time to decide: “{workshopTitle}”",
-    "preview": "{registrations} registered, {minimum} needed.",
+    "preview": "{registrations, number} registered, {minimum, number} needed.",
     "heading": "Go or no-go?",
     "intro": "{status, select, reached {Good news: “{workshopTitle}” has reached its minimum number of participants. Please confirm the workshop so everyone knows it’s going ahead.} other {“{workshopTitle}” hasn’t reached its minimum number of participants yet. Please decide whether to hold it or cancel it. If you cancel, every participant gets a friendly email and a full refund.}}",
     "cta": "Make the decision"

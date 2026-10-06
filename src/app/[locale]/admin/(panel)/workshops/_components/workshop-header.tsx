@@ -3,10 +3,12 @@ import { getLocale, getTranslations } from "next-intl/server"
 
 import { PageHeader } from "@/components/admin/page-header"
 import type { Workshop } from "@/features/workshops/queries"
+import { displayStatus } from "@/features/workshops/schema"
 import { Link } from "@/i18n/navigation"
 import { formatDate, formatNumber, formatTimeRange, localized } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { WorkshopStatusBadge } from "./workshop-status"
+import { WorkshopTabsNav } from "./workshop-tabs-nav"
 
 export type WorkshopTab = "overview" | "contract" | "registrations" | "gallery" | "finances"
 
@@ -45,7 +47,7 @@ export async function WorkshopHeader({
         actions={actions}
         description={
           <span className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-            <WorkshopStatusBadge status={workshop.status} />
+            <WorkshopStatusBadge status={displayStatus(workshop)} />
             <span className="inline-flex items-center gap-1.5">
               <CalendarDaysIcon className="size-4 opacity-70" />
               {formatDate(workshop.startsAt, locale, "full")}
@@ -63,7 +65,7 @@ export async function WorkshopHeader({
           </span>
         }
       />
-      <nav aria-label={t("tabs.label")} className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+      <WorkshopTabsNav label={t("tabs.label")} active={active}>
         <ul className="flex min-w-max gap-1 border-b">
           {tabs.map((tab) => {
             const current = tab.key === active
@@ -91,7 +93,7 @@ export async function WorkshopHeader({
             )
           })}
         </ul>
-      </nav>
+      </WorkshopTabsNav>
     </div>
   )
 }

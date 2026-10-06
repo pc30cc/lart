@@ -2,7 +2,7 @@ import "server-only"
 import { and, eq, lt } from "drizzle-orm"
 import { cookies } from "next/headers"
 
-import { db } from "@/db"
+import { db, type Db, type Tx } from "@/db"
 import { sessions } from "@/db/schema"
 import { randomToken, sha256 } from "@/lib/crypto"
 import { sessionCookieName, sessionCookieSecure, type PrincipalKind } from "./cookies"
@@ -74,9 +74,9 @@ export async function deleteSession(id: string) {
   await db.delete(sessions).where(eq(sessions.id, id))
 }
 
-/** Sign a subject out everywhere (e.g. after a password change or deactivation). */
-export async function deleteSessionsOf(kind: PrincipalKind, subjectId: string) {
-  await db.delete(sessions).where(and(eq(sessions.kind, kind), eq(sessions.subjectId, subjectId)))
+/** Sign a subject out everywhere (e.g. after a password change or deactivation). Pass `tx` inside a transaction. */
+export async function deleteSessionsOf(kind: PrincipalKind, subjectId: string, tx: Db | Tx = db) {
+  await tx.delete(sessions).where(and(eq(sessions.kind, kind), eq(sessions.subjectId, subjectId)))
 }
 
 // ─── Cookie helpers (server actions and route handlers only) ──────────────────

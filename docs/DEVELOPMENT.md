@@ -23,6 +23,17 @@ React 19, TypeScript, Tailwind CSS 4, shadcn/ui (radix base, nova style,
 ported into `src/components/ui`), Drizzle ORM + PostgreSQL, next-intl,
 Zod, React Hook Form, Recharts, Resend + React Email, sharp.
 
+Auth is our own code in `src/lib/auth`, not Auth.js: database sessions in
+the `sessions` table (only the SHA-256 of the
+256-bit cookie token is stored), Argon2id via `@node-rs/argon2`, per-account
+lockout and per-IP rate limiting. Why: Auth.js Credentials sign-in only
+supports JWT sessions (no server-side revocation, no sliding idle / absolute
+expiry); one Auth.js session cookie per instance does not suit separate admin,
+instructor and member logins; and lockout and rate limiting would be custom
+code anyway. Phase 2 instructor and member logins reuse `startSession`,
+`verifyCredentials` and the rest with their `kind` parameter; do not add
+next-auth.
+
 Next.js 16 differs from older versions: read the relevant guide in
 `node_modules/next/dist/docs/` before using an API.
 
@@ -33,7 +44,8 @@ src/
   app/
     page.tsx                    root: redirects to the default language (setting)
     [locale]/
-      admin/login/              super-admin login (no panel chrome)
+      page.tsx                  language root: redirects to /admin until the public site exists
+      admin/login/              super-admin sign in, forgot/ and reset/ password (no panel chrome)
       admin/(panel)/<module>/   super-admin pages, one folder per module
   components/
     ui/                         shadcn/ui primitives (do not edit casually)
@@ -88,6 +100,9 @@ drizzle/                        SQL migrations (generated + custom guards)
   appears as `{brand}` in templates.
 - Persian is RTL: use logical Tailwind classes (`ms-`, `me-`, `ps-`, `pe-`,
   `start-`, `end-`, `text-start`) instead of left/right.
+- A number in a message is `{n, number}` (or `#` inside a plural), never a
+  plain `{n}`: a plain argument prints Latin digits in Persian. Or pass an
+  already formatted string (`formatNumber(n, locale)`).
 
 ### UX
 
@@ -108,7 +123,8 @@ database stores only the storage path, e.g. `courses/2026-10/<random>.webp`.
   photos and videos, reorder, remove). The value is the storage path.
 - **Purposes** (`lib/storage/shared.ts`): `instructor_photo` (square 800),
   `course_cover` (2000 wide), `course_sample` (1600), `gallery_photo` (2400,
-  watermarked, private unwatermarked original), `watermark_logo` (PNG,
+  watermarked, private unwatermarked original; refused with 409
+  `watermark_missing` until a watermark logo is set), `watermark_logo` (PNG,
   private), `gallery_video` (MP4 / MOV / WebM as they are, sent in 8 MB parts).
   Images are checked from their bytes, auto-rotated, stripped of all metadata
   (GPS) and re-encoded as WebP.
@@ -183,14 +199,27 @@ export async function POST(request: Request) { // route handlers
   `startSession`, `currentSession`, `endSession`, `deleteSessionsOf`
   (`@/lib/auth/session`); `verifyCredentials(kind, email, password)` with
   lockout after 5 failures for 15 minutes and constant-time behaviour
-  (`@/lib/auth/login`); `hashPassword`, `verifyPassword`,
-  `PASSWORD_MIN_LENGTH` (`@/lib/auth/password`, Argon2id); `loginRateLimiter`,
-  `createRateLimiter` (`@/lib/auth/rate-limit`, in memory, per IP);
-  `clientIp(headers)`, `isSameOrigin(request)` (`@/lib/auth/request`). Store
-  emails lower-case (`normalizeEmail`). Show one generic message for every
-  failed login.
+  (`@/lib/auth/login`; race-safe: each try is claimed in the database before
+  the password is checked, so concurrent requests get no extra guesses);
+  `hashPassword`, `verifyPassword` (`@/lib/auth/password`, Argon2id);
+  `PASSWORD_MIN_LENGTH` and the password form schemas (`@/lib/auth/schemas`,
+  client-safe); `loginRateLimiter`, `createRateLimiter`, `rateLimitClient(ip)`
+  (`@/lib/auth/rate-limit`, in memory; key by `rateLimitClient`, which groups
+  IPv6 addresses by /64); `clientIp(headers)`, `isSameOrigin(request)`
+  (`@/lib/auth/request`). Store emails lower-case (`normalizeEmail`). Show one
+  generic message for every failed login.
 - Admin sign-in / sign-out: `adminLoginAction`, `adminLogoutAction`
   (`@/lib/auth/actions`). First admin: `pnpm admin:create` (at most 3).
+- Admin passwords (`@/lib/auth/actions`, logic in `@/lib/auth/account`):
+  `changeAdminPasswordAction` (user menu → "Change password": needs the
+  current password, signs out other devices); "Forgot your password?"
+  (`/admin/login/forgot`, `requestAdminPasswordResetAction`: same answer and
+  timing for any address, the `password_reset` email is sent after the
+  response) and the link's page `/admin/login/reset?token=…`
+  (`resetAdminPasswordAction`: one-time `email_tokens` row, 30 minutes, only
+  its SHA-256 stored; ends every session). Audited as `auth.password_change`,
+  `auth.password_reset_request`, `auth.password_reset`. The proxy lets the
+  `/admin/login`, `/forgot` and `/reset` pages through without a session.
 
 ### Server actions: `adminAction`
 
@@ -222,7 +251,11 @@ export const updateThing = adminAction(thingUpdateSchema, async ({ id, ...input 
   all text translated. Return only what the UI needs (it goes to the browser).
 - `throw new UserError("<namespace>.<key>", { values?, field? })` for expected
   problems; `field` puts the message on that form field. Anything else is
-  logged and shown as `common.errors.generic`. `redirect()` / `notFound()` pass through.
+  logged (through `errorForLog`) and shown as `common.errors.generic`.
+  `redirect()` / `notFound()` pass through.
+- Logging an unexpected error yourself: `console.error("[module] …", errorForLog(err))`
+  (`@/lib/errors`). It keeps the SQL text and PostgreSQL code / constraint
+  but drops bound values and `detail`, so no personal data reaches the logs.
 - `ctx` = the `AdminSession` plus `ctx.audit(entry, tx?)`.
 - Revalidate: `revalidatePath("/[locale]/admin/<module>", "page")` for a page
   the user goes back to; `refresh()` from `next/cache` to re-render the
@@ -236,6 +269,25 @@ writes `audit_log` (with the client IP). Inside actions use `ctx.audit`. Actions
 are named `<entity>.<verb>` (`category.create`, `auth.login`). `changes(before,
 after)` gives `{ field: { from, to } }` for updates. Never put secrets or
 decrypted private data in `data`. The table is append-only.
+
+### Emails
+
+```ts
+import { sendEmail } from "@/lib/email"
+await sendEmail({ to, template: "contract_ready", props: { … }, locale }) // never throws: { ok } | { ok: false, error }
+```
+
+- Each email is defined in `src/emails/templates.ts` (props as a Zod schema;
+  links must be on `APP_URL`); the list of emails and of their texts is in
+  `src/emails/names.ts`. The texts are in `messages/<locale>/emails.json`
+  (`subject`, `preview`, `heading`, `intro`, `intro2?`, `cta`, `note?`, ICU
+  format) and may use the props, computed `values` (list them in `valueKeys`)
+  and `{brand}` as placeholders (`emailPlaceholders(template)`).
+- Admins can replace any of these texts per language on `/admin/templates`
+  (the `emailTexts` setting). `renderEmail` lays them over the bundled texts;
+  if one cannot be used, the email goes out with the bundled texts and the
+  problem is logged. `checkEmailText` checks a text (braces, unknown
+  placeholders) before it is saved.
 
 ### List pages: `PageHeader` + `DataTable`
 
@@ -258,7 +310,10 @@ const params = parseTableParams(await searchParams, {
   empty={<EmptyState icon={…} title={…} description={…} action={…} />} />
 ```
 
-- `Column<Row>`: `{ key, header, cell: (row) => node, sortable?, align?: "start" | "end" | "center", hideBelow?: "sm" | "md" | "lg", className? }`.
+- `Column<Row>`: `{ key, header, cell: (row) => node, sortable?, align?: "start" | "end" | "center", hideBelow?: "sm" | "md" | "lg", primary?, className? }`.
+  Mark one column `primary` (usually the name): it takes the remaining width
+  and gives way on phones, so its content must truncate (`block truncate`,
+  `min-w-0`). The `actions` column stays as narrow as its button.
   Search, filters, sort and page live in the URL (`?q=&sort=&dir=&page=&<filter>=`); the
   table fades while the next page loads; "no results" offers to clear filters.
 - `PageHeader({ title, description?, actions?, back?: { href, label } })`. On
@@ -271,7 +326,8 @@ const params = parseTableParams(await searchParams, {
   in a dropdown, leave out `trigger` and control `open` / `onOpenChange`
   (see `categories/_components/row-actions.tsx`).
 - `<Money value={kurus} tone?="signed" />` shows lira in the current language
-  (server or client).
+  (server or client). `className` goes on a wrapper that follows the page
+  direction, so `className="block …"` lines up with its label in Persian too.
 - Drizzle gotcha: in a single-table `select`, columns inside a raw `sql`
   subquery are printed unqualified. Qualify them by hand for correlated
   subqueries (see `workshops` in `features/categories/queries.ts`).
@@ -330,7 +386,8 @@ const thingSchema = z.object({
 ### Formatting (`@/lib/format`)
 
 `formatDate(value, locale, "short" | "medium" | "long" | "full")` (full adds the
-weekday), `formatTime`, `formatDateTime`, `formatWeekday`, `formatTimeRange`,
+weekday; its punctuation differs between ICU builds, so a client component that
+server-renders it puts `suppressHydrationWarning` on the element), `formatTime`, `formatDateTime`, `formatWeekday`, `formatTimeRange`,
 `formatNumber`, `formatPercent(fraction)` (shares: `bp / 10000`), all in
 `Europe/Istanbul`; Persian uses the Gregorian calendar with Persian digits.
 `localized(text, locale)` picks a `LocalizedText` with a tr → en → fa fallback.

@@ -5,7 +5,7 @@ import type { z } from "zod"
 
 import { audit, type AuditEntry } from "@/lib/audit"
 import { requireAdmin, type AdminSession } from "@/lib/auth/admin"
-import { UserError, isMessageKey, zodIssueMessage, type ActionResult, type MessageValues } from "@/lib/errors"
+import { UserError, errorForLog, isMessageKey, zodIssueMessage, type ActionResult, type MessageValues } from "@/lib/errors"
 import type { Tx } from "@/db"
 
 export type { ActionResult } from "@/lib/errors"
@@ -77,7 +77,7 @@ export async function runAction<S extends z.ZodType, T>(
       const message = translate(err.key, err.values)
       return { ok: false, error: message, ...(err.field ? { fieldErrors: { [err.field]: message } } : {}) }
     }
-    console.error("[action] unexpected error", err)
+    console.error("[action] unexpected error", errorForLog(err))
     return { ok: false, error: t("common.errors.generic") }
   }
 }

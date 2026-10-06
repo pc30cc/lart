@@ -1,3 +1,4 @@
+import { DrizzleQueryError } from "drizzle-orm"
 import { redirect } from "next/navigation"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { z } from "zod"
@@ -116,6 +117,17 @@ describe("adminAction", () => {
       error: "Something went wrong on our side. Please try again in a moment.",
     })
     expect(log).toHaveBeenCalled()
+    log.mockRestore()
+  })
+
+  it("logs a failed query without its bound values", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {})
+    const action = adminAction(schema, async () => {
+      throw new DrizzleQueryError("insert into instructors (mobile) values ($1)", ["+905551112233"], new Error("x"))
+    })
+    expect(await action(valid)).toMatchObject({ ok: false })
+    expect(JSON.stringify(log.mock.calls)).not.toContain("905551112233")
+    expect(JSON.stringify(log.mock.calls)).toContain("insert into instructors")
     log.mockRestore()
   })
 

@@ -65,6 +65,11 @@ describe("money queries", () => {
     expect(correction).toMatchObject({ kind: "reversal", originalKind: "expense", reversalOf: ids.expense })
     expect(isReversible(correction)).toBe(false)
     expect(isReversible(rows.find((r) => r.id === ids.contribution)!)).toBe(true)
+    // A cancelled workshop stays "cancelled" once its books are closed: closed_at locks it.
+    const locked = { reversedBy: null, courseStatus: "cancelled" as const, courseClosedAt: new Date() }
+    expect(isReversible({ ...locked, kind: "expense" })).toBe(false)
+    expect(isReversible({ ...locked, kind: "instructor_payment" })).toBe(true)
+    expect(isReversible({ ...locked, kind: "expense", courseClosedAt: null })).toBe(true)
 
     const search = await listTransactions(params({ q: `KIL VE sır ${tag}` }), { from: day, to: day })
     expect(search.rows.map((r) => r.id).sort()).toEqual([ids.expense, ids.reversal].sort())

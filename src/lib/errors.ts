@@ -50,6 +50,65 @@ export function pgError(err: unknown): { code: string; constraint?: string } | n
   return null
 }
 
+type PgFields = { code?: unknown; constraint?: unknown; table?: unknown; column?: unknown; cause?: unknown }
+
+/** Drizzle's `DrizzleQueryError` ("Failed query: <sql>\nparams: <values>"), recognised by shape (no drizzle import here). */
+const isQueryError = (err: unknown): err is Error & { query: string; params: unknown } =>
+  err instanceof Error && typeof (err as { query?: unknown }).query === "string" && "params" in err
+
+/** Only the "at …" frames: the first lines of a stack repeat the message, which may hold values. */
+const stackFrames = (err: Error) =>
+  err.stack
+    ?.split("\n")
+    .filter((line) => /^\s+at /.test(line))
+    .join("\n")
+
+/** A PostgreSQL message without a trailing quoted value (`invalid input syntax for type uuid: "…"`). */
+const safePgMessage = (message: unknown) =>
+  typeof message === "string" ? message.replace(/: "[\s\S]*"$/, ': "…"').slice(0, 300) : undefined
+
+/**
+ * A log-safe summary of an unexpected error: the SQL text and PostgreSQL
+ * code / constraint / table / column, never bound values or PostgreSQL's
+ * `detail` (which repeats the values, e.g. `Key (email)=(…)`).
+ */
+export function errorForLog(err: unknown): Record<string, unknown> {
+  let pg: (Error & PgFields) | undefined
+  for (let current = err, depth = 0; current instanceof Error && depth < 5; depth++) {
+    const code = (current as PgFields).code
+    if (typeof code === "string" && /^[0-9A-Z]{5}$/.test(code)) {
+      pg = current as Error & PgFields
+      break
+    }
+    current = (current as PgFields).cause
+  }
+  const pgInfo = pg && {
+    code: pg.code,
+    constraint: typeof pg.constraint === "string" ? pg.constraint : undefined,
+    table: typeof pg.table === "string" ? pg.table : undefined,
+    column: typeof pg.column === "string" ? pg.column : undefined,
+  }
+  if (isQueryError(err)) {
+    const cause = err.cause instanceof Error ? err.cause : undefined
+    return {
+      kind: "query",
+      query: err.query,
+      ...pgInfo,
+      cause: cause && (pg === cause ? safePgMessage(cause.message) : cause.name),
+      stack: stackFrames(err),
+    }
+  }
+  if (err instanceof Error) {
+    return {
+      name: err.name,
+      message: pg === err ? safePgMessage(err.message) : err.message,
+      ...pgInfo,
+      stack: pg === err ? stackFrames(err) : err.stack,
+    }
+  }
+  return { value: typeof err }
+}
+
 /** A translator for the "common" namespace (server `getTranslations` or client `useTranslations`). */
 export type CommonTranslate = (key: string, values?: MessageValues) => string
 

@@ -278,10 +278,10 @@ test.describe.serial("workshops", () => {
       await page.goto(`/en/admin/workshops/${id}`)
       await expect(page.getByText("Registration is open")).toBeVisible()
     }
-    // Signed contract page shows the evidence.
+    // Signed contract page shows the evidence, the signature line in the contract's language (signed in Turkish).
     const id = await workshopId(WORKSHOPS.held.slug)
     await page.goto(`/en/admin/workshops/${id}/contract`)
-    await expect(page.getByText(`Signed electronically by ${INSTRUCTORS.elif.officialName}`)).toBeVisible()
+    await expect(page.getByText(`${INSTRUCTORS.elif.officialName} tarafından`)).toBeVisible()
     await expect(page.getByText("203.0.113.7")).toBeVisible()
   })
 

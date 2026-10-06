@@ -9,7 +9,8 @@ import { sessionCookieName } from "@/lib/auth/cookies"
  * - language routing (/fa, /tr, /en, always prefixed); "/" goes to src/app/page.tsx,
  * - a strict Content Security Policy with a fresh nonce per request,
  * - noindex for the admin panel and admin API,
- * - an optimistic redirect to the admin login when there is no admin cookie.
+ * - an optimistic redirect to the admin login when there is no admin cookie
+ *   (except on the sign-in pages themselves, ADMIN_LOGIN_PATH).
  *   The real checks happen on the server (requireAdmin) for every page and action.
  * Static security headers (HSTS, nosniff, ...) are set in next.config.ts.
  */
@@ -37,7 +38,8 @@ function contentSecurityPolicy(nonce: string): string {
 }
 
 const ADMIN_PATH = /^\/(fa|tr|en)\/admin(?:\/|$)/
-const ADMIN_LOGIN_PATH = /^\/(fa|tr|en)\/admin\/login\/?$/
+/** The sign-in pages, open without a session: sign in, forgot password, new password from a reset link. */
+const ADMIN_LOGIN_PATH = /^\/(fa|tr|en)\/admin\/login(?:\/(?:forgot|reset))?\/?$/
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl

@@ -52,7 +52,8 @@ export default async function WorkshopFinancesPage({ params }: PageProps<"/[loca
   const partners = finances.partners.map((p) => ({ adminId: p.adminId, name: p.name }))
   const instructor = localized(workshop.instructor.displayName, locale)
   const title = localized(workshop.title, locale)
-  const closed = finances.status === "closed" && finances.closedTotals
+  // Books locked: a cancelled workshop keeps its status once closed, so look at `closedAt`.
+  const closed = finances.closedAt && finances.closedTotals
   const owed = finances.balances.payable
 
   return (
@@ -128,7 +129,7 @@ function LiveView({
             regs.pending > 0
               ? t("finances.registrationsPending", { count: regs.pending })
               : finalNumber && projection.participants !== regs.confirmed
-                ? t("finances.finalNumber", { count: projection.participants })
+                ? t("finances.finalNumber", { count: formatNumber(projection.participants, locale) })
                 : t("finances.registrationsHint")
           }
         />
@@ -169,7 +170,7 @@ function LiveView({
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-w-0 space-y-6">
           <Panel
             title={t("finances.expenses.title")}
@@ -299,7 +300,7 @@ function ClosedView({
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-w-0 space-y-6">
           <Panel title={totals.netProfit >= 0 ? t("close.profitTo") : t("close.lossTo")}>
             {totals.partners.length ? (

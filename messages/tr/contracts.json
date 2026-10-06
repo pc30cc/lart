@@ -14,7 +14,7 @@
     "fee": "Eğitmen ücreti",
     "feeLine": "{kind, select, per_participant {Eğitmen, her katılımcı için {fee_amount} alır. Katılımcı sayısı olarak, atölyenin yapılmasına karar verildiğinde belirlenen kesin sayı esas alınır.} other {Eğitmen, katılımcı sayısından bağımsız olarak atölyenin tamamı için sabit {fee_amount} alır.}}",
     "advance": "Ön ödeme",
-    "advanceLine": "{has, select, yes {Eğitmene {advance_amount} tutarında ön ödeme yapılır. Bu tutar, hesap kapatılırken ücretten düşülür.} other {Ön ödeme yapılmaz.}}",
+    "advanceLine": "{has, select, yes {{brand}, eğitmene {advance_amount} tutarında ön ödeme yapar. Bu tutar, hesap kapatılırken ücretten düşülür.} other {Ön ödeme yapılmaz.}}",
     "feeType": {
       "per_participant": "katılımcı başına",
       "fixed": "atölyenin tamamı için sabit"
@@ -27,6 +27,6 @@
     "notSignable": "Bu sözleşme artık imzalanamıyor. Lütfen bizimle iletişime geçin.",
     "nameRequired": "İmzalamak için lütfen adınızı ve soyadınızı yazın.",
     "nothingToResend": "Şu anda imza bekleyen bir sözleşme yok.",
-    "emailFailed": "E-posta şu anda gönderilemedi. Lütfen e-posta ayarlarını kontrol edin ya da biraz sonra yeniden deneyin."
+    "emailFailed": "E-posta şu anda gönderilemedi. Lütfen biraz sonra yeniden deneyin."
   }
 }

@@ -1,4 +1,4 @@
-import { CheckIcon, FileSignatureIcon, PlusIcon, ScrollTextIcon } from "lucide-react"
+import { ChevronRightIcon, CheckIcon, FileSignatureIcon, MailIcon, PlusIcon, ScrollTextIcon } from "lucide-react"
 import type { Metadata } from "next"
 import { getLocale, getTranslations } from "next-intl/server"
 
@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/admin/empty-state"
 import { PageHeader } from "@/components/admin/page-header"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { Button } from "@/components/ui/button"
+import { listEmails } from "@/features/templates/emails"
 import { templateKinds, type TemplateKind } from "@/features/templates/placeholders"
 import { isUsed, listTemplates, type TemplateRow } from "@/features/templates/queries"
 import { Link } from "@/i18n/navigation"
@@ -33,6 +34,7 @@ export default async function TemplatesPage() {
         {templateKinds.map((kind) => (
           <KindSection key={kind} kind={kind} rows={rows.filter((row) => row.kind === kind)} />
         ))}
+        <EmailsSection />
       </div>
     </>
   )
@@ -144,5 +146,56 @@ async function TemplateCard({ row }: { row: TemplateRow }) {
         <span>{t("updated", { date: formatDate(row.updatedAt, locale, "medium") })}</span>
       </div>
     </li>
+  )
+}
+
+/** The transactional emails: each opens its text editor; edited ones say in which languages. */
+async function EmailsSection() {
+  const [t, tc, emails] = await Promise.all([getTranslations("templates"), getTranslations("common"), listEmails()])
+  return (
+    <section aria-labelledby="kind-emails" className="space-y-4">
+      <div className="flex items-start gap-3">
+        <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-xl">
+          <MailIcon className="size-[1.1rem]" />
+        </span>
+        <div className="space-y-0.5">
+          <h2 id="kind-emails" className="text-base font-semibold">
+            {t("emails.title")}
+          </h2>
+          <p className="text-muted-foreground max-w-2xl text-sm text-pretty">{t("emails.description")}</p>
+        </div>
+      </div>
+      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {emails.map(({ template, edited }) => (
+          <li
+            key={template}
+            className={cn(
+              "group bg-card relative flex items-center gap-3 rounded-xl p-4 shadow-xs ring-1 transition-all hover:shadow-md",
+              edited.length ? "ring-primary/25" : "ring-foreground/8 hover:ring-foreground/15",
+            )}
+          >
+            <div className="min-w-0 flex-1 space-y-1">
+              <Link
+                href={`/admin/templates/emails/${template}`}
+                className="group-hover:text-primary block truncate font-medium transition-colors after:absolute after:inset-0 after:rounded-xl"
+              >
+                {t(`emails.names.${template}.title`)}
+              </Link>
+              <p className="text-muted-foreground truncate text-xs">{t("emails.to", { who: t(`emails.names.${template}.to`) })}</p>
+              <div className="pt-1">
+                {edited.length ? (
+                  <StatusBadge tone="brand">
+                    {t("emails.edited")} · {edited.map((l) => tc(`locales.${l}`)).join(", ")}
+                  </StatusBadge>
+                ) : (
+                  <StatusBadge tone="neutral">{t("emails.defaultTexts")}</StatusBadge>
+                )}
+              </div>
+            </div>
+            <ChevronRightIcon aria-hidden className="text-muted-foreground size-4 shrink-0 rtl:rotate-180" />
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }

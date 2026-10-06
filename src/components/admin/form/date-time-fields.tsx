@@ -98,8 +98,9 @@ export function DateTimeFields({
               className={cn("h-9 justify-start gap-2 px-2.5 font-normal", !parts.date && "text-muted-foreground")}
             >
               <CalendarIcon className="text-muted-foreground" />
-              {/* "full" style includes the weekday, e.g. "Tuesday, 14 October 2026". */}
-              <span className="truncate">{parts.date ? formatDate(`${parts.date}T09:00:00Z`, locale, "full") : t("pickDate")}</span>
+              {/* "full" style includes the weekday, e.g. "Tuesday, 14 October 2026". Its punctuation
+                  differs between ICU builds (server vs browser), so only this text may differ on hydration. */}
+              <span className="truncate" suppressHydrationWarning>{parts.date ? formatDate(`${parts.date}T09:00:00Z`, locale, "full") : t("pickDate")}</span>
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-auto p-0">

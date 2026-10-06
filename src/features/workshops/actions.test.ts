@@ -3,6 +3,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 
 import { db } from "@/db"
 import { auditLog, categories, contracts, courses, instructors, media, members, registrations, templates } from "@/db/schema"
+import { encrypt } from "@/lib/crypto"
 import { cancelWorkshop, confirmWorkshop, createWorkshop, saveGallery, updateWorkshop } from "./actions"
 import { getWorkshop, listGallery, listRegistrations } from "./queries"
 import {
@@ -126,7 +127,10 @@ async function edit(id: string, changes: Parameters<typeof workshopInput>[2]) {
 
 /** What signing does to the database (signContract itself is tested in contracts/sign.test.ts). */
 async function markSigned(courseId: string) {
-  await db.update(contracts).set({ status: "signed", signedAt: new Date(), signedText: "x" }).where(and(eq(contracts.courseId, courseId), eq(contracts.status, "sent")))
+  await db
+    .update(contracts)
+    .set({ status: "signed", signedAt: new Date(), signedText: encrypt("x") })
+    .where(and(eq(contracts.courseId, courseId), eq(contracts.status, "sent")))
   await db.update(courses).set({ status: "published", publishedAt: new Date() }).where(eq(courses.id, courseId))
 }
 
@@ -225,13 +229,52 @@ describe("updateWorkshop", () => {
   it("voids a signed contract on a fee change: the workshop waits for the signature again", async () => {
     const { id } = await create()
     await markSigned(id)
-    await db.update(courses).set({ status: "confirmed", finalParticipants: 3 }).where(eq(courses.id, id))
     const result = await edit(id, { feeType: "fixed", feeAmount: 400_000, advanceAmount: 50_000 })
     expect(result).toMatchObject({ ok: true, data: { contractVersion: 2 } })
     const [v1, v2] = await contractsOf(id)
     expect(v1.status).toBe("void")
     expect(v2).toMatchObject({ status: "sent", feeType: "fixed", feeAmount: 400_000, advanceAmount: 50_000 })
     expect(await courseRow(id)).toMatchObject({ status: "awaiting_signature", finalParticipants: null })
+    expect((await lastAudit(id)).data).toMatchObject({ status: { from: "published", to: "awaiting_signature" } })
+  })
+
+  it("re-issues the contract of a confirmed workshop before it starts, keeping the go decision and final number", async () => {
+    const { id } = await create()
+    await markSigned(id)
+    await db.update(courses).set({ status: "confirmed", finalParticipants: 3 }).where(eq(courses.id, id))
+    const result = await edit(id, { venue: "Studio 2" })
+    expect(result).toMatchObject({ ok: true, data: { contractVersion: 2 } })
+    expect((await contractsOf(id)).map((c) => c.status)).toEqual(["void", "sent"])
+    expect(await courseRow(id)).toMatchObject({ status: "awaiting_signature", finalParticipants: 3, venue: "Studio 2" })
+    expect((await lastAudit(id)).data).toMatchObject({ status: { from: "confirmed", to: "awaiting_signature" } })
+  })
+
+  it("locks the contract of a confirmed workshop once it has started, but texts stay editable", async () => {
+    const { id } = await create()
+    await markSigned(id)
+    const start = new Date(Date.now() - 2 * 86_400_000)
+    await db
+      .update(courses)
+      .set({
+        status: "confirmed",
+        finalParticipants: 3,
+        startsAt: start,
+        endsAt: new Date(start.getTime() + 3 * 3_600_000),
+        registrationDeadline: new Date(start.getTime() - 86_400_000),
+        decisionAt: new Date(start.getTime() - 86_400_000),
+      })
+      .where(eq(courses.id, id))
+    const venue = (await courseRow(id)).venue
+
+    expect(await edit(id, { venue: "Studio 2" })).toEqual({
+      ok: false,
+      error: "This workshop is cancelled or closed, or it has started after it was confirmed, so its date, place, capacity, instructor and fee can’t change.",
+    })
+    expect(await edit(id, { feeAmount: 60_000 })).toMatchObject({ ok: false })
+    expect(await courseRow(id)).toMatchObject({ status: "confirmed", finalParticipants: 3, venue })
+    expect(await contractsOf(id)).toHaveLength(1)
+    expect(await edit(id, { intro: text({ tr: "Hikâye" }) })).toMatchObject({ ok: true, data: { contractVersion: null } })
+    expect(await courseRow(id)).toMatchObject({ status: "confirmed", finalParticipants: 3 })
   })
 
   it("re-issues on a new instructor, a new title and new times", async () => {
@@ -284,6 +327,7 @@ describe("updateWorkshop", () => {
     const { id } = await create()
     expect(await cancelWorkshop({ id })).toMatchObject({ ok: true })
     expect(await edit(id, { venue: "Elsewhere" })).toMatchObject({ ok: false, error: expect.stringContaining("cancelled or closed") })
+    expect((await courseRow(id)).venue).not.toBe("Elsewhere")
     expect(await edit(id, { intro: text({ tr: "Hikâye" }) })).toMatchObject({ ok: true })
   })
 
@@ -366,6 +410,18 @@ describe("gallery", () => {
       ok: false,
       error: "Photos and videos can be added once the workshop is closed.",
     })
+  })
+
+  it("is never for a cancelled workshop, also after its books were closed", async () => {
+    const { id } = await create()
+    await cancelWorkshop({ id })
+    // Closing a cancelled workshop sets the status to closed and keeps cancelled_at.
+    await db.update(courses).set({ status: "closed", closedAt: new Date() }).where(eq(courses.id, id))
+    expect(await saveGallery({ id, items: [photo("cancelled")] })).toEqual({
+      ok: false,
+      error: "This workshop was cancelled, so it has no gallery.",
+    })
+    expect(await listGallery(id)).toEqual([])
   })
 
   it("adds, re-orders and removes photos and videos, and deletes removed files", async () => {

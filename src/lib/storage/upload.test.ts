@@ -25,6 +25,20 @@ const read = async (zone: "public" | "private", p: string) =>
 const files = async (zone: "public" | "private") =>
   (await readdir(path.join(root, zone), { recursive: true, withFileTypes: true })).filter((e) => e.isFile()).length
 const noWatermark = { ...settingDefaults.watermark, logoPath: null }
+const pixel = async (zone: "public" | "private", p: string, x: number, y: number) => {
+  const { data, info } = await sharp(await read(zone, p)).raw().toBuffer({ resolveWithObject: true })
+  return data[(y * info.width + x) * info.channels]
+}
+/** Upload a white square logo and answer settings that put it in the top-left corner at 10 % width. */
+async function withLogo() {
+  const logo = await storeImage({
+    storage,
+    purpose: "watermark_logo",
+    file: toStream(await sharp({ create: { width: 100, height: 100, channels: 3, background: "#fff" } }).png().toBuffer()),
+    watermark: noWatermark,
+  })
+  return { ...settingDefaults.watermark, logoPath: logo.path, position: "top-left", sizePct: 10, marginPct: 0, opacity: 1 } as const
+}
 
 describe("storeImage", () => {
   it("stores a processed public image", async () => {
@@ -44,31 +58,31 @@ describe("storeImage", () => {
   })
 
   it("stores a watermarked gallery photo and its private original", async () => {
-    const logo = await storeImage({
-      storage,
-      purpose: "watermark_logo",
-      file: toStream(await sharp({ create: { width: 100, height: 100, channels: 3, background: "#fff" } }).png().toBuffer()),
-      watermark: noWatermark,
-    })
-    const watermark = { ...settingDefaults.watermark, logoPath: logo.path, position: "top-left", sizePct: 10, marginPct: 0, opacity: 1 } as const
-
+    const watermark = await withLogo()
     const result = await storeImage({ storage, purpose: "gallery_photo", file: toStream(await jpeg(3000, 2000)), watermark })
-    expect(result).toMatchObject({ width: 2400, height: 1600, watermarked: true })
+    expect(result).toMatchObject({ width: 2400, height: 1600 })
     expect(result.path).toMatch(/^gallery\//)
     expect(result.originalPath).toMatch(/^originals\//)
 
-    const pixel = async (zone: "public" | "private", p: string, x: number, y: number) => {
-      const { data, info } = await sharp(await read(zone, p)).raw().toBuffer({ resolveWithObject: true })
-      return data[(y * info.width + x) * info.channels]
-    }
     expect(await pixel("public", result.path, 100, 100)).toBeGreaterThan(240)
     expect(await pixel("private", result.originalPath!, 100, 100)).toBeLessThan(15)
     expect((await sharp(await read("private", result.originalPath!)).metadata()).width).toBe(3000)
   })
 
-  it("uploads gallery photos unwatermarked while no logo is set", async () => {
-    const result = await storeImage({ storage, purpose: "gallery_photo", file: toStream(await jpeg(100, 100)), watermark: noWatermark })
-    expect(result.watermarked).toBe(false)
+  it("refuses gallery photos while no watermark logo is set, storing nothing", async () => {
+    await expect(
+      storeImage({ storage, purpose: "gallery_photo", file: toStream(await jpeg(100, 100)), watermark: noWatermark }),
+    ).rejects.toMatchObject({ code: "watermark_missing", status: 409 })
+    expect(await files("public").catch(() => 0)).toBe(0)
+    expect(await files("private").catch(() => 0)).toBe(0)
+  })
+
+  it("watermarks gallery photos even when a stored setting says the watermark is off", async () => {
+    // Settings saved before the on/off switch was removed may still carry `enabled: false`.
+    const stored = { ...(await withLogo()), enabled: false }
+    const result = await storeImage({ storage, purpose: "gallery_photo", file: toStream(await jpeg(1000, 1000)), watermark: stored })
+    expect(await pixel("public", result.path, 50, 50)).toBeGreaterThan(240)
+    expect(await pixel("private", result.originalPath!, 50, 50)).toBeLessThan(15)
   })
 
   it("refuses to publish when the saved logo is missing", async () => {

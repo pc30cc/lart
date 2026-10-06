@@ -192,9 +192,6 @@ export function ImageUpload({
           {error(phase.code, purpose)}
         </UploadMessage>
       )}
-      {uploaded && uploaded.path === value && uploaded.watermarked === false && (
-        <UploadMessage tone="info">{t("upload.noWatermark")}</UploadMessage>
-      )}
     </div>
   )
 }

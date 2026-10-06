@@ -41,7 +41,7 @@ import {
   type WorkshopFormValues,
 } from "@/features/workshops/schema"
 import { Link, useRouter } from "@/i18n/navigation"
-import { localized, slugify } from "@/lib/format"
+import { formatNumber, localized, slugify } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { cn } from "@/lib/utils"
 
@@ -50,6 +50,8 @@ type Values = WorkshopFormValues
 export type WorkshopEdit = {
   id: string
   status: WorkshopStatus
+  /** The contract terms can't change any more (`contractLocked` in the workshops schema). */
+  contractLocked: boolean
   values: Values
   coverUrl: string | null
   /** Pending + confirmed registrations: the price is locked when > 0. */
@@ -115,6 +117,7 @@ function contractPart(v: Partial<Values>) {
 export function WorkshopForm({ workshop, options }: { workshop?: WorkshopEdit; options: WorkshopFormOptions }) {
   const t = useTranslations("workshops")
   const tc = useTranslations("common")
+  const locale = useLocale()
   const router = useRouter()
   const [confirming, setConfirming] = useState(false)
   const editing = Boolean(workshop)
@@ -130,8 +133,9 @@ export function WorkshopForm({ workshop, options }: { workshop?: WorkshopEdit; o
         if (data.emailSent) toast.success(t("toast.created", { name }))
         else toast.warning(t("toast.createdNoEmail"))
       } else if (data.contractVersion) {
-        if (data.emailSent) toast.success(t("toast.reissued", { name, version: data.contractVersion }))
-        else toast.warning(t("toast.reissuedNoEmail", { version: data.contractVersion }))
+        const version = formatNumber(data.contractVersion, locale)
+        if (data.emailSent) toast.success(t("toast.reissued", { name, version }))
+        else toast.warning(t("toast.reissuedNoEmail", { version }))
       } else {
         toast.success(t("toast.updated"))
       }
@@ -139,7 +143,6 @@ export function WorkshopForm({ workshop, options }: { workshop?: WorkshopEdit; o
     },
   })
 
-  const locale = useLocale()
   function instructorName(id: string) {
     const person = options.instructors.find((i) => i.id === id)
     return person ? localized(person.displayName, locale) || person.officialName : ""
@@ -156,7 +159,7 @@ export function WorkshopForm({ workshop, options }: { workshop?: WorkshopEdit; o
   // Editing a field that is in the contract re-issues it: warn before saving.
   const watched = useWatch({ control: form.control }) as Partial<Values>
   const live = workshop?.contract && workshop.contract.status !== "void" ? workshop.contract : null
-  const locked = workshop?.status === "cancelled" || workshop?.status === "closed"
+  const locked = Boolean(workshop?.contractLocked)
   const reissue = Boolean(workshop && !locked && contractPart(watched) !== contractPart(workshop.values))
 
   async function onSubmit(event?: React.BaseSyntheticEvent) {
@@ -349,7 +352,7 @@ export function WorkshopForm({ workshop, options }: { workshop?: WorkshopEdit; o
 
       {reissue && live && (
         <Notice icon={TriangleAlertIcon} tone="warning" title={t("form.reissue.title")}>
-          {t(`form.reissue.${live.status === "signed" ? "signed" : "sent"}`, { version: live.version })}
+          {t(`form.reissue.${live.status === "signed" ? "signed" : "sent"}`, { version: formatNumber(live.version, locale) })}
         </Notice>
       )}
 
@@ -373,7 +376,7 @@ export function WorkshopForm({ workshop, options }: { workshop?: WorkshopEdit; o
             <AlertDialogTitle>{t("form.reissue.confirmTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
               {t("form.reissue.confirmDescription", {
-                version: (workshop?.contract?.version ?? 0) + 1,
+                version: formatNumber((workshop?.contract?.version ?? 0) + 1, locale),
                 name: instructorName(watched.instructorId ?? "") || (workshop?.instructorName ?? ""),
               })}
             </AlertDialogDescription>

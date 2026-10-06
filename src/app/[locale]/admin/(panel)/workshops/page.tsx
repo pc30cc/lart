@@ -9,7 +9,7 @@ import { Money } from "@/components/admin/money"
 import { PageHeader } from "@/components/admin/page-header"
 import { Button } from "@/components/ui/button"
 import { countWorkshopViews, listWorkshops, type WorkshopRow } from "@/features/workshops/queries"
-import { workshopTable, workshopViews, type WorkshopView } from "@/features/workshops/schema"
+import { displayStatus, workshopTable, workshopViews, type WorkshopView } from "@/features/workshops/schema"
 import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
 import { formatDate, formatNumber, formatTimeRange, formatWeekday, localized } from "@/lib/format"
@@ -50,6 +50,8 @@ export default async function WorkshopsPage({ searchParams }: PageProps<"/[local
       key: "title",
       header: t("table.workshop"),
       sortable: true,
+      // Takes the room the other columns leave and truncates (on phones, next to the status).
+      primary: true,
       cell: (row) => (
         <Link href={`/admin/workshops/${row.id}`} className="group/name flex min-w-0 items-center gap-3">
           <span className="bg-muted ring-foreground/8 relative hidden aspect-[4/3] w-14 shrink-0 overflow-hidden rounded-lg ring-1 sm:block">
@@ -65,6 +67,9 @@ export default async function WorkshopsPage({ searchParams }: PageProps<"/[local
               {localized(row.title, locale)}
             </span>
             <span className="text-muted-foreground block truncate text-xs">
+              <span className="sm:hidden">
+                <bdi>{formatDate(row.startsAt, locale, "medium")}</bdi> ·{" "}
+              </span>
               {localized(row.category, locale)}
               <span className="md:hidden"> · {localized(row.instructor, locale)}</span>
             </span>
@@ -76,6 +81,7 @@ export default async function WorkshopsPage({ searchParams }: PageProps<"/[local
       key: "startsAt",
       header: t("table.date"),
       sortable: true,
+      hideBelow: "sm",
       cell: (row) => (
         <span className="block whitespace-nowrap">
           <span className="block text-sm">{formatDate(row.startsAt, locale, "medium")}</span>
@@ -117,7 +123,8 @@ export default async function WorkshopsPage({ searchParams }: PageProps<"/[local
       key: "status",
       header: t("table.status"),
       align: "end",
-      cell: (row) => <WorkshopStatusBadge status={row.status} />,
+      className: "w-px whitespace-nowrap",
+      cell: (row) => <WorkshopStatusBadge status={displayStatus(row)} />,
     },
   ]
 

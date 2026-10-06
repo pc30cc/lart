@@ -37,10 +37,10 @@
   },
   "validation": {
     "required": "Please fill this in.",
-    "tooShort": "Please use at least {min} characters.",
-    "tooLong": "Please use {max} characters or fewer.",
-    "tooSmall": "Please enter {min} or more.",
-    "tooBig": "Please enter {max} or less.",
+    "tooShort": "Please use at least {min, number} characters.",
+    "tooLong": "Please use {max, number} characters or fewer.",
+    "tooSmall": "Please enter {min, number} or more.",
+    "tooBig": "Please enter {max, number} or less.",
     "number": "Please enter a number.",
     "integer": "Please enter a whole number.",
     "email": "Please enter a valid email address.",
@@ -58,7 +58,7 @@
     "filled": "Filled in",
     "missing": "Not filled in yet",
     "hasError": "Needs attention",
-    "languagesFilled": "{count} of {total} languages"
+    "languagesFilled": "{count, number} of {total, number} languages"
   },
   "date": {
     "pickDate": "Pick a date",

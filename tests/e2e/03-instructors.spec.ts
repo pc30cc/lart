@@ -160,7 +160,8 @@ test.describe.serial("instructors", () => {
     await page.goto(`/en/admin/instructors/${id}`)
     await page.getByRole("link", { name: "Edit profile" }).click()
     await expect(page).toHaveURL(/\/edit$/)
-    await expect(field(page, "ID number")).toContainText("Leave empty to keep the current one (••••••901)")
+    // The masked number is wrapped in bidi isolates (U+2066 … U+2069) so it reads left to right in Persian too.
+    await expect(field(page, "ID number")).toContainText(/Leave empty to keep the current one \(\u2066?••••••901\u2069?\)/)
     await field(page, "Mobile number").getByRole("textbox").fill("+90 533 765 43 21")
     await page.getByRole("button", { name: "Save changes" }).click()
     await expect(toast(page, "Changes saved.")).toBeVisible()

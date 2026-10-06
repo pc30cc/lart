@@ -105,7 +105,7 @@ function PartnerCard({
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="truncate font-semibold">{p.name}</h2>
-          <p className="text-muted-foreground truncate text-xs" dir="ltr">
+          <p className="text-muted-foreground truncate text-xs rtl:text-right" dir="ltr">
             {p.email}
           </p>
         </div>

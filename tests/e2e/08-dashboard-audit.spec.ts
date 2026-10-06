@@ -74,12 +74,9 @@ test.describe("activity log", () => {
       await page.goto(`/en/admin/audit?q=${encodeURIComponent(code)}`)
       await expect(page.getByRole("cell").filter({ hasText: label }).first(), label).toBeVisible()
     }
-    // Searching for the words people see finds nothing: only codes and data are searched.
+    // The words people see are searched too, in the page's language.
     await page.goto(`/en/admin/audit?q=${encodeURIComponent("Transaction reversed")}`)
-    test.info().annotations.push({
-      type: "search-by-label",
-      description: String(await page.getByRole("cell").filter({ hasText: "Transaction reversed" }).count()),
-    })
+    await expect(page.getByRole("cell").filter({ hasText: "Transaction reversed" }).first()).toBeVisible()
 
     // Filter by record type: workshops only.
     await page.goto("/en/admin/audit?entity=workshop")

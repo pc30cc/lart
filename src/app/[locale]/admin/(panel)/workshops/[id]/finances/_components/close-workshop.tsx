@@ -56,6 +56,8 @@ export function CloseWorkshop({
           revenue: figures.revenue,
           instructorFee: figures.instructorFee,
           expenses: figures.expenses,
+          owedToInstructor: figures.owedToInstructor,
+          partners: figures.partners.map(({ adminId, shareBp, amount }) => ({ adminId, shareBp, amount })),
         })
         if (!result) return
         if (result.ok) {

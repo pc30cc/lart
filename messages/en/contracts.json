@@ -27,6 +27,6 @@
     "notSignable": "This contract can’t be signed any more. Please get in touch with us.",
     "nameRequired": "Please type your full name to sign.",
     "nothingToResend": "There’s no contract waiting for a signature right now.",
-    "emailFailed": "We couldn’t send the email just now. Please check the email settings, or try again in a moment."
+    "emailFailed": "We couldn’t send the email just now. Please try again in a moment."
   }
 }

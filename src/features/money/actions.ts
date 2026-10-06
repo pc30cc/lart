@@ -1,6 +1,6 @@
 "use server"
 
-import { eq } from "drizzle-orm"
+import { asc, eq, inArray, ne, or, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 import { db } from "@/db"
@@ -132,7 +132,7 @@ export const payInstructor = adminAction(instructorPaymentSchema, async ({ cours
   return { id }
 })
 
-/** Close a workshop: settlement + profit to the partners, figures locked, status "closed". */
+/** Close a workshop: settlement + profit to the partners, figures locked; "closed", or still "cancelled" with `closed_at`. */
 export const closeWorkshop = adminAction(closeSchema, async ({ courseId, ...expected }, ctx) => {
   const totals = await db.transaction(async (tx) => {
     const totals = await closeCourse(tx, courseId, ctx.admin.id, expected)
@@ -169,9 +169,15 @@ export const reverseEntry = adminAction(reverseSchema, async ({ id }, ctx) => {
  */
 export const updateShares = adminAction(sharesSchema, async ({ shares }, ctx) => {
   await db.transaction(async (tx) => {
+    // One change of shares at a time. Then only the people whose share can change are locked (current
+    // partners and the listed people), in id order: locking every admin row deadlocked with transactions
+    // that reference admins (audit entries, ledger lines).
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext('admins:shares'))`)
     const everyone = await tx
       .select({ id: admins.id, name: admins.name, active: admins.active, shareBp: admins.shareBp })
       .from(admins)
+      .where(or(ne(admins.shareBp, 0), inArray(admins.id, shares.map((s) => s.adminId))))
+      .orderBy(asc(admins.id))
       .for("update")
     const byId = new Map(everyone.map((a) => [a.id, a]))
     if (shares.some((s) => !byId.get(s.adminId)?.active)) throw new UserError("money.partners.partnerGone")

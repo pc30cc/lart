@@ -105,14 +105,10 @@
     }
   },
   "watermark": {
-    "enabledTitle": "Watermark",
-    "enabledDescription": "Your logo is added to every gallery photo when it’s uploaded. The original, without the logo, stays private for admins.",
-    "enabled": "Add a watermark to gallery photos",
-    "enabledHint": "Photos that are already uploaded don’t change.",
-    "logoTitle": "Logo",
-    "logoDescription": "A PNG with a transparent background looks best.",
+    "logoTitle": "Watermark",
+    "logoDescription": "Your logo is added to every gallery photo when it’s uploaded. The original, without the logo, stays private for admins. A PNG with a transparent background looks best.",
     "logo": "Watermark logo",
-    "noLogo": "There’s no logo yet, so photos are uploaded without a watermark. Add one here.",
+    "noLogo": "Add a logo: gallery photos can’t be uploaded until there is one.",
     "placementTitle": "Position and size",
     "placementDescription": "Watch the preview while you adjust.",
     "position": "Position",
@@ -137,7 +133,6 @@
     "previewAlt": "A sample photo with the watermark",
     "previewNoLogo": "Add a logo to see the preview.",
     "previewCaption": "A sample photo with your current choices (not saved yet).",
-    "previewCaptionOff": "The watermark is turned off, so photos are uploaded without it. This is how it would look.",
     "errors": {
       "logo": "Please upload the logo again."
     }
@@ -177,6 +172,7 @@
       "admin": "Admin",
       "category": "Category",
       "contract": "Contract",
+      "email": "Email",
       "instructor": "Instructor",
       "ledger_transaction": "Transaction",
       "media": "Media",
@@ -192,7 +188,10 @@
       "auth": {
         "login": "Signed in",
         "logout": "Signed out",
-        "lockout": "Locked out after failed sign-ins"
+        "lockout": "Locked out after failed sign-ins",
+        "password_change": "Password changed",
+        "password_reset_request": "Password reset requested",
+        "password_reset": "Password reset with an email link"
       },
       "category": {
         "create": "Category created",
@@ -202,6 +201,10 @@
       "contract": {
         "sign": "Contract signed",
         "resend": "Contract email sent again"
+      },
+      "email": {
+        "update": "Email texts changed",
+        "reset": "Email texts reset to default"
       },
       "instructor": {
         "create": "Instructor added",

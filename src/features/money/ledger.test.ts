@@ -9,6 +9,7 @@ import {
   checkPosting,
   courseBalances,
   LedgerError,
+  lockCourse,
   partnerCapitals,
   postAdvance,
   postContribution,
@@ -249,6 +250,32 @@ describe("standard postings", () => {
   })
 })
 
+describe("lock order", () => {
+  it("locks the workshop before the registration, so a refund never deadlocks with a reversal", async () => {
+    const courseId = await makeCourse(world, alice.id, { status: "published" })
+    const registrationId = await addRegistration(world, courseId, { amount: 65000 })
+    const paid = await inTx((tx) => postRegistrationPayment(tx, { registrationId, occurredOn: day }))
+
+    // A holds the workshop, then reverses the payment (its insert needs a key-share lock on the registration).
+    let holding!: () => void
+    const held = new Promise<void>((resolve) => (holding = resolve))
+    const reversal = inTx(async (tx) => {
+      await lockCourse(tx, courseId)
+      holding()
+      await new Promise((resolve) => setTimeout(resolve, 300)) // B is waiting by now
+      return reverseTransaction(paid, alice.id, { tx })
+    })
+    await held
+    // B refunds the same registration meanwhile: it waits for the workshop instead of holding the registration.
+    const refund = inTx((tx) => postRegistrationRefund(tx, { registrationId, amount: 1000, occurredOn: day }))
+
+    const [a, b] = await Promise.allSettled([reversal, refund])
+    expect(a.status).toBe("fulfilled")
+    expect(b.status === "rejected" && b.reason instanceof UserError && b.reason.key).toBe("money.errors.moreThanPaid")
+    expect(await registrationMoney(db, registrationId)).toEqual({ paid: 0, refunded: 0 })
+  })
+})
+
 describe("closed workshops", () => {
   it("accept no more expenses, advances or revenue, but the instructor can still be paid", async () => {
     const courseId = await makeCourse(world, alice.id)
@@ -353,5 +380,15 @@ describe("reverseTransaction", () => {
     const expense = await inTx((tx) => postExpense(tx, { ...common(), courseId, amount: 500, source: "wallet" }))
     await db.update(courses).set({ status: "closed" }).where(eq(courses.id, courseId))
     expect(await userError(reverseTransaction(expense, alice.id))).toBe("money.errors.workshopClosed")
+  })
+
+  it("treats a cancelled workshop whose books were closed as closed", async () => {
+    const courseId = await makeCourse(world, alice.id, { status: "cancelled" })
+    const expense = await inTx((tx) => postExpense(tx, { ...common(), courseId, amount: 500, source: "wallet" }))
+    await db.update(courses).set({ closedAt: new Date() }).where(eq(courses.id, courseId))
+    expect(await userError(reverseTransaction(expense, alice.id))).toBe("money.errors.workshopClosed")
+    expect(await userError(inTx((tx) => postExpense(tx, { ...common(), courseId, amount: 100, source: "wallet" })))).toBe(
+      "money.errors.workshopClosed",
+    )
   })
 })

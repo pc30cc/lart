@@ -15,7 +15,7 @@ export function AuditData({ summary, detail }: { summary: string; detail: string
           type="button"
           dir="auto"
           title={t("showDetails")}
-          className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 block max-w-56 truncate rounded-sm text-start font-mono text-xs outline-none focus-visible:ring-3 lg:max-w-80"
+          className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 block w-fit max-w-full truncate rounded-sm text-start font-mono text-xs outline-none focus-visible:ring-3"
         >
           {summary}
         </button>

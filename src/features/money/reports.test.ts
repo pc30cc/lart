@@ -1,6 +1,8 @@
+import { eq } from "drizzle-orm"
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { db, type Tx } from "@/db"
+import { courses } from "@/db/schema"
 import { csvCell, lira, toCsv } from "./csv"
 import {
   postContribution,
@@ -89,6 +91,8 @@ describe("reports", () => {
       })
       await postContribution(tx, { ...common, partnerId: partner.id, amount: 100000, occurredOn: "2003-01-05" })
       await postWithdrawal(tx, { ...common, description: "=cmd()", partnerId: partner.id, amount: 30000, occurredOn: "2003-03-01" })
+      // As closing does: no projected fee any more, the settlement holds it.
+      await tx.update(courses).set({ status: "closed", closedAt: new Date() }).where(eq(courses.id, courseId))
     })
   })
 
@@ -117,6 +121,7 @@ describe("reports", () => {
     expect(workshops.find((w) => w.id === courseId)).toMatchObject({
       revenue: 50000,
       instructorFees: 10000,
+      estimatedFee: 0,
       courseExpenses: 3000,
       net: 37000,
       participants: 1,

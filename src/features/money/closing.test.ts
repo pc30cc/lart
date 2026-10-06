@@ -7,8 +7,10 @@ import { admins, auditLog, ledgerLines, ledgerTransactions } from "@/db/schema"
 import { splitByShares } from "@/lib/money"
 import en from "../../../messages/en/money.json"
 import { closeWorkshop, payInstructor, recordAdvance, recordExpense, reverseEntry, updateShares } from "./actions"
-import { closingPlan, instructorFee, prepareClosing, type Partner } from "./closing"
-import { courseBalances, partnerCapitals, postRegistrationPayment, postRegistrationRefund } from "./ledger"
+import { closingPlan, instructorFee, prepareClosing, projectedFees, workshopsToClose, type Partner } from "./closing"
+import { courseBalances, partnerCapitals, postRegistrationPayment, postRegistrationRefund, today } from "./ledger"
+import { isReversible, listTransactions } from "./queries"
+import { partnerStatement, profitAndLoss, workshopResults } from "./reports"
 import { addRegistration, courseRow, makeAdmin, makeCourse, makeWorld, retireAdmins, type World } from "./testing"
 
 vi.mock("next-intl/server", async () => {
@@ -153,6 +155,28 @@ const ok = <T>(result: { ok: true; data: T } | { ok: false; error: string }) => 
   return result.data
 }
 
+/** What the close dialog sends: the figures of the preview the admin is looking at. */
+async function previewOf(courseId: string) {
+  const { figures } = (await prepareClosing(db, courseId))!.plan
+  return {
+    courseId,
+    revenue: figures.revenue,
+    instructorFee: figures.instructorFee,
+    expenses: figures.expenses,
+    owedToInstructor: figures.owedToInstructor,
+    partners: figures.partners.map(({ adminId, shareBp, amount }) => ({ adminId, shareBp, amount })),
+  }
+}
+
+/** Dates of a workshop's closing entries. */
+async function closingDates(courseId: string) {
+  const rows = await db
+    .select({ occurredOn: ledgerTransactions.occurredOn })
+    .from(ledgerTransactions)
+    .where(and(eq(ledgerTransactions.courseId, courseId), inArray(ledgerTransactions.kind, ["course_settlement", "course_close"])))
+  return rows.map((r) => r.occurredOn)
+}
+
 beforeAll(async () => {
   p1 = await makeAdmin("Partner One")
   p2 = await makeAdmin("Partner Two")
@@ -253,11 +277,9 @@ describe("closing a workshop", () => {
     ])
 
     const capitalBefore = await partnerCapitals()
-    expect(await closeWorkshop({ courseId, revenue: 150000, instructorFee: 60000, expenses: 24999 })).toEqual({
-      ok: false,
-      error: en.close.changed,
-    })
-    expect(ok(await closeWorkshop({ courseId, revenue: 150000, instructorFee: 60000, expenses: 25000 }))).toEqual({ netProfit: 65000 })
+    const seen = await previewOf(courseId)
+    expect(await closeWorkshop({ ...seen, expenses: 24999 })).toEqual({ ok: false, error: en.close.changed })
+    expect(ok(await closeWorkshop(seen))).toEqual({ netProfit: 65000 })
 
     const course = await courseRow(courseId)
     expect(course.status).toBe("closed")
@@ -275,6 +297,7 @@ describe("closing a workshop", () => {
       ],
     })
     expect(await plAfterClose(courseId)).toBe(0)
+    expect(await closingDates(courseId)).toEqual([today(), today()]) // the day of closing, not the workshop's
     expect(await courseBalances(db, courseId)).toMatchObject({ advance: 0, payable: 50000 })
     const capitalAfter = await partnerCapitals()
     expect(capitalAfter.get(p1.id)!.profitShares - (capitalBefore.get(p1.id)?.profitShares ?? 0)).toBe(21672)
@@ -286,10 +309,7 @@ describe("closing a workshop", () => {
       ok: false,
       error: en.errors.workshopClosed,
     })
-    expect(await closeWorkshop({ courseId, revenue: 150000, instructorFee: 60000, expenses: 25000 })).toEqual({
-      ok: false,
-      error: en.close.issues.closed,
-    })
+    expect(await closeWorkshop(seen)).toEqual({ ok: false, error: en.close.issues.closed })
     const [closing] = await db
       .select({ id: ledgerTransactions.id })
       .from(ledgerTransactions)
@@ -306,21 +326,18 @@ describe("closing a workshop", () => {
     const courseId = await makeCourse(world, p1.id, { fee: { type: "fixed", amount: 30001 } })
     const preview = (await prepareClosing(db, courseId))!
     expect(preview.plan.figures).toMatchObject({ revenue: 0, instructorFee: 30001, netProfit: -30001, owedToInstructor: 30001 })
-    ok(await closeWorkshop({ courseId, revenue: 0, instructorFee: 30001, expenses: 0 }))
+    ok(await closeWorkshop(await previewOf(courseId)))
     const totals = (await courseRow(courseId)).closedTotals!
     expect(totals.partners.map((p) => p.amount)).toEqual([-10003, -9999, -9999])
     expect(await plAfterClose(courseId)).toBe(0)
   })
 
-  it("needs the advance of a cancelled workshop returned or spent first", async () => {
+  it("needs the advance of a cancelled workshop returned or spent first, and keeps it cancelled once closed", async () => {
     const courseId = await makeCourse(world, p1.id, { status: "published", fee: { type: "fixed", amount: 80000, advance: 20000 } })
     ok(await recordAdvance({ courseId, direction: "paid", amount: 20000, occurredOn: yesterday(), source: p3.id, note: "" }))
     await db.execute(sql`update courses set status = 'cancelled', cancelled_at = now() where id = ${courseId}`)
 
-    expect(await closeWorkshop({ courseId, revenue: 0, instructorFee: 0, expenses: 0 })).toEqual({
-      ok: false,
-      error: en.close.issues.advanceTooBig,
-    })
+    expect(await closeWorkshop(await previewOf(courseId))).toEqual({ ok: false, error: en.close.issues.advanceTooBig })
     // Clause 6.4: materials bought from the advance are set off; the rest comes back.
     ok(await recordExpense({ courseId, category: "Materials", amount: 15000, occurredOn: yesterday(), source: "advance" }))
     ok(await recordAdvance({ courseId, direction: "returned", amount: 5000, occurredOn: yesterday(), source: "wallet", note: "" }))
@@ -328,14 +345,36 @@ describe("closing a workshop", () => {
     const preview = (await prepareClosing(db, courseId))!
     expect(preview.issues).toEqual([])
     expect(preview.plan.settlement).toEqual([])
-    ok(await closeWorkshop({ courseId, revenue: 0, instructorFee: 0, expenses: 15000 }))
-    expect((await courseRow(courseId)).closedTotals).toMatchObject({ instructorFee: 0, participants: 0, netProfit: -15000 })
+    expect((await workshopsToClose(db)).map((w) => w.id)).toContain(courseId)
+    const seen = await previewOf(courseId)
+    ok(await closeWorkshop(seen))
+    const course = await courseRow(courseId)
+    expect(course.closedTotals).toMatchObject({ instructorFee: 0, participants: 0, netProfit: -15000 })
     expect(await plAfterClose(courseId)).toBe(0)
+
+    // Still a cancelled workshop (never "held"), but its books are locked.
+    expect(course.status).toBe("cancelled")
+    expect(course.closedAt).toBeInstanceOf(Date)
+    expect((await workshopsToClose(db)).map((w) => w.id)).not.toContain(courseId)
+    expect((await prepareClosing(db, courseId))!.issues).toContain("closed")
+    expect(await closeWorkshop(seen)).toEqual({ ok: false, error: en.close.issues.closed })
+    expect(await recordExpense({ courseId, category: "Late", amount: 100, occurredOn: yesterday(), source: "wallet" })).toEqual({
+      ok: false,
+      error: en.errors.workshopClosed,
+    })
+    const { rows } = await listTransactions(
+      { q: "", sort: "occurredOn", dir: "desc", page: 1, pageSize: 20, offset: 0, filters: { workshop: courseId } },
+      {},
+    )
+    const expense = rows.find((r) => r.kind === "expense")!
+    expect(expense).toMatchObject({ courseStatus: "cancelled" })
+    expect(isReversible(expense)).toBe(false)
+    expect(await reverseEntry({ id: expense.id })).toEqual({ ok: false, error: en.errors.workshopClosed })
   })
 
   it("waits until a confirmed workshop has ended", async () => {
     const courseId = await makeCourse(world, p1.id, { endsAt: new Date(Date.now() + 3_600_000) })
-    expect(await closeWorkshop({ courseId, revenue: 0, instructorFee: 100000, expenses: 0 })).toEqual({
+    expect(await closeWorkshop(await previewOf(courseId))).toEqual({
       ok: false,
       error: en.close.issues.notEnded,
     })
@@ -347,10 +386,86 @@ describe("closing a workshop", () => {
     const courseId = await makeCourse(world, p1.id)
     await addRegistration(world, courseId) // paid, but no payment posted
     expect((await prepareClosing(db, courseId))!.issues).toEqual(["revenueMismatch"])
-    expect(await closeWorkshop({ courseId, revenue: 0, instructorFee: 100000, expenses: 0 })).toEqual({
+    expect(await closeWorkshop(await previewOf(courseId))).toEqual({
       ok: false,
       error: en.close.issues.revenueMismatch,
     })
+  })
+})
+
+describe("closing: what the admin saw", () => {
+  const thirds = [
+    { adminId: "", shareBp: 3334 },
+    { adminId: "", shareBp: 3333 },
+    { adminId: "", shareBp: 3333 },
+  ]
+  const restoreThirds = async () =>
+    ok(await updateShares({ shares: [p1, p2, p3].map((p, i) => ({ ...thirds[i], adminId: p.id })) }))
+
+  it("refuses to close when the shares changed after the preview", async () => {
+    const courseId = await makeCourse(world, p1.id, { fee: { type: "fixed", amount: 100000 } })
+    const seen = await previewOf(courseId)
+    expect(seen.partners.map((p) => p.amount)).toEqual([-33340, -33330, -33330])
+    try {
+      ok(await updateShares({ shares: [{ adminId: p1.id, shareBp: 9000 }, { adminId: p2.id, shareBp: 1000 }] }))
+      expect(await closeWorkshop(seen)).toEqual({ ok: false, error: en.close.changed })
+      expect(await courseRow(courseId)).toMatchObject({ status: "confirmed", closedAt: null })
+      // Looking again shows the new split, which then closes.
+      const again = await previewOf(courseId)
+      expect(again.partners).toEqual([
+        { adminId: p1.id, shareBp: 9000, amount: -90000 },
+        { adminId: p2.id, shareBp: 1000, amount: -10000 },
+      ])
+      ok(await closeWorkshop(again))
+      expect((await courseRow(courseId)).closedTotals!.partners.map((p) => p.amount)).toEqual([-90000, -10000])
+    } finally {
+      await restoreThirds()
+    }
+  })
+
+  it("refuses to close when an advance was returned after the preview", async () => {
+    const courseId = await makeCourse(world, p1.id, { fee: { type: "fixed", amount: 100000, advance: 30000 } })
+    ok(await recordAdvance({ courseId, direction: "paid", amount: 30000, occurredOn: yesterday(), source: "wallet", note: "" }))
+    const seen = await previewOf(courseId)
+    expect(seen.owedToInstructor).toBe(70000)
+
+    ok(await recordAdvance({ courseId, direction: "returned", amount: 10000, occurredOn: yesterday(), source: "wallet", note: "" }))
+    expect(await closeWorkshop(seen)).toEqual({ ok: false, error: en.close.changed })
+    expect(await courseRow(courseId)).toMatchObject({ status: "confirmed", closedAt: null })
+    const again = await previewOf(courseId)
+    expect(again).toMatchObject({ revenue: seen.revenue, instructorFee: seen.instructorFee, expenses: seen.expenses, owedToInstructor: 80000 })
+    ok(await closeWorkshop(again))
+  })
+})
+
+describe("closing: earlier periods never change", () => {
+  // A month no other test posts to; the ledger keeps rows from earlier runs, so compare before and after.
+  const june = { from: "2004-06-01", to: "2004-06-30" }
+
+  it("counts the projected fee before closing and dates the closing entries on the day of closing", async () => {
+    const courseId = await makeCourse(world, p1.id, { endsAt: new Date("2004-06-15T15:00:00Z"), fee: { type: "fixed", amount: 100000 } })
+    const registrationId = await addRegistration(world, courseId, { amount: 500000 })
+    await db.transaction((tx) => postRegistrationPayment(tx, { registrationId, occurredOn: "2004-06-15" }))
+    // Paid a week after the workshop, personally by a partner.
+    ok(await recordExpense({ courseId, category: "Clay", amount: 50000, occurredOn: "2004-06-22", source: p2.id }))
+
+    const result = async () => (await workshopResults(june)).workshops.find((w) => w.id === courseId)
+    expect((await prepareClosing(db, courseId))!.projection.netProfit).toBe(350000)
+    expect((await projectedFees(db)).get(courseId)).toBe(100000)
+    // Before closing, the report already counts the fee the workshop will owe.
+    expect(await result()).toMatchObject({ revenue: 500000, instructorFees: 100000, estimatedFee: 100000, courseExpenses: 50000, net: 350000 })
+    const pnl = await profitAndLoss({ ...june, group: "month" })
+    const statement = await partnerStatement(p2.id, june)
+    expect(statement!.movements.map((m) => [m.occurredOn, m.kind, m.amount])).toEqual([["2004-06-22", "expense", 50000]])
+
+    ok(await closeWorkshop(await previewOf(courseId)))
+
+    expect(await closingDates(courseId)).toEqual([today(), today()])
+    // The same result, now booked; June (already reported) is unchanged.
+    expect(await result()).toMatchObject({ instructorFees: 100000, estimatedFee: 0, net: 350000 })
+    expect(await profitAndLoss({ ...june, group: "month" })).toEqual(pnl)
+    expect(await partnerStatement(p2.id, june)).toEqual(statement)
+    expect((await projectedFees(db)).has(courseId)).toBe(false)
   })
 })
 

@@ -5,7 +5,7 @@
     "expense": "Gider",
     "registration_payment": "Kayıt ödemesi",
     "registration_refund": "İade",
-    "instructor_advance": "Eğitmen avansı",
+    "instructor_advance": "Eğitmen ön ödemesi",
     "instructor_payment": "Eğitmen ödemesi",
     "course_settlement": "Kapanışta eğitmen ücreti",
     "course_close": "Atölye sonucunun ortaklara aktarımı",
@@ -14,7 +14,7 @@
   },
   "accounts": {
     "wallet": "Ortak kasa",
-    "instructor_advance": "Eğitmenlere verilen avanslar",
+    "instructor_advance": "Eğitmenlere verilen ön ödemeler",
     "instructor_payable": "Eğitmenlere borçlar",
     "partner_capital": "Ortak sermayesi",
     "revenue": "Gelir",
@@ -41,6 +41,7 @@
     "credit": "Alacak",
     "revenue": "Gelir",
     "instructorFees": "Eğitmen ücreti",
+    "estimatedFee": "Henüz kaydedilmemiş ücret",
     "courseExpenses": "Atölye giderleri",
     "generalExpenses": "Genel giderler",
     "net": "Net kâr",
@@ -54,12 +55,12 @@
     "balance": "Kasadaki para",
     "balanceHint": "Şu anda ortak kasada bulunan nakit.",
     "negative": "Kasa sıfırın altına düştü. Büyük ihtimalle bir ödemeyi ortaklardan biri kendi cebinden yaptı; bu ödemeyi o ortağın adına kaydedin.",
-    "advances": "Verilen avanslar",
+    "advances": "Ön ödemeler",
     "advancesHint": "Atölyeden önce eğitmenlere ödenen tutarlar.",
     "owed": "Eğitmenlere borç",
     "owedHint": "Kapanan atölyelerin henüz ödenmemiş ücretleri.",
-    "open": "Henüz paylaştırılmadı",
-    "openHint": "Henüz kapanmamış atölyelerin sonucu, genel giderler düşüldükten sonra.",
+    "open": "Paylaştırılmamış",
+    "openHint": "Henüz kapanmamış atölyelerin eğitmen ücretleri düşülmüş sonucu, genel giderler de düşüldükten sonra.",
     "recent": "Son hareketler",
     "allTransactions": "Tüm işlemler",
     "empty": {
@@ -73,8 +74,8 @@
     },
     "instructors": {
       "title": "Eğitmen hesapları",
-      "description": "Verilen avanslar ve henüz ödenmemiş ücretler.",
-      "holds": "Eğitmendeki avans",
+      "description": "Verilen ön ödemeler ve henüz ödenmemiş ücretler.",
+      "holds": "Eğitmendeki ön ödeme",
       "owed": "Borcumuz"
     }
   },
@@ -90,8 +91,8 @@
     "chooseSource": "Kim ödedi?",
     "sourceWallet": "Ortak kasa",
     "sourcePartner": "{name}, kendi cebinden",
-    "sourceAdvance": "Eğitmenin avansı (kalan: {amount})",
-    "advanceHint": "Eğitmen bunu avans parasıyla aldıysa avansı seçin.",
+    "sourceAdvance": "Eğitmenin ön ödemesi (kalan: {amount})",
+    "advanceHint": "Eğitmen bunu ön ödeme parasıyla aldıysa ön ödemeyi seçin.",
     "category": "Ne için harcandı?",
     "categoryHint": "Birkaç kelime yeterli, örneğin: salon, malzeme, ikram.",
     "categories": {
@@ -129,15 +130,15 @@
   },
   "advance": {
     "paid": {
-      "trigger": "Avans ödendi",
-      "title": "Ödenen avansı kaydedin",
+      "trigger": "Ön ödeme yapıldı",
+      "title": "Yapılan ön ödemeyi kaydedin",
       "description": "Atölyeden önce eğitmene ödenen para. Atölye kapatılırken ücretinden düşülür.",
-      "done": "Avans kaydedildi."
+      "done": "Ön ödeme kaydedildi."
     },
     "returned": {
-      "trigger": "Avans iade edildi",
-      "title": "İade edilen avansı kaydedin",
-      "description": "Eğitmenin geri ödediği para. Şu anda eğitmendeki avans: {amount}.",
+      "trigger": "Ön ödeme iade edildi",
+      "title": "İade edilen ön ödemeyi kaydedin",
+      "description": "Eğitmenin geri ödediği para. Şu anda eğitmendeki ön ödeme: {amount}.",
       "done": "Kaydedildi. Teşekkürler."
     }
   },
@@ -201,7 +202,7 @@
     "explain": {
       "title": "Bu hesaplar nasıl işler?",
       "capital": "Bir ortağın sermayesi; kasaya koyduğu para, kendi cebinden ödediği giderler ve kapanan her atölyedeki payıyla artar, çektiği parayla azalır.",
-      "open": "Henüz kapanmamış atölyeler ve genel giderler henüz ortaklara paylaştırılmadı. Her ortağın bunlardaki payı, bugünkü paylara göre hesaplanır:",
+      "open": "Henüz kapanmamış atölyeler (kesinleşenlerin eğitmen ücretleri düşülerek) ve genel giderler henüz ortaklara paylaştırılmadı. Her ortağın bunlardaki payı, bugünkü paylara göre hesaplanır:",
       "openLabel": "Henüz paylaştırılmamış sonuç",
       "settled": "“Bugün hesaplaşılsa”, sermaye ile bu payın toplamıdır: işletme bugün hesaplaşsaydı her ortağın alacağı tutar.",
       "statement": "Bir ortağın hesap dökümünü görün"
@@ -234,7 +235,11 @@
     "exportCsv": "CSV indir",
     "print": "Yazdır veya PDF",
     "groupBy": "Gruplama",
-    "groups": { "month": "Ay", "quarter": "Çeyrek", "year": "Yıl" },
+    "groups": {
+      "month": "Ay",
+      "quarter": "Çeyrek",
+      "year": "Yıl"
+    },
     "tabs": {
       "pnl": "Kâr ve zarar",
       "workshops": "Atölyelere göre",
@@ -247,7 +252,10 @@
     "change": "Dönemdeki değişim",
     "openingOn": "Bakiye · {date}",
     "closingOn": "Bakiye · {date}",
-    "pnlNote": "Her kayıt gerçekleştiği güne yazılır. Yalnızca atölye sonucunu ortaklara aktaran kapanış kayıtları bu rapora dahil değildir.",
+    "pnlNote": "Her kayıt gerçekleştiği güne, eğitmen ücreti ise atölyenin kapatıldığı güne yazılır; bu yüzden henüz kapatılmamış atölyeler eğitmen ücreti olmadan görünür. Yalnızca atölye sonucunu ortaklara aktaran kapanış kaydı bu rapora dahil değildir.",
+    "estimated": "tahmini",
+    "estimatedNote": "* Tahmini: kesinleşen bir atölyenin sözleşmeye göre eğitmenine ödeyeceği ücret. Ücret, atölye kapatılınca kaydedilir.",
+    "cancelledClosed": "İptal · kapatıldı",
     "partnerNote": "Artı tutarlar ortağın sermayesini artırır; eksi tutarlar (para çekme veya zarar payı) azaltır.",
     "empty": {
       "title": "Bu tarihlerde kayıt yok",
@@ -271,25 +279,25 @@
       "noContract": "Henüz geçerli bir sözleşme yok."
     },
     "expensesCount": "{count, plural, =0 {Henüz gider yok.} other {# gider}}",
-    "advanceHeld": "Eğitmendeki avans",
-    "advanceAgreed": "Sözleşmedeki avans: {amount}",
-    "noAdvanceAgreed": "Sözleşmede avans yok.",
+    "advanceHeld": "Eğitmendeki ön ödeme",
+    "advanceAgreed": "Sözleşmedeki ön ödeme: {amount}",
+    "noAdvanceAgreed": "Sözleşmede ön ödeme yok.",
     "projectedNet": "Beklenen net kâr",
     "projectedHint": "Atölye bu rakamlarla kapatılırsa.",
     "paidBy": "ödeyen: {name}",
     "fromWallet": "ortak kasadan",
-    "fromAdvance": "eğitmenin avansından",
+    "fromAdvance": "eğitmenin ön ödemesinden",
     "expenses": {
       "title": "Giderler",
       "description": "Bu atölyenin tüm harcamaları ve kimin ödediği.",
       "empty": "Henüz gider kaydedilmedi."
     },
     "advance": {
-      "title": "Eğitmen avansı",
-      "description": "Atölyeden önce ödenir ve kapanışta ücretten düşülür. Ücretten fazla kalan kısım iade edilmeli ya da avanstan ödenen bir gider olarak kaydedilmelidir.",
-      "empty": "Avans ödenmedi.",
-      "paid": "Avans ödendi",
-      "returned": "Avans iade edildi"
+      "title": "Eğitmen ön ödemesi",
+      "description": "Atölyeden önce ödenir ve kapanışta ücretten düşülür. Ücretten fazla kalan kısım iade edilmeli ya da ön ödemeden ödenen bir gider olarak kaydedilmelidir.",
+      "empty": "Ön ödeme yapılmadı.",
+      "paid": "Ön ödeme yapıldı",
+      "returned": "Ön ödeme iade edildi"
     },
     "split": {
       "title": "Ortakların payı",
@@ -297,7 +305,7 @@
     },
     "settlement": {
       "title": "Eğitmenle hesaplaşma · {name}",
-      "advanceUsed": "Avanstan düşülen",
+      "advanceUsed": "Ön ödemeden düşülen",
       "paid": "Kapanıştan sonra ödenen",
       "owed": "Kalan ödeme",
       "toPay": "Eğitmene ödemeyi yaptığınızda buraya kaydedin.",
@@ -308,7 +316,7 @@
       "description": "Bu rakamlar kesindir ve artık değişmez.",
       "participants": "{count, plural, =0 {Katılımcı yok} other {# katılımcı}}",
       "nothingShared": "Paylaştırılacak bir şey yoktu.",
-      "entries": "Giderler ve avans"
+      "entries": "Giderler ve ön ödeme"
     }
   },
   "errors": {
@@ -316,8 +324,8 @@
     "workshopClosed": "Bu atölye kapatıldı; rakamları artık değiştirilemez.",
     "partnerGone": "Bu ortağı bulamadık. Lütfen sayfayı yenileyip tekrar deneyin.",
     "partnerInactive": "Bu kişi artık aktif bir ortak değil. Lütfen başka birini seçin.",
-    "moreThanAdvance": "Bu tutar, eğitmende kalan avanstan fazla.",
-    "advanceNotNow": "Avans yalnızca hâlâ yapılacak bir atölye için ödenebilir.",
+    "moreThanAdvance": "Bu tutar, eğitmende kalan ön ödemeden fazla.",
+    "advanceNotNow": "Ön ödeme yalnızca hâlâ yapılacak bir atölye için yapılabilir.",
     "moreThanOwed": "Bu tutar, bu atölye için eğitmene kalan borçtan fazla.",
     "nothingToPay": "Bu kaydın ödenecek bir tutarı yok.",
     "alreadyPaid": "Bu kayıt zaten ödenmiş.",
@@ -339,14 +347,14 @@
   },
   "close": {
     "panelTitle": "Atölyeyi kapat",
-    "panelDescription": "Kapatınca rakamlar kilitlenir, avans ücretten düşülür ve sonuç ortaklar arasında paylaştırılır.",
+    "panelDescription": "Kapatınca rakamlar kilitlenir, ön ödeme ücretten düşülür ve sonuç ortaklar arasında paylaştırılır.",
     "ready": "Her şey hazır.",
     "trigger": "Atölyeyi kapat…",
     "title": "“{title}” kapatılsın mı?",
     "description": "Kesin rakamlar bunlar. Kapatıldıktan sonra kilitlenir ve değiştirilemez.",
     "profitTo": "Ortaklara kâr",
     "lossTo": "Ortakların paylaştığı zarar",
-    "instructorWithAdvance": "Eğitmenin {advance} tutarındaki avansı ücretinden düşülür. Eğitmene kalan ödeme: {owed}.",
+    "instructorWithAdvance": "Eğitmenin {advance} tutarındaki ön ödemesi ücretinden düşülür. Eğitmene kalan ödeme: {owed}.",
     "instructorOwed": "Eğitmene kalan ödeme: {owed}.",
     "confirm": "Kapat ve kilitle",
     "done": "Atölye kapatıldı. Rakamlar kilitlendi.",
@@ -358,7 +366,7 @@
       "notEnded": "Atölye henüz bitmedi. Bittikten sonra kapatabilirsiniz.",
       "noContract": "Bu atölyenin geçerli bir sözleşmesi yok, bu yüzden eğitmen ücreti bilinmiyor.",
       "revenueMismatch": "Bu atölyenin bazı ödemeleri veya iadeleri henüz deftere işlenmedi.",
-      "advanceTooBig": "Eğitmende ücretinden fazla avans kaldı. Önce iade ettiği tutarı ya da atölye için harcadığını kaydedin.",
+      "advanceTooBig": "Eğitmende ücretinden fazla ön ödeme kaldı. Önce iade ettiği tutarı ya da atölye için harcadığını kaydedin.",
       "sharesNot100": "Ortakların paylarının toplamı %100 değil."
     }
   }

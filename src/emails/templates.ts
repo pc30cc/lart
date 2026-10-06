@@ -2,12 +2,16 @@ import "server-only"
 import { z } from "zod"
 
 import { env } from "@/lib/env"
+import type { EmailTemplate } from "./names"
+
+export { emailTemplateNames, emailTextFields, type EmailTemplate, type EmailTextField } from "./names"
 
 /**
  * Every transactional email: its props (validated with Zod on the server) and
  * how they fill the shared layout. All copy lives in messages/<locale>/emails.json
  * under the template's name: subject, preview, heading, intro, intro2?, cta, note?.
- * Every prop (and `brand`) can be used as {placeholder} in those messages.
+ * Every prop (and `brand`) can be used as {placeholder} in those messages
+ * (`emailPlaceholders`); admins can replace those texts (the `emailTexts` setting).
  */
 
 const text = (max = 200) => z.string().trim().min(1).max(max)
@@ -60,8 +64,9 @@ export type EmailDefinition<S extends z.ZodObject = z.ZodObject> = {
   cta: Key<S>
   /** Rows of the details box, in order (label → prop). Empty optional props are skipped. */
   details?: Partial<Record<DetailLabel, Key<S>>>
-  /** Extra message values computed from the props. */
+  /** Extra message values computed from the props; `valueKeys` lists their names (placeholders). */
   values?(props: Out<S>): Record<string, string | number>
+  valueKeys?: readonly string[]
 }
 
 const define = <S extends z.ZodObject>(definition: EmailDefinition<S>) => definition
@@ -102,6 +107,7 @@ export const emailTemplates = {
     cta: "workshopUrl",
     details: { workshop: "workshopTitle", registrations: "registrations", minimum: "minimum", decisionAt: "decisionAt" },
     values: (p) => ({ status: p.registrations >= p.minimum ? "reached" : "notReached" }),
+    valueKeys: ["status"],
   }),
   registration_confirmed: define({
     schema: z.object({
@@ -142,9 +148,22 @@ export const emailTemplates = {
     greet: "name",
     cta: "resetUrl",
   }),
-}
+} satisfies Record<EmailTemplate, unknown>
 
-export type EmailTemplate = keyof typeof emailTemplates
 /** Props a caller passes for a template (strings arrive pre-formatted; counts are numbers). */
 export type EmailProps<T extends EmailTemplate> = z.input<(typeof emailTemplates)[T]["schema"]>
-export const emailTemplateNames = Object.keys(emailTemplates) as EmailTemplate[]
+
+/**
+ * The {placeholders} an email's texts may use: its props, the computed values
+ * and `brand`. `numbers` are the ones that are numbers (`{n, number}`, plurals).
+ */
+export function emailPlaceholders(template: EmailTemplate): { names: string[]; numbers: string[] } {
+  const def = emailTemplates[template] as unknown as EmailDefinition
+  const shape = def.schema.shape as Record<string, z.ZodType>
+  const props = Object.keys(shape)
+  const numbers = props.filter((key) => {
+    const type = (shape[key] as { def?: { type?: string; innerType?: { def?: { type?: string } } } }).def
+    return type?.type === "number" || type?.innerType?.def?.type === "number"
+  })
+  return { names: [...props, ...(def.valueKeys ?? []), "brand"], numbers }
+}

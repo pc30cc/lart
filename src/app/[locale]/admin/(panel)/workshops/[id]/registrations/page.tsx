@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/admin/wo
   return workshop ? { title: t("registrations.metaTitle", { title: localized(workshop.title, locale) }) } : {}
 }
 
-/** Who registered: read-only (changes happen in the Registrations section). */
+/** Who registered: read-only in phase 1 (per-registration changes and refunds come with the Registrations section later). */
 export default async function WorkshopRegistrationsPage({ params }: PageProps<"/[locale]/admin/workshops/[id]/registrations">) {
   await requireAdmin()
   const { id } = await params

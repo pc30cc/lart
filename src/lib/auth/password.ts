@@ -4,8 +4,7 @@
  */
 import { hash, parseOptions, verify } from "@node-rs/argon2"
 
-export const PASSWORD_MIN_LENGTH = 12
-export const PASSWORD_MAX_LENGTH = 256
+export { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "./schemas"
 
 /** OWASP baseline for Argon2id: 19 MiB memory, 2 passes, 1 lane. */
 const params = { memoryCost: 19456, timeCost: 2, parallelism: 1 } as const

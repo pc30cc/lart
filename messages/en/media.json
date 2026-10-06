@@ -26,8 +26,7 @@
     "moveLater": "Move later",
     "reorder": "Drag to reorder",
     "count": "{count, plural, =0 {Nothing yet} one {# item} other {# items}}",
-    "limitReached": "You can add up to {max} items. The extra files were left out.",
-    "noWatermark": "Uploaded without a watermark, because no watermark logo has been set yet. You can add one in Settings."
+    "limitReached": "You can add up to {max} items. The extra files were left out."
   },
   "errors": {
     "unauthorized": "Your session has ended. Please sign in again, then try once more.",
@@ -37,6 +36,7 @@
     "heic_unsupported": "This HEIC photo can't be opened here. Please save it as a JPG and try again (on iPhone: Settings → Camera → Formats → Most Compatible).",
     "too_many_pixels": "This photo's dimensions are too large. Please use one under {megapixels, number} megapixels.",
     "invalid_image": "This photo seems to be damaged and can't be opened. Please try another file.",
+    "watermark_missing": "Gallery photos are always published with your watermark. Please add a watermark logo in Settings first.",
     "watermark_unavailable": "The watermark logo couldn't be loaded, so the photo wasn't published. Please upload the logo again in Settings.",
     "storage": "The file couldn't be saved to storage. Please check the CDN settings, or try again in a moment.",
     "server": "Something went wrong on our side. Please try again.",

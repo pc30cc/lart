@@ -11,7 +11,7 @@ import { changes } from "@/lib/audit"
 import { decrypt, encrypt, randomToken, sha256 } from "@/lib/crypto"
 import { sendEmail } from "@/lib/email"
 import { env } from "@/lib/env"
-import { PG, pgError } from "@/lib/errors"
+import { errorForLog, PG, pgError } from "@/lib/errors"
 import { remove } from "@/lib/storage"
 import {
   instructorActiveSchema,
@@ -89,7 +89,7 @@ async function removePhoto(path: string) {
   try {
     await remove(path)
   } catch (err) {
-    console.error("[instructors] could not remove the old photo", path, err)
+    console.error("[instructors] could not remove the old photo", path, errorForLog(err))
   }
 }
 

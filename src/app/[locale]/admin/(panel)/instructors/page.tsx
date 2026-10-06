@@ -47,6 +47,7 @@ export default async function InstructorsPage({ searchParams }: PageProps<"/[loc
       key: "name",
       header: t("table.name"),
       sortable: true,
+      primary: true,
       cell: (row) => {
         const name = profileText(row.displayName, locale)
         return (

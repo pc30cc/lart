@@ -37,13 +37,17 @@ test.describe.serial("gallery", () => {
     await expect(page.getByText("2 of 3 agreed to photos, 1 of 3 to videos.")).toBeVisible()
     await expect(page.getByText("Leyla Demir")).toHaveCount(0)
 
+    // 04-settings saved the watermark logo: without it every gallery photo upload is refused (watermark_missing).
+    const logo = await one<{ path: string | null }>("select value->>'logoPath' as path from settings where key = 'watermark'")
+    expect(logo.path, "run 04-settings first: gallery photos need a watermark logo").toBeTruthy()
+
     const input = page.locator('main input[type="file"]')
     await input.setInputFiles([photo1, photo2, ...(video ? [video] : [])])
     const grid = page.locator("main")
     await expect(grid.getByRole("img", { name: /^Photo \d$/ })).toHaveCount(2, { timeout: 90_000 })
     if (video) await expect(grid.locator("video[aria-label^='Video']")).toHaveCount(1, { timeout: 90_000 })
     await expect(page.getByText("All changes saved")).toBeVisible({ timeout: 30_000 })
-    await expect(page.getByText("Uploaded without a watermark")).toHaveCount(0)
+    await expect(page.getByText("Please add a watermark logo in Settings first.", { exact: false })).toHaveCount(0)
 
     const rows = await sql<{ kind: string; path: string; original_path: string | null; width: number; height: number; sort: number }>(
       "select kind, path, original_path, width, height, sort from media where course_id = $1 and kind <> 'sample' order by sort",

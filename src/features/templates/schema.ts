@@ -2,6 +2,7 @@ import { z } from "zod"
 
 import { localizedText, uuid } from "@/components/admin/form/schemas"
 import type { Locale, LocalizedText } from "@/db/schema"
+import { EMAIL_TEXT_MAX, emailTemplateNames } from "@/emails/names"
 import { templateKinds, unknownPlaceholders, type TemplateKind } from "./placeholders"
 
 /** Longest body per language (the default contract is about 7 000 characters). */
@@ -35,3 +36,32 @@ export const templateUpdateSchema = fields.extend({ id: uuid() }).superRefine(ch
 export const templateIdSchema = z.object({ id: uuid() })
 
 export type TemplateFormValues = z.input<typeof templateSchema>
+
+// ─── Email texts ──────────────────────────────────────────────────────────────
+
+/** One email text: every language optional (an empty one keeps the default text). */
+const emailText = () => localizedText({ max: EMAIL_TEXT_MAX })
+
+/**
+ * The admin's texts of one email (the `emailTexts` setting). The action also
+ * checks each text's {placeholders} and braces (`checkEmailText`, server).
+ */
+export const emailTextsSchema = z.object({
+  template: z.enum(emailTemplateNames),
+  texts: z.object({
+    subject: emailText(),
+    preview: emailText(),
+    heading: emailText(),
+    intro: emailText(),
+    intro2: emailText(),
+    cta: emailText(),
+    note: emailText(),
+  }),
+})
+
+export type EmailTextsValues = z.input<typeof emailTextsSchema>
+
+/** Preview of unsaved texts in one language. */
+export const emailPreviewSchema = emailTextsSchema.extend({ locale: z.enum(["fa", "tr", "en"]) })
+
+export const emailTemplateSchema = z.object({ template: z.enum(emailTemplateNames) })

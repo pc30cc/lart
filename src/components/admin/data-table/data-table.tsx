@@ -24,11 +24,19 @@ export type Column<Row> = {
   align?: "start" | "end" | "center"
   /** Hide on small screens to keep the table readable on phones. */
   hideBelow?: "sm" | "md" | "lg"
+  /**
+   * The one column that gives way when space is short (usually the name).
+   * It takes the remaining width and its content must truncate (`truncate` /
+   * `min-w-0`), so the table fits a phone and the row actions stay in view.
+   */
+  primary?: boolean
   className?: string
 }
 
 const alignClass = { start: "text-start", end: "text-end", center: "text-center" }
 const hideClass = { sm: "hidden sm:table-cell", md: "hidden md:table-cell", lg: "hidden lg:table-cell" }
+/** Width rules: the primary column absorbs the squeeze; the row-actions column never grows. */
+const widthClass = (col: Column<unknown>) => (col.primary ? "w-full max-w-0" : col.key === "actions" ? "w-px" : undefined)
 
 /**
  * Server-rendered table driven by URL params (see `parseTableParams`):
@@ -103,6 +111,7 @@ export async function DataTable<Row>({
                       "text-muted-foreground h-11 px-4 text-xs font-medium",
                       alignClass[col.align ?? "start"],
                       col.hideBelow && hideClass[col.hideBelow],
+                      widthClass(col as Column<unknown>),
                       col.className,
                     )}
                   >
@@ -127,6 +136,7 @@ export async function DataTable<Row>({
                         "px-4 py-3",
                         alignClass[col.align ?? "start"],
                         col.hideBelow && hideClass[col.hideBelow],
+                        widthClass(col as Column<unknown>),
                         col.className,
                       )}
                     >

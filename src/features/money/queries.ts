@@ -7,8 +7,8 @@ import { db } from "@/db"
 import { admins, courses, instructors, ledgerLines, ledgerTransactions, type LocalizedText } from "@/db/schema"
 import { requireAdmin } from "@/lib/auth/admin"
 import { splitByShares } from "@/lib/money"
-import { activePartners, prepareClosing, workshopsToClose } from "./closing"
-import { accountBalances, openResult, partnerCapitals, type Account, type TransactionKind } from "./ledger"
+import { activePartners, prepareClosing, projectedFees, totalOf, workshopsToClose } from "./closing"
+import { accountBalances, booksClosed, openResult, partnerCapitals, type Account, type TransactionKind } from "./ledger"
 import type { transactionTable } from "./schema"
 
 const t = ledgerTransactions
@@ -38,6 +38,8 @@ export type Entry = {
   courseId: string | null
   courseTitle: LocalizedText | null
   courseStatus: (typeof courses.status.enumValues)[number] | null
+  /** When the workshop's books were closed (also set for a cancelled workshop that was closed). */
+  courseClosedAt: Date | null
   createdBy: string | null
   createdAt: Date
   amount: number
@@ -59,6 +61,7 @@ async function loadEntries(options: { where?: SQL; orderBy?: SQL[]; limit?: numb
       courseId: t.courseId,
       courseTitle: courses.title,
       courseStatus: courses.status,
+      courseClosedAt: courses.closedAt,
       createdBy: creator.name,
       createdAt: t.createdAt,
       amount: size,
@@ -100,9 +103,19 @@ async function loadEntries(options: { where?: SQL; orderBy?: SQL[]; limit?: numb
  * Not a reversal or a closing entry, not reversed yet, and nothing that would
  * change a closed workshop's figures (paying its instructor can still be corrected).
  */
-export function isReversible(entry: Pick<Entry, "kind" | "reversedBy" | "courseStatus">): boolean {
+export function isReversible(entry: Pick<Entry, "kind" | "reversedBy" | "courseStatus" | "courseClosedAt">): boolean {
   if (entry.reversedBy || ["reversal", "course_settlement", "course_close"].includes(entry.kind)) return false
-  return entry.courseStatus !== "closed" || entry.kind === "instructor_payment"
+  const closed = entry.courseStatus !== null && booksClosed({ status: entry.courseStatus, closedAt: entry.courseClosedAt })
+  return !closed || entry.kind === "instructor_payment"
+}
+
+/**
+ * Result not shared out to the partners yet: the ledger's open result minus
+ * the fees confirmed workshops will owe their instructors (booked at closing).
+ */
+async function notSharedOut() {
+  const [ledger, fees] = await Promise.all([openResult(db), projectedFees(db)])
+  return ledger - totalOf(fees)
 }
 
 // ─── Wallet overview ──────────────────────────────────────────────────────────
@@ -127,7 +140,7 @@ export async function getWalletOverview() {
   await requireAdmin()
   const [balances, open, recent, toClose, instructorsOpen, partners] = await Promise.all([
     accountBalances(db),
-    openResult(db),
+    notSharedOut(),
     loadEntries({ limit: 8 }),
     workshopsToClose(db),
     withInstructors(),
@@ -146,8 +159,9 @@ export async function listActivePartners() {
 
 /**
  * Every partner's capital account and share, plus their part of the result
- * not yet shared out (open workshops, general expenses) by today's shares:
- * capital + that part = what they would get if the business settled today.
+ * not yet shared out (workshops not closed yet, after the fees confirmed ones
+ * owe their instructors, and general expenses) by today's shares: capital +
+ * that part = what they would get if the business settled today.
  */
 export async function listPartnerAccounts() {
   await requireAdmin()
@@ -157,7 +171,7 @@ export async function listPartnerAccounts() {
       .from(admins)
       .orderBy(desc(admins.active), desc(admins.shareBp), asc(admins.createdAt)),
     partnerCapitals(db),
-    openResult(db),
+    notSharedOut(),
   ])
   const partners = people.filter((p) => p.active || capitals.has(p.id))
   const sharing = partners.filter((p) => p.active && p.shareBp > 0)

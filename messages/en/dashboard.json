@@ -58,7 +58,7 @@
     "noRevenueLastMonth": "No revenue last month",
     "lastMonth": "Last month: {amount}",
     "net": "Net profit in {year}",
-    "netHint": "Income minus all expenses since 1 January",
+    "netHint": "Since 1 January. An instructor’s fee counts once the workshop is closed.",
     "upcoming": "Upcoming workshops",
     "upcomingSeats": "{taken} of {seats} places taken",
     "upcomingNotOpen": "Waiting for contracts to be signed",
@@ -69,7 +69,7 @@
   },
   "revenue": {
     "title": "Revenue, expenses and profit",
-    "description": "The last 12 months, by the date each entry was recorded",
+    "description": "The last 12 months, by the date each entry was recorded. An instructor’s fee counts on the day the workshop is closed.",
     "report": "Reports",
     "totals": "Totals for the last 12 months",
     "revenue": "Revenue",

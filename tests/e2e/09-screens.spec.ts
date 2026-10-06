@@ -66,6 +66,7 @@ function pages(i: Ids): [string, string][] {
     ["templates", "/admin/templates"],
     ["template-edit", `/admin/templates/${i.terms}`],
     ["template-new", "/admin/templates/new"],
+    ["template-email", "/admin/templates/emails/contract_ready"],
     ["audit", "/admin/audit"],
     // Phase 1 has no public site yet: the language root should still be a proper page, not the bare framework 404.
     ["site-root", ""],
@@ -159,7 +160,7 @@ test.describe("Persian layout", () => {
     await page.goto("/fa/admin/money")
     await settle(page)
     const r = await page.evaluate(() => {
-      const amount = document.querySelector("main bdi.block")!
+      const amount = document.querySelector("main [data-money].block")!
       const range = document.createRange()
       range.selectNodeContents(amount)
       const text = range.getBoundingClientRect()

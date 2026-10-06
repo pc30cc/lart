@@ -2,7 +2,7 @@
   "meta": { "title": "Yönetim" },
   "brandSubtitle": "Yönetim paneli",
   "nav": {
-    "groups": { "overview": "Genel bakış", "workshops": "Atölyeler", "money": "Finans", "system": "Sistem" },
+    "groups": { "overview": "Genel bakış", "workshops": "Eğitim", "money": "Finans", "system": "Sistem" },
     "dashboard": "Pano",
     "workshops": "Atölyeler",
     "instructors": "Eğitmenler",

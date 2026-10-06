@@ -7,6 +7,7 @@ import { db } from "@/db"
 import { contracts, courses, emailTokens, instructors } from "@/db/schema"
 import { requireAdmin } from "@/lib/auth/admin"
 import { decrypt } from "@/lib/crypto"
+import { errorForLog } from "@/lib/errors"
 import { getStorage, type Storage } from "@/lib/storage"
 import { maskIdNumber, type instructorTable } from "./schema"
 
@@ -37,7 +38,7 @@ async function storageOrNull(): Promise<Storage | null> {
   try {
     return await getStorage()
   } catch (err) {
-    console.error("[instructors] storage unavailable", err)
+    console.error("[instructors] storage unavailable", errorForLog(err))
     return null
   }
 }
@@ -139,7 +140,7 @@ export const getInstructor = cache(async (id: string) => {
   try {
     idNumberMasked = maskIdNumber(decrypt(idNumberEnc))
   } catch (err) {
-    console.error("[instructors] cannot decrypt the ID number of", id, err)
+    console.error("[instructors] cannot decrypt the ID number of", id, errorForLog(err))
   }
 
   const [invite] = await db

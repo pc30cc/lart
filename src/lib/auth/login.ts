@@ -18,7 +18,6 @@ type AccountRow = {
   id: string
   password_hash: string | null
   active: boolean
-  locked_until: Date | string | null
 }
 
 export type CredentialsResult =
@@ -33,6 +32,12 @@ export const normalizeEmail = (email: string) => email.trim().toLowerCase()
  * Always runs exactly one Argon2 verification, so unknown, inactive, locked
  * and wrong-password cases take the same time. Callers must show one generic
  * message for every failure (no user enumeration).
+ *
+ * Race-safe: before the password is checked, one UPDATE (row-locked by
+ * PostgreSQL) claims an attempt. The claim that uses up the last try also sets
+ * the lock, so concurrent attempts beyond `maxFailures` are refused as
+ * "locked" and a burst cannot test more passwords than the policy allows.
+ * The right password on a claimed try clears the counters and the lock.
  */
 export async function verifyCredentials(
   kind: PrincipalKind,
@@ -44,33 +49,40 @@ export async function verifyCredentials(
   const email = normalizeEmail(emailInput)
   const active = kind === "member" ? sql`true` : sql`active`
   const { rows } = await db.execute<AccountRow>(
-    sql`select id, password_hash, ${active} as active, locked_until from ${table} where email = ${email} limit 1`,
+    sql`select id, password_hash, ${active} as active from ${table} where email = ${email} limit 1`,
   )
   const account = rows[0]
-  const stored = account?.password_hash ?? (await dummyHash())
-  const valid = await verifyPassword(stored, password)
+  const usable = account?.password_hash && account.active ? { id: account.id, hash: account.password_hash } : null
 
-  if (!account || !account.password_hash || !account.active) return { ok: false, reason: "invalid" }
-
-  const lockedUntil = account.locked_until ? new Date(account.locked_until) : null
-  if (lockedUntil && lockedUntil > now) return { ok: false, reason: "locked", id: account.id }
-
-  if (!valid) {
-    const lockAt = new Date(now.getTime() + LOCKOUT.lockMs)
-    const { rows: updated } = await db.execute<{ locked_until: Date | string | null }>(sql`
+  // Claim a try. An expired lock starts a new count. No row back: locked.
+  let attempt: number | null = null
+  if (usable) {
+    const at = sql`${now.toISOString()}::timestamptz`
+    const count = sql`(case when locked_until is null then failed_logins + 1 else 1 end)`
+    const lockAt = new Date(now.getTime() + LOCKOUT.lockMs).toISOString()
+    const { rows: claimed } = await db.execute<{ failed_logins: number }>(sql`
       update ${table} set
-        failed_logins = case when failed_logins + 1 >= ${LOCKOUT.maxFailures} then 0 else failed_logins + 1 end,
-        locked_until = case when failed_logins + 1 >= ${LOCKOUT.maxFailures} then ${lockAt.toISOString()}::timestamptz else null end
-      where id = ${account.id}
-      returning locked_until`)
-    const lockedNow = updated[0]?.locked_until != null
-    return { ok: false, reason: lockedNow ? "locked" : "invalid", id: account.id, lockedNow }
+        failed_logins = ${count},
+        locked_until = case when ${count} >= ${LOCKOUT.maxFailures} then ${lockAt}::timestamptz end
+      where id = ${usable.id} and (locked_until is null or locked_until <= ${at})
+      returning failed_logins`)
+    attempt = claimed[0] ? Number(claimed[0].failed_logins) : null
   }
 
-  await db.execute(sql`update ${table} set failed_logins = 0, locked_until = null where id = ${account.id}`)
-  if (needsRehash(account.password_hash)) {
-    const rehashed = await hashPassword(password)
-    await db.execute(sql`update ${table} set password_hash = ${rehashed} where id = ${account.id}`)
+  const valid = await verifyPassword(usable?.hash ?? (await dummyHash()), password)
+
+  if (!usable) return { ok: false, reason: "invalid" }
+  if (attempt === null) return { ok: false, reason: "locked", id: usable.id }
+  if (!valid) {
+    // Only the request that claimed the last try set the lock: it reports (and audits) it.
+    const lockedNow = attempt >= LOCKOUT.maxFailures
+    return { ok: false, reason: lockedNow ? "locked" : "invalid", id: usable.id, lockedNow }
   }
-  return { ok: true, id: account.id }
+
+  await db.execute(sql`update ${table} set failed_logins = 0, locked_until = null where id = ${usable.id}`)
+  if (needsRehash(usable.hash)) {
+    const rehashed = await hashPassword(password)
+    await db.execute(sql`update ${table} set password_hash = ${rehashed} where id = ${usable.id}`)
+  }
+  return { ok: true, id: usable.id }
 }

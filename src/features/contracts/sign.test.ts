@@ -10,7 +10,7 @@ import {
   defaultContractTemplate,
   runId,
 } from "@/features/workshops/test-fixtures"
-import { sha256 } from "@/lib/crypto"
+import { decrypt, sha256 } from "@/lib/crypto"
 import { UserError } from "@/lib/errors"
 import { getContractText } from "./queries"
 import { renderContract } from "./render"
@@ -89,7 +89,7 @@ async function failure(promise: Promise<unknown>): Promise<string> {
 }
 
 describe("signContract", () => {
-  it("stores the exact text, its SHA-256 and the evidence, and publishes the workshop", async () => {
+  it("stores the exact text (encrypted), its SHA-256 and the evidence, and publishes the workshop", async () => {
     const { course, contract } = await pending()
     const expected = await renderContract(contract.id, "tr")
     const result = await signContract(contract.id, instructorId, "  Zeynep Yılmaz ", "203.0.113.7", "Mozilla/5.0 Test", "tr")
@@ -100,15 +100,19 @@ describe("signContract", () => {
       status: "signed",
       signedName: "Zeynep Yılmaz",
       signedLocale: "tr",
-      signedText: expected,
       signedTextSha256: sha256(expected),
       signedIp: "203.0.113.7",
       signedUserAgent: "Mozilla/5.0 Test",
     })
     expect(row.signedAt).toBeInstanceOf(Date)
-    expect(row.signedText).toContain("Zeynep Yılmaz (kimlik numarası: 12345678901)")
-    expect(row.signedText).toContain("1. Lart ve Zeynep Yılmaz: Seramik")
-    expect(row.signedText).toContain("Kimlik: 12345678901. {unknown} kalır.")
+    // The text holds the ID number, so it is stored encrypted; the hash is of the plain text.
+    expect(row.signedText).not.toContain("12345678901")
+    const signed = decrypt(row.signedText!)
+    expect(signed).toBe(expected)
+    expect(row.signedTextSha256).toBe(sha256(signed))
+    expect(signed).toContain("Zeynep Yılmaz (kimlik numarası: 12345678901)")
+    expect(signed).toContain("1. Lart ve Zeynep Yılmaz: Seramik")
+    expect(signed).toContain("Kimlik: 12345678901. {unknown} kalır.")
 
     const [published] = await db.select().from(courses).where(eq(courses.id, course.id))
     expect(published.status).toBe("published")
@@ -146,6 +150,15 @@ describe("signContract", () => {
     expect(shown.text).not.toContain("New clause")
     await db.delete(contracts).where(eq(contracts.id, contract.id))
     await db.delete(templates).where(eq(templates.id, own.id))
+  })
+
+  it("confirms again a workshop whose go decision was taken before the contract was re-issued", async () => {
+    const { course, contract } = await pending()
+    // As updateWorkshop leaves a confirmed workshop after a contract change: waiting, final number kept.
+    await db.update(courses).set({ finalParticipants: 3 }).where(eq(courses.id, course.id))
+    await signContract(contract.id, instructorId, "Zeynep Yılmaz", null, null, "tr")
+    const [row] = await db.select().from(courses).where(eq(courses.id, course.id))
+    expect(row).toMatchObject({ status: "confirmed", finalParticipants: 3 })
   })
 
   it("only lets the contract's own instructor sign", async () => {

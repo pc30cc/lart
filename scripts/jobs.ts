@@ -23,6 +23,7 @@ load.cache[marker] = Object.assign(new Module(marker), { filename: marker, loade
 async function main() {
   const { notifyDueDecisions } = await import("../src/features/workshops/decisions")
   const { db } = await import("../src/db")
+  const { errorForLog } = await import("../src/lib/errors")
   let failed = false
   try {
     const started = Date.now()
@@ -32,7 +33,7 @@ async function main() {
     )
     if (result.notified < result.due) failed = true
   } catch (err) {
-    console.error("[jobs] decision_due failed", err)
+    console.error("[jobs] decision_due failed", errorForLog(err))
     failed = true
   } finally {
     await db.$client.end()

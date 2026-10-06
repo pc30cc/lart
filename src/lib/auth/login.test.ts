@@ -1,16 +1,30 @@
 import { randomUUID } from "node:crypto"
 import { hash } from "@node-rs/argon2"
 import { eq } from "drizzle-orm"
-import { beforeAll, describe, expect, it } from "vitest"
+import { beforeAll, describe, expect, it, vi } from "vitest"
 
 import { db } from "@/db"
 import { admins } from "@/db/schema"
 import { LOCKOUT, verifyCredentials } from "./login"
 import { hashPassword, needsRehash } from "./password"
-import { createRateLimiter } from "./rate-limit"
+import { createRateLimiter, rateLimitClient } from "./rate-limit"
 
 const PASSWORD = "a long and lovely password"
 let passwordHash: string
+
+// Lets a test hold wrong-password verifications open, to line up a race.
+const verifyGate = vi.hoisted(() => ({ hold: null as Promise<void> | null, holdPassword: "", started: 0 }))
+vi.mock("./password", async (importOriginal) => {
+  const real = await importOriginal<typeof import("./password")>()
+  return {
+    ...real,
+    verifyPassword: async (stored: string, password: string) => {
+      verifyGate.started++
+      if (verifyGate.hold && password === verifyGate.holdPassword) await verifyGate.hold
+      return real.verifyPassword(stored, password)
+    },
+  }
+})
 
 async function newAdmin(values: Partial<typeof admins.$inferInsert> = {}) {
   const email = `login-${randomUUID()}@test.local`
@@ -52,7 +66,6 @@ describe("verifyCredentials", () => {
     const last = await verifyCredentials("admin", a.email, "wrong", now)
     expect(last).toMatchObject({ ok: false, reason: "locked", lockedNow: true, id: a.id })
     const locked = await account(a.id)
-    expect(locked.failedLogins).toBe(0)
     expect(locked.lockedUntil?.getTime()).toBe(now.getTime() + LOCKOUT.lockMs)
 
     // Even the right password is refused while locked.
@@ -63,6 +76,51 @@ describe("verifyCredentials", () => {
     const after = new Date(now.getTime() + LOCKOUT.lockMs + 1000)
     expect(await verifyCredentials("admin", a.email, PASSWORD, after)).toEqual({ ok: true, id: a.id })
     expect(await account(a.id)).toMatchObject({ failedLogins: 0, lockedUntil: null })
+  })
+
+  it("starts a new count after the lock has expired", async () => {
+    const a = await newAdmin()
+    const now = new Date()
+    for (let i = 0; i < LOCKOUT.maxFailures; i++) await verifyCredentials("admin", a.email, "wrong", now)
+    const after = new Date(now.getTime() + LOCKOUT.lockMs + 1000)
+    expect(await verifyCredentials("admin", a.email, "wrong", after)).toMatchObject({ reason: "invalid" })
+    expect(await account(a.id)).toMatchObject({ failedLogins: 1, lockedUntil: null })
+  })
+
+  it(`checks at most ${LOCKOUT.maxFailures} passwords from a concurrent burst and reports the lock once`, async () => {
+    const a = await newAdmin()
+    const results = await Promise.all(Array.from({ length: 20 }, () => verifyCredentials("admin", a.email, "wrong")))
+    expect(results.filter((r) => !r.ok && r.reason === "invalid")).toHaveLength(LOCKOUT.maxFailures - 1)
+    expect(results.filter((r) => !r.ok && r.lockedNow)).toHaveLength(1)
+    expect(results.filter((r) => !r.ok && r.reason === "locked")).toHaveLength(20 - LOCKOUT.maxFailures + 1)
+    expect((await account(a.id)).lockedUntil).not.toBeNull()
+    expect(await verifyCredentials("admin", a.email, PASSWORD)).toMatchObject({ ok: false, reason: "locked" })
+  })
+
+  it("refuses the right password sent while a burst of wrong ones is still being checked", async () => {
+    const a = await newAdmin()
+    let release!: () => void
+    verifyGate.hold = new Promise<void>((resolve) => (release = resolve))
+    verifyGate.holdPassword = "wrong"
+    verifyGate.started = 0
+    try {
+      // 20 wrong passwords: every request has claimed (or been refused) a try
+      // and is now inside the slow password check.
+      const wrong = Array.from({ length: 20 }, () => verifyCredentials("admin", a.email, "wrong"))
+      await vi.waitFor(() => expect(verifyGate.started).toBe(20))
+
+      // The right password arrives before any of those checks has finished.
+      expect(await verifyCredentials("admin", a.email, PASSWORD)).toMatchObject({ ok: false, reason: "locked" })
+
+      release()
+      const results = await Promise.all(wrong)
+      expect(results.filter((r) => !r.ok && r.reason === "invalid")).toHaveLength(LOCKOUT.maxFailures - 1)
+      expect(results.filter((r) => !r.ok && r.lockedNow)).toHaveLength(1)
+      expect((await account(a.id)).lockedUntil).not.toBeNull()
+    } finally {
+      release()
+      verifyGate.hold = null
+    }
   })
 
   it("resets the failure count after a successful login", async () => {
@@ -107,5 +165,16 @@ describe("rate limiter", () => {
     expect(limiter.consume("k").ok).toBe(false)
     limiter.reset("k")
     expect(limiter.consume("k").ok).toBe(true)
+  })
+
+  it("keys IPv6 clients by their /64 network", () => {
+    expect(rateLimitClient("203.0.113.7")).toBe("203.0.113.7")
+    expect(rateLimitClient("::ffff:203.0.113.7")).toBe("203.0.113.7")
+    expect(rateLimitClient("2001:db8:abcd:12:1::5")).toBe("2001:db8:abcd:12::/64")
+    expect(rateLimitClient("2001:0DB8:abcd:0012:ffff:1:2:3")).toBe("2001:db8:abcd:12::/64")
+    expect(rateLimitClient("2001:db8::1")).toBe("2001:db8:0:0::/64")
+    expect(rateLimitClient("fe80::1%eth0")).toBe("fe80:0:0:0::/64")
+    expect(rateLimitClient("::1")).toBe("0:0:0:0::/64")
+    expect(rateLimitClient("not-an-ip")).toBe("not-an-ip")
   })
 })

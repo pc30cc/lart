@@ -101,12 +101,14 @@ export const instructorPaymentSchema = z.object({
 })
 export type InstructorPaymentValues = z.input<typeof instructorPaymentSchema>
 
-/** Close a workshop. The figures the admin saw: refused if they changed meanwhile. */
+/** Close a workshop. The figures the admin saw (result, settlement, split): refused if any changed meanwhile. */
 export const closeSchema = z.object({
   courseId: uuid(),
   revenue: z.number().int(),
   instructorFee: z.number().int(),
   expenses: z.number().int(),
+  owedToInstructor: z.number().int(),
+  partners: z.array(z.object({ adminId: z.uuid(), shareBp: z.number().int(), amount: z.number().int() })).max(3),
 })
 
 export const reverseSchema = z.object({ id: uuid() })

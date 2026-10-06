@@ -123,6 +123,11 @@ describe("uploadFile", () => {
     await expect(uploadFile(new File(["x"], "a.jpg"), "course_cover")).rejects.toMatchObject({ code: "unsupported_type" })
   })
 
+  it("reports a gallery photo refused for a missing watermark logo (409 is not a video receipt here)", async () => {
+    fakeXhr(() => ({ status: 409, body: { error: "watermark_missing" } }))
+    await expect(uploadFile(new File(["x"], "a.jpg"), "gallery_photo")).rejects.toMatchObject({ code: "watermark_missing" })
+  })
+
   it("sends a video in parts, retries a dropped part and follows the server's offset", async () => {
     vi.useFakeTimers()
     const size = 2 * VIDEO_PART_BYTES + 5

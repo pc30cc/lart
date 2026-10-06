@@ -1,4 +1,4 @@
-import { BanIcon, CameraIcon, CameraOffIcon, ImagesIcon, ShieldCheckIcon, VideoIcon, VideoOffIcon } from "lucide-react"
+import { BanIcon, CameraIcon, CameraOffIcon, ImagesIcon, ShieldCheckIcon, TriangleAlertIcon, VideoIcon, VideoOffIcon } from "lucide-react"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { getLocale, getTranslations } from "next-intl/server"
@@ -7,9 +7,11 @@ import { z } from "zod"
 import { EmptyState } from "@/components/admin/empty-state"
 import { Button } from "@/components/ui/button"
 import { getWorkshop, listConsents, listGallery } from "@/features/workshops/queries"
+import { isCancelled } from "@/features/workshops/schema"
 import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
 import { formatNumber, localized } from "@/lib/format"
+import { getSetting } from "@/lib/settings"
 import { cn } from "@/lib/utils"
 import { GalleryManager } from "../../_components/gallery-manager"
 import { WorkshopHeader } from "../../_components/workshop-header"
@@ -29,8 +31,9 @@ export default async function WorkshopGalleryPage({ params }: PageProps<"/[local
   const [workshop, t, locale] = await Promise.all([getWorkshop(id), getTranslations("workshops"), getLocale()])
   if (!workshop) notFound()
 
-  if (workshop.status !== "closed") {
-    const cancelled = workshop.status === "cancelled"
+  // A cancelled workshop has no gallery, also after its books were closed (status "closed").
+  const cancelled = isCancelled(workshop)
+  if (cancelled || workshop.status !== "closed") {
     return (
       <>
         <WorkshopHeader workshop={workshop} active="gallery" />
@@ -50,7 +53,7 @@ export default async function WorkshopGalleryPage({ params }: PageProps<"/[local
     )
   }
 
-  const [items, people] = await Promise.all([listGallery(id), listConsents(id)])
+  const [items, people, watermark] = await Promise.all([listGallery(id), listConsents(id), getSetting("watermark")])
   const photosOk = people.filter((p) => p.photoConsent).length
   const videosOk = people.filter((p) => p.videoConsent).length
   const n = (v: number) => formatNumber(v, locale)
@@ -59,12 +62,18 @@ export default async function WorkshopGalleryPage({ params }: PageProps<"/[local
     <>
       <WorkshopHeader workshop={workshop} active="gallery" />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_19rem]">
-        <section className="bg-card ring-foreground/8 min-w-0 rounded-xl p-5 shadow-xs ring-1 md:p-6">
-          <div className="mb-2 space-y-1">
-            <h2 className="font-semibold">{t("gallery.title")}</h2>
-            <p className="text-muted-foreground text-sm text-pretty">{t("gallery.description")}</p>
-          </div>
-          <GalleryManager id={id} initial={items} />
+        <section className="bg-card ring-foreground/8 min-w-0 space-y-4 rounded-xl p-5 shadow-xs ring-1 md:p-6">
+          {/* Photo uploads are refused (watermark_missing) until a watermark logo is set. */}
+          {!watermark.logoPath && (
+            <div role="status" className="border-warning/30 bg-warning/10 flex flex-wrap items-start gap-x-3 gap-y-2 rounded-lg border p-3 text-sm">
+              <TriangleAlertIcon className="text-warning mt-0.5 size-4 shrink-0" />
+              <p className="min-w-0 flex-1 text-pretty">{t("gallery.noWatermark.text")}</p>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/admin/settings/watermark">{t("gallery.noWatermark.action")}</Link>
+              </Button>
+            </div>
+          )}
+          <GalleryManager id={id} initial={items} title={t("gallery.title")} description={t("gallery.description")} />
         </section>
 
         <aside className="min-w-0">

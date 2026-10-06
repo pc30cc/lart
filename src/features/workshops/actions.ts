@@ -9,7 +9,7 @@ import { contracts, courses, instructors, members, registrations, templates } fr
 import { sendContractReady } from "@/features/contracts/notify"
 import { adminAction, UserError } from "@/lib/action"
 import { changes } from "@/lib/audit"
-import { PG, pgError } from "@/lib/errors"
+import { errorForLog, PG, pgError } from "@/lib/errors"
 import { localized } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { getSetting } from "@/lib/settings"
@@ -17,9 +17,11 @@ import { sendEmail } from "@/lib/email"
 import { removeFiles, syncMedia, type MediaFile } from "./media"
 import {
   contractCourseFields,
+  contractLocked,
   courseValues,
   feeValues,
   gallerySchema,
+  isCancelled,
   workshopIdSchema,
   workshopSchema,
   workshopUpdateSchema,
@@ -82,7 +84,7 @@ const activeRegistrations = (tx: Tx, courseId: string) =>
 /** The contract email never blocks saving: the result only tells the admin whether it went out. */
 async function emailContract(contractId: string): Promise<boolean> {
   return sendContractReady(contractId).catch((err) => {
-    console.error("[workshops] contract_ready email failed", err)
+    console.error("[workshops] contract_ready email failed", errorForLog(err))
     return false
   })
 }
@@ -140,7 +142,9 @@ export const createWorkshop = adminAction(workshopSchema, async (input, ctx) => 
 /**
  * Edit a workshop. A change to a field that appears in the contract voids the
  * live contract and sends a new version; the workshop waits for the signature
- * again. The price is locked once people have registered.
+ * again. A confirmed workshop keeps its go decision and final number (signing
+ * confirms it again), and its contract can't change once it has started (see
+ * `contractLocked`). The price is locked once people have registered.
  */
 export const updateWorkshop = adminAction(workshopUpdateSchema, async ({ id, ...input }, ctx) => {
   const values = courseValues(input)
@@ -162,8 +166,7 @@ export const updateWorkshop = adminAction(workshopUpdateSchema, async ({ id, ...
       const feeDiff = changes((current ?? {}) as Partial<typeof fee>, fee)
       const contractDiff = Object.keys(courseDiff).filter((k) => (contractCourseFields as readonly string[]).includes(k))
       const contractChanged = contractDiff.length > 0 || Object.keys(feeDiff).length > 0
-      const locked = before.status === "cancelled" || before.status === "closed"
-      if (contractChanged && locked) throw new UserError("workshops.errors.contractLocked")
+      if (contractChanged && contractLocked(before)) throw new UserError("workshops.errors.contractLocked")
 
       const registered = await activeRegistrations(tx, id)
       if ("price" in courseDiff && registered > 0) throw new UserError("workshops.errors.priceLocked", { field: "price" })
@@ -181,7 +184,7 @@ export const updateWorkshop = adminAction(workshopUpdateSchema, async ({ id, ...
           .update(courses)
           .set({
             ...values,
-            ...(contractChanged ? { status: "awaiting_signature" as const, finalParticipants: null } : {}),
+            ...(contractChanged ? { status: "awaiting_signature" as const } : {}),
             ...("decisionAt" in courseDiff ? { decisionNotifiedAt: null } : {}),
             updatedAt: now,
           })
@@ -350,11 +353,16 @@ async function emailCancellation(courseId: string, title: Record<string, string 
   }
 }
 
-/** Save the gallery of a closed workshop: photos and videos in order (adds, removes, re-sorts). */
+/** Save the gallery of a closed (not cancelled) workshop: photos and videos in order (adds, removes, re-sorts). */
 export const saveGallery = adminAction(gallerySchema, async ({ id, items }, ctx) => {
   const removed = await db.transaction(async (tx) => {
-    const [course] = await tx.select({ status: courses.status }).from(courses).where(eq(courses.id, id)).for("update")
+    const [course] = await tx
+      .select({ status: courses.status, cancelledAt: courses.cancelledAt })
+      .from(courses)
+      .where(eq(courses.id, id))
+      .for("update")
     if (!course) throw new UserError("workshops.errors.notFound")
+    if (isCancelled(course)) throw new UserError("workshops.errors.galleryCancelled")
     if (course.status !== "closed") throw new UserError("workshops.errors.galleryClosedOnly")
     const result = await syncMedia(
       tx,

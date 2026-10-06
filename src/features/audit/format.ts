@@ -3,6 +3,8 @@
  * one-line summary and a readable, size-limited JSON for the details popover.
  */
 
+import { formatLira } from "@/lib/money"
+
 const SUMMARY_MAX = 140
 const VALUE_MAX = 40
 const DETAIL_STRING_MAX = 400
@@ -12,6 +14,20 @@ const clip = (s: string, max: number) => (s.length > max ? `${s.slice(0, max - 1
 const isRecord = (v: unknown): v is Record<string, unknown> => Boolean(v) && typeof v === "object" && !Array.isArray(v)
 const isChange = (v: unknown): v is { from: unknown; to: unknown } =>
   isRecord(v) && Object.keys(v).length === 2 && "from" in v && "to" in v
+
+/** Keys whose numbers are kuruş (lib/money): the summary shows lira, so ₺200 never reads as "20000". */
+const MONEY_KEYS = new Set([
+  "amount",
+  "price",
+  "revenue",
+  "expenses",
+  "instructorFee",
+  "netProfit",
+  "feeAmount",
+  "advanceAmount",
+  "refundAmount",
+  "refundTotal",
+])
 
 /** A short text for any JSON value. Localized texts show their first language. */
 function short(value: unknown): string {
@@ -26,12 +42,18 @@ function short(value: unknown): string {
   return "…"
 }
 
-/** "slug: candles → candle-making · sort: 1 → 2" */
-export function auditSummary(data: unknown): string {
+/** The value of `key` in the summary: amounts in kuruş as lira, anything else as `short`. */
+const shown = (key: string, value: unknown, locale: string) =>
+  MONEY_KEYS.has(key) && typeof value === "number" && Number.isSafeInteger(value) ? formatLira(value, locale) : short(value)
+
+/** "slug: candles → candle-making · sort: 1 → 2 · price: ₺1,500 → ₺1,800" */
+export function auditSummary(data: unknown, locale: string): string {
   if (data === null || data === undefined) return ""
   if (!isRecord(data)) return clip(short(data), SUMMARY_MAX)
   const parts = Object.entries(data).map(([key, value]) =>
-    isChange(value) ? `${key}: ${short(value.from)} → ${short(value.to)}` : `${key}: ${short(value)}`,
+    isChange(value)
+      ? `${key}: ${shown(key, value.from, locale)} → ${shown(key, value.to, locale)}`
+      : `${key}: ${shown(key, value, locale)}`,
   )
   return clip(parts.join(" · "), SUMMARY_MAX)
 }

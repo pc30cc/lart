@@ -41,7 +41,8 @@ export async function sendContractReady(contractId: string): Promise<boolean> {
     props: {
       instructorName: localized(row.displayName, locale) || row.officialName,
       workshopTitle: localized(row.title, locale),
-      workshopDate: `${formatDate(row.startsAt, locale, "full")}, ${formatTimeRange(row.startsAt, row.endsAt, locale)}`,
+      // Persian uses its own comma.
+      workshopDate: `${formatDate(row.startsAt, locale, "full")}${locale === "fa" ? "،" : ","} ${formatTimeRange(row.startsAt, row.endsAt, locale)}`,
       signUrl: signPath(locale, contractId),
     },
   })

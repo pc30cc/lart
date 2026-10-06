@@ -57,11 +57,18 @@ test.describe.serial("settings", () => {
     const logo = await makeLogo()
     const existing = await sql("select 1 from settings where key = 'watermark' and value->>'logoPath' is not null")
     await page.goto("/en/admin/settings/watermark")
-    if (!existing.length) await expect(page.getByText("Add a logo to see the preview.")).toBeVisible()
+    // No on/off switch: every gallery photo is watermarked, and uploads wait for a logo.
+    await expect(page.getByRole("switch")).toHaveCount(0)
+    const noLogo = page.getByText("Add a logo: gallery photos can’t be uploaded until there is one.")
+    if (!existing.length) {
+      await expect(page.getByText("Add a logo to see the preview.")).toBeVisible()
+      await expect(noLogo).toBeVisible()
+    }
 
     const logoField = field(page, "Watermark logo")
     await logoField.locator('input[type="file"]').setInputFiles(logo)
     await expect(logoField.getByRole("img", { name: "Uploaded photo" })).toBeVisible({ timeout: 30_000 })
+    await expect(noLogo).toHaveCount(0)
 
     // The preview appears and follows the controls.
     const preview = page.getByRole("img", { name: "A sample photo with the watermark" })
@@ -81,16 +88,15 @@ test.describe.serial("settings", () => {
     expect(res.headers()["content-type"]).toMatch(/^image\//)
     expect((await sharp(await res.body()).metadata()).width).toBeGreaterThan(100)
 
-    // Turn the watermark on and save.
-    const enabled = page.getByRole("switch", { name: /Add a watermark to gallery photos/ })
-    if (!(await enabled.isChecked())) await enabled.click()
+    // Save: the gallery uploads in 07-gallery need this logo.
     await page.getByRole("button", { name: "Save changes" }).click()
     await expect(toast(page, "Settings saved.")).toBeVisible()
 
-    const saved = await one<{ value: { enabled: boolean; position: string; sizePct: number; logoPath: string } }>(
+    const saved = await one<{ value: { position: string; sizePct: number; logoPath: string } }>(
       "select value from settings where key = 'watermark'",
     )
-    expect(saved.value).toMatchObject({ enabled: true, position: "bottom-left", sizePct: 30 })
+    expect(saved.value).toMatchObject({ position: "bottom-left", sizePct: 30 })
+    expect(saved.value).not.toHaveProperty("enabled")
     expect(saved.value.logoPath).toMatch(/^brand\/\d{4}-\d{2}\/[\w-]+\.png$/)
 
     // The logo is private: not under /media.
@@ -135,6 +141,49 @@ test.describe.serial("templates", () => {
     await expect(toast(page, "Changes saved.")).toBeVisible()
     const row = await one<{ body: { en: string } }>("select body from templates where id = $1", [id])
     expect(row.body.en).toContain(`Please bring a smile. (${RUN})`)
+  })
+
+  test("email texts: change one, see it in the preview, save, then go back to the default", async ({ page }) => {
+    await page.goto("/en/admin/templates")
+    await expect(page.getByRole("heading", { name: "Emails" })).toBeVisible()
+    await page.getByRole("link", { name: "Contract ready to sign" }).click()
+    await expect(page).toHaveURL(/\/en\/admin\/templates\/emails\/contract_ready$/)
+    await expect(page.getByRole("heading", { level: 1, name: "Contract ready to sign" })).toBeVisible()
+    await expect(page.getByText("{instructorName}", { exact: true })).toBeVisible()
+
+    const heading = field(page, /^Heading/)
+    await heading.getByRole("tab", { name: "English" }).click()
+    const input = heading.locator('input[lang="en"]')
+    // An empty field shows the default text it falls back to.
+    await expect(input).toHaveAttribute("placeholder", /\S/)
+    await input.fill(`Ready for you, {instructorName} (${RUN})`)
+    // Read from the srcdoc: looking inside the sandboxed frame makes the browser log blocked scripts.
+    const preview = page.locator('iframe[title="Preview of the email"]')
+    await expect.poll(async () => (await preview.getAttribute("srcdoc")) ?? "", { timeout: 15_000 }).toContain(`Ready for you, Ayşe Demir (${RUN})`)
+
+    // An unknown placeholder is explained, and not saved.
+    const button = field(page, /^Button/)
+    await button.getByRole("tab", { name: "English" }).click()
+    await button.locator('input[lang="en"]').fill("{signLink}")
+    await expect(page.getByText("{signLink} isn’t a placeholder of this email.", { exact: false }).first()).toBeVisible({ timeout: 15_000 })
+    await button.locator('input[lang="en"]').fill("")
+
+    await page.getByRole("button", { name: "Save changes" }).click()
+    await expect(toast(page, "Email texts saved.")).toBeVisible()
+    const saved = await one<{ value: Record<string, unknown> }>("select value from settings where key = 'emailTexts'")
+    expect(saved.value).toEqual(expect.objectContaining({ contract_ready: { heading: { en: `Ready for you, {instructorName} (${RUN})` } } }))
+
+    await page.goto("/en/admin/templates")
+    await expect(page.getByRole("listitem").filter({ hasText: "Contract ready to sign" })).toContainText("Edited · English")
+
+    // Back to the default texts (the workshop specs check the real contract emails).
+    await page.getByRole("link", { name: "Contract ready to sign" }).click()
+    await page.getByRole("button", { name: "Use the default texts" }).click()
+    await page.getByRole("alertdialog").getByRole("button", { name: "Yes, use the default texts" }).click()
+    await expect(toast(page, "The default texts are used again.")).toBeVisible()
+    const after = await one<{ value: Record<string, unknown> }>("select value from settings where key = 'emailTexts'")
+    expect(after.value).not.toHaveProperty("contract_ready")
+    await expect(page.getByText("Default texts", { exact: true })).toBeVisible()
   })
 
   test("an unknown placeholder is flagged", async ({ page }) => {

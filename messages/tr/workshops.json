@@ -54,13 +54,34 @@
       "description": "İlk atölyenizi oluşturun. Sözleşmeyi biz hazırlayıp eğitmene e-postayla göndereceğiz."
     },
     "views": {
-      "upcoming": { "title": "Yaklaşan atölye yok", "description": "Şu anda yaklaşan bir atölye yok. Bir sonrakini planlamaya ne dersiniz?" },
-      "awaiting_signature": { "title": "İmza bekleyen sözleşme yok", "description": "Tüm eğitmenler sözleşmelerini imzaladı. Harika!" },
-      "published": { "title": "Kayda açık atölye yok", "description": "Eğitmen sözleşmeyi imzaladığında atölye burada görünür." },
-      "confirmed": { "title": "Kesinleşen atölye yok", "description": "Karar zamanında onayladığınız atölyeler burada görünür." },
-      "cancelled": { "title": "İptal edilen atölye yok", "description": "Güzel haber: Hiçbir atölye iptal edilmedi." },
-      "closed": { "title": "Henüz kapanan atölye yok", "description": "Finans sayfasından kapatılan atölyeler burada görünür." },
-      "all": { "title": "Atölye yok", "description": "Başlamak için ilk atölyenizi oluşturun." }
+      "upcoming": {
+        "title": "Yaklaşan atölye yok",
+        "description": "Şu anda yaklaşan bir atölye yok. Bir sonrakini planlamaya ne dersiniz?"
+      },
+      "awaiting_signature": {
+        "title": "İmza bekleyen sözleşme yok",
+        "description": "Tüm eğitmenler sözleşmelerini imzaladı. Harika!"
+      },
+      "published": {
+        "title": "Kayda açık atölye yok",
+        "description": "Eğitmen sözleşmeyi imzaladığında atölye burada görünür."
+      },
+      "confirmed": {
+        "title": "Kesinleşen atölye yok",
+        "description": "Karar zamanında onayladığınız atölyeler burada görünür."
+      },
+      "cancelled": {
+        "title": "İptal edilen atölye yok",
+        "description": "Güzel haber: Hiçbir atölye iptal edilmedi."
+      },
+      "closed": {
+        "title": "Henüz kapanan atölye yok",
+        "description": "Finans sayfasından kapatılan atölyeler burada görünür."
+      },
+      "all": {
+        "title": "Atölye yok",
+        "description": "Başlamak için ilk atölyenizi oluşturun."
+      }
     }
   },
   "prerequisites": {
@@ -75,7 +96,7 @@
   },
   "form": {
     "lockedTitle": "Sözleşme koşulları artık değiştirilemez",
-    "lockedDescription": "Bu atölye iptal edildi ya da kapandı; bu yüzden tarih, yer, kontenjan ve ücret olduğu gibi kalır. Metinleri ve fotoğrafları yine de düzenleyebilirsiniz.",
+    "lockedDescription": "Bu atölye iptal edildi ya da kapandı, ya da kesinleştikten sonra başladı; bu yüzden tarih, yer, kontenjan, eğitmen ve ücret olduğu gibi kalır. Metinleri ve fotoğrafları yine de düzenleyebilirsiniz.",
     "createAndSend": "Oluştur ve sözleşmeyi gönder",
     "basics": {
       "title": "Atölye",
@@ -110,9 +131,9 @@
     "reissue": {
       "title": "Bu değişiklikler sözleşmeyi günceller",
       "sent": "Sözleşmenin {version}. sürümü henüz imzalanmadı. Kaydettiğinizde yerine yeni bir sürüm hazırlanır ve eğitmene yeniden e-postayla gönderilir.",
-      "signed": "Sözleşmenin {version}. sürümü zaten imzalandı. Kaydettiğinizde yerine yeni bir sürüm hazırlanır ve eğitmen yeniden imzalayana kadar atölye sitede görünmez.",
+      "signed": "Sözleşmenin {version}. sürümü zaten imzalandı. Kaydettiğinizde yerine yeni bir sürüm hazırlanır ve eğitmen yeniden imzalayana kadar atölye sitede görünmez. Kesinleşmiş bir atölyenin kararı ve kesin katılımcı sayısı korunur.",
       "confirmTitle": "Yeni sözleşme gönderilsin mi?",
-      "confirmDescription": "Mevcut sözleşmenin yerine {version}. sürüm hazırlanıp {name} adlı eğitmene e-postayla gönderilecek. İmzalanana kadar atölye imza bekler ve sitede görünmez. Kayıt yaptıranların yerleri korunur.",
+      "confirmDescription": "Mevcut sözleşmenin yerine {version}. sürüm hazırlanıp {name} adlı eğitmene e-postayla gönderilecek. İmzalanana kadar atölye imza bekler ve sitede görünmez. Kayıt yaptıranların yerleri korunur; kesinleşmiş bir atölye, imzalandığında aynı kesin katılımcı sayısıyla yeniden kesinleşir.",
       "confirm": "Evet, kaydet ve gönder"
     }
   },
@@ -154,7 +175,7 @@
     "includesPlaceholder": "Malzemeler, araç gereçler, ikramlar…",
     "bringNothing": "Bir şey getirmeye gerek yok",
     "bringNothingHint": "Katılımcıların yanlarında bir şey getirmesi gerekmiyor.",
-    "bring": "Yanınızda getirin",
+    "bring": "Katılımcıların getirmesi gerekenler",
     "bringPlaceholder": "ör. Bir önlük ve küçük bir havlu",
     "bringHint": "Hatırlatma e-postasında da gönderilir.",
     "experience": "Ön deneyim gerekli",
@@ -206,13 +227,14 @@
     "noContractTemplate": "Henüz varsayılan bir sözleşme metni yok. Lütfen önce Şablonlar bölümünden belirleyin.",
     "instructorUnavailable": "Bu eğitmen aktif değil. Lütfen başka bir eğitmen seçin.",
     "notFound": "Bu atölye artık yok.",
-    "contractLocked": "Bu atölye iptal edildi ya da kapandı; bu yüzden tarihi, yeri, kontenjanı, eğitmeni ve ücreti değiştirilemez.",
+    "contractLocked": "Bu atölye iptal edildi ya da kapandı, ya da kesinleştikten sonra başladı; bu yüzden tarihi, yeri, kontenjanı, eğitmeni ve ücreti değiştirilemez.",
     "priceLocked": "Bu fiyattan kayıt yaptıranlar var, bu yüzden fiyat değiştirilemez.",
     "capacityBelowRegistrations": "Şimdiden {count, plural, one {# kişi} other {# kişi}} kayıt yaptırdı; en fazla katılımcı sayısı bundan az olamaz.",
     "cannotConfirm": "Yalnızca kayda açık bir atölye onaylanabilir.",
     "alreadyStarted": "Bu atölye başladı, artık onaylanamaz.",
     "cannotCancel": "Bu atölye zaten iptal edildi ya da kapandı.",
     "galleryClosedOnly": "Fotoğraf ve videolar, atölye kapandıktan sonra eklenebilir.",
+    "galleryCancelled": "Bu atölye iptal edildi, bu yüzden galerisi yok.",
     "mediaInUse": "Bu dosyalardan biri başka bir yerde kullanılıyor. Lütfen yeniden yükleyin."
   },
   "overview": {
@@ -314,7 +336,11 @@
     "print": "Yazdır",
     "preview": "Henüz imzalanmadı. Bu, eğitmenin şu anda göreceği metindir.",
     "language": "Sözleşme dili",
-    "languages": { "fa": "فارسی", "tr": "Türkçe", "en": "English" },
+    "languages": {
+      "fa": "فارسی",
+      "tr": "Türkçe",
+      "en": "English"
+    },
     "signedLine": "{name} tarafından {date} tarihinde elektronik olarak imzalandı.",
     "none": {
       "title": "Henüz sözleşme yok",
@@ -372,12 +398,12 @@
       "videoYes": "Videoları yayımlanabilir",
       "videoNo": "Video yok"
     },
-    "readOnly": "Bir kaydı ya da iadeyi değiştirmek için Kayıtlar bölümünü kullanın."
+    "readOnly": "Bu liste yalnızca görüntüleme içindir. Tek bir kaydı değiştirmek ya da iade etmek henüz mümkün değil."
   },
   "gallery": {
     "metaTitle": "Galeri · {title}",
     "title": "Fotoğraflar ve videolar",
-    "description": "Fotoğraflara filigran kendiliğinden eklenir. Sırayı değiştirmek için sürükleyin.",
+    "description": "Fotoğraflara filigran kendiliğinden eklenir. Değişiklikler anında kaydedilir.",
     "notYet": {
       "title": "Galeri, atölye kapandıktan sonra açılır",
       "description": "Önce atölyeyi finans sayfasından kapatın. Ardından fotoğraf ve videoları buraya ekleyin.",
@@ -400,6 +426,10 @@
     "saving": "Kaydediliyor…",
     "saved": "Tüm değişiklikler kaydedildi",
     "notSaved": "Kaydedilemedi",
-    "retry": "Yeniden dene"
+    "retry": "Yeniden dene",
+    "noWatermark": {
+      "text": "Önce bir filigran logosu ekleyin: galeri fotoğrafları her zaman filigranla yayınlanır, logo olmadan yüklenemez.",
+      "action": "Filigran ayarlarını aç"
+    }
   }
 }

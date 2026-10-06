@@ -42,7 +42,7 @@
     }
   },
   "attention": {
-    "title": "İlginizi bekleyenler",
+    "title": "Sizi bekleyen işler",
     "decisions": "{count, plural, one {# atölye için karar zamanı geldi} other {# atölye için karar zamanı geldi}}",
     "signatures": "{count, plural, one {# sözleşme imza bekliyor} other {# sözleşme imza bekliyor}}",
     "toClose": "{count, plural, one {# atölye kapanmaya hazır} other {# atölye kapanmaya hazır}}"
@@ -58,7 +58,7 @@
     "noRevenueLastMonth": "Geçen ay gelir olmadı",
     "lastMonth": "Geçen ay: {amount}",
     "net": "Net kâr ({year})",
-    "netHint": "1 Ocak’tan bu yana gelirler eksi tüm giderler",
+    "netHint": "1 Ocak’tan bu yana. Eğitmen ücreti, atölye kapatılınca sayılır.",
     "upcoming": "Yaklaşan atölyeler",
     "upcomingSeats": "{seats} yerin {taken} tanesi dolu",
     "upcomingNotOpen": "Sözleşmelerin imzalanması bekleniyor",
@@ -69,7 +69,7 @@
   },
   "revenue": {
     "title": "Gelir, gider ve kâr",
-    "description": "Son 12 ay, her kaydın tarihine göre",
+    "description": "Son 12 ay, her kaydın tarihine göre. Eğitmen ücreti, atölyenin kapatıldığı gün hesaba katılır.",
     "report": "Raporlar",
     "totals": "Son 12 ayın toplamları",
     "revenue": "Gelir",

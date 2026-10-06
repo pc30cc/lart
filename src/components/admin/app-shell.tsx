@@ -63,7 +63,7 @@ export function AppShell({
         <SidebarInset className={cn("min-w-0", rtl && insetRtl)}>
           <header className="bg-background/85 supports-backdrop-filter:backdrop-blur-md sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b px-3 md:rounded-t-xl md:px-5">
             <SidebarToggle rtl={rtl} label={t("toggleSidebar")} />
-            <Separator orientation="vertical" className="me-1 data-[orientation=vertical]:h-4" />
+            <Separator orientation="vertical" className="me-1 data-vertical:h-4 data-vertical:self-center" />
             <AdminBreadcrumbs />
             <div className="ms-auto flex items-center gap-0.5">
               <LocaleSwitcher />

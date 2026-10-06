@@ -1,15 +1,17 @@
 "use client"
 
-import { CircleAlertIcon, EyeIcon, EyeOffIcon } from "lucide-react"
+import { CircleAlertIcon, CircleCheckIcon, EyeIcon, EyeOffIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useActionState, useState } from "react"
 
 import { SubmitButton } from "@/components/admin/form/form"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { Link } from "@/i18n/navigation"
 import { adminLoginAction, type LoginState } from "@/lib/auth/actions"
 
-export function LoginForm({ next }: { next?: string }) {
+/** `notice`: a success message to show above the form (e.g. after a password reset). */
+export function LoginForm({ next, notice }: { next?: string; notice?: string }) {
   const t = useTranslations("auth.login")
   const [state, formAction, pending] = useActionState<LoginState, FormData>(adminLoginAction, {})
   const [showPassword, setShowPassword] = useState(false)
@@ -17,6 +19,13 @@ export function LoginForm({ next }: { next?: string }) {
   return (
     <form action={formAction} className="space-y-5">
       {next && <input type="hidden" name="next" value={next} />}
+
+      {notice && !state.error && (
+        <div role="status" className="bg-success/10 text-success flex gap-2.5 rounded-lg p-3 text-sm">
+          <CircleCheckIcon className="mt-0.5 size-4 shrink-0" />
+          <p className="text-pretty">{notice}</p>
+        </div>
+      )}
 
       {state.error && (
         <div
@@ -77,6 +86,15 @@ export function LoginForm({ next }: { next?: string }) {
       <SubmitButton pending={pending} className="h-10 w-full">
         {pending ? t("submitting") : t("submit")}
       </SubmitButton>
+
+      <p className="text-center text-sm">
+        <Link
+          href="/admin/login/forgot"
+          className="text-muted-foreground hover:text-primary rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          {t("forgot")}
+        </Link>
+      </p>
     </form>
   )
 }

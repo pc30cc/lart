@@ -151,6 +151,31 @@ export function feeValues(v: Pick<WorkshopInput, "feeType" | "feeAmount" | "hasA
 export const workshopStatuses = ["awaiting_signature", "published", "confirmed", "cancelled", "closed"] as const
 export type WorkshopStatus = (typeof workshopStatuses)[number]
 
+/**
+ * Cancelled, also after its books were closed: closing a cancelled workshop
+ * keeps the status "cancelled" and sets `closedAt`. The `cancelledAt` check is
+ * a fallback for older rows, closed as status "closed" with `cancelledAt` kept.
+ */
+export const isCancelled = (w: { status: WorkshopStatus; cancelledAt: Date | null }) =>
+  w.status === "cancelled" || w.cancelledAt !== null
+
+/** The status to show: a cancelled workshop stays "cancelled" after closing (also an older "closed" row with `cancelledAt`). */
+export const displayStatus = (w: { status: WorkshopStatus; cancelledAt: Date | null }): WorkshopStatus =>
+  isCancelled(w) ? "cancelled" : w.status
+
+/**
+ * Whether the contract terms can no longer change: the workshop is cancelled
+ * or closed, or it has started after the go decision (its fee is settled from
+ * that contract and the final number). Before the start, a confirmed workshop
+ * can still get a new contract version; it keeps its go decision.
+ */
+export function contractLocked(
+  w: { status: WorkshopStatus; startsAt: Date; finalParticipants: number | null },
+  now: Date = new Date(),
+): boolean {
+  return w.status === "cancelled" || w.status === "closed" || (w.finalParticipants !== null && w.startsAt <= now)
+}
+
 // ─── Gallery ──────────────────────────────────────────────────────────────────
 
 const galleryItem = z.discriminatedUnion("kind", [

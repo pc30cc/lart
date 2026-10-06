@@ -5,6 +5,7 @@ import { z } from "zod"
 
 import { db, type Tx } from "@/db"
 import { settings } from "@/db/schema"
+import { EMAIL_TEXT_MAX, emailTemplateNames, emailTextFields } from "@/emails/names"
 
 /**
  * Typed site settings. Each key has a Zod schema and a default, so a missing
@@ -18,6 +19,13 @@ const localized = z.object({
 })
 
 const locale = z.enum(["fa", "tr", "en"])
+
+/** One email text in three languages; longer than `localized`. Empty means "use the bundled text". */
+const emailText = z.object({
+  fa: z.string().trim().max(EMAIL_TEXT_MAX).optional(),
+  tr: z.string().trim().max(EMAIL_TEXT_MAX).optional(),
+  en: z.string().trim().max(EMAIL_TEXT_MAX).optional(),
+})
 
 export const settingSchemas = {
   /** Brand name shown everywhere as {brand}. */
@@ -56,8 +64,11 @@ export const settingSchemas = {
       privateBucket: z.string().min(1),
     }),
   ]),
+  /**
+   * Every gallery photo is watermarked; uploads are refused until a logo is set.
+   * Rows saved with the former `enabled` switch still parse (unknown keys are dropped).
+   */
   watermark: z.object({
-    enabled: z.boolean(),
     /** Storage path of the PNG logo, or null when not uploaded yet. */
     logoPath: z.string().nullable(),
     position: z.enum([
@@ -72,6 +83,11 @@ export const settingSchemas = {
     /** Distance from the edge as a percentage of the photo width. */
     marginPct: z.number().min(0).max(20),
   }),
+  /**
+   * The admin's own email texts (templates page): email → field → language,
+   * laid over messages/<locale>/emails.json when an email is rendered.
+   */
+  emailTexts: z.partialRecord(z.enum(emailTemplateNames), z.partialRecord(z.enum(emailTextFields), emailText)),
 } as const
 
 export type SettingKey = keyof typeof settingSchemas
@@ -84,13 +100,13 @@ export const settingDefaults: { [K in SettingKey]: SettingValue<K> } = {
   theme: "default",
   cdn: { provider: "local" },
   watermark: {
-    enabled: true,
     logoPath: null,
     position: "bottom-right",
     sizePct: 18,
     opacity: 0.7,
     marginPct: 3,
   },
+  emailTexts: {},
 }
 
 const loadAll = cache(async () => {

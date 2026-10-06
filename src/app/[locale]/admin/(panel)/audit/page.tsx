@@ -7,11 +7,13 @@ import { DataTable, type Column } from "@/components/admin/data-table/data-table
 import { parseTableParams } from "@/components/admin/data-table/params"
 import { EmptyState } from "@/components/admin/empty-state"
 import { PageHeader } from "@/components/admin/page-header"
+import { emailTemplateNames } from "@/emails/names"
 import { getAuditFilterOptions, listAudit, auditTable, type AuditRow } from "@/features/audit/queries"
 import { parseDateRange } from "@/features/audit/range"
 import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
 import { formatDateTime } from "@/lib/format"
+import { cn } from "@/lib/utils"
 import { AuditData } from "./_components/audit-data"
 import { DateRangeFilter } from "./_components/date-range-filter"
 
@@ -26,6 +28,7 @@ const isUuid = (v: string) => z.uuid().safeParse(v).success
 function recordHref(entity: string, id: string | null): string | null {
   if (!id) return null
   if (entity === "setting") return id === "cdn" ? "/admin/settings/storage" : id === "watermark" ? "/admin/settings/watermark" : "/admin/settings"
+  if (entity === "email") return (emailTemplateNames as readonly string[]).includes(id) ? `/admin/templates/emails/${id}` : null
   const base = { category: "categories", workshop: "workshops", instructor: "instructors", template: "templates" }[entity]
   return base && isUuid(id) ? `/admin/${base}/${id}` : null
 }
@@ -42,7 +45,7 @@ export default async function AuditPage({ searchParams }: PageProps<"/[locale]/a
     filters: { admin: options.admins.map((a) => a.id), entity: options.entities },
   })
   const range = parseDateRange(sp)
-  const { rows, total } = await listAudit(params, range)
+  const { rows, total } = await listAudit(params, range, locale)
 
   /** A translated label when there is one, the code otherwise (modules add new actions over time). */
   const label = (key: string, fallback: string) => {
@@ -80,14 +83,19 @@ export default async function AuditPage({ searchParams }: PageProps<"/[locale]/a
       key: "action",
       header: t("table.what"),
       sortable: true,
-      cell: (row) => (
-        <span className="block min-w-0">
-          <span className="block">{label(`actions.${row.action}`, row.action)}</span>
-          <code dir="ltr" className="text-muted-foreground block font-mono text-[0.7rem]">
-            {row.action}
-          </code>
-        </span>
-      ),
+      // On phones (no details column) this takes the room left and truncates, like a primary column.
+      className: "max-sm:w-full max-sm:max-w-0",
+      cell: (row) => {
+        const text = label(`actions.${row.action}`, row.action)
+        return (
+          <span className="block min-w-0" title={text}>
+            <span className="block truncate">{text}</span>
+            <code dir="ltr" className="text-muted-foreground block truncate font-mono text-[0.7rem]">
+              {row.action}
+            </code>
+          </span>
+        )
+      },
     },
     {
       key: "entity",
@@ -96,17 +104,19 @@ export default async function AuditPage({ searchParams }: PageProps<"/[locale]/a
       hideBelow: "md",
       cell: (row) => {
         const href = recordHref(row.entity, row.entityId)
-        const id = row.entityId && (isUuid(row.entityId) ? row.entityId.slice(0, 8) : row.entityId)
+        // Short and distinctive: a uuid's first 8 characters, a storage path's file name. The title has all of it.
+        const id = row.entityId && (isUuid(row.entityId) ? row.entityId.slice(0, 8) : row.entityId.split("/").pop() || row.entityId)
+        const idClass = "block w-fit max-w-40 truncate font-mono text-[0.7rem]"
         return (
           <span className="block min-w-0">
             <span className="block whitespace-nowrap">{entityLabel(row.entity)}</span>
             {id &&
               (href ? (
-                <Link href={href} title={row.entityId ?? undefined} className="text-primary font-mono text-[0.7rem] hover:underline" dir="ltr">
+                <Link href={href} title={row.entityId ?? undefined} className={cn(idClass, "text-primary hover:underline")} dir="ltr">
                   {id}
                 </Link>
               ) : (
-                <code dir="ltr" title={row.entityId ?? undefined} className="text-muted-foreground font-mono text-[0.7rem]">
+                <code dir="ltr" title={row.entityId ?? undefined} className={cn(idClass, "text-muted-foreground")}>
                   {id}
                 </code>
               ))}
@@ -118,6 +128,8 @@ export default async function AuditPage({ searchParams }: PageProps<"/[locale]/a
       key: "data",
       header: t("table.details"),
       hideBelow: "sm",
+      // Takes the width left over and truncates, so the table fits its card and the IP stays in view.
+      primary: true,
       cell: (row) => <AuditData summary={row.summary} detail={row.detail} />,
     },
     {

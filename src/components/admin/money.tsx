@@ -7,6 +7,9 @@ import { cn } from "@/lib/utils"
  * An amount in Turkish lira, from integer kuruş. Works in server and client
  * components. `tone="signed"` colours negatives red and positives green.
  *   <Money value={course.price} />
+ * `className` goes on an outer span that keeps the page's direction, so a
+ * `block` amount lines up with its label in Persian too; only the inner
+ * `<bdi>` isolates the left-to-right currency text.
  */
 export function Money({
   value,
@@ -19,7 +22,8 @@ export function Money({
 }) {
   const locale = useLocale()
   return (
-    <bdi
+    <span
+      data-money=""
       className={cn(
         "tabular-nums whitespace-nowrap",
         tone === "signed" && value < 0 && "text-destructive",
@@ -27,7 +31,7 @@ export function Money({
         className,
       )}
     >
-      {formatLira(value, locale)}
-    </bdi>
+      <bdi>{formatLira(value, locale)}</bdi>
+    </span>
   )
 }

@@ -71,7 +71,7 @@ export function MediaGrid({
   const format = useFormatter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [pending, setPendingState] = useState<Pending[]>([])
-  const [notice, setNotice] = useState<"limit" | "noWatermark" | null>(null)
+  const [limitNotice, setLimitNotice] = useState(false)
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [overIndex, setOverIndex] = useState<number | null>(null)
 
@@ -122,15 +122,13 @@ export function MediaGrid({
         if (!item) break
         patch(item.id, { status: "uploading", progress: 0 })
         try {
-          const result = await uploadFile(item.file, purposeOf(item.kind), {
+          const { path, url, width, height, originalPath } = await uploadFile(item.file, purposeOf(item.kind), {
             signal: item.controller.signal,
             onProgress: (progress) => patch(item.id, { progress }),
           })
-          const { path, url, width, height, originalPath } = result
           const items = [...valueRef.current, { path, url, width, height, originalPath, kind: item.kind }]
           valueRef.current = items
           onChangeRef.current(items)
-          if (result.watermarked === false) setNotice("noWatermark")
           drop(item.id)
         } catch (failure) {
           const code = failureCode(failure)
@@ -145,7 +143,7 @@ export function MediaGrid({
 
   const addFiles = (files: File[]) => {
     const room = Math.max(0, max - valueRef.current.length - pendingRef.current.length)
-    setNotice(files.length > room ? "limit" : null)
+    setLimitNotice(files.length > room)
     const added = files.slice(0, room).map((file): Pending => {
       const kind = allowVideos && isVideoFile(file) ? "video" : "image"
       const code = checkFile(file, purposeOf(kind)) ?? undefined
@@ -234,16 +232,16 @@ export function MediaGrid({
           </div>
         )}
 
-        {notice && (
+        {limitNotice && (
           <UploadMessage
             tone="info"
             action={
-              <Button type="button" variant="link" size="xs" className="h-auto p-0" onClick={() => setNotice(null)}>
+              <Button type="button" variant="link" size="xs" className="h-auto p-0" onClick={() => setLimitNotice(false)}>
                 {t("upload.dismiss")}
               </Button>
             }
           >
-            {notice === "limit" ? t("upload.limitReached", { max: format.number(max) }) : t("upload.noWatermark")}
+            {t("upload.limitReached", { max: format.number(max) })}
           </UploadMessage>
         )}
 

@@ -55,7 +55,7 @@ export function LedgerTable({ rows, sort, dir }: { rows: LedgerRow[]; sort: "occ
               {t("columns.date")}
             </SortButton>
           </TableHead>
-          <TableHead className="text-muted-foreground h-11 px-4 text-start text-xs font-medium">{t("columns.entry")}</TableHead>
+          <TableHead className="text-muted-foreground h-11 w-full px-4 text-start text-xs font-medium">{t("columns.entry")}</TableHead>
           <TableHead className="text-muted-foreground hidden h-11 px-4 text-start text-xs font-medium md:table-cell">
             {t("columns.workshop")}
           </TableHead>
@@ -87,16 +87,29 @@ export function LedgerTable({ rows, sort, dir }: { rows: LedgerRow[]; sort: "occ
                 <TableCell className="px-4 py-3 align-top whitespace-nowrap tabular-nums">
                   {formatDate(`${row.occurredOn}T09:00:00Z`, locale, "medium")}
                 </TableCell>
-                <TableCell className="max-w-0 px-4 py-3 align-top">
+                <TableCell className="w-full max-w-0 px-4 py-3 align-top">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span className={cn("font-medium", row.reversedBy && "line-through decoration-1")}>{label}</span>
                     {row.reversedBy && <StatusBadge>{t("ledger.reversed")}</StatusBadge>}
                     {row.reversalOf && <StatusBadge tone="warning">{t("ledger.correction")}</StatusBadge>}
                   </div>
-                  {row.description && <p className="text-muted-foreground truncate text-sm">{row.description}</p>}
-                  {row.workshop && <p className="text-muted-foreground truncate text-xs md:hidden">{row.workshop.title}</p>}
+                  {row.description && (
+                    // dir="auto": a Latin description in Persian (or the other way round) is cut at its own end.
+                    <p dir="auto" title={row.description} className="text-muted-foreground truncate text-sm rtl:text-right">
+                      {row.description}
+                    </p>
+                  )}
+                  {row.workshop && (
+                    <p dir="auto" className="text-muted-foreground truncate text-xs md:hidden rtl:text-right">
+                      {row.workshop.title}
+                    </p>
+                  )}
                 </TableCell>
-                <TableCell className="text-muted-foreground hidden max-w-56 truncate px-4 py-3 align-top text-sm md:table-cell">
+                <TableCell
+                  dir="auto"
+                  title={row.workshop?.title}
+                  className="text-muted-foreground hidden max-w-56 truncate px-4 py-3 align-top text-sm md:table-cell rtl:text-right"
+                >
                   {row.workshop?.title ?? "—"}
                 </TableCell>
                 <TableCell className="px-4 py-3 text-end align-top">

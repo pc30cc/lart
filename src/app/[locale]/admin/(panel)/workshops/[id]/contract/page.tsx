@@ -56,6 +56,8 @@ export default async function WorkshopContractPage({
   const selected = versions.find((v) => v.version === asked) ?? current
   const lang = LOCALES.find((l) => l === sp.lang) ?? (locale as Locale)
   const doc = selected && (selected.hasText || selected.status === "sent") ? await getContractText(selected.id, lang) : null
+  // The signature line belongs to the document: in its language, not the panel's.
+  const tDoc = doc ? await getTranslations({ locale: doc.locale, namespace: "workshops.contractPage" }) : null
   const n = (v: number) => formatNumber(v, locale)
   const href = (query: Record<string, string>) => ({ pathname: `/admin/workshops/${id}/contract`, query })
 
@@ -104,10 +106,10 @@ export default async function WorkshopContractPage({
             )}
             {doc ? (
               <ContractDocument text={doc.text} locale={doc.locale}>
-                {selected.signedAt && (
+                {selected.signedAt && tDoc && (
                   <footer className="mt-10 space-y-1 border-t pt-4 text-xs print:border-black/30">
                     <p className="font-medium">
-                      {t("contractPage.signedLine", {
+                      {tDoc("signedLine", {
                         name: selected.signedName ?? "",
                         date: formatDateTime(selected.signedAt, doc.locale, "long"),
                       })}

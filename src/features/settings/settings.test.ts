@@ -221,7 +221,7 @@ describe("general settings", () => {
 })
 
 describe("watermark settings", () => {
-  const base = { enabled: true, logoPath: null, position: "bottom-right" as const, sizePct: 18, opacity: 0.7, marginPct: 3 }
+  const base = { logoPath: null, position: "bottom-right" as const, sizePct: 18, opacity: 0.7, marginPct: 3 }
 
   it("saves, audits and removes a replaced logo from private storage", async () => {
     expect(await saveWatermarkSettings({ ...base, logoPath: "brand/2026-10/first_logo-1.png" })).toEqual({ ok: true, data: { changed: true } })

@@ -5,25 +5,50 @@ import { parseTableParams, type SearchParams } from "@/components/admin/data-tab
 import { db } from "@/db"
 import { admins, auditLog } from "@/db/schema"
 import { auditDetail, auditSummary } from "./format"
-import { auditTable, getAuditFilterOptions, listAudit } from "./queries"
+import { auditTable, codesByLabel, getAuditFilterOptions, listAudit } from "./queries"
 import { nextDay, parseDateRange, shiftDay, validDate } from "./range"
 
 const session = vi.hoisted(() => ({ sessionId: "test", admin: { id: "", email: "", name: "Audit Tester", shareBp: 0 } }))
 vi.mock("@/lib/auth/admin", () => ({ requireAdmin: async () => session, getAdmin: async () => session }))
+vi.mock("next-intl/server", async () => {
+  const { createTranslator } = await import("next-intl")
+  const load = async (l: "fa" | "tr" | "en") => ({ settings: (await import(`../../../messages/${l}/settings.json`)).default })
+  const all = { fa: await load("fa"), tr: await load("tr"), en: await load("en") }
+  return {
+    getTranslations: async (options?: string | { locale: "fa" | "tr" | "en"; namespace?: string }) => {
+      const { locale = "en", namespace } = typeof options === "object" ? options : { namespace: options }
+      return createTranslator({ locale, messages: all[locale], namespace: namespace as never })
+    },
+    getLocale: async () => "en",
+  }
+})
+
+const labels = async (locale: "fa" | "tr" | "en") => (await import(`../../../messages/${locale}/settings.json`)).default.audit
 
 describe("audit data formatting", () => {
   it("summarises changes, localized texts and long values on one line", () => {
-    expect(auditSummary(null)).toBe("")
-    expect(auditSummary({ slug: { from: "candles", to: "candle-making" }, sort: { from: 1, to: 2 } })).toBe(
+    expect(auditSummary(null, "en")).toBe("")
+    expect(auditSummary({ slug: { from: "candles", to: "candle-making" }, sort: { from: 1, to: 2 } }, "en")).toBe(
       "slug: candles → candle-making · sort: 1 → 2",
     )
-    expect(auditSummary({ name: { fa: "شمع", tr: "Mum" }, logoPath: { from: null, to: "brand/x.png" } })).toBe(
+    expect(auditSummary({ name: { fa: "شمع", tr: "Mum" }, logoPath: { from: null, to: "brand/x.png" } }, "en")).toBe(
       "name: شمع · logoPath: — → brand/x.png",
     )
-    expect(auditSummary({ keysReplaced: ["publicZoneKey", "privateZoneKey"] })).toBe("keysReplaced: publicZoneKey, privateZoneKey")
-    const long = auditSummary({ body: { from: { en: "x".repeat(500) }, to: { en: "y".repeat(500) } }, more: "z".repeat(500) })
+    expect(auditSummary({ keysReplaced: ["publicZoneKey", "privateZoneKey"] }, "en")).toBe(
+      "keysReplaced: publicZoneKey, privateZoneKey",
+    )
+    const long = auditSummary({ body: { from: { en: "x".repeat(500) }, to: { en: "y".repeat(500) } }, more: "z".repeat(500) }, "en")
     expect(long.length).toBeLessThanOrEqual(140)
     expect(long.endsWith("…")).toBe(true)
+  })
+
+  it("shows amounts in lira, not in kuruş", () => {
+    expect(auditSummary({ amount: 20000, category: "Printing" }, "en")).toBe("amount: ₺200 · category: Printing")
+    expect(auditSummary({ price: { from: 150000, to: 180050 } }, "tr")).toBe("price: ₺1.500 → ₺1.800,50")
+    expect(auditSummary({ revenue: 450000, expenses: 140000, participants: 12, feeAmount: { from: null, to: 5000 } }, "en")).toBe(
+      "revenue: ₺4,500 · expenses: ₺1,400 · participants: 12 · feeAmount: — → ₺50",
+    )
+    expect(auditSummary({ amount: 20000 }, "fa")).toContain("₺۲۰۰")
   })
 
   it("keeps the details readable and bounded", () => {
@@ -32,6 +57,23 @@ describe("audit data formatting", () => {
     expect(detail).toContain(`${"a".repeat(399)}…`)
     expect(detail).not.toContain("a".repeat(401))
     expect(auditDetail({ big: Array.from({ length: 200 }, () => "b".repeat(300)) }).length).toBeLessThanOrEqual(6000)
+  })
+})
+
+describe("search by label", () => {
+  it("maps what people see to the codes in the log", async () => {
+    const [en, fa, tr] = await Promise.all([labels("en"), labels("fa"), labels("tr")])
+    expect(codesByLabel("Transaction reversed", en.actions, "en")).toEqual(["money.reverse"])
+    expect(codesByLabel("  transaction REVERSED ", en.actions, "en")).toEqual(["money.reverse"])
+    expect(codesByLabel("برگرداندن تراکنش", fa.actions, "fa")).toEqual(["money.reverse"])
+    // With or without the half-space (ZWNJ) in "پیش‌پرداخت".
+    const advances = ["money.advance_paid", "money.advance_returned"]
+    expect(codesByLabel("پیش‌پرداخت", fa.actions, "fa")).toEqual(advances)
+    expect(codesByLabel("پیشپرداخت", fa.actions, "fa")).toEqual(advances)
+    expect(codesByLabel("İŞLEM TERS", tr.actions, "tr")).toEqual(["money.reverse"])
+    expect(codesByLabel("تراکنش", fa.entities, "fa")).toEqual(["ledger_transaction"])
+    expect(codesByLabel("Transaction reversed", fa.actions, "fa")).toEqual([])
+    expect(codesByLabel("   ", en.actions, "en")).toEqual([])
   })
 })
 
@@ -78,10 +120,11 @@ describe("listAudit", () => {
 
   // audit_log is append-only: these rows and their (inactive) admins stay in the test database.
 
-  const list = (sp: SearchParams, filters = { admin: [adminA, adminB], entity: [entity, other] }) =>
+  const list = (sp: SearchParams, filters = { admin: [adminA, adminB], entity: [entity, other] }, locale = "en") =>
     listAudit(
       parseTableParams(sp, { sort: auditTable.sort, defaultSort: "at", defaultDir: "desc", filters }),
       parseDateRange(sp),
+      locale,
     )
   const ids = (result: Awaited<ReturnType<typeof listAudit>>) => result.rows.map((r) => r.entityId)
 
@@ -110,6 +153,25 @@ describe("listAudit", () => {
     expect(ids(await list({ entity, q: "%_%" }))).toEqual([])
     expect(ids(await list({ entity, q: `Bora ${run}` }))).toEqual(["three"])
     expect(ids(await list({ entity, sort: "action", dir: "asc" }))).toEqual(["one", "three", "two"])
+  })
+
+  it("finds entries by the labels shown in the page's language", async () => {
+    const id = `rev-${run}`
+    await db.insert(auditLog).values({
+      adminId: adminA,
+      action: "money.reverse",
+      entity: "ledger_transaction",
+      entityId: id,
+      data: { reversalId: run },
+      at: new Date("2026-03-09T12:00:00Z"),
+    })
+    const day = { from: "2026-03-09", to: "2026-03-09" }
+    expect(ids(await list({ q: "Transaction reversed", ...day }))).toContain(id)
+    expect(ids(await list({ q: "برگرداندن تراکنش", ...day }, undefined, "fa"))).toContain(id)
+    expect(ids(await list({ q: "işlem ters", ...day }, undefined, "tr"))).toContain(id)
+    expect(ids(await list({ q: "Transaction reversed", ...day }, undefined, "fa"))).not.toContain(id)
+    // Labels add to the search; they do not narrow it.
+    expect(ids(await list({ q: "money.reverse", ...day }))).toContain(id)
   })
 
   it("offers every admin and every logged entity as filters", async () => {

@@ -1,5 +1,5 @@
 import "server-only"
-import { and, asc, count, desc, eq, gte, ilike, inArray, ne, or, sql, type SQL } from "drizzle-orm"
+import { and, asc, count, desc, eq, gte, ilike, inArray, isNotNull, isNull, ne, or, sql, type SQL } from "drizzle-orm"
 import { cache } from "react"
 
 import { likePattern, type TableParams } from "@/components/admin/data-table/params"
@@ -15,6 +15,7 @@ import {
   templates,
 } from "@/db/schema"
 import { requireAdmin } from "@/lib/auth/admin"
+import { errorForLog } from "@/lib/errors"
 import { getStorage, type Storage } from "@/lib/storage"
 import type { WorkshopView, workshopTable } from "./schema"
 
@@ -26,7 +27,7 @@ async function storage(): Promise<Storage | null> {
   try {
     return await getStorage()
   } catch (err) {
-    console.error("[workshops] storage unavailable", err)
+    console.error("[workshops] storage unavailable", errorForLog(err))
     return null
   }
 }
@@ -46,9 +47,16 @@ const confirmedCount = sql<number>`(select count(*)::int from ${registrations} w
 
 const active = ["awaiting_signature", "published", "confirmed"] as const
 
+/**
+ * A cancelled workshop stays in "cancelled" after its books are closed (status
+ * "cancelled", `closed_at` set). The `cancelled_at` checks are a fallback for
+ * older rows that were closed as status "closed" with `cancelled_at` kept.
+ */
 function viewCondition(view: WorkshopView): SQL | undefined {
   if (view === "all") return undefined
   if (view === "upcoming") return and(inArray(courses.status, [...active]), gte(courses.endsAt, sql`now()`))
+  if (view === "cancelled") return or(eq(courses.status, "cancelled"), isNotNull(courses.cancelledAt))
+  if (view === "closed") return and(eq(courses.status, "closed"), isNull(courses.cancelledAt))
   return eq(courses.status, view)
 }
 
@@ -85,6 +93,7 @@ export async function listWorkshops(params: TableParams<Sort, Filter>, locale: s
       .select({
         id: courses.id,
         status: courses.status,
+        cancelledAt: courses.cancelledAt,
         title: courses.title,
         coverPath: courses.coverPath,
         startsAt: courses.startsAt,
@@ -125,8 +134,8 @@ export async function countWorkshopViews(): Promise<Record<WorkshopView, number>
       awaiting_signature: sql<number>`count(*) filter (where ${courses.status} = 'awaiting_signature')::int`,
       published: sql<number>`count(*) filter (where ${courses.status} = 'published')::int`,
       confirmed: sql<number>`count(*) filter (where ${courses.status} = 'confirmed')::int`,
-      cancelled: sql<number>`count(*) filter (where ${courses.status} = 'cancelled')::int`,
-      closed: sql<number>`count(*) filter (where ${courses.status} = 'closed')::int`,
+      cancelled: sql<number>`count(*) filter (where ${viewCondition("cancelled")})::int`,
+      closed: sql<number>`count(*) filter (where ${viewCondition("closed")})::int`,
     })
     .from(courses)
   return row

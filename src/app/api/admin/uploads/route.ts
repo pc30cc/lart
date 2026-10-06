@@ -2,6 +2,7 @@ import { z } from "zod"
 
 import { audit } from "@/lib/audit"
 import { requireAdminApi } from "@/lib/auth/admin"
+import { errorForLog } from "@/lib/errors"
 import { getSetting } from "@/lib/settings"
 import { getStorage, StorageError } from "@/lib/storage"
 import { MultipartReader, multipartBoundary } from "@/lib/storage/multipart"
@@ -103,7 +104,7 @@ export async function POST(request: Request) {
     }
     if (error instanceof UploadError) return fail(error.code)
     if (error instanceof PartMismatch) return Response.json(error.received, { status: 409 })
-    console.error("[uploads]", error)
+    console.error("[uploads]", errorForLog(error))
     return fail(error instanceof StorageError ? "storage" : "server")
   } finally {
     await form.cancel()

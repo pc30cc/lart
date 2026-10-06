@@ -44,10 +44,12 @@ export function AdminBreadcrumbs() {
   if (!match) return null
 
   const deeper = pathname !== match.item.href
-  const crumbs: { label: string; href?: string }[] = [
-    { label: t(`nav.${match.group.label}`) },
-    { label: t(`nav.${match.item.label}`), href: deeper ? match.item.href : undefined },
-  ]
+  const groupLabel = t(`nav.${match.group.label}`)
+  const itemLabel = t(`nav.${match.item.label}`)
+  const crumbs: { label: string; href?: string }[] = []
+  // Never "Workshops › Workshops": skip the group when it reads like its item.
+  if (groupLabel !== itemLabel) crumbs.push({ label: groupLabel })
+  crumbs.push({ label: itemLabel, href: deeper ? match.item.href : undefined })
   if (deeper && pageTitle) crumbs.push({ label: pageTitle })
 
   return (

@@ -44,15 +44,18 @@ export default async function CategoriesPage({ searchParams }: PageProps<"/[loca
       key: "name",
       header: t("table.name"),
       sortable: true,
+      primary: true,
       cell: (row) => {
         const others = (["fa", "tr", "en"] as const)
           .filter((l) => l !== locale && row.name[l])
           .map((l) => row.name[l])
         return (
           <Link href={`/admin/categories/${row.id}`} className="group/name block min-w-0">
-            <span className="group-hover/name:text-primary font-medium transition-colors">{localized(row.name, locale)}</span>
+            <span className="group-hover/name:text-primary block truncate font-medium transition-colors">
+              {localized(row.name, locale)}
+            </span>
             {others.length > 0 && (
-              <span className="text-muted-foreground block max-w-72 truncate text-xs">{others.join(" · ")}</span>
+              <span className="text-muted-foreground block truncate text-xs">{others.join(" · ")}</span>
             )}
           </Link>
         )

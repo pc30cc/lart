@@ -38,7 +38,12 @@ const dateStyles = {
 
 export type DateStyle = keyof typeof dateStyles
 
-/** "14 Oct 2026" / "14 Eki 2026" / "۱۴ اکتبر ۲۰۲۶". `full` adds the weekday. */
+/**
+ * "14 Oct 2026" / "14 Eki 2026" / "۱۴ اکتبر ۲۰۲۶". `full` adds the weekday.
+ * The `full` text differs between ICU builds ("Tuesday, 20 October 2026" in
+ * Node, no comma in Chromium for en-GB): a client component that renders it
+ * during SSR must put `suppressHydrationWarning` on the element holding it.
+ */
 export function formatDate(value: DateInput, locale: string, style: DateStyle = "medium"): string {
   return dtf(locale, dateStyles[style]).format(toDate(value))
 }

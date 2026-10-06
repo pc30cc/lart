@@ -1,7 +1,7 @@
 "use client"
 
 import { BanIcon, CircleCheckBigIcon, MailIcon, PrinterIcon } from "lucide-react"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useTransition } from "react"
 import { toast } from "sonner"
 
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { resendContract } from "@/features/contracts/actions"
 import { cancelWorkshop, confirmWorkshop } from "@/features/workshops/actions"
+import { formatNumber } from "@/lib/format"
 
 /** Go decision: confirm the workshop (fixes the number of participants). */
 export function ConfirmWorkshopButton({
@@ -24,6 +25,7 @@ export function ConfirmWorkshopButton({
   minimum: number
 }) {
   const t = useTranslations("workshops.lifecycle")
+  const locale = useLocale()
   return (
     <ConfirmAction
       action={confirmWorkshop}
@@ -33,7 +35,11 @@ export function ConfirmWorkshopButton({
       description={
         <>
           {t("confirm.description", { count: confirmed })}
-          {confirmed < minimum && <span className="text-warning mt-2 block font-medium">{t("confirm.belowMinimum", { minimum })}</span>}
+          {confirmed < minimum && (
+            <span className="text-warning mt-2 block font-medium">
+              {t("confirm.belowMinimum", { minimum: formatNumber(minimum, locale) })}
+            </span>
+          )}
         </>
       }
       confirmLabel={t("confirm.action")}

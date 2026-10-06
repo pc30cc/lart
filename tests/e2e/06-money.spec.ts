@@ -282,11 +282,13 @@ test.describe.serial("money", () => {
     await expect(dialog).toContainText(lira(0))
     await dialog.getByRole("button", { name: "Close and lock" }).click()
     await expect(toast(page, "Workshop closed. The figures are locked.")).toBeVisible()
-    const course = await one<{ status: string; closed_totals: { netProfit: number; revenue: number } }>(
-      "select status, closed_totals from courses where id = $1",
+    // A cancelled workshop stays "cancelled" once its books are closed, with closed_at set.
+    const course = await one<{ status: string; closed_at: Date | null; closed_totals: { netProfit: number; revenue: number } }>(
+      "select status, closed_at, closed_totals from courses where id = $1",
       [id],
     )
-    expect(course.status).toBe("closed")
+    expect(course.status).toBe("cancelled")
+    expect(course.closed_at).not.toBeNull()
     expect(course.closed_totals).toMatchObject({ revenue: 0, netProfit: 0 })
 
     // Neither workshop waits on the wallet page any more.

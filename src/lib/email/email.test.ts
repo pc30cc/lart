@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { type EmailLocale, renderEmail } from "@/emails"
-import { type EmailProps, type EmailTemplate, emailTemplateNames } from "@/emails/templates"
+import { checkEmailText, type EmailLocale, renderEmail } from "@/emails"
+import { type EmailProps, type EmailTemplate, emailPlaceholders, emailTemplateNames } from "@/emails/templates"
 import { env } from "@/lib/env"
 import { getBrand } from "@/lib/settings"
 import en from "../../../messages/en/emails.json"
@@ -11,6 +11,16 @@ import { sendEmail, sender } from "./index"
 
 const send = vi.hoisted(() => vi.fn())
 vi.mock("resend", () => ({ Resend: class { emails = { send } } }))
+
+// The admin's email texts come from here, never from the shared test database (other files save some).
+const saved = vi.hoisted(() => ({ emailTexts: {} as Record<string, unknown> }))
+vi.mock("@/lib/settings", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/settings")>()
+  return {
+    ...actual,
+    getSetting: async (key: string) => (key === "emailTexts" ? saved.emailTexts : actual.getSetting(key as never)),
+  }
+})
 
 const site = new URL(env.APP_URL).origin
 const locales: EmailLocale[] = ["fa", "tr", "en"]
@@ -73,6 +83,7 @@ const flatKeys = (obj: object, prefix = ""): string[] =>
   )
 
 afterEach(() => {
+  saved.emailTexts = {}
   vi.restoreAllMocks()
   send.mockReset()
   env.RESEND_API_KEY = undefined
@@ -132,6 +143,10 @@ describe("renderEmail", () => {
     const email = await renderEmail("decision_due", samples.decision_due, "fa")
     expect(email.text).toContain("۴")
     expect(email.text).toContain("۶")
+    // The preview line (hidden preheader, first text in the inbox) too.
+    expect(email.html).toContain("۴ ثبت‌نام")
+    expect(email.html).toContain("حداقل لازم ۶ نفر")
+    expect(email.html).not.toMatch(/\b4 ثبت‌نام/)
   })
 
   it("says whether the minimum is reached", async () => {
@@ -154,6 +169,68 @@ describe("renderEmail", () => {
 
   it.each(["https://evil.example/verify", "//evil.example/x", "javascript:alert(1)"])("refuses the link %s", async (url) => {
     await expect(renderEmail("welcome_verify", { name: "Ayşe", verifyUrl: url }, "tr")).rejects.toThrow()
+  })
+})
+
+describe("edited texts (emailTexts setting)", () => {
+  it("lays the admin's texts over the default ones, only in their language", async () => {
+    saved.emailTexts = { workshop_reminder: { heading: { en: "See you soon, {name}!" }, note: { en: "Parking at {venue}." } } }
+    const en = await renderEmail("workshop_reminder", samples.workshop_reminder, "en")
+    expect(en.html).toContain("See you soon, Ayşe!")
+    expect(en.text).toContain("Parking at Kadıköy Sanat Evi.")
+    expect(en.subject).toBe(`See you soon at “Mum Yapımı”`)
+    const tr = await renderEmail("workshop_reminder", samples.workshop_reminder, "tr")
+    expect(tr.html).not.toContain("See you soon, Ayşe!")
+    // Other emails keep their texts.
+    expect((await renderEmail("password_reset", samples.password_reset, "en")).html).not.toContain("Parking")
+  })
+
+  it("previews unsaved texts instead of the saved ones", async () => {
+    saved.emailTexts = { workshop_reminder: { heading: { en: "Saved heading" } } }
+    const email = await renderEmail("workshop_reminder", samples.workshop_reminder, "en", { texts: { heading: { en: "Draft heading" } } })
+    expect(email.html).toContain("Draft heading")
+    expect(email.html).not.toContain("Saved heading")
+  })
+
+  it("sends the default texts, and logs it, when a saved text cannot be used", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {})
+    saved.emailTexts = { workshop_reminder: { subject: { en: "Tomorrow: {unknown}" } } }
+    const email = await renderEmail("workshop_reminder", samples.workshop_reminder, "en")
+    expect(email.subject).toBe(`See you soon at “Mum Yapımı”`)
+    expect(error.mock.calls.flat().join(" ")).toContain("workshop_reminder")
+    // A preview reports the problem instead.
+    await expect(
+      renderEmail("workshop_reminder", samples.workshop_reminder, "en", { texts: { subject: { en: "{unknown}" } } }),
+    ).rejects.toThrow()
+  })
+
+  it("lists each email's placeholders: its props, computed values and the brand", () => {
+    expect(emailPlaceholders("decision_due")).toEqual({
+      names: ["adminName", "workshopTitle", "registrations", "minimum", "decisionAt", "workshopUrl", "status", "brand"],
+      numbers: ["registrations", "minimum"],
+    })
+    expect(emailPlaceholders("password_reset").names).toEqual(["name", "resetUrl", "brand"])
+  })
+
+  it.each([
+    ["Hello {adminName}, welcome to {brand}", null],
+    ["{registrations, plural, one {# person} other {# people}} so far", null],
+    ["{status, select, reached {Yes} other {Not yet}}", null],
+    ["Hello {nme}", { problem: "placeholder", name: "nme" }],
+    ["Hello <b>{adminName}</b>", { problem: "placeholder", name: "b" }],
+    ["Hello {adminName", { problem: "syntax" }],
+    ["{workshopTitle, plural, one {#} other {#}}", { problem: "number" }],
+  ])("checks %s", (text, problem) => {
+    expect(checkEmailText("decision_due", text, "en")).toEqual(problem)
+  })
+
+  it("checks the bundled texts too", () => {
+    for (const template of emailTemplateNames) {
+      for (const locale of locales) {
+        const own = { fa, tr, en }[locale][template] as Record<string, string>
+        for (const [field, text] of Object.entries(own)) expect(checkEmailText(template, text, locale), `${template}.${field} ${locale}`).toBeNull()
+      }
+    }
   })
 })
 
