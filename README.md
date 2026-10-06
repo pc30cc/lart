@@ -166,6 +166,18 @@ After closing, admins upload the course photos and videos. The course then
 moves to an elegant **Past courses** section (gallery with lightbox, photos
 and video, course story), which also helps SEO.
 
+
+#### Watermark
+
+Every gallery photo is **watermarked automatically on upload**, before it is
+sent to the CDN (the original is kept private for admins only). In the
+super-admin settings:
+
+- **Watermark logo** (PNG with transparency) upload.
+- **Position**: any of the nine positions (corners, edges, centre) or tiled.
+- **Size** (percentage of the photo width), **opacity** and **margin**.
+- Live preview on a sample photo before saving.
+
 ## Shared wallet and accounting
 
 - One **shared wallet** for the whole business.
@@ -222,6 +234,7 @@ for example when a new design reference is given:
 | i18n | next-intl (fa, tr, en; RTL for Persian) |
 | Validation / forms | Zod, React Hook Form |
 | Contracts | PDF generation and e-signature with a signed audit record |
+| Image processing | sharp (resize, WebP/AVIF, watermark) |
 | Media | Bunny CDN or Cloudflare R2 for images and videos (plain CDN files, no streaming service) |
 | Email | Transactional email provider (e.g. Resend) |
 | Testing | Vitest, Playwright |
