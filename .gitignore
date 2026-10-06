@@ -43,3 +43,6 @@ next-env.d.ts
 
 # local media storage (development)
 /.data/
+
+# local end-to-end scratch
+.e2e
