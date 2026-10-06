@@ -5,6 +5,8 @@ part (workshop, date, times, venue, capacity, fee, advance payment) comes
 from the [contract fields](../README.md#contract-fields).
 
 - `{brand}` is the brand name from the super-admin settings.
+- `{decision_deadline}` is the workshop's go / no-go decision date and
+  time, filled in automatically.
 - The text is stored in the database as a template, editable by super
   admins, in Persian, Turkish and English.
 - Each signed contract keeps the exact text that was signed; later template
@@ -55,8 +57,8 @@ from the [contract fields](../README.md#contract-fields).
 
 1. Any additional cost may be paid only with {brand}'s prior written
    approval.
-2. Increasing the number of participants after the stated deadline requires
-   the instructor's approval.
+2. Increasing the number of participants after the go / no-go decision
+   time (`{decision_deadline}`) requires the instructor's approval.
 3. If the workshop takes place, a participant's absence or cancellation
    after the final number has been announced does not reduce the amount for
    that participant.
