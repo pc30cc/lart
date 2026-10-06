@@ -38,6 +38,11 @@ Nothing on the site is hard-coded. From the super-admin panel:
 
 ## Principles
 
+- **Security comes first, always.** Every feature is reviewed for security
+  before it ships. Details in [Security](#security).
+- **Minimal code.** No unnecessary code, dependencies or abstractions; the
+  simplest solution that is correct and secure wins.
+
 - **Three languages everywhere**: Persian (RTL), Turkish and English. Every
   menu, page, email and admin label is translated. The **default language can
   be changed** from the admin panel in one setting.
@@ -192,6 +197,32 @@ super-admin settings:
   - income and expense reports by period, class and instructor,
   - profit and loss, and per-partner settlement,
   - CSV / PDF export and an audit trail of who did what.
+
+## Security
+
+Security is the first requirement of every feature and is checked carefully
+before each release.
+
+- **Authentication**: separate logins and sessions for students,
+  instructors and super admins; passwords hashed with Argon2; mandatory 2FA
+  for super admins; login rate limiting and lockout.
+- **Authorization**: every request is checked on the server for role and
+  ownership; nothing is trusted from the browser.
+- **Input**: every input validated with Zod on the server; parameterized
+  queries only (Drizzle), no raw SQL from user input.
+- **Web protections**: CSRF protection, strict Content Security Policy,
+  secure HTTP-only SameSite cookies, HSTS and security headers.
+- **Uploads**: type and size checked, images re-encoded (removes hidden
+  content and metadata), random file names, no executable files.
+- **Payments**: gateway callbacks verified by signature; amounts always
+  taken from the server, never from the browser.
+- **Contracts and money**: signed contracts and ledger entries are never
+  edited, only reversed; a full audit log of admin actions.
+- **Secrets** only in environment variables (Coolify), never in the code.
+- **Data**: daily encrypted database backups; least-privilege database
+  user.
+- **Review**: dependency vulnerability scanning and a security review of
+  every change before deployment.
 
 ## Swappable landing theme
 
