@@ -15,6 +15,17 @@ The look and feel follows the owner's previous project,
 premium feel and an animated (video) hero, rebuilt for Lart in three
 languages.
 
+## Typography
+
+All fonts are **self-hosted** (served from the site / CDN, never from Google
+Fonts or any third party), subset and preloaded for speed.
+
+| Language | Font | Notes |
+| --- | --- | --- |
+| Persian | **IRANSans** | Persian digits, RTL; licensed web version |
+| Turkish | **Inter** | full Turkish set (ç ğ ı İ ö ş ü), excellent on screen |
+| English | **Inter** | same family as Turkish for a consistent look |
+
 ## Everything is editable
 
 Nothing on the site is hard-coded. From the super-admin panel:
@@ -66,16 +77,42 @@ stay in one place:
 - Shop sales go into the shared wallet and show up in the accounting
   reports.
 
-## Members
+## Three separate panels
 
-- Sign up and log in (email and password; social login optional).
-- Choose a class and register for it.
-- Personal dashboard: my registrations and their status.
+Each role has its own panel, its own login and its own session.
+
+### Student panel
+
+- Sign up and log in from the site.
+- Browse courses, choose a class and register.
+- My courses, registration status and payments.
+
+### Instructor panel
+
+- **No link to it anywhere on the site.** Instructors reach it only through
+  a private address sent to them; the page is `noindex` and excluded from
+  the sitemap.
+- Profile (photo, bio) in three languages.
+- My courses, participant lists and schedule.
+- My contracts: review and sign; my earnings per course.
+
+### Super-admin panel
+
+Described below; it has its own separate login as well.
 
 ## Super-admin panel
 
 A completely separate application area with its **own login**, not shared with
-site members.
+site members or instructors.
+
+**A premium dashboard with beautiful charts**: clean cards, smooth animated
+charts and a dark / light theme:
+
+- revenue, expenses and net profit over time,
+- registrations per course and fill rate,
+- profit per course and per instructor,
+- wallet balance and each partner's capital and share,
+- upcoming courses at a glance.
 
 - **Partners**: one to three super admins, who are also the business
   partners.
@@ -140,9 +177,11 @@ and video, course story), which also helps SEO.
 | --- | --- |
 | Framework | Next.js (App Router), React, TypeScript |
 | Styling / UI | Tailwind CSS, shadcn/ui, Framer Motion |
+| Charts | Recharts (via shadcn/ui charts) |
+| Fonts | Self-hosted with `next/font/local`: IRANSans, Inter |
 | Database | PostgreSQL |
 | ORM / migrations | Drizzle ORM |
-| Auth | Auth.js; separate sessions for members and super admins, 2FA for admins |
+| Auth | Auth.js; separate logins and sessions for students, instructors and super admins; 2FA for admins |
 | i18n | next-intl (fa, tr, en; RTL for Persian) |
 | Validation / forms | Zod, React Hook Form |
 | Contracts | PDF generation and e-signature with a signed audit record |
