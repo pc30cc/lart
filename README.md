@@ -87,6 +87,16 @@ Each role has its own panel, its own login and its own session.
 - Browse courses, choose a class and register.
 - My courses, registration status and payments.
 
+#### Terms and conditions at registration
+
+- Registering for a class requires ticking **"I have read and accept the
+  terms and conditions"**; registration is blocked until it is ticked.
+- Admins manage **terms templates** in the panel (three languages), one
+  marked as the **default**. Each course uses the default or a template
+  chosen for that course.
+- The accepted version and the time of acceptance are stored with the
+  registration as proof.
+
 ### Instructor panel
 
 - **No link to it anywhere on the site.** Instructors reach it only through
@@ -171,6 +181,33 @@ and video, course story), which also helps SEO.
   - profit and loss, and per-partner settlement,
   - CSV / PDF export and an audit trail of who did what.
 
+## Swappable landing theme
+
+The public landing site is built so its **theme can be replaced quickly**,
+for example when a new design reference is given:
+
+- **Data and logic are separate from design.** Content, courses, SEO and
+  forms live in a shared core; a theme only decides how they look.
+- A theme is one folder (`themes/<name>`) with its layout, sections and
+  design tokens (colours, fonts, spacing). The rest of the code never
+  changes when a theme is added.
+- Every home-page section (hero, latest workshops, instructors, past
+  courses, ...) has a fixed data contract, so a new theme just implements
+  the same sections in a new style.
+- The active theme is chosen in the super-admin settings.
+- Admin, instructor and student panels keep their own design and are not
+  affected by a theme change.
+
+## Build order
+
+1. **Super-admin panel first**: database, admin login, courses,
+   instructors, contracts, course finances, shared wallet and accounting,
+   settings, charts dashboard.
+2. Student and instructor panels.
+3. Public landing site on top of the theme system (first theme after the
+   throttlehaus.ca reference).
+4. Later phase: shop.
+
 ## Technology
 
 | Layer | Choice |
@@ -198,12 +235,13 @@ and video, course story), which also helps SEO.
 | `admins` | super admins / partners (separate login) |
 | `members` | site users |
 | `instructors` | photo, bio |
-| `courses` | class or workshop, instructor, dates, capacity, price, instructor fee type and amount, status, closed totals |
-| `registrations` | member ↔ course, status |
+| `courses` | class or workshop, terms template, instructor, dates, capacity, price, instructor fee type and amount, status, closed totals |
+| `registrations` | member ↔ course, status, accepted terms and time |
 | `contracts` | course ↔ instructor, terms, signature, signed date |
 | `translations` | text for fa / tr / en, keyed by entity and field |
 | `course_expenses` | expenses of a course, who paid |
 | `ledger_entries` | double-entry wallet accounting (contributions, expenses, income, payouts) |
 | `products`, `orders`, `order_items` | shop (later phase) |
 | `pages`, `sections` | editable pages, hero and home sections |
+| `terms` | terms and conditions templates, one default |
 | `media`, `faqs`, `settings` | gallery, FAQ, site settings incl. default language |
