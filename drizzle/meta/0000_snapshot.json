@@ -1,5 +1,5 @@
 {
-  "id": "78a885b2-94a9-4976-a7a2-4e2a12a989e8",
+  "id": "f06d35df-95d4-494e-a639-cf02640d07e5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -589,6 +589,12 @@
         "cover_path": {
           "name": "cover_path",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decision_notified_at": {
+          "name": "decision_notified_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },

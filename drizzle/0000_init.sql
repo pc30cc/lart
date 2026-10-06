@@ -88,6 +88,7 @@ CREATE TABLE "courses" (
 	"decision_at" timestamp with time zone NOT NULL,
 	"terms_template_id" uuid,
 	"cover_path" text,
+	"decision_notified_at" timestamp with time zone,
 	"final_participants" smallint,
 	"closed_totals" jsonb,
 	"published_at" timestamp with time zone,

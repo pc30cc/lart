@@ -1,6 +1,6 @@
 {
-  "id": "735e8c07-ee2b-4c9b-9234-e6e7a5f02e3a",
-  "prevId": "78a885b2-94a9-4976-a7a2-4e2a12a989e8",
+  "id": "5768ef31-7756-4dcd-8471-cd1dd9434f65",
+  "prevId": "f06d35df-95d4-494e-a639-cf02640d07e5",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -589,6 +589,12 @@
         "cover_path": {
           "name": "cover_path",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decision_notified_at": {
+          "name": "decision_notified_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },

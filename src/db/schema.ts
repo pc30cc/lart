@@ -177,6 +177,8 @@ export const courses = pgTable("courses", {
   /** Null means the default terms template. */
   termsTemplateId: uuid("terms_template_id").references(() => templates.id),
   coverPath: text("cover_path"),
+  /** When the admins were told the go / no-go decision is due. */
+  decisionNotifiedAt: timestamp("decision_notified_at", { withTimezone: true }),
   /** Fixed at the go decision; the per-participant fee is based on it. */
   finalParticipants: smallint("final_participants"),
   /** Locked figures written when the workshop is closed. */
