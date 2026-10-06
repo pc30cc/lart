@@ -114,6 +114,51 @@ Instructors and super admins each have their own panel and login.
 - The accepted version and the time of acceptance are stored with the
   registration as proof.
 
+##### Default terms: registration and cancellation
+
+The default template (shown in three languages; `{brand}` is the site name
+from settings):
+
+> Please read the workshop details and the terms below before registering.
+>
+> - Your registration is final once all steps are complete and you receive
+>   a confirmation message from {brand}.
+> - Cancel **72 hours or more** before the start: **full refund**.
+> - Cancel **between 72 and 24 hours** before the start: **50% refund**.
+> - **Less than 24 hours** before the start, or not attending: **no refund**.
+> - If you cannot attend, you may send someone else in your place before
+>   the start, in agreement with {brand}.
+> - If {brand} cancels the workshop, you get a full refund. If the date,
+>   venue or instructor changes, you can accept the new terms or receive a
+>   full refund.
+> - Refunds covered by these terms are made within five business days.
+>   Your statutory rights are not affected.
+> - Please arrive on time; late arrival does not change the end time.
+>
+> ☐ **I have read and accept the registration and cancellation terms.**
+> *(required to register)*
+
+The refund rules are applied automatically: when a participant cancels, the
+system calculates the refund (100 %, 50 % or 0 %) from the time left before
+the workshop starts, and the admin confirms it.
+
+##### Photo and video consent
+
+> Photos and videos may be taken during the workshop. The choices below are
+> only about publishing **identifiable** images of the participant on the
+> {brand} website and official pages, to present the activities of {brand}.
+> They are **optional** and do not affect registration or attendance.
+> Consent for the instructor's personal pages is not covered here.
+>
+> ☐ I agree to the publication of identifiable **photos** of the participant.
+> ☐ I agree to the publication of identifiable **videos** of the participant.
+>
+> If the participant is a child, a parent or legal guardian makes these
+> choices.
+
+Both choices are saved with the registration and shown to admins next to
+each participant, so the gallery team knows whose face may be published.
+
 ### Instructor panel
 
 - **No link to it anywhere on the site.** Instructors reach it only through
@@ -409,7 +454,7 @@ for example when a new design reference is given:
 | `members` | site users |
 | `instructors` | photo, bio |
 | `courses` | class or workshop, terms template, instructor, dates, capacity, price, instructor fee type and amount, status, closed totals |
-| `registrations` | member ↔ course, status, accepted terms and time |
+| `registrations` | member ↔ course, status, accepted terms and time, photo / video consent, refund |
 | `contracts` | course ↔ instructor, terms, signature, signed date |
 | `translations` | text for fa / tr / en, keyed by entity and field |
 | `course_expenses` | expenses of a course, who paid |
