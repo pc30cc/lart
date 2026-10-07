@@ -54,3 +54,22 @@ it. Do every step marked **required**.
       the workshop form. Every payment is then recorded by an admin in the
       workshop's registrations.
 - [ ] Money → partners: profit shares add up to 100 %.
+
+## Production (limer.tr), set up on 2026-10-07
+
+- Coolify on the `analyticsme.site` server: application **LimerLanding** (id 32,
+  Dockerfile build, port 3000, domains `limer.tr` and `www.limer.tr` behind
+  Cloudflare) and database **LimerPostgres** (PostgreSQL 18, internal only).
+- Environment variables, the `/app/.data` volume and the `pnpm jobs` task
+  (every 15 minutes) are set in Coolify. `RESEND_API_KEY` is **not set yet**:
+  until it is, no email is sent (invitations, email confirmation, password
+  reset). The brand setting is Limer / لیمر.
+- Done on the first deploy: migrations, `pnpm db:seed`, and
+  `pnpm contracts:encrypt` (dry run and run: 0 contracts, nothing to encrypt).
+- First super admin: in Coolify open LimerLanding → Terminal, then
+  `pnpm admin:create` (email, name, password of at least 12 characters, profit
+  share). Sign in at `https://limer.tr/fa/admin/login`.
+- **The server's CPU** is a generic `QEMU Virtual CPU 2.5+` without SSE4.1/4.2,
+  so sharp (image processing) cannot run there: photo uploads answer
+  "processing unavailable" until the VPS CPU type is changed (e.g. to "host")
+  or the app moves to a server with a modern CPU. Everything else works.
