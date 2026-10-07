@@ -60,25 +60,21 @@ it. Do every step marked **required**.
 
 ## Production (limer.tr)
 
-Moving on 2026-10-07 from `analyticsme.site` to the Coolify on **vps-50cc1602**
+Moved on 2026-10-07 from `analyticsme.site` to the Coolify on **vps-50cc1602**
 (`192.99.68.134`, Intel Haswell: sharp and photo uploads work there).
 
 - Project **Limer**: application **LimerLanding** (Dockerfile build, port 3000,
-  domains `limer.tr` and `www.limer.tr` behind Cloudflare) and database
-  **LimerPostgres** (PostgreSQL 18, internal only). GitHub App "Limer" (the
-  same app as on the old Coolify) gives access to `pc30cc/lart`.
+  domains `limer.tr` and `www.limer.tr` behind Cloudflare, health check on
+  `/` with curl) and database **LimerPostgres** (PostgreSQL 18, internal
+  only). GitHub App "Limer" (the same app as on the old Coolify) gives access
+  to `pc30cc/lart`.
 - Environment variables, the `/app/.data` volume and the `pnpm jobs` task
   (every 15 minutes) are set in Coolify. `ENCRYPTION_KEY` is the one from the
   first install (checked equal by hash after the move): never change it.
-  No email provider is set yet: until one is saved in Settings → Email (or
-  `RESEND_API_KEY` is set), no email is sent.
-- The database was moved with `pg_dump -Fc` / `pg_restore --no-owner`; the
-  old server keeps its copy until the move is confirmed.
-- Done on the first deploy: migrations, `pnpm db:seed`, and
-  `pnpm contracts:encrypt` (dry run and run: 0 contracts).
-- Cutover: point the Cloudflare A records of `limer.tr` and `www.limer.tr` to
-  `192.99.68.134` (proxied, SSL mode "Full" until the new server has its
-  certificate), then enable the `jobs` task here (created disabled, so
-  reminders are not sent twice) and stop LimerLanding on the old server. The GitHub App's webhook still points to the old
-  Coolify, so a push does not deploy here by itself: use the Deploy button
-  (or point the app's webhook to this Coolify).
+- Emails: choose the provider in Settings → Email (Resend or SMTP).
+- The database was moved with `pg_dump -Fc` / `pg_restore --no-owner`. On the
+  old server LimerLanding is stopped (auto-deploy and its task off); its
+  LimerPostgres still runs as a backup, with the dump in `/root/limer-move/`.
+- Deploys: the GitHub App's webhook must point to this Coolify
+  (`http://192.99.68.134:8000/webhooks/source/github/events`) for a push to
+  deploy here; otherwise use the Deploy button.
