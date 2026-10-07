@@ -88,26 +88,6 @@ export const settingSchemas = {
    * laid over messages/<locale>/emails.json when an email is rendered.
    */
   emailTexts: z.partialRecord(z.enum(emailTemplateNames), z.partialRecord(z.enum(emailTextFields), emailText)),
-  /**
-   * Online payment for workshop registrations. "none": no online payment;
-   * admins record payments by hand (cash, bank transfer). Keys are encrypted.
-   */
-  payment: z.discriminatedUnion("provider", [
-    z.object({ provider: z.literal("none") }),
-    z.object({
-      provider: z.literal("iyzico"),
-      mode: z.enum(["sandbox", "live"]),
-      apiKeyEnc: z.string().min(1),
-      secretKeyEnc: z.string().min(1),
-    }),
-    z.object({
-      provider: z.literal("paytr"),
-      mode: z.enum(["sandbox", "live"]),
-      merchantId: z.string().regex(/^\d{1,20}$/),
-      merchantKeyEnc: z.string().min(1),
-      merchantSaltEnc: z.string().min(1),
-    }),
-  ]),
 } as const
 
 export type SettingKey = keyof typeof settingSchemas
@@ -127,7 +107,6 @@ export const settingDefaults: { [K in SettingKey]: SettingValue<K> } = {
     marginPct: 3,
   },
   emailTexts: {},
-  payment: { provider: "none" },
 }
 
 const loadAll = cache(async () => {

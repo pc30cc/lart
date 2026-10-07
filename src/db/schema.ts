@@ -274,8 +274,8 @@ export const contracts = pgTable("contracts", {
 ])
 
 export const registrationStatus = pgEnum("registration_status", [
-  "pending", // awaiting payment
-  "confirmed", // paid
+  "pending", // registered, holds a seat, not paid yet
+  "confirmed", // registered and paid (payment recorded by an admin)
   "cancelled",
 ])
 
@@ -292,15 +292,11 @@ export const registrations = pgTable("registrations", {
   termsAcceptedAt: timestamp("terms_accepted_at", { withTimezone: true }).notNull(),
   photoConsent: boolean("photo_consent").notNull().default(false),
   videoConsent: boolean("video_consent").notNull().default(false),
-  /** A pending registration keeps its seat until then (online payment in progress). */
-  holdUntil: timestamp("hold_until", { withTimezone: true }),
   /**
-   * "iyzico", "paytr", "manual" (recorded by an admin: cash, bank transfer) or
-   * "test" (the simulated gateway, development and e2e only).
+   * How the payment was made: "cash" or "transfer" (recorded by an admin).
+   * Online payment comes in a later phase and will add its own values.
    */
-  paymentProvider: text("payment_provider"),
-  /** The gateway's id of the payment, needed for refunds. */
-  paymentRef: text("payment_ref"),
+  paymentMethod: text("payment_method"),
   paidAt: timestamp("paid_at", { withTimezone: true }),
   cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
   /** Owed back to the payer (set at cancellation); refunded_at once paid back. */
@@ -312,9 +308,8 @@ export const registrations = pgTable("registrations", {
 }, (t) => [
   index("registrations_course_idx").on(t.courseId, t.status),
   index("registrations_member_idx").on(t.memberId),
-  uniqueIndex("registrations_payment_ref").on(t.paymentProvider, t.paymentRef),
   check("registrations_amounts", sql`${t.amount} >= 0 and coalesce(${t.refundAmount}, 0) between 0 and ${t.amount}`),
-  check("registrations_provider", sql`${t.paymentProvider} in ('iyzico', 'paytr', 'manual', 'test')`),
+  check("registrations_payment_method", sql`${t.paymentMethod} in ('cash', 'transfer')`),
 ])
 
 export const mediaKind = pgEnum("media_kind", ["sample", "gallery_photo", "gallery_video"])
