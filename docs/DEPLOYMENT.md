@@ -55,21 +55,26 @@ it. Do every step marked **required**.
       workshop's registrations.
 - [ ] Money → partners: profit shares add up to 100 %.
 
-## Production (limer.tr), set up on 2026-10-07
+## Production (limer.tr)
 
-- Coolify on the `analyticsme.site` server: application **LimerLanding** (id 32,
-  Dockerfile build, port 3000, domains `limer.tr` and `www.limer.tr` behind
-  Cloudflare) and database **LimerPostgres** (PostgreSQL 18, internal only).
+Moving on 2026-10-07 from `analyticsme.site` to the Coolify on **vps-50cc1602**
+(`192.99.68.134`, Intel Haswell: sharp and photo uploads work there).
+
+- Project **Limer**: application **LimerLanding** (Dockerfile build, port 3000,
+  domains `limer.tr` and `www.limer.tr` behind Cloudflare) and database
+  **LimerPostgres** (PostgreSQL 18, internal only). GitHub App "Limer" (the
+  same app as on the old Coolify) gives access to `pc30cc/lart`.
 - Environment variables, the `/app/.data` volume and the `pnpm jobs` task
-  (every 15 minutes) are set in Coolify. `RESEND_API_KEY` is **not set yet**:
-  until it is, no email is sent (invitations, email confirmation, password
-  reset). The brand setting is Limer / لیمر.
+  (every 15 minutes) are set in Coolify. `ENCRYPTION_KEY` is the one from the
+  first install (checked equal by hash after the move): never change it.
+  `RESEND_API_KEY` is **not set yet**: until it is, no email is sent.
+- The database was moved with `pg_dump -Fc` / `pg_restore --no-owner`; the
+  old server keeps its copy until the move is confirmed.
 - Done on the first deploy: migrations, `pnpm db:seed`, and
-  `pnpm contracts:encrypt` (dry run and run: 0 contracts, nothing to encrypt).
-- First super admin: in Coolify open LimerLanding → Terminal, then
-  `pnpm admin:create` (email, name, password of at least 12 characters, profit
-  share). Sign in at `https://limer.tr/fa/admin/login`.
-- **The server's CPU** is a generic `QEMU Virtual CPU 2.5+` without SSE4.1/4.2,
-  so sharp (image processing) cannot run there: photo uploads answer
-  "processing unavailable" until the VPS CPU type is changed (e.g. to "host")
-  or the app moves to a server with a modern CPU. Everything else works.
+  `pnpm contracts:encrypt` (dry run and run: 0 contracts).
+- Cutover: point the Cloudflare A records of `limer.tr` and `www.limer.tr` to
+  `192.99.68.134` (proxied, SSL mode "Full" until the new server has its
+  certificate), then enable the `jobs` task here (created disabled, so
+  reminders are not sent twice) and stop LimerLanding on the old server. The GitHub App's webhook still points to the old
+  Coolify, so a push does not deploy here by itself: use the Deploy button
+  (or point the app's webhook to this Coolify).
