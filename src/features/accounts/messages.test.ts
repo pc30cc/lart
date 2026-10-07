@@ -53,6 +53,17 @@ describe("accounts messages", () => {
     }
   })
 
+  it("call a link «لینک» in Persian, as the emails do (not the formal «پیوند»)", async () => {
+    const fa = await load("fa")
+    expect(JSON.stringify(fa)).not.toMatch(/پیوند/)
+    expect(JSON.stringify(fa)).toMatch(/لینک/)
+  })
+
+  it("call creating an account «ساخت حساب» in Persian, apart from registering for a workshop («ثبت‌نام»)", async () => {
+    const { site } = await load("fa")
+    expect((site.header as Record<string, string>).logInOrSignUp).not.toMatch(/ثبت‌?نام/)
+  })
+
   it("have a text for every notice an action can leave", async () => {
     for (const locale of locales) {
       const { site } = await load(locale)

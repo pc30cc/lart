@@ -23,6 +23,9 @@
     "signedOut": "You’re logged out. See you soon!",
     "passwordSaved": "Your new password is saved, and you’re logged in."
   },
+  "error": {
+    "workshops": "See all workshops"
+  },
   "footer": {
     "rights": "© {year} {brand}"
   }

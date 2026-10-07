@@ -99,7 +99,7 @@ export function VerifyEmail({
       </span>
       <div className="space-y-2">
         <h2 className="text-xl font-semibold text-balance">{t("failedTitle")}</h2>
-        <p className="text-muted-foreground text-pretty">{t("failedText")}</p>
+        <p className="text-muted-foreground text-pretty">{t(signedIn ? "failedText" : "failedTextSignedOut")}</p>
       </div>
       {message && (
         <p role="status" className="bg-muted rounded-xl px-4 py-3 text-sm text-pretty">

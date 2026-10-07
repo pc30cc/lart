@@ -60,9 +60,7 @@ export function RegistrationCard({ registration: r, now }: { registration: MyReg
         </Fact>
         <div className="flex items-center gap-2">
           <dt className="text-muted-foreground text-sm">{t("item.amount")}:</dt>
-          <dd className="font-medium">
-            <Money value={r.amount} />
-          </dd>
+          <dd className="font-medium">{r.amount > 0 ? <Money value={r.amount} /> : t("price.free")}</dd>
         </div>
       </dl>
 
@@ -87,6 +85,7 @@ export function RegistrationCard({ registration: r, now }: { registration: MyReg
               id={r.id}
               participantName={r.participantName}
               preview={cancelPreview(r, r.course.startsAt, now)}
+              free={r.amount === 0}
             />
           </span>
         )}

@@ -8,6 +8,7 @@ import { paymentWays } from "@/emails/payment"
 import { requireMember } from "@/lib/auth/member"
 import { localized } from "@/lib/format"
 import { getSetting } from "@/lib/settings"
+import { workshopTerms } from "./public"
 import { safePaymentUrl } from "./schema"
 
 /**
@@ -81,12 +82,22 @@ export async function listMyRegistrations(locale: string) {
   return present(await selectMine(member.id), locale)
 }
 
-/** One of the member's registrations, or null (also for someone else's id). */
+/**
+ * One of the member's registrations, or null (also for someone else's id).
+ * `terms`: the registration terms of the template they accepted, in the page
+ * language, so the refund rule can still be read later.
+ */
 export async function getMyRegistration(id: string, locale: string) {
   const { member } = await requireMember()
   if (!z.uuid().safeParse(id).success) return null
   const [row] = await present(await selectMine(member.id, id), locale)
-  return row ?? null
+  if (!row) return null
+  const [accepted] = await db
+    .select({ templateId: registrations.termsTemplateId })
+    .from(registrations)
+    .where(and(eq(registrations.id, id), eq(registrations.memberId, member.id)))
+  const terms = accepted ? await workshopTerms(accepted.templateId, locale) : null
+  return { ...row, terms: terms?.text ?? null }
 }
 
 export type MyRegistration = Awaited<ReturnType<typeof listMyRegistrations>>[number]

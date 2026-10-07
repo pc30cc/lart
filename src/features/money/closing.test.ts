@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { db } from "@/db"
 import { admins, auditLog, ledgerLines, ledgerTransactions, registrations } from "@/db/schema"
+import { cancelRegistration, recordPayment } from "@/features/registrations/admin/payments"
 import { splitByShares } from "@/lib/money"
 import en from "../../../messages/en/money.json"
 import { closeWorkshop, payInstructor, recordAdvance, recordExpense, reverseEntry, updateShares } from "./actions"
@@ -405,6 +406,69 @@ describe("closing a workshop", () => {
     await db.transaction((tx) => postRegistrationRefund(tx, { registrationId: cancelled, amount: 25000, occurredOn: yesterday() }))
     await db.update(registrations).set({ refundedAt: new Date() }).where(eq(registrations.id, cancelled))
     expect((await prepareClosing(db, courseId))!.issues).toEqual([])
+  })
+
+  it("waits until every registration is paid or cancelled: a payment can't be booked once closed", async () => {
+    const courseId = await makeCourse(world, p1.id, { finalParticipants: 3, fee: { type: "per_participant", amount: 10000 } })
+    const online = await addRegistration(world, courseId)
+    await db.transaction((tx) => postRegistrationPayment(tx, { registrationId: online, occurredOn: yesterday() }))
+    // Paying cash at the workshop, and someone who didn't come.
+    const cash = await addRegistration(world, courseId, { status: "pending" })
+    const noShow = await addRegistration(world, courseId, { status: "pending" })
+
+    const preview = (await prepareClosing(db, courseId))!
+    expect(preview.issues).toEqual(["unpaidRegistrations"])
+    expect(preview.registrations).toMatchObject({ confirmed: 1, pending: 2, paid: 1, unpaid: 2 })
+    expect(await closeWorkshop(await previewOf(courseId))).toEqual({
+      ok: false,
+      error: expect.stringMatching(/^2 registrations are still not paid\./),
+    })
+
+    await db.transaction((tx) =>
+      recordPayment(tx, { registrationId: cash, method: "cash", amount: 50000, paidAt: new Date(), createdBy: p1.id }),
+    )
+    expect((await prepareClosing(db, courseId))!.issues).toEqual(["unpaidRegistrations"])
+    expect(await closeWorkshop(await previewOf(courseId))).toEqual({
+      ok: false,
+      error: expect.stringMatching(/^1 registration is still not paid\./),
+    })
+    await db.transaction((tx) => cancelRegistration(tx, { registrationId: noShow, refund: "terms" }))
+
+    const settled = (await prepareClosing(db, courseId))!
+    expect(settled.issues).toEqual([])
+    expect(settled.registrations).toMatchObject({ confirmed: 2, pending: 0, paid: 2, unpaid: 0, refundsOwed: 0 })
+    ok(await closeWorkshop(await previewOf(courseId)))
+    // The cash is in the result; the fee stays on the number fixed at the go decision.
+    expect((await courseRow(courseId)).closedTotals).toMatchObject({ revenue: 100000, instructorFee: 30000, participants: 3 })
+  })
+
+  it("never counts a free registration as paid or as still to pay", async () => {
+    const courseId = await makeCourse(world, p1.id, { fee: { type: "fixed", amount: 10000 } })
+    await addRegistration(world, courseId, { amount: 0 })
+    await addRegistration(world, courseId, { amount: 0 })
+    await addRegistration(world, courseId, { status: "pending", amount: 0 }) // doesn't happen: free is confirmed at once
+    const preview = (await prepareClosing(db, courseId))!
+    expect(preview.registrations).toMatchObject({ confirmed: 2, pending: 1, paid: 0, unpaid: 0 })
+    expect(preview.issues).toEqual([])
+  })
+
+  it("after the go decision, a cancelled place taken again keeps the fee's participants equal to who is registered", async () => {
+    // The go decision fixed 3 (registerForWorkshop then takes no one beyond 3: registrations/register.test.ts).
+    const courseId = await makeCourse(world, p1.id, { finalParticipants: 3, fee: { type: "per_participant", amount: 10000 } })
+    const regs = [await addRegistration(world, courseId), await addRegistration(world, courseId)]
+    const leaving = await addRegistration(world, courseId, { status: "pending" })
+    await db.transaction(async (tx) => {
+      for (const registrationId of regs) await postRegistrationPayment(tx, { registrationId, occurredOn: yesterday() })
+    })
+    // One gives up their place, and someone else takes it.
+    await db.transaction((tx) => cancelRegistration(tx, { registrationId: leaving, refund: "terms" }))
+    const refill = await addRegistration(world, courseId)
+    await db.transaction((tx) => postRegistrationPayment(tx, { registrationId: refill, occurredOn: yesterday() }))
+
+    const preview = (await prepareClosing(db, courseId))!
+    expect(preview.issues).toEqual([])
+    expect(preview.registrations).toMatchObject({ confirmed: 3, pending: 0, paid: 3 })
+    expect(preview.plan.figures).toMatchObject({ participants: 3, instructorFee: 30000, revenue: 150000 })
   })
 
   it("counts everyone registered, paid or not yet, until the go decision fixes the number", async () => {

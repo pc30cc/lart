@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { addMonths, change, fillMonths, fillRate, lastMonths, partOfDay, workshopAlert } from "./metrics"
+import { addMonths, change, fillMonths, fillRate, lastMonths, partOfDay, paymentNote, workshopAlert } from "./metrics"
 
 describe("dashboard metrics", () => {
   it("steps months across year ends", () => {
@@ -52,6 +52,15 @@ describe("dashboard metrics", () => {
     expect(workshopAlert({ ...base, decisionAt: at(100) }, now)).toBeNull()
     // Decided already: nothing to flag.
     expect(workshopAlert({ ...base, status: "confirmed", decisionAt: at(-10) }, now)).toBeNull()
+  })
+
+  it("says how many paid, or that a free workshop has nothing to pay", () => {
+    expect(paymentNote({ price: 15000, registered: 4, paid: 3 })).toEqual({ kind: "paid", count: 3 })
+    expect(paymentNote({ price: 15000, registered: 2, paid: 0 })).toEqual({ kind: "paid", count: 0 })
+    expect(paymentNote({ price: 15000, registered: 0, paid: 0 })).toBeNull()
+    // Free: registrations are confirmed at once with amount 0, never shown as paid.
+    expect(paymentNote({ price: 0, registered: 8, paid: 0 })).toEqual({ kind: "free" })
+    expect(paymentNote({ price: 0, registered: 0, paid: 0 })).toEqual({ kind: "free" })
   })
 
   it("greets by the time of day", () => {

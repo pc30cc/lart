@@ -32,12 +32,15 @@ export function CloseWorkshop({
   title,
   figures,
   issues,
+  unpaid,
   feeText,
 }: {
   courseId: string
   title: string
   figures: ClosingFigures
   issues: ClosingIssue[]
+  /** Registrations still to pay, for the "unpaidRegistrations" issue. */
+  unpaid: number
   /** How the fee is made up, e.g. "8 × ₺500". */
   feeText: string
 }) {
@@ -85,7 +88,7 @@ export function CloseWorkshop({
             <li key={issue} className="text-warning flex items-start gap-2 text-sm">
               <CircleAlertIcon className="mt-0.5 size-4 shrink-0" />
               <span className="text-pretty">
-                {t(`close.issues.${issue}`)}
+                {t(`close.issues.${issue}`, { count: unpaid })}
                 {issue === "sharesNot100" && (
                   <>
                     {" "}
@@ -99,6 +102,14 @@ export function CloseWorkshop({
                     {" "}
                     <Link href="/admin/money/refunds" className="font-medium underline underline-offset-3">
                       {t("close.openRefunds")}
+                    </Link>
+                  </>
+                )}
+                {issue === "unpaidRegistrations" && (
+                  <>
+                    {" "}
+                    <Link href={`/admin/workshops/${courseId}/registrations`} className="font-medium underline underline-offset-3">
+                      {t("close.openRegistrations")}
                     </Link>
                   </>
                 )}

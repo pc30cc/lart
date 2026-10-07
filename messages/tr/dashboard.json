@@ -108,6 +108,8 @@
     "now": "Şu anda sürüyor",
     "seats": "Dolu: {taken} / {max}",
     "paid": "{count, plural, =0 {Henüz ödeme yapan yok} other {# kişi ödedi}}",
+    "free": "Ücretsiz atölye",
+    "final": "{count, plural, other {Kesin sayı: # katılımcı}}",
     "notOpen": "Kayıtlar imzadan sonra açılır",
     "alerts": {
       "awaitingSignature": "Eğitmenin sözleşmeyi imzalaması bekleniyor",

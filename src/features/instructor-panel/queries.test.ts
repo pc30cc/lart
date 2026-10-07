@@ -271,6 +271,36 @@ describe("getMyEarnings", () => {
     expect(workshops.find((w) => w.id === without.course.id)).toBeUndefined()
   })
 
+  it("a workshop taken over from another instructor counts only what moved since this instructor's contract", async () => {
+    // The other instructor got an advance, spent part of it on costs and returned the rest.
+    const { course, contract } = await workshop(other)
+    const common = { occurredOn: today(), description: "", createdBy: adminId, courseId: course.id }
+    await db.transaction(async (tx) => {
+      await postAdvance(tx, { ...common, amount: 40_000, direction: "paid", source: "wallet" })
+      await postExpense(tx, { ...common, amount: 10_000, source: "advance" })
+      await postAdvance(tx, { ...common, amount: 30_000, direction: "returned", source: "wallet" })
+    })
+    // Then the workshop moved to Zeynep, who got an advance of her own.
+    await db.update(contracts).set({ status: "void", voidedAt: new Date() }).where(eq(contracts.id, contract.id))
+    await db.update(courses).set({ instructorId: zeynep }).where(eq(courses.id, course.id))
+    await db.insert(contracts).values({
+      courseId: course.id,
+      instructorId: zeynep,
+      version: 2,
+      templateId: contractTemplateId,
+      status: "signed",
+      feeType: "fixed",
+      feeAmount: 500_000,
+      sentAt: new Date(Date.now() + 1_000),
+    })
+    await new Promise((resolve) => setTimeout(resolve, 1_100))
+    await db.transaction((tx) => postAdvance(tx, { ...common, amount: 20_000, direction: "paid", source: "wallet" }))
+
+    as(zeynep)
+    const row = (await getMyEarnings()).workshops.find((w) => w.id === course.id)
+    expect(row).toMatchObject({ fee: 500_000, advancePaid: 20_000, advanceForCosts: 0, received: 20_000, owed: 480_000 })
+  })
+
   it("never includes someone else's workshops", async () => {
     const theirs = await workshop(other)
     as(zeynep)

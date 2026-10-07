@@ -8,12 +8,11 @@ import { DataTable, type Column } from "@/components/admin/data-table/data-table
 import { parseTableParams } from "@/components/admin/data-table/params"
 import { EmptyState } from "@/components/admin/empty-state"
 import { Money } from "@/components/admin/money"
-import { StatusBadge, type StatusTone } from "@/components/admin/status-badge"
 import { Button } from "@/components/ui/button"
 import { RegistrationActions } from "@/features/registrations/admin/components/dialogs"
+import { PaymentCell, refundOwed } from "@/features/registrations/admin/components/payment-cell"
 import { listWorkshopRegistrations, registrationSummary, type AdminRegistrationRow } from "@/features/registrations/admin/queries"
 import { paymentMethods, registrationTable, registrationViews, type PaymentMethod } from "@/features/registrations/admin/schema"
-import { paymentState, refundState } from "@/features/registrations/schema"
 import { getWorkshop } from "@/features/workshops/queries"
 import { isCancelled } from "@/features/workshops/schema"
 import { requireAdmin } from "@/lib/auth/admin"
@@ -21,11 +20,6 @@ import { formatDate, formatNumber, localized } from "@/lib/format"
 import { getSetting } from "@/lib/settings"
 import { cn } from "@/lib/utils"
 import { WorkshopHeader } from "../../_components/workshop-header"
-
-const tones = { unpaid: "warning", paid: "success", free: "success", cancelled: "neutral" } as const satisfies Record<
-  string,
-  StatusTone
->
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/admin/workshops/[id]/registrations">): Promise<Metadata> {
   const { id } = await params
@@ -36,7 +30,8 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/admin/wo
 
 /**
  * Who registered and whether they paid: totals, the list (filter, search,
- * CSV) and, per registration, "Record payment" and "Cancel registration".
+ * CSV) and, per registration, "Record payment" and "Cancel registration";
+ * on a cancelled, paid one not paid back yet, "Change refund".
  */
 export default async function WorkshopRegistrationsPage({
   params,
@@ -158,6 +153,7 @@ export default async function WorkshopRegistrationsPage({
                   memberName: r.member.name,
                   status: r.status,
                   amount: r.amount,
+                  refundOwed: refundOwed(r),
                 }}
                 startsAt={startsAt}
                 defaultMethod={defaultMethod}
@@ -256,37 +252,6 @@ export default async function WorkshopRegistrationsPage({
         </div>
       )}
     </>
-  )
-}
-
-type Translate = (key: string, values?: Record<string, string | number>) => string
-
-/** "Not paid yet" / "Paid · Cash · 3 Oct" / "Free" / "Cancelled" with its refund. */
-function PaymentCell({ row: r, t, locale }: { row: AdminRegistrationRow; t: Translate; locale: string }) {
-  const state = paymentState(r)
-  const refund = state === "cancelled" ? refundState(r) : "none"
-  return (
-    <span className="flex flex-col items-start gap-1">
-      <StatusBadge tone={tones[state]}>{t(`state.${state}`)}</StatusBadge>
-      {state === "paid" && r.paidAt && (
-        <span className="text-muted-foreground text-xs whitespace-nowrap">
-          {t("state.paidVia", { method: r.paymentMethod ?? "other", date: formatDate(r.paidAt, locale, "medium") })}
-        </span>
-      )}
-      {refund === "due" && (
-        <span className="text-info text-xs whitespace-nowrap">
-          {t("state.refundOwed")} <Money value={r.refundAmount ?? 0} />
-        </span>
-      )}
-      {refund === "sent" && r.refundedAt && (
-        <span className="text-muted-foreground text-xs whitespace-nowrap">
-          {t("state.refundSent", { date: formatDate(r.refundedAt, locale, "medium") })} <Money value={r.refundAmount ?? 0} />
-        </span>
-      )}
-      {state === "cancelled" && refund === "none" && r.paidAt && (
-        <span className="text-muted-foreground text-xs">{t("state.noRefund")}</span>
-      )}
-    </span>
   )
 }
 

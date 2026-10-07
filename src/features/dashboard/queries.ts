@@ -15,7 +15,7 @@ import {
 import { partnerCapitals, walletBalance } from "@/features/money/ledger"
 import { requireAdmin } from "@/lib/auth/admin"
 import { zonedParts, zonedToIso } from "@/lib/format"
-import { addMonths, change, fillMonths, fillRate, lastMonths, workshopAlert } from "./metrics"
+import { addMonths, change, fillMonths, fillRate, lastMonths, paymentNote, workshopAlert } from "./metrics"
 
 /**
  * Everything the dashboard shows, in a handful of SQL aggregates.
@@ -50,14 +50,21 @@ const total = (expr: unknown, cond: SQL | undefined) => sql<number>`coalesce(sum
 /** The outer query's course id, qualified by hand (see the Drizzle note in docs/DEVELOPMENT.md). */
 const courseId = sql`${courses}.${sql.identifier(courses.id.name)}`
 /**
- * Registrations of the course in the outer query: "registered" means every
+ * Registrations of the course in the outer query. "Registered" means every
  * active one, paid ("confirmed") or not paid yet ("pending"), as the seats
- * left on the site and the go decision count them; "paid" only the paid ones.
+ * left on the site and the admin's fill columns count them: the upcoming
+ * meters use it, live, also after the go decision. "Paid" means confirmed
+ * with an amount above 0, as on the registrations tab: a free registration
+ * (confirmed at once, amount 0) is not counted as paid.
  */
 const registeredCount = sql<number>`(select count(*) from ${registrations} r where r.course_id = ${courseId} and r.status in ('pending', 'confirmed'))`.mapWith(Number)
-const paidCount = sql<number>`(select count(*) from ${registrations} r where r.course_id = ${courseId} and r.status = 'confirmed')`.mapWith(Number)
+const paidCount = sql<number>`(select count(*) from ${registrations} r where r.course_id = ${courseId} and r.status = 'confirmed' and r.amount > 0)`.mapWith(Number)
 
-/** Participants of a workshop: locked at closing, fixed at the go decision, otherwise everyone registered (paid or not yet). */
+/**
+ * Participants of a workshop that took place (the held figures): locked at
+ * closing, fixed at the go decision, otherwise everyone registered (paid or
+ * not yet). Upcoming workshops use the live registered count instead.
+ */
 function participants(registered: unknown) {
   return sql<number>`case
     when ${courses.status} = 'closed' then coalesce((${courses.closedTotals}->>'participants')::int, 0)
@@ -109,6 +116,7 @@ async function summary(exec: Exec, now: Date, windowStart: Date) {
     .from(registrations)
     .groupBy(registrations.courseId)
     .as("regs")
+  /** Held workshops: the participant figure (locked or fixed at the go decision). */
   const taken = participants(regs.registered)
   const upcoming = and(inArray(courses.status, active), gte(courses.endsAt, now))
   const open = and(upcoming, ne(courses.status, "awaiting_signature"))
@@ -119,7 +127,8 @@ async function summary(exec: Exec, now: Date, windowStart: Date) {
       workshops: count(),
       upcoming: n(upcoming),
       upcomingSeats: total(courses.maxCapacity, open),
-      upcomingTaken: total(taken, open),
+      // Live, as the upcoming meters and the seats left on the site.
+      upcomingTaken: total(sql`coalesce(${regs.registered}, 0)`, open),
       held: n(held),
       heldSeats: total(courses.maxCapacity, held),
       heldTaken: total(taken, held),
@@ -149,9 +158,13 @@ function upcomingWorkshops(exec: Exec, now: Date) {
       decisionAt: courses.decisionAt,
       minCapacity: courses.minCapacity,
       maxCapacity: courses.maxCapacity,
-      registered: participants(registeredCount).mapWith(Number),
-      /** Of those registered now, how many have paid. */
+      /** Everyone registered now, paid or not yet (also after the go decision). */
+      registered: registeredCount,
+      /** Of those registered now, how many have paid (a free workshop: none). */
       paid: paidCount,
+      price: courses.price,
+      /** The number fixed at the go decision (confirmed workshops), or null. */
+      finalParticipants: courses.finalParticipants,
       instructor: instructors.displayName,
     })
     .from(courses)
@@ -250,7 +263,12 @@ export async function getDashboard(now: Date = new Date(), exec: Exec = db) {
   const figures = fillMonths(months, monthRows)
   const [lastMonth, thisMonth] = figures.slice(-2)
   const year = today.slice(0, 4)
-  const upcoming = upcomingRows.map((w) => ({ ...w, running: w.startsAt <= now, alert: workshopAlert(w, now) }))
+  const upcoming = upcomingRows.map((w) => ({
+    ...w,
+    running: w.startsAt <= now,
+    alert: workshopAlert(w, now),
+    payment: paymentNote(w),
+  }))
 
   return {
     today,

@@ -104,7 +104,9 @@ export const createInstructor = adminAction(instructorSchema, async ({ idNumber,
   if (!idNumber) throw new UserError("common.validation.required", { field: "idNumber" })
   const uiLocale = await getLocale()
   const locale = inviteLocale ?? inviteLocales.find((l) => l === uiLocale) ?? "tr"
-  const values = { ...input, bio: emptyToNull(input.bio), idNumberEnc: encrypt(idNumber) }
+  // The invitation's language is also the instructor's until they choose one (accepting, panel switch):
+  // emails sent before they accept, such as `contract_ready`, go out in it.
+  const values = { ...input, bio: emptyToNull(input.bio), idNumberEnc: encrypt(idNumber), locale }
 
   const { id, token } = await db
     .transaction(async (tx) => {
@@ -240,6 +242,8 @@ export const resendInvite = adminAction(resendInviteSchema, async ({ id, locale 
     if (!row) throw notFound()
     if (!row.active) throw new UserError("instructors.errors.inviteInactive")
     if (row.passwordHash) throw new UserError("instructors.errors.alreadySetUp")
+    // Not accepted yet, so they have not chosen a language themselves: use the invitation's.
+    await tx.update(instructors).set({ locale, updatedAt: sql`now()` }).where(eq(instructors.id, id))
     return { token: await issueInvite(tx, id), email: row.email, displayName: row.displayName }
   })
 

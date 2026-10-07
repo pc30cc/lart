@@ -9,9 +9,11 @@ import { cancelWorkshop } from "@/features/workshops/actions"
 import { addRegistration, createAdmin, createCategory, createInstructor, createMember, createTermsTemplate, runId } from "@/features/workshops/test-fixtures"
 import { getSetting, setSetting, type SettingValue } from "@/lib/settings"
 import { cleanIban, ibanChecksumOk, ibanProblem } from "@/features/settings/payments"
-import { cancelRegistrationAction, markRefundedAction, recordPaymentAction, savePaymentSettings } from "./actions"
-import { listRefunds, listWorkshopRegistrations, registrationSummary } from "./queries"
-import { refundTable, registrationTable } from "./schema"
+import { cancelMyRegistration } from "@/features/registrations/register"
+import { cancelRegistrationAction, markRefundedAction, recordPaymentAction, savePaymentSettings, setRefundAction } from "./actions"
+import { sharePercent } from "./notify"
+import { countRegistrationViews, listRefunds, listRegistrations, listWorkshopRegistrations, registrationSummary } from "./queries"
+import { allRegistrationsTable, refundTable, registrationTable } from "./schema"
 
 vi.mock("next-intl/server", async () => {
   const { createTranslator } = await import("next-intl")
@@ -37,7 +39,8 @@ vi.mock("@/lib/auth/admin", () => ({ requireAdmin: async () => session, getAdmin
 
 const run = runId()
 const HOUR = 3_600_000
-const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date())
+const dayOf = (at: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(at)
+const today = () => dayOf(new Date())
 let refs: { categoryId: string; instructorId: string; termsId: string }
 
 beforeAll(async () => {
@@ -278,6 +281,24 @@ describe("refunds", () => {
     expect(done.rows.map((x) => x.id)).toEqual([r.id])
   })
 
+  it("refuses a refund dated before the day it was paid, and takes one dated that same day", async () => {
+    const w = await workshop()
+    const person = await member()
+    const r = await register(w.id, person.id)
+    await pay(r.id)
+    await cancelRegistrationAction({ id: r.id, refund: "full" })
+
+    const yesterday = dayOf(new Date(Date.now() - 24 * HOUR))
+    const refused = await markRefundedAction({ id: r.id, method: "transfer", refundedOn: yesterday })
+    expect(refused).toMatchObject({ ok: false, fieldErrors: { refundedOn: expect.any(String) } })
+    expect(await lastAudit(r.id)).toMatchObject({ action: "registration.cancel" })
+    expect((await ledgerOf(r.id)).map((t) => t.kind)).toEqual(["registration_payment"])
+    expect(await registration(r.id)).toMatchObject({ refundedAt: null })
+
+    expect(await markRefundedAction({ id: r.id, method: "transfer", refundedOn: today() })).toMatchObject({ ok: true })
+    expect((await ledgerOf(r.id)).map((t) => t.kind).sort()).toEqual(["registration_payment", "registration_refund"])
+  })
+
   it("refuses to pay back what is not owed", async () => {
     const w = await workshop()
     const person = await member()
@@ -319,6 +340,101 @@ describe("refunds", () => {
   })
 })
 
+describe("change refund", () => {
+  it("raises a member's 50 % cancellation to a full refund, audited, and the member is told; then it is paid back in full", async () => {
+    const w = await workshop(30)
+    const person = await member("en", "Deniz")
+    const r = await register(w.id, person.id)
+    await pay(r.id)
+    // The member cancels on the site 30 hours before the start: 50 % under the terms.
+    expect(await cancelMyRegistration(person.id, r.id)).toMatchObject({ refund: 75_000 })
+    sendEmail.mockClear()
+
+    expect(await setRefundAction({ id: r.id, amount: 150_000 })).toEqual({ ok: true, data: { id: r.id, amount: 150_000, changed: true } })
+    await Promise.all(background)
+    expect(await registration(r.id)).toMatchObject({ status: "cancelled", refundAmount: 150_000, refundedAt: null })
+    expect(await lastAudit(r.id)).toMatchObject({
+      action: "registration.refundChange",
+      entity: "registration",
+      adminId: session.admin.id,
+      data: { courseId: w.id, paid: 150_000, from: 75_000, to: 150_000 },
+    })
+    const [mail] = emails("registration_cancelled")
+    expect(mail).toMatchObject({
+      to: person.email,
+      locale: "en",
+      idempotencyKey: `registration_cancelled:${r.id}:refund:75000:150000`,
+      props: { refundPercent: 100, byUs: true, refundAmount: "₺1,500" },
+    })
+    // A refund was owed already: no new "a refund needs paying" to the admins.
+    expect(emails("refund_due")).toHaveLength(0)
+
+    // The same amount again: nothing changes, nothing is sent.
+    sendEmail.mockClear()
+    expect(await setRefundAction({ id: r.id, amount: 150_000 })).toEqual({ ok: true, data: { id: r.id, amount: 150_000, changed: false } })
+    await Promise.all(background)
+    expect(sendEmail).not.toHaveBeenCalled()
+
+    expect(await markRefundedAction({ id: r.id, method: "transfer", refundedOn: today() })).toEqual({ ok: true, data: { id: r.id, amount: 150_000 } })
+    const refund = (await ledgerOf(r.id)).find((t) => t.kind === "registration_refund")
+    expect(await walletOf(refund!.id)).toBe(-150_000)
+
+    // Paid back: it can't change any more.
+    expect(await setRefundAction({ id: r.id, amount: 0 })).toMatchObject({
+      ok: false,
+      error: "This refund is already marked as paid back. Nothing more to do.",
+    })
+  })
+
+  it("gives a 0 % cancellation a refund, which then shows in the refunds list and tells the admins", async () => {
+    const w = await workshop(10)
+    const person = await member("tr", "Ece")
+    const r = await register(w.id, person.id)
+    await pay(r.id)
+    await cancelRegistrationAction({ id: r.id, refund: "terms" })
+    expect(await registration(r.id)).toMatchObject({ refundAmount: 0 })
+    await Promise.all(background)
+    sendEmail.mockClear()
+
+    expect(await setRefundAction({ id: r.id, amount: 100_000 })).toMatchObject({ ok: true, data: { amount: 100_000, changed: true } })
+    await Promise.all(background)
+    expect(emails("registration_cancelled")[0]).toMatchObject({ to: person.email, props: { refundPercent: 66, byUs: true } })
+    expect(emails("refund_due").length).toBeGreaterThan(0)
+    expect(emails("refund_due")[0]).toMatchObject({ props: { amount: expect.stringContaining("1.000") } })
+    const owed = await listRefunds(parseTableParams({ q: person.email }, { sort: refundTable.sort, defaultSort: "cancelledAt", filters: refundTable.filters }))
+    expect(owed.rows.map((x) => [x.id, x.refundAmount])).toEqual([[r.id, 100_000]])
+  })
+
+  it("refuses more than was paid, an unpaid or active registration, and invalid input", async () => {
+    const w = await workshop()
+    const person = await member()
+    const paid = await register(w.id, person.id)
+    await pay(paid.id)
+    expect(await setRefundAction({ id: paid.id, amount: 150_000 })).toMatchObject({ ok: false, error: "Nothing is owed back on this registration." })
+    await cancelRegistrationAction({ id: paid.id, refund: "terms" })
+    expect(await setRefundAction({ id: paid.id, amount: 150_001 })).toMatchObject({
+      ok: false,
+      fieldErrors: { amount: "That is more than was paid for this registration and not yet refunded." },
+    })
+    expect(await setRefundAction({ id: paid.id, amount: -1 })).toMatchObject({ ok: false, fieldErrors: { amount: expect.any(String) } })
+    expect(await registration(paid.id)).toMatchObject({ refundAmount: 150_000 })
+
+    const unpaid = await register(w.id, person.id)
+    await cancelRegistrationAction({ id: unpaid.id, refund: "full" })
+    expect(await setRefundAction({ id: unpaid.id, amount: 0 })).toMatchObject({ ok: false, error: "Nothing is owed back on this registration." })
+    expect(await registration(unpaid.id)).toMatchObject({ refundAmount: 0 })
+    expect(await setRefundAction({ id: randomUUID(), amount: 0 })).toMatchObject({ ok: false, error: expect.stringContaining("couldn’t find") })
+  })
+
+  it("words the share of the payment for the email", () => {
+    expect(sharePercent(150_000, 150_000)).toBe(100)
+    expect(sharePercent(149_999, 150_000)).toBe(99)
+    expect(sharePercent(75_000, 150_000)).toBe(50)
+    expect(sharePercent(1, 150_000)).toBe(1)
+    expect(sharePercent(0, 150_000)).toBe(0)
+  })
+})
+
 describe("registrations list", () => {
   it("filters by payment and adds up the totals", async () => {
     const w = await workshop()
@@ -343,6 +459,40 @@ describe("registrations list", () => {
       cancelled: 1,
       refundsOwed: 0,
     })
+  })
+})
+
+describe("registrations of all workshops", () => {
+  it("shows the unpaid ones by default and finds a member's registrations by email across workshops", async () => {
+    const [w1, w2] = [await workshop(), await workshop(20 * 24)]
+    const person = await member("tr", "Gizem")
+    const other = await member("tr", "Başka")
+    const a = await register(w1.id, person.id)
+    const b = await register(w2.id, person.id)
+    const c = await register(w2.id, person.id)
+    const d = await register(w1.id, other.id)
+    await pay(b.id)
+    await cancelRegistrationAction({ id: c.id, refund: "terms" })
+
+    const params = (query: Record<string, string>) =>
+      parseTableParams(query, { sort: allRegistrationsTable.sort, defaultSort: "createdAt", filters: allRegistrationsTable.filters })
+    const unpaid = await listRegistrations(params({ q: person.email }))
+    expect(unpaid.view).toBe("unpaid")
+    expect(unpaid.rows.map((r) => r.id)).toEqual([a.id])
+    expect(unpaid.rows[0]).toMatchObject({ member: { email: person.email }, course: { id: w1.id, slug: w1.slug, closedAt: null } })
+
+    const all = await listRegistrations(params({ q: person.email, view: "all", sort: "workshop" }))
+    expect(all.total).toBe(3)
+    expect(all.rows.map((r) => r.course.id)).toEqual([w1.id, w2.id, w2.id])
+    expect((await listRegistrations(params({ q: person.email, view: "paid" }))).rows.map((r) => r.id)).toEqual([b.id])
+    expect((await listRegistrations(params({ q: person.email, view: "cancelled" }))).rows.map((r) => r.id)).toEqual([c.id])
+    // The participant's name, as written in a bank transfer's description, finds it too.
+    await db.update(registrations).set({ participantName: `Deniz ${run}` }).where(eq(registrations.id, d.id))
+    expect((await listRegistrations(params({ q: `deniz ${run}` }))).rows.map((r) => r.id)).toEqual([d.id])
+
+    const counts = await countRegistrationViews()
+    expect(counts.all).toBeGreaterThanOrEqual(4)
+    expect(counts.unpaid + counts.paid + counts.cancelled).toBe(counts.all)
   })
 })
 

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test"
 
 /**
- * End-to-end tests of the super-admin panel against a running production build.
+ * End-to-end tests of the app (admin panel, instructor panel, public site) against a running production build.
  *
  *   pnpm build
  *   node tests/e2e/helpers/mail-sink.mjs .e2e/mail.jsonl 3199 &      # fake Resend API: emails land in .e2e/mail.jsonl
@@ -14,11 +14,17 @@ import { defineConfig, devices } from "@playwright/test"
  * migrations, the seed (default templates) and the super admin
  * owner@lart.test / Correct-Horse-Battery-9 (share 100 %).
  *
- * The specs run in order (01 → 09) and build on each other's data, so they use
- * one worker. Every run uses a fresh suffix (E2E_RUN) for names, emails and
+ * The specs run in order and build on each other's data, so they use one
+ * worker: 01 → 09 the super-admin panel (phase 1), 10 → 15 phase 2 (payment
+ * settings, instructors and their panel, students and registrations, admin
+ * payments / refunds / reminders, security probes, screenshots). Spec 13 runs
+ * `scripts/jobs.ts` with the server's environment (lart_e2e, the mail sink as
+ * Resend) and moves workshop D closer by SQL (the form only takes later
+ * dates). Every run uses a fresh suffix (E2E_RUN) for names, emails and
  * slugs, so the suite can run again on the same database. Screenshots go to
- * .e2e/screens/<page>-<locale>-<theme>-<size>.png, browser errors of every
- * page to .e2e/problems.jsonl.
+ * .e2e/screens/<page>-<locale>-<theme>-<size>.png (phase 2: p2-…), browser
+ * errors of every page to .e2e/problems.jsonl, the phase-2 members' and
+ * instructors' sessions to .e2e/p2-session-<who>.json.
  */
 process.env.E2E_RUN ||= Date.now().toString(36).slice(-5)
 

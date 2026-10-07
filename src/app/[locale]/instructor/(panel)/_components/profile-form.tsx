@@ -25,6 +25,13 @@ export type EditableProfile = {
 
 const texts = (t: LocalizedText | null | undefined) => ({ fa: t?.fa ?? "", tr: t?.tr ?? "", en: t?.en ?? "" })
 
+/**
+ * Big, phone-friendly controls (44px inputs, 16px text, taller language tabs)
+ * on each field, not on the whole section: that would also reach the photo's
+ * hidden file input. `!` because TabsList sets its height twice.
+ */
+const big = "[&_input]:h-11 [&_input]:text-base [&_textarea]:text-base [&_[data-slot=tabs-list]]:h-10!"
+
 /** The instructor's public profile: what visitors of the site will see. */
 export function ProfileForm({ profile }: { profile: EditableProfile }) {
   const t = useTranslations("instructorPanel.profile")
@@ -47,15 +54,13 @@ export function ProfileForm({ profile }: { profile: EditableProfile }) {
   return (
     <Form form={form} onSubmit={submit}>
       <FormSection title={t("public.title")} description={t("public.description")}>
-        <FormField<ProfileValues> name="photoPath" label={t("fields.photo")} description={t("fields.photoHint")}>
-          {(field) => <PhotoField {...field} previewUrl={profile.photoUrl} />}
-        </FormField>
         <LocalizedInput
           name="displayName"
           label={t("fields.displayName")}
           description={t("fields.displayNameHint")}
           required={["tr", "en"]}
           maxLength={80}
+          className={big}
         />
         <LocalizedInput
           name="teachingField"
@@ -63,12 +68,24 @@ export function ProfileForm({ profile }: { profile: EditableProfile }) {
           description={t("fields.teachingFieldHint")}
           required={["tr", "en"]}
           maxLength={80}
+          className={big}
         />
-        <LocalizedTextarea name="bio" label={t("fields.bio")} description={t("fields.bioHint")} maxLength={600} rows={5} />
+        <FormField<ProfileValues> name="photoPath" label={t("fields.photo")} description={t("fields.photoHint")}>
+          {(field) => <PhotoField {...field} previewUrl={profile.photoUrl} />}
+        </FormField>
+        <LocalizedTextarea
+          name="bio"
+          label={t("fields.bio")}
+          description={t("fields.bioHint")}
+          maxLength={600}
+          rows={5}
+          className={big}
+        />
         <FormField<ProfileValues>
           name="teachingLanguages"
           label={t("fields.teachingLanguages")}
           description={t("fields.teachingLanguagesHint")}
+          className="[&_[role=combobox]]:h-11 [&_[role=combobox]]:text-base"
         >
           {(field) => <LanguagePicker {...field} />}
         </FormField>
@@ -82,7 +99,7 @@ export function ProfileForm({ profile }: { profile: EditableProfile }) {
           placeholder="https://"
           dir="ltr"
           maxLength={300}
-          className="[&_input]:h-11 [&_input]:text-base"
+          className={big}
         />
       </FormSection>
       <FormActions className="border-t-0 pt-0">

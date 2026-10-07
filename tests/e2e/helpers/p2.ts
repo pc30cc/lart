@@ -1,10 +1,10 @@
 import fs from "node:fs"
 import path from "node:path"
 
-import type { Browser, BrowserContext, Page } from "@playwright/test"
+import type { APIRequestContext, Browser, BrowserContext, Page } from "@playwright/test"
 import { createTranslator } from "next-intl"
 
-import { E2E_DIR, emailsSince, expect, RUN, type SentEmail } from "./app"
+import { chooseSelect, E2E_DIR, emailsSince, expect, field, fillDateTime, fillLocalized, istanbulDate, PROBLEMS_FILE, RUN, RUN_NAME, test, toast, type Problem, type SentEmail } from "./app"
 import { one } from "./db"
 
 /**
@@ -81,10 +81,10 @@ export const P2 = {
     mobile: "+90 534 222 33 44",
     email: `derya.${RUN}@lart.test`,
   },
-  /** Members (students). */
-  ayla: { name: `Ayla Kurt ${RUN}`, email: `ayla.${RUN}@member.test`, phone: "+90 532 000 11 22" },
-  bahar: { name: `Bahar Ece ${RUN}`, email: `bahar.${RUN}@member.test`, phone: "" },
-  cemre: { name: `Cemre Su ${RUN}`, email: `cemre.${RUN}@member.test`, phone: "+90 535 000 33 44" },
+  /** Members (students). Names without digits: the sign-up form refuses them. */
+  ayla: { name: `Ayla Kurt ${RUN_NAME}`, email: `ayla.${RUN}@member.test`, phone: "+90 532 000 11 22" },
+  bahar: { name: `Bahar Ece ${RUN_NAME}`, email: `bahar.${RUN}@member.test`, phone: "" },
+  cemre: { name: `Cemre Su ${RUN_NAME}`, email: `cemre.${RUN}@member.test`, phone: "+90 535 000 33 44" },
   /** Workshops of phase 2. */
   wA: {
     title: { fa: `نقاشی روی سفال ${RUN}`, tr: `Seramik boyama ${RUN}`, en: `Ceramic painting ${RUN}` },
@@ -121,16 +121,46 @@ export const randomIp = () => `10.${97 + Math.floor(Math.random() * 3)}.${Math.f
 
 const sessionFile = (who: string) => path.join(E2E_DIR, `p2-session-${who}.json`)
 
+/**
+ * Record browser problems of a context of our own (console errors, page errors,
+ * failed requests, HTTP >= 400) in .e2e/problems.jsonl, as the `problems`
+ * fixture does for the test's default context (it doesn't see these).
+ */
+function watchProblems(context: BrowserContext, who: string) {
+  let title = who
+  try {
+    title = `${test.info().titlePath.slice(1).join(" › ")} [${who}]`
+  } catch {
+    // outside a test
+  }
+  const add = (p: Omit<Problem, "test">) => {
+    if (p.type === "requestfailed" && /ERR_ABORTED/.test(p.text)) return
+    fs.mkdirSync(E2E_DIR, { recursive: true })
+    fs.appendFileSync(PROBLEMS_FILE, JSON.stringify({ test: title, ...p }) + "\n")
+  }
+  context.on("page", (page) => {
+    page.on("console", (msg) => {
+      if (msg.type() === "error") add({ page: page.url(), type: "console", text: msg.text().slice(0, 500) })
+    })
+    page.on("pageerror", (err) => add({ page: page.url(), type: "pageerror", text: String(err).slice(0, 500) }))
+    page.on("requestfailed", (req) => add({ page: page.url(), type: "requestfailed", text: `${req.method()} ${req.url()} ${req.failure()?.errorText ?? ""}` }))
+    page.on("response", (res) => {
+      if (res.status() >= 400) add({ page: page.url(), type: "http", text: `${res.status()} ${res.request().method()} ${res.url()}` })
+    })
+  })
+  return context
+}
+
 /** A fresh, signed-out context (no admin cookie), with its own client IP. */
 export async function anonContext(browser: Browser, options: Parameters<Browser["newContext"]>[0] = {}) {
-  return browser.newContext({ storageState: { cookies: [], origins: [] }, extraHTTPHeaders: { "x-real-ip": randomIp() }, ...options })
+  return watchProblems(await browser.newContext({ storageState: { cookies: [], origins: [] }, extraHTTPHeaders: { "x-real-ip": randomIp() }, ...options }), "visitor")
 }
 
 /** The saved session of a member or instructor of this run (from an earlier spec), in a new context. */
 export async function personContext(browser: Browser, who: string, options: Parameters<Browser["newContext"]>[0] = {}) {
   const file = sessionFile(who)
   if (!fs.existsSync(file)) throw new Error(`no saved session for ${who}: run the earlier phase-2 specs first`)
-  return browser.newContext({ storageState: file, extraHTTPHeaders: { "x-real-ip": randomIp() }, ...options })
+  return watchProblems(await browser.newContext({ storageState: file, extraHTTPHeaders: { "x-real-ip": randomIp() }, ...options }), who)
 }
 
 export async function saveSession(context: BrowserContext, who: string) {
@@ -195,4 +225,95 @@ export async function memberLogin(page: Page, locale: Locale, email: string, pas
 export async function html(page: Page, url: string) {
   const res = await page.request.get(url)
   return { status: res.status(), headers: res.headers(), body: await res.text() }
+}
+
+// ─── Admin forms ───────────────────────────────────────────────────────────────
+
+const DAY = 86_400_000
+/** "YYYY-MM-DD" in Istanbul, n days from now. */
+export const inDays = (n: number) => istanbulDate(new Date(Date.now() + n * DAY))
+
+/** The category of this run's phase-2 workshops (10-p2-admin-setup creates it). */
+export const CATEGORY = { fa: `سفال‌گری ${RUN}`, tr: `Atölye P2 ${RUN}`, en: `Workshop P2 ${RUN}` }
+
+/** Fill in the instructor form (new or edit) with a phase-2 instructor. */
+export async function fillInstructor(page: Page, p: Pick<(typeof P2)["nur"], "displayName" | "teachingField" | "officialName" | "idNumber" | "mobile" | "email">) {
+  await fillLocalized(page, "Display name", p.displayName)
+  await fillLocalized(page, "Teaching field", p.teachingField)
+  await field(page, "Official full name").getByRole("textbox").fill(p.officialName)
+  await field(page, "ID number").getByRole("textbox").fill(p.idNumber)
+  await field(page, "Mobile number").getByRole("textbox").fill(p.mobile)
+  await field(page, /^Email/).getByRole("textbox").fill(p.email)
+}
+
+export type WorkshopInput = {
+  title: { fa?: string; tr: string; en?: string }
+  instructor: string
+  date: number
+  start: string
+  end: string
+  deadline: [number, string]
+  decision: [number, string]
+  venue: Record<string, string>
+  min: number
+  max: number
+  price: string
+  fee: string
+  paymentUrl?: string
+  intro?: { fa?: string; tr?: string; en?: string }
+}
+
+/** Create a workshop with the admin form (per-participant fee), which emails the contract to the instructor. */
+export async function createWorkshop(page: Page, w: WorkshopInput) {
+  await page.goto("/en/admin/workshops/new")
+  await expect(page.getByRole("heading", { level: 1, name: "New workshop" })).toBeVisible()
+  await fillLocalized(page, /^Workshop name/, w.title)
+  await chooseSelect(page, /^Category/, CATEGORY.en)
+  await chooseSelect(page, /^Instructor/, w.instructor)
+  await fillDateTime(page, /^Date and time/, inDays(w.date), w.start, w.end)
+  await fillDateTime(page, /^Registration closes/, inDays(w.deadline[0]), w.deadline[1])
+  await fillDateTime(page, /^Go \/ no-go decision/, inDays(w.decision[0]), w.decision[1])
+  await fillLocalized(page, /^Place/, w.venue)
+  await field(page, /^Minimum participants/).getByRole("spinbutton").fill(String(w.min))
+  await field(page, /^Maximum participants/).getByRole("spinbutton").fill(String(w.max))
+  await field(page, /^Price per person/).getByRole("textbox").fill(w.price)
+  if (w.intro) await fillLocalized(page, /^Short introduction/, w.intro)
+  if (w.paymentUrl) await field(page, /^Online payment link/).getByRole("textbox").fill(w.paymentUrl)
+  await field(page, /^Amount per participant/).getByRole("textbox").fill(w.fee)
+  await page.getByRole("button", { name: "Create and send contract" }).click()
+  await expect(toast(page, /Workshop created\./)).toBeVisible()
+  await expect(page).toHaveURL(/\/en\/admin\/workshops\/[0-9a-f-]{36}$/)
+}
+
+// ─── Server actions, replayed ──────────────────────────────────────────────────
+
+export type CapturedAction = { url: string; headers: Record<string, string>; body: string }
+
+/**
+ * Run `trigger` (a click that posts a server action) and catch that POST
+ * before it reaches the server (aborted, so nothing happens): its address,
+ * headers and body, to be replayed with someone else's cookies.
+ */
+export async function captureAction(page: Page, trigger: () => Promise<void>): Promise<CapturedAction> {
+  let captured: CapturedAction | undefined
+  await page.route("**/*", async (route) => {
+    const req = route.request()
+    if (!captured && req.method() === "POST" && req.headers()["next-action"]) {
+      captured = { url: req.url(), headers: req.headers(), body: req.postData() ?? "" }
+      return route.abort("aborted")
+    }
+    return route.continue()
+  })
+  await trigger()
+  await expect.poll(() => Boolean(captured), { message: "a server action was posted" }).toBe(true)
+  await page.unrouteAll({ behavior: "ignoreErrors" })
+  return captured!
+}
+
+/** Post a captured server action again, as whoever `request` belongs to (same-origin, as a browser would). */
+export async function replayAction(request: APIRequestContext, action: CapturedAction, body = action.body) {
+  const keep = ["next-action", "content-type", "next-router-state-tree", "accept"]
+  const headers = Object.fromEntries(Object.entries(action.headers).filter(([k]) => keep.includes(k.toLowerCase())))
+  const res = await request.post(action.url, { headers: { ...headers, origin: new URL(action.url).origin }, data: body, maxRedirects: 0 })
+  return { status: res.status(), text: await res.text() }
 }

@@ -31,7 +31,8 @@ test.describe("dashboard", () => {
     await expect(kpi(`Net profit in ${year}`)).toContainText(lira(net))
     test.info().annotations.push({ type: "net-ytd", description: lira(net) })
 
-    // The candle workshop was held and closed: 4 of its 8 places taken (3 paid, 1 not paid yet at the go decision).
+    // The candle workshop was held and closed: 4 of its 8 places taken, the number fixed at the go decision
+    // (3 paid, 1 not paid yet then; that one was cancelled before closing as she didn't come).
     await expect(kpi("Average fill rate")).toContainText(/4 of 8 places taken in 1 workshop/)
     await expect(kpi("Average fill rate")).toContainText("50%")
 

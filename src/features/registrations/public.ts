@@ -12,7 +12,7 @@ import { errorForLog } from "@/lib/errors"
 import { localized } from "@/lib/format"
 import { getBrand } from "@/lib/settings"
 import { getStorage, type Storage } from "@/lib/storage"
-import { activeStatuses, registrationWindow, safePaymentUrl } from "./schema"
+import { activeStatuses, registrationWindow, safePaymentUrl, seatLimit } from "./schema"
 
 /**
  * The public side of workshops (no sign-in needed): the open workshops list,
@@ -37,8 +37,8 @@ export async function seatsTaken(courseId: string, exec: Exec = db): Promise<num
   return row.n
 }
 
-/** Places still free (never below zero). */
-export const seatsLeft = (maxCapacity: number, taken: number) => Math.max(0, maxCapacity - taken)
+/** Places still free (never below zero); `limit` is `seatLimit(course)`. */
+export const seatsLeft = (limit: number, taken: number) => Math.max(0, limit - taken)
 
 /** Places held per workshop, for lists. */
 async function seatsTakenOf(courseIds: string[]): Promise<Map<string, number>> {
@@ -91,6 +91,7 @@ export async function listOpenWorkshops(locale: string, now: Date = new Date()) 
       endsAt: courses.endsAt,
       registrationDeadline: courses.registrationDeadline,
       maxCapacity: courses.maxCapacity,
+      finalParticipants: courses.finalParticipants,
       price: courses.price,
       ageMin: courses.ageMin,
       ageMax: courses.ageMax,
@@ -106,7 +107,7 @@ export async function listOpenWorkshops(locale: string, now: Date = new Date()) 
   const [taken, files] = await Promise.all([seatsTakenOf(rows.map((r) => r.id)), storage()])
 
   return rows.map((r) => {
-    const left = seatsLeft(r.maxCapacity, taken.get(r.id) ?? 0)
+    const left = seatsLeft(seatLimit(r), taken.get(r.id) ?? 0)
     return {
       id: r.id,
       slug: r.slug,
@@ -169,6 +170,7 @@ export const getPublicWorkshop = cache(async (slug: string, locale: string) => {
       endsAt: courses.endsAt,
       registrationDeadline: courses.registrationDeadline,
       maxCapacity: courses.maxCapacity,
+      finalParticipants: courses.finalParticipants,
       price: courses.price,
       coverPath: courses.coverPath,
       termsTemplateId: courses.termsTemplateId,
@@ -198,7 +200,7 @@ export const getPublicWorkshop = cache(async (slug: string, locale: string) => {
       .orderBy(asc(media.sort), asc(media.createdAt)),
     storage(),
   ])
-  const left = seatsLeft(row.maxCapacity, taken)
+  const left = seatsLeft(seatLimit(row), taken)
   const text = (value: Parameters<typeof localized>[0]) => localized(value, locale)
 
   return {

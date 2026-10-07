@@ -106,7 +106,7 @@ describe("sendDayBeforeReminders", () => {
       to: parent.email,
       template: "workshop_reminder",
       locale: "en",
-      idempotencyKey: `workshop_reminder:${w.id}:${parent.id}`,
+      idempotencyKey: expect.stringMatching(new RegExp(`^workshop_reminder:${w.id}:${parent.id}:\\d+:[0-9a-f]{16}$`)),
       props: { name: "Nur", workshopTitle: "Candles", venue: "Moda studio", workshopUrl: `/en/workshops/${w.slug}` },
     })
     // "What to bring" stays the workshop's own; the unpaid part has its own row and payment blocks.
@@ -122,6 +122,46 @@ describe("sendDayBeforeReminders", () => {
     sendEmail.mockClear()
     await sendDayBeforeReminders()
     expect(sentFor(w.slug)).toHaveLength(0)
+  })
+
+  it("reminds about a registration added after the member's reminder in an email of its own, with its own key", async () => {
+    const w = await workshop(18)
+    const parent = await member("en")
+    const first = await addRegistration(w.id, parent.id, refs.termsId, { status: "confirmed" })
+    await sendDayBeforeReminders()
+    const [before] = sentFor(w.slug)
+    expect(before.props).not.toHaveProperty("amount")
+    expect(await remindedAt(first.id)).toBeInstanceOf(Date)
+
+    // Later that day the parent registers a second child, not paid yet.
+    const later = await addRegistration(w.id, parent.id, refs.termsId, { status: "pending", amount: 50_000 })
+    await db.update(registrations).set({ participantName: "Child B" }).where(eq(registrations.id, later.id))
+    sendEmail.mockClear()
+    await sendDayBeforeReminders()
+    const sent = sentFor(w.slug)
+    expect(sent).toHaveLength(1)
+    expect(sent[0]).toMatchObject({ to: parent.email, props: { participantName: "Child B" } })
+    expect(sent[0].props.amount).toMatch(/^₺500(\.00)?$/)
+    expect(sent[0].idempotencyKey).toMatch(new RegExp(`^workshop_reminder:${w.id}:${parent.id}:\\d+:[0-9a-f]{16}$`))
+    expect(sent[0].idempotencyKey).not.toBe(before.idempotencyKey)
+    expect(await remindedAt(later.id)).toBeInstanceOf(Date)
+
+    // And nothing more after that.
+    sendEmail.mockClear()
+    await sendDayBeforeReminders()
+    expect(sentFor(w.slug)).toHaveLength(0)
+  })
+
+  it("uses the same key when the same email is tried again", async () => {
+    const w = await workshop(16)
+    const person = await member()
+    await addRegistration(w.id, person.id, refs.termsId, { status: "pending" })
+    sendEmail.mockResolvedValue({ ok: false })
+    await sendDayBeforeReminders()
+    sendEmail.mockResolvedValue({ ok: true })
+    await sendDayBeforeReminders()
+    const [a, b] = sentFor(w.slug)
+    expect(a.idempotencyKey).toBe(b.idempotencyKey)
   })
 
   it("writes in the member's language, says nothing about paying when all is paid, and shows only the ways that are on", async () => {

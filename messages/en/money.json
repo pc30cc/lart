@@ -269,6 +269,7 @@
     "print": "Print or PDF",
     "registrations": "Registrations",
     "registrationsPaid": "{count, plural, =0 {Nobody has paid yet} other {# paid}}{pending, plural, =0 {} other {, # not paid yet}}",
+    "registrationsFree": "Free workshop: nothing to pay.",
     "finalNumber": "Final number at the go decision: {count}",
     "revenueHint": "Paid registrations, minus refunds.",
     "revenueInBooks": "{amount} of it is in the books so far.",
@@ -362,6 +363,7 @@
     "done": "Workshop closed. The figures are locked.",
     "fixShares": "Fix the shares",
     "openRefunds": "Open the refunds list",
+    "openRegistrations": "Open the registrations",
     "changed": "The figures changed while you were looking. Please check the new figures and close again.",
     "issues": {
       "closed": "This workshop is already closed.",
@@ -369,6 +371,7 @@
       "notEnded": "The workshop hasn’t finished yet. You can close it after it ends.",
       "noContract": "This workshop has no valid contract, so the instructor’s fee is unknown.",
       "refundsOwed": "Some refunds of this workshop haven’t been paid back yet. Pay back the refunds first and mark them as refunded; then you can close it.",
+      "unpaidRegistrations": "{count, plural, one {# registration is still not paid. Record the payment, or cancel the registration if the person didn’t come;} other {# registrations are still not paid. Record each payment, or cancel the registration of anyone who didn’t come;}} then you can close it.",
       "revenueMismatch": "Some payments or refunds of this workshop aren’t in the books yet.",
       "advanceTooBig": "The instructor still holds more advance than their fee. Record what they returned, or what they spent on the workshop, first.",
       "sharesNot100": "The partners’ shares don’t add up to 100%."
@@ -414,6 +417,16 @@
       "submit": "Yes, it’s paid back",
       "done": "Marked as refunded. {name} gets an email."
     },
+    "change": {
+      "trigger": "Change refund",
+      "title": "Change the refund for {participant}",
+      "description": "{paid} was paid, and {refund} is to go back now. If the date, venue or instructor changed, the terms promise a full refund.",
+      "amount": "Refund",
+      "hint": "Up to {amount}, what was paid. 0 means no refund.",
+      "after": "It waits in Refunds until you mark it as paid back. When there’s a refund, {name} gets an email with the new amount.",
+      "submit": "Save refund",
+      "done": "Refund changed."
+    },
     "empty": {
       "title": "No refunds to pay back",
       "description": "When someone who paid cancels, or a workshop is cancelled, the refund shows up here."
@@ -421,7 +434,8 @@
     "errors": {
       "alreadyRefunded": "This refund is already marked as paid back. Nothing more to do.",
       "nothingOwed": "Nothing is owed back on this registration.",
-      "chooseMethod": "Please choose how you paid it back."
+      "chooseMethod": "Please choose how you paid it back.",
+      "beforePayment": "The refund date can’t be before the day they paid."
     }
   }
 }

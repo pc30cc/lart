@@ -45,7 +45,7 @@ export function UserMenu({ admin }: { admin: { name: string; email: string } }) 
         <DropdownMenuContent align="end" className="w-auto min-w-56">
           <DropdownMenuLabel className="flex flex-col gap-0.5 py-1.5 font-normal">
             <span className="text-foreground truncate text-sm font-medium">{admin.name}</span>
-            <span className="text-muted-foreground truncate text-xs" dir="ltr">
+            <span className="text-muted-foreground truncate text-xs rtl:text-right" dir="ltr">
               {admin.email}
             </span>
           </DropdownMenuLabel>
@@ -61,7 +61,7 @@ export function UserMenu({ admin }: { admin: { name: string; email: string } }) 
               startTransition(() => adminLogoutAction())
             }}
           >
-            {pending ? <Spinner aria-hidden /> : <LogOutIcon />}
+            {pending ? <Spinner aria-hidden /> : <LogOutIcon className="rtl:-scale-x-100" />}
             {t("auth.logout.action")}
           </DropdownMenuItem>
         </DropdownMenuContent>

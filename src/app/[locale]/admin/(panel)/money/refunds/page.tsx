@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/admin/empty-state"
 import { Money } from "@/components/admin/money"
 import { PageHeader } from "@/components/admin/page-header"
 import { StatusBadge } from "@/components/admin/status-badge"
-import { MarkRefundedButton } from "@/features/registrations/admin/components/dialogs"
+import { ChangeRefundButton, MarkRefundedButton } from "@/features/registrations/admin/components/dialogs"
 import { listRefunds, refundReason, refundsOwed, type RefundRow } from "@/features/registrations/admin/queries"
 import { refundTable, refundViews } from "@/features/registrations/admin/schema"
 import { Link } from "@/i18n/navigation"
@@ -22,8 +22,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /**
  * Refunds to pay back by hand: from members' own cancellations, an admin's,
- * and cancelled workshops. "Mark as refunded" books it in the wallet once and
- * tells the person. The other view lists the refunds already paid back.
+ * and cancelled workshops. "Change refund" confirms or changes the amount
+ * (e.g. in full when the date, venue or instructor changed); "Mark as
+ * refunded" books it in the wallet once and tells the person. The other view lists the refunds already paid back.
  */
 export default async function RefundsPage({ searchParams }: PageProps<"/[locale]/admin/money/refunds">) {
   await requireAdmin()
@@ -136,12 +137,24 @@ export default async function RefundsPage({ searchParams }: PageProps<"/[locale]
             header: <span className="sr-only">{t("columns.actions")}</span>,
             align: "end" as const,
             cell: (r: RefundRow) => (
-              <MarkRefundedButton
-                id={r.id}
-                amount={r.refundAmount ?? 0}
-                name={r.member.name}
-                workshop={localized(r.course.title, locale)}
-              />
+              <span className="flex flex-wrap items-center justify-end gap-1">
+                {/* A cancelled workshop already refunds in full; a single cancellation can be raised (or lowered) first. */}
+                {refundReason(r) === "registrationCancelled" && (
+                  <ChangeRefundButton
+                    id={r.id}
+                    paid={r.amount}
+                    refund={r.refundAmount ?? 0}
+                    name={r.member.name}
+                    participant={r.participantName}
+                  />
+                )}
+                <MarkRefundedButton
+                  id={r.id}
+                  amount={r.refundAmount ?? 0}
+                  name={r.member.name}
+                  workshop={localized(r.course.title, locale)}
+                />
+              </span>
             ),
           },
         ]

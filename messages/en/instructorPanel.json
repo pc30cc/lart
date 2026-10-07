@@ -125,7 +125,8 @@
     },
     "signedNotice": {
       "title": "You have signed this contract",
-      "text": "Signed on {date}. You can print it or save it as a PDF."
+      "text": "Signed on {date}. You can print it or save it as a PDF.",
+      "otherLanguage": "This is the exact text you signed, in {language}."
     },
     "replaced": {
       "title": "This version was replaced",

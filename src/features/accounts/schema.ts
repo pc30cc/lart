@@ -21,9 +21,37 @@ export function normalizePhone(input: string): string {
   return compact.startsWith("00") ? `+${compact.slice(2)}` : compact
 }
 
+/**
+ * True for text that could be a link, an email address or a phone number:
+ * any digit (Latin, Persian or Arabic), `@ / \ : < >`, "www." or a
+ * domain-like "word.tld". Initials ("J.R.", "A. Yılmaz") are fine.
+ */
+export function looksLikeContact(value: string): boolean {
+  return (
+    /\p{Nd}/u.test(value) ||
+    /[@/\\:<>]/.test(value) ||
+    /www\./i.test(value) ||
+    /[\p{L}\p{N}-]{2,}\.\p{L}{2,}/u.test(value)
+  )
+}
+
+/**
+ * A person's name, as members type it (sign up, their profile). It is the
+ * greeting of the emails we send them, so it may not carry a link, an email
+ * address or a phone number: otherwise anyone could send a branded welcome
+ * email with their own text to any address.
+ */
+export const personName = () =>
+  z
+    .string()
+    .trim()
+    .min(2)
+    .max(80)
+    .refine((v) => !looksLikeContact(v), { error: "account.signup.errors.name" })
+
 /** Sign up: name, email, password and an optional phone. The language is the page's. */
 export const signupSchema = z.object({
-  name: z.string().trim().min(2).max(80),
+  name: personName(),
   email: email(),
   password: newPassword(),
   phone: z

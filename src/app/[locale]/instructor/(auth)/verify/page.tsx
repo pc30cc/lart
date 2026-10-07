@@ -1,4 +1,3 @@
-import { MailCheckIcon } from "lucide-react"
 import type { Metadata } from "next"
 import { getTranslations } from "next-intl/server"
 
@@ -21,7 +20,7 @@ export default async function InstructorVerifyPage({ searchParams }: PageProps<"
   const [t, session] = await Promise.all([getTranslations("account.verify"), getInstructor()])
 
   return (
-    <AuthCard icon={<MailCheckIcon />} title={t("title")}>
+    <AuthCard title={t("title")}>
       <VerifyEmail
         kind="instructor"
         token={token}

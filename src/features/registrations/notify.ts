@@ -131,7 +131,8 @@ export async function sendRegistrationCancelled(cancelled: Cancelled): Promise<n
           participantName: row.participantName,
           workshopTitle: localized(course.title, adminLocale),
           amount: formatLira(cancelled.refund, adminLocale),
-          url: `/${adminLocale}/admin/workshops/${course.id}/registrations`,
+          // "Mark as refunded" is on Money › Refunds (its default view lists the refunds still owed).
+          url: `/${adminLocale}/admin/money/refunds`,
         },
       })
       if (result.ok) sent++

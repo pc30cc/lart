@@ -11,9 +11,11 @@ import { getSetting } from "@/lib/settings"
 
 /**
  * Contract emails. The instructor's go out in the instructor's own language
- * (`instructors.locale`: the invitation page's language, or the one chosen in
- * the panel), with the sign link in that language too. Admins have no
- * language of their own, so theirs use the default-language setting.
+ * (`instructors.locale`: until the instructor accepts the invitation, the
+ * invitation language the admin chose when creating the instructor or
+ * resending the invitation; then the invitation page's language, or the one
+ * chosen in the panel), with the sign link in that language too. Admins have
+ * no language of their own, so theirs use the default-language setting.
  */
 
 /** Where the instructor reads and signs a contract (instructor panel, phase 2). */

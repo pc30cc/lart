@@ -224,7 +224,7 @@ function AccountMenu({ name, email }: { name: string; email: string }) {
       <DropdownMenuContent align="end" className="w-auto max-w-72 min-w-56">
         <DropdownMenuLabel className="flex flex-col gap-0.5 py-2 font-normal">
           <span className="text-foreground truncate text-sm font-medium">{name}</span>
-          <span className="text-muted-foreground truncate text-xs" dir="ltr">
+          <span className="text-muted-foreground truncate text-xs rtl:text-right" dir="ltr">
             {email}
           </span>
         </DropdownMenuLabel>

@@ -2,7 +2,7 @@
 
 import { BanknoteIcon, CircleCheckIcon, CreditCardIcon, EyeIcon, InfoIcon, LandmarkIcon, type LucideIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
-import { useFormContext, useWatch } from "react-hook-form"
+import { useFormContext, useFormState, useWatch } from "react-hook-form"
 
 import { Form, FormActions, FormField, SubmitButton, TextField } from "@/components/admin/form/form"
 import { LocalizedTextarea } from "@/components/admin/form/localized-input"
@@ -201,7 +201,8 @@ function IbanField() {
         const clean = cleanIban(String(value ?? ""))
         const valid = clean.length > 0 && ibanProblem(clean) === null
         return (
-          <div className="relative">
+          // `dir="ltr"` on the wrapper too, so the padding (`pe-9`) and the check mark (`end-3`) are both on the right, also in RTL.
+          <div className="relative" dir="ltr">
             <Input
               {...field}
               ref={field.ref}
@@ -233,12 +234,17 @@ function IbanField() {
   )
 }
 
-/** What a student sees after registering, with the values in the form (not saved yet), in the panel's language. */
+/**
+ * What a student sees after registering, with the values in the form, in the
+ * panel's language. While the form has changes, a line says they are not saved
+ * yet (it goes away after saving, when the form is reset).
+ */
 function Preview() {
   const t = useTranslations("settings.payments.preview")
   const locale = useLocale()
   const { control } = useFormContext<Values>()
   const values = useWatch({ control }) as Values
+  const { isDirty } = useFormState({ control })
   const iban = cleanIban(values.transfer?.iban ?? "")
   const note = (text: Values["online"]["note"] | undefined) => localized(text, locale) || undefined
 
@@ -267,6 +273,7 @@ function Preview() {
         <p className="text-muted-foreground text-sm text-pretty">
           {t("description", { amount: isolate(formatLira(SAMPLE_AMOUNT, locale)) })}
         </p>
+        {isDirty && <p className="text-warning text-xs font-medium text-pretty">{t("unsaved")}</p>}
       </div>
       {/* A picture of the student's page: nothing in it can be clicked or copied. */}
       <div inert className="bg-background rounded-2xl p-3 shadow-xs select-none sm:p-4">

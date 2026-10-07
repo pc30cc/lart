@@ -1,10 +1,10 @@
 import "server-only"
-import { and, asc, count, desc, eq, exists, ilike, inArray, or, sql, type SQL } from "drizzle-orm"
+import { and, asc, count, desc, eq, exists, ilike, inArray, min, or, sql, type SQL } from "drizzle-orm"
 import { alias } from "drizzle-orm/pg-core"
 
 import { likePattern, type TableParams } from "@/components/admin/data-table/params"
 import { db } from "@/db"
-import { admins, courses, instructors, ledgerLines, ledgerTransactions, type LocalizedText } from "@/db/schema"
+import { admins, contracts, courses, instructors, ledgerLines, ledgerTransactions, type LocalizedText } from "@/db/schema"
 import { requireAdmin } from "@/lib/auth/admin"
 import { splitByShares } from "@/lib/money"
 import { activePartners, prepareClosing, projectedFees, totalOf, workshopsToClose } from "./closing"
@@ -268,17 +268,26 @@ export async function getLedgerFilterOptions() {
 /**
  * A workshop's finances: live figures and the closing preview, and its
  * expenses, advance movements and instructor payments (reversals show as a
- * "reversed" mark on the entry they cancel). Null when the workshop does not exist.
+ * "reversed" mark on the entry they cancel). `contractSince`: when the current
+ * instructor's first contract for it was sent (entries before it belong to an
+ * earlier instructor), null without one. Null when the workshop does not exist.
  */
 export async function getWorkshopFinances(courseId: string) {
   await requireAdmin()
   const preview = await prepareClosing(db, courseId)
   if (!preview) return null
-  const entries = await loadEntries({
-    where: and(eq(t.courseId, courseId), inArray(t.kind, ["expense", "instructor_advance", "instructor_payment"])),
-    orderBy: [desc(t.occurredOn), desc(t.createdAt)],
-  })
-  return { ...preview, entries: entries.map(describeEntry) }
+  const [entries, [first]] = await Promise.all([
+    loadEntries({
+      where: and(eq(t.courseId, courseId), inArray(t.kind, ["expense", "instructor_advance", "instructor_payment"])),
+      orderBy: [desc(t.occurredOn), desc(t.createdAt)],
+    }),
+    db
+      .select({ since: min(contracts.sentAt) })
+      .from(contracts)
+      .innerJoin(courses, eq(courses.id, contracts.courseId))
+      .where(and(eq(contracts.courseId, courseId), eq(contracts.instructorId, courses.instructorId))),
+  ])
+  return { ...preview, entries: entries.map(describeEntry), contractSince: first?.since ?? null }
 }
 
 export type WorkshopFinances = NonNullable<Awaited<ReturnType<typeof getWorkshopFinances>>>

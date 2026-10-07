@@ -1,12 +1,14 @@
 "use server"
 
-import { and, count, desc, eq, inArray, sql } from "drizzle-orm"
+import { and, count, desc, eq, inArray, isNotNull, sql } from "drizzle-orm"
 import { refresh, revalidatePath } from "next/cache"
 import { after } from "next/server"
+import { getLocale } from "next-intl/server"
 
 import { db, type Tx } from "@/db"
 import { contracts, courses, instructors, members, registrations, templates } from "@/db/schema"
 import { sendContractReady } from "@/features/contracts/notify"
+import { courseBalances } from "@/features/money/ledger"
 import { memberLocale } from "@/features/registrations/admin/notify"
 import { adminAction, UserError } from "@/lib/action"
 import { changes } from "@/lib/audit"
@@ -23,6 +25,7 @@ import {
   feeValues,
   gallerySchema,
   isCancelled,
+  raiseFinalSchema,
   workshopIdSchema,
   workshopSchema,
   workshopUpdateSchema,
@@ -147,6 +150,11 @@ export const createWorkshop = adminAction(workshopSchema, async (input, ctx) => 
  * again. A confirmed workshop keeps its go decision and final number (signing
  * confirms it again), and its contract can't change once it has started (see
  * `contractLocked`). The price is locked once people have registered.
+ * The instructor can't change while an advance is still held: the ledger keeps
+ * it per workshop, not per instructor, so the new instructor would see it (and
+ * have it set off against their fee) as their own. It is recorded as returned
+ * (or reversed) on the finances page first. A new start time clears the
+ * day-before reminders already sent, so everyone is reminded of the new date.
  */
 export const updateWorkshop = adminAction(workshopUpdateSchema, async ({ id, ...input }, ctx) => {
   const values = courseValues(input)
@@ -178,6 +186,16 @@ export const updateWorkshop = adminAction(workshopUpdateSchema, async ({ id, ...
           values: { count: registered },
         })
       }
+      // The workshop row is held FOR UPDATE, so no advance can be posted meanwhile (`lockCourse`).
+      if (values.instructorId !== before.instructorId) {
+        const { advance } = await courseBalances(tx, id)
+        if (advance !== 0) {
+          throw new UserError("workshops.errors.advanceHeld", {
+            field: "instructorId",
+            values: { amount: formatLira(advance, await getLocale()) },
+          })
+        }
+      }
       await checkChoices(tx, values, before)
 
       const now = new Date()
@@ -192,6 +210,23 @@ export const updateWorkshop = adminAction(workshopUpdateSchema, async ({ id, ...
           })
           .where(eq(courses.id, id))
       }
+      // A reminder already sent was for the old date (registrations after the workshop: lock order).
+      const remindersReset =
+        "startsAt" in courseDiff
+          ? (
+              await tx
+                .update(registrations)
+                .set({ reminderSentAt: null })
+                .where(
+                  and(
+                    eq(registrations.courseId, id),
+                    inArray(registrations.status, ["pending", "confirmed"]),
+                    isNotNull(registrations.reminderSentAt),
+                  ),
+                )
+                .returning({ id: registrations.id })
+            ).length
+          : 0
       const samples = await syncMedia(
         tx,
         id,
@@ -220,6 +255,7 @@ export const updateWorkshop = adminAction(workshopUpdateSchema, async ({ id, ...
           : {}),
         ...(reissued ? { contract: { voidedVersion: reissued.voided, newVersion: reissued.version } } : {}),
         ...(contractChanged && before.status !== "awaiting_signature" ? { status: { from: before.status, to: "awaiting_signature" } } : {}),
+        ...(remindersReset ? { remindersReset } : {}),
       }
       if (Object.keys(data).length) {
         await ctx.audit({ action: "workshop.update", entity: "workshop", entityId: id, data }, tx)
@@ -242,17 +278,23 @@ export const updateWorkshop = adminAction(workshopUpdateSchema, async ({ id, ...
  * now. Everyone registered counts, paid or not yet (many pay in cash at the
  * workshop): the active registrations, read under the workshop's lock, so a
  * registration at the same moment is either counted or waits.
+ * A decision that was missed can still be taken after the start: confirming
+ * records that the workshop was held, so it can be closed with the fee from
+ * its contract (cancelling would owe every payer a full refund instead).
+ * From then on, registrations are capped at `final_participants` (`seatLimit`
+ * in features/registrations/schema.ts): a cancelled place can be taken again,
+ * but more people only after the instructor agreed and an admin raised the
+ * number (`raiseFinalParticipants`).
  */
 export const confirmWorkshop = adminAction(workshopIdSchema, async ({ id }, ctx) => {
   const finalParticipants = await db.transaction(async (tx) => {
     const [course] = await tx
-      .select({ status: courses.status, startsAt: courses.startsAt, minCapacity: courses.minCapacity })
+      .select({ status: courses.status, minCapacity: courses.minCapacity })
       .from(courses)
       .where(eq(courses.id, id))
       .for("update")
     if (!course) throw new UserError("workshops.errors.notFound")
     if (course.status !== "published") throw new UserError("workshops.errors.cannotConfirm")
-    if (course.startsAt <= new Date()) throw new UserError("workshops.errors.alreadyStarted")
     const n = await activeRegistrations(tx, id)
     await tx
       .update(courses)
@@ -272,6 +314,48 @@ export const confirmWorkshop = adminAction(workshopIdSchema, async ({ id }, ctx)
   revalidate()
   refresh()
   return { id, finalParticipants }
+})
+
+/**
+ * More places after the go decision: the instructor agreed (contract 5.2) to
+ * teach more people than the number fixed then, so the admin raises
+ * `final_participants`; registrations open again up to it, and a
+ * per-participant fee is paid on it. Only for a confirmed workshop that has
+ * not started; the workshop is locked FOR UPDATE (a registration at the same
+ * moment waits); the new number must be higher than the current one and at
+ * most the maximum capacity. Audited with the instructor's approval noted.
+ */
+export const raiseFinalParticipants = adminAction(raiseFinalSchema, async ({ id, finalParticipants: to }, ctx) => {
+  await db.transaction(async (tx) => {
+    const [course] = await tx
+      .select({
+        status: courses.status,
+        cancelledAt: courses.cancelledAt,
+        startsAt: courses.startsAt,
+        finalParticipants: courses.finalParticipants,
+        maxCapacity: courses.maxCapacity,
+      })
+      .from(courses)
+      .where(eq(courses.id, id))
+      .for("update")
+    if (!course) throw new UserError("workshops.errors.notFound")
+    if (course.status !== "confirmed" || course.cancelledAt || course.finalParticipants === null || course.startsAt <= new Date()) {
+      throw new UserError("workshops.errors.cannotRaiseFinal")
+    }
+    const from = course.finalParticipants
+    if (to <= from) throw new UserError("workshops.errors.finalNotHigher", { field: "finalParticipants", values: { count: from } })
+    if (to > course.maxCapacity) {
+      throw new UserError("workshops.errors.finalAboveMax", { field: "finalParticipants", values: { max: course.maxCapacity } })
+    }
+    await tx.update(courses).set({ finalParticipants: to, updatedAt: new Date() }).where(eq(courses.id, id))
+    await ctx.audit(
+      { action: "workshop.raiseFinal", entity: "workshop", entityId: id, data: { from, to, instructorApproved: true } },
+      tx,
+    )
+  })
+  revalidate()
+  refresh()
+  return { id, finalParticipants: to }
 })
 
 /**

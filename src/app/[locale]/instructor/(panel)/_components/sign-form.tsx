@@ -99,7 +99,7 @@ export function SignForm({
             onCheckedChange={(value) => setAgree(value === true)}
             aria-invalid={agreeError}
             aria-describedby={agreeError ? `${id}-agree-error` : undefined}
-            className="mt-0.5 size-5 [&_svg]:size-4!"
+            className="mt-0.5 size-5 rounded-[5px] border-2 border-foreground/50 [&_svg]:size-4!"
           />
           <span className="text-base leading-snug font-medium">{t("agree")}</span>
         </label>

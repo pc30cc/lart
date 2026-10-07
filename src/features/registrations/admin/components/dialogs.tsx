@@ -7,6 +7,7 @@ import {
   CreditCardIcon,
   EllipsisIcon,
   LandmarkIcon,
+  PencilIcon,
   Undo2Icon,
   type LucideIcon,
 } from "lucide-react"
@@ -16,6 +17,7 @@ import type { FieldValues, Path, UseFormReturn } from "react-hook-form"
 
 import { DateField, todayIso } from "@/app/[locale]/admin/(panel)/money/_components/fields"
 import { Form, FormField, SubmitButton } from "@/components/admin/form/form"
+import { MoneyInput } from "@/components/admin/form/money-input"
 import { useActionForm } from "@/components/admin/form/use-action-form"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -31,20 +33,23 @@ import { formatPercent } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { cn } from "@/lib/utils"
 import { cancelPreview, isolate } from "../../schema"
-import { cancelRegistrationAction, markRefundedAction, recordPaymentAction } from "../actions"
+import { cancelRegistrationAction, markRefundedAction, recordPaymentAction, setRefundAction } from "../actions"
 import {
   cancelRegistrationSchema,
   markRefundedSchema,
   recordPaymentSchema,
+  setRefundSchema,
   type CancelRegistrationValues,
   type MarkRefundedValues,
   type PaymentMethod,
   type RecordPaymentValues,
+  type SetRefundValues,
 } from "../schema"
 
 /**
  * The super admin's dialogs for one registration: record its payment, cancel
- * it (with the refund choice), and mark its refund as paid back. Each one is
+ * it (with the refund choice), change its refund, and mark its refund as paid
+ * back. Each one is
  * a small form that asks for confirmation with its big button; the server
  * checks everything again (amounts come from the database).
  */
@@ -174,11 +179,17 @@ export type RegistrationActionRow = {
   status: "pending" | "confirmed" | "cancelled"
   /** In kuruş. */
   amount: number
+  /**
+   * Cancelled after paying, and not paid back yet: the refund owed now (0 for
+   * a cancellation without refund), which the admin may change. Else null.
+   */
+  refundOwed?: number | null
 }
 
 /**
  * The "…" menu of a registration: "Record payment" (not paid yet) and
- * "Cancel registration" (active). Nothing for a cancelled one.
+ * "Cancel registration" (active). A cancelled one that was paid and not paid
+ * back yet: "Change refund". Nothing for any other cancelled one.
  */
 export function RegistrationActions({
   registration: r,
@@ -194,7 +205,14 @@ export function RegistrationActions({
   const t = useTranslations("workshops.registrations")
   const [open, setOpen] = useState<"pay" | "cancel" | null>(null)
   const canPay = r.status === "pending" && r.amount > 0
-  if (r.status === "cancelled") return null
+  if (r.status === "cancelled") {
+    if (r.refundOwed == null) return null
+    return (
+      <div className="flex items-center justify-end">
+        <ChangeRefundButton id={r.id} paid={r.amount} refund={r.refundOwed} name={r.memberName} participant={r.participantName} />
+      </div>
+    )
+  }
 
   return (
     <>
@@ -345,6 +363,87 @@ function CancelRegistrationDialog({
 }
 
 // ─── Refunds list ─────────────────────────────────────────────────────────────
+
+/**
+ * "Change refund" of a cancelled, paid registration not paid back yet: any
+ * amount up to what was paid (e.g. all of it when the date, venue or
+ * instructor changed, as the terms promise), starting from the refund owed now.
+ */
+export function ChangeRefundButton({
+  id,
+  paid,
+  refund,
+  name,
+  participant,
+}: {
+  id: string
+  /** What was paid, in kuruş. */
+  paid: number
+  /** The refund owed now, in kuruş. */
+  refund: number
+  /** Who registered (gets the email). */
+  name: string
+  participant: string
+}) {
+  const t = useTranslations("money.refunds")
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <Button size="sm" variant="ghost" onClick={() => setOpen(true)} className="whitespace-nowrap">
+        <PencilIcon />
+        {t("change.trigger")}
+      </Button>
+      {open && (
+        <ChangeRefundDialog id={id} paid={paid} refund={refund} name={name} participant={participant} onClose={() => setOpen(false)} />
+      )}
+    </>
+  )
+}
+
+function ChangeRefundDialog({
+  id,
+  paid,
+  refund,
+  name,
+  participant,
+  onClose,
+}: {
+  id: string
+  paid: number
+  refund: number
+  name: string
+  participant: string
+  onClose: () => void
+}) {
+  const t = useTranslations("money.refunds")
+  const locale = useLocale()
+  const money = (kurus: number) => isolate(formatLira(kurus, locale))
+  const { form, submit, pending } = useActionForm({
+    schema: setRefundSchema,
+    action: setRefundAction,
+    // Starts from the refund owed now: saving unchanged changes nothing.
+    defaultValues: { id, amount: refund },
+    successMessage: t("change.done"),
+    onSuccess: onClose,
+  })
+  return (
+    <FormDialog
+      open
+      onOpenChange={(next) => !next && onClose()}
+      title={t("change.title", { participant })}
+      description={t("change.description", { paid: money(paid), refund: money(refund) })}
+      form={form}
+      submit={submit}
+      pending={pending}
+      submitLabel={t("change.submit")}
+    >
+      <FormField<SetRefundValues> name="amount" label={t("change.amount")} description={t("change.hint", { amount: money(paid) })} required>
+        {(field) => <MoneyInput {...field} ref={field.ref} className="h-10 text-base" />}
+      </FormField>
+      <p className="text-muted-foreground text-sm text-pretty">{t("change.after", { name })}</p>
+    </FormDialog>
+  )
+}
 
 /** "Mark as refunded": how the refund was paid back (cash or transfer) and when. */
 export function MarkRefundedButton({

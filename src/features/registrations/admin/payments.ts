@@ -12,8 +12,8 @@ import type { PaymentMethod } from "./schema"
 /**
  * The money side of one registration, in ONE place: a payment is recorded
  * (`recordPayment`), a registration is cancelled with the refund it is owed
- * (`cancelRegistration`), and a refund is marked as paid back
- * (`recordRefund`). Each runs inside the caller's transaction, locks the
+ * (`cancelRegistration`), the admin confirms or changes that refund
+ * (`setRefund`), and a refund is marked as paid back (`recordRefund`). Each runs inside the caller's transaction, locks the
  * workshop first and then the registration (the lock order of
  * features/money/ledger, the member's own register / cancel and
  * cancelWorkshop), checks the state under those locks and posts the ledger
@@ -41,6 +41,7 @@ async function lock(tx: Tx, registrationId: string) {
       status: registrations.status,
       amount: registrations.amount,
       createdAt: registrations.createdAt,
+      paidAt: registrations.paidAt,
       refundAmount: registrations.refundAmount,
       refundedAt: registrations.refundedAt,
     })
@@ -164,8 +165,9 @@ export type RecordedRefund = {
 
 /**
  * The refund owed on a cancelled registration was paid back by hand: posts
- * `registration_refund` (revenue back out of the wallet) and sets
- * `refunded_at`. Never twice: refused when it is already marked (the row
+ * `registration_refund` (revenue back out of the wallet) on that day and sets
+ * `refunded_at`. The day is not in the future and not before the payment.
+ * Never twice: refused when it is already marked (the row
  * lock makes a second call wait and then see it), and the ledger never pays
  * back more than was paid.
  */
@@ -182,6 +184,10 @@ export async function recordRefund(
   if (booksClosed(course)) throw new UserError("money.errors.workshopClosed")
   if (input.refundedAt.getTime() > now.getTime() + 5 * 60_000) {
     throw new UserError("money.validation.notInFuture", { field: "refundedOn" })
+  }
+  // Not before the day the money came in (Istanbul days, as `recordPayment`), or an earlier period's figures would change.
+  if (reg.paidAt && today(input.refundedAt) < today(reg.paidAt)) {
+    throw new UserError("money.refunds.errors.beforePayment", { field: "refundedOn" })
   }
 
   const transactionId = await postRegistrationRefund(tx, {
@@ -202,6 +208,41 @@ export async function recordRefund(
     refundedAt: input.refundedAt,
     transactionId,
   }
+}
+
+export type ChangedRefund = {
+  registrationId: string
+  courseId: string
+  memberId: string
+  /** What was paid, in kuruş. */
+  paid: number
+  /** The refund owed before and after the change, in kuruş. */
+  from: number
+  to: number
+}
+
+/**
+ * The admin confirms or changes the refund owed on a cancelled, paid
+ * registration before it is paid back: e.g. a full refund instead of the
+ * terms' 50 % when the workshop's date, venue or instructor changed, or a
+ * 0 % cancellation the admin still wants to refund. Any amount from 0 up to
+ * what was paid; it is stored as `refund_amount` (Money → Refunds lists it
+ * while it is above 0). Refused once the refund is marked as paid back, for
+ * a registration that is not cancelled or was never paid, and once the
+ * workshop's books are closed.
+ */
+export async function setRefund(tx: Tx, input: { registrationId: string; amount: number }): Promise<ChangedRefund> {
+  const { course, reg } = await lock(tx, input.registrationId)
+  if (reg.refundedAt) throw new UserError("money.refunds.errors.alreadyRefunded")
+  if (reg.status !== "cancelled" || !reg.paidAt || reg.amount <= 0) throw new UserError("money.refunds.errors.nothingOwed")
+  if (booksClosed(course)) throw new UserError("money.errors.workshopClosed")
+  if (input.amount > reg.amount) throw new UserError("money.errors.moreThanPaid", { field: "amount" })
+
+  const from = reg.refundAmount ?? 0
+  if (input.amount !== from) {
+    await tx.update(registrations).set({ refundAmount: input.amount }).where(eq(registrations.id, reg.id))
+  }
+  return { registrationId: reg.id, courseId: reg.courseId, memberId: reg.memberId, paid: reg.amount, from, to: input.amount }
 }
 
 /** The moment to store for a day the admin picked ("YYYY-MM-DD"): now for today, else midday of that day in Istanbul. */

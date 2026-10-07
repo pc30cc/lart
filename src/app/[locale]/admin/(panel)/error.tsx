@@ -6,7 +6,11 @@ import { useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 
-export default function PanelError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+/**
+ * "Try again" uses `retry()` (re-fetches the page from the server), not
+ * `reset()`, which would only re-render the same failed result.
+ */
+export default function PanelError({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
   const t = useTranslations("common.panelError")
   useEffect(() => console.error(error), [error])
 
@@ -19,7 +23,7 @@ export default function PanelError({ error, reset }: { error: Error & { digest?:
         <h1 className="text-xl font-semibold tracking-tight text-balance">{t("title")}</h1>
         <p className="text-muted-foreground text-pretty">{t("description")}</p>
         {error.digest && <p className="text-muted-foreground font-mono text-xs">{error.digest}</p>}
-        <Button size="lg" className="mt-2 px-4" onClick={reset}>
+        <Button size="lg" className="mt-2 px-4" onClick={() => retry()}>
           {t("retry")}
         </Button>
       </div>

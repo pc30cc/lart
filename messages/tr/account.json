@@ -33,6 +33,7 @@
     "hasAccount": "Zaten hesabınız var mı?",
     "logIn": "Giriş yapın",
     "errors": {
+      "name": "Lütfen yalnızca adınızı yazın (bağlantı, e-posta veya rakam olmadan).",
       "phone": "Lütfen bir telefon numarası yazın, örneğin +90 532 123 45 67."
     }
   },
@@ -47,6 +48,7 @@
     "continueInstructor": "Panelimi aç",
     "failedTitle": "Bu bağlantı artık geçerli değil",
     "failedText": "Doğrulama bağlantısı 24 saat geçerlidir ve yalnızca en yenisi çalışır. Hemen yeni bir bağlantı gönderebiliriz.",
+    "failedTextSignedOut": "Doğrulama bağlantısı 24 saat geçerlidir ve yalnızca en yenisi çalışır. Giriş yapın, size yeni bir bağlantı gönderelim.",
     "resend": "Yeni bağlantı gönder",
     "sent": "Gönderildi! Lütfen gelen kutunuza, istenmeyen klasörüne de bakın.",
     "logIn": "Giriş yap",

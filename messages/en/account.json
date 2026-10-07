@@ -33,6 +33,7 @@
     "hasAccount": "Already have an account?",
     "logIn": "Log in",
     "errors": {
+      "name": "Please enter just your name (no links, emails or numbers).",
       "phone": "Please enter a phone number, like +90 532 123 45 67."
     }
   },
@@ -47,6 +48,7 @@
     "continueInstructor": "Open my panel",
     "failedTitle": "This link no longer works",
     "failedText": "A confirmation link works for 24 hours, and only the newest one does. We can send you a new one right away.",
+    "failedTextSignedOut": "A confirmation link works for 24 hours, and only the newest one does. Log in and we’ll send you a new one.",
     "resend": "Send me a new link",
     "sent": "Sent! Please check your inbox, and the spam folder too.",
     "logIn": "Log in",

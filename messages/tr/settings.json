@@ -133,7 +133,8 @@
     "marginHint": "Fotoğrafın kenarına uzaklık (tekrarlandığında logolar arasındaki boşluk).",
     "previewAlt": "Filigranlı örnek bir fotoğraf",
     "previewNoLogo": "Önizlemeyi görmek için bir logo ekleyin.",
-    "previewCaption": "Şu anki seçimlerinizle örnek bir fotoğraf (henüz kaydedilmedi).",
+    "previewCaption": "Şu anki seçimlerinizle örnek bir fotoğraf.",
+    "previewUnsaved": "Henüz kaydetmediğiniz değişiklikler gösteriliyor.",
     "errors": {
       "logo": "Lütfen logoyu yeniden yükleyin."
     }
@@ -177,6 +178,7 @@
       "instructor": "Eğitmen",
       "ledger_transaction": "İşlem",
       "media": "Dosya",
+      "registration": "Kayıt",
       "report": "Rapor",
       "setting": "Ayar",
       "template": "Şablon",
@@ -213,7 +215,8 @@
         "update": "Eğitmen düzenlendi",
         "delete": "Eğitmen silindi",
         "invite": "Davet gönderildi",
-        "reveal_id": "Kimlik numarası görüntülendi"
+        "reveal_id": "Kimlik numarası görüntülendi",
+        "profile_update": "Eğitmen profilini düzenledi"
       },
       "media": {
         "upload": "Dosya yüklendi"
@@ -231,6 +234,13 @@
       "partner": {
         "shares": "Ortaklık payları değiştirildi"
       },
+      "registration": {
+        "payment": "Ödeme kaydedildi",
+        "cancel": "Kayıt iptal edildi",
+        "refund": "İade geri ödendi olarak işaretlendi",
+        "refundChange": "İade değiştirildi",
+        "export": "Kayıtlar dışa aktarıldı"
+      },
       "setting": {
         "update": "Ayarlar değiştirildi"
       },
@@ -246,7 +256,8 @@
         "confirm": "Atölye kesinleşti",
         "cancel": "Atölye iptal edildi",
         "close": "Atölye kapatıldı",
-        "gallery": "Galeri güncellendi"
+        "gallery": "Galeri güncellendi",
+        "raiseFinal": "Kesin katılımcı sayısı artırıldı"
       }
     }
   },
@@ -284,7 +295,8 @@
     },
     "preview": {
       "title": "Öğrencilerin gördüğü",
-      "description": "{amount} fiyatlı bir atölyeye kayıttan sonra, sizin dilinizde. Henüz kaydedilmedi.",
+      "description": "{amount} fiyatlı bir atölyeye kayıttan sonra, sizin dilinizde.",
+      "unsaved": "Henüz kaydetmediğiniz değişiklikler gösteriliyor.",
       "participant": "Deniz",
       "onlineHint": "“Online öde” düğmesi yalnızca ödeme linki olan atölyelerde görünür."
     },

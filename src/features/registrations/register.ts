@@ -12,6 +12,7 @@ import {
   MAX_ACTIVE_PER_MEMBER,
   registrationWindow,
   sameParticipant,
+  seatLimit,
   type CancelPreview,
   type registerSchema,
 } from "./schema"
@@ -40,8 +41,10 @@ const closedReason = {
 /**
  * Register a participant. The workshop must be published or confirmed, before
  * its registration deadline and start, with a free seat (registered + paid <
- * maximum). The member may register several people, but the same participant
- * only once (while active), and at most MAX_ACTIVE_PER_MEMBER.
+ * maximum; once confirmed, < the number fixed at the go decision, so nobody
+ * takes part without the instructor being paid for them: `seatLimit`). The
+ * member may register several people, but the same participant only once
+ * (while active), and at most MAX_ACTIVE_PER_MEMBER.
  *
  * The amount is the workshop's price; the registration is "pending"
  * (registered, holds a seat, not paid yet), or "confirmed" right away for a
@@ -63,6 +66,7 @@ export async function registerForWorkshop(
         endsAt: courses.endsAt,
         registrationDeadline: courses.registrationDeadline,
         maxCapacity: courses.maxCapacity,
+        finalParticipants: courses.finalParticipants,
         price: courses.price,
         termsTemplateId: courses.termsTemplateId,
         publishedAt: courses.publishedAt,
@@ -73,7 +77,7 @@ export async function registerForWorkshop(
     if (!course || !course.publishedAt) throw new UserError("registration.errors.notFound")
 
     // The seat count is read under the lock: whoever comes second sees the first one's seat.
-    const left = course.maxCapacity - (await seatsTaken(course.id, tx))
+    const left = seatLimit(course) - (await seatsTaken(course.id, tx))
     const window = registrationWindow({ ...course, seatsLeft: left }, now)
     if (window !== "open") throw new UserError(closedReason[window])
 

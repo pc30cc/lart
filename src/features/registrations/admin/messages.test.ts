@@ -28,6 +28,8 @@ const values = {
   name: "Ayşe",
   participant: "Deniz",
   amount: "₺1.500",
+  paid: "₺1.500",
+  refund: "₺750",
   percent: "%50",
   date: "14 Eki 2026",
   method: "cash",

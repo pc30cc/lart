@@ -44,7 +44,7 @@ Next.js 16 differs from older versions: read the relevant guide in
 src/
   app/
     page.tsx                    root: redirects to the NEXT_LOCALE cookie's or the default language (setting)
-    sitemap.ts, robots.ts       /sitemap.xml (workshops list + open workshop pages, fa/tr/en with hreflang), /robots.txt
+    sitemap.ts, robots.ts       /sitemap.xml (workshops list + open workshop pages, fa/tr/en with hreflang), /robots.txt (disallows only /<l>/admin and /api)
     [locale]/
       page.tsx                  language root: redirects to /<locale>/workshops until the phase 3 home page exists
       (site)/                   the public site frame (header, footer, "confirm your email" banner; phase 3 themes replace it)
@@ -559,6 +559,19 @@ instructor panel's "Please confirm your email" banner sends the link again
 with `resendInstructorVerifyAction` (the link opens `/<l>/instructor/verify`),
 and its "Sign out" is `instructorLogoutAction` (`features/accounts/actions`).
 
+Member names (sign-up and "My details") use `personName()`
+(`features/accounts/schema`): 2 to 80 characters, no digits, links, email
+addresses or `@ / \ : < >`. The name is the greeting of the emails we send,
+so it must not carry someone's own link or phone number to any address.
+
+Errors: the `(site)` and `instructor/(auth)` groups have their own
+`error.tsx`, both built on `src/components/site/page-error.tsx` (a friendly
+message, "Try again" = `retry()`, one way on). A failure in those groups'
+layouts (brand, signed-in member) is caught by `src/app/[locale]/error.tsx`
+(full page, back to the home page); one in the root or language layout by
+`src/app/global-error.tsx`. Error boundaries use `retry()` (fetches the page
+again), not `reset()`.
+
 Actions that change the session cookie end with a server-side `redirect`, so
 the next page renders with the new session. To say something on that page,
 redirect with `withNotice(path, "checkEmail" | "signedOut" | "passwordSaved")`
@@ -568,7 +581,8 @@ a toast and removes `?notice=` from the address. Only those values are shown.
 ### The public site shell
 
 `src/app/[locale]/(site)/layout.tsx` frames every public page (workshops, the
-member's account pages): `SiteHeader` (brand wordmark → workshops, "Workshops",
+member's account pages): `SiteHeader` (brand wordmark → workshops, "Workshops"
+from `sm` up (on phones the brand is that link),
 language, account button: "Log in / Sign up" coming back to the page, or the
 member's first name with My workshops → `/<l>/account`, language, log out),
 the "Please confirm your email" banner (with "Send it again") for a signed-in
@@ -583,6 +597,11 @@ The proxy sends `X-Robots-Tag: noindex` for `/<l>/admin/**`,
 and redirects a signed-out GET of a private page to that area's login (except
 the sign-in pages themselves). It also passes the requested path and query to
 the page as `x-pathname` (overwriting any value the client sent).
+The instructor panel and the account pages rely on that noindex (and the
+pages' meta noindex), not on a robots.txt Disallow: `src/app/robots.ts` does
+not name them, so crawlers can fetch them and see the noindex (a blocked page
+can still be indexed as a bare URL), and robots.txt does not publish the
+instructor panel's private address (README §5). Do not add them there.
 
 ### Emails of phase 2
 
@@ -596,8 +615,8 @@ the page as `x-pathname` (overwriting any value the client sent).
 | `refund_due` | registrations | to every super admin: a refund must be paid back by hand |
 | `refund_sent` | registrations | an admin marked the refund as paid back |
 | `workshop_cancelled` | workshops (`cancelWorkshop`) | to everyone registered, one per member: with `refundAmount` (refunded in full) when they had paid, without it ("please don't come to the venue") when not |
-| `workshop_reminder` | jobs (day before) | one per member and workshop; with `amount` (still to pay), `participantName` and the payment ways (as `registration_received`) while something is unpaid |
-| `contract_ready` | workshops / contracts | in the instructor's language (`instructors.locale`, set from the invitation page and the panel's language switch), sign link in that language |
+| `workshop_reminder` | jobs (day before) | one per member and workshop per batch of registrations (a registration added after the reminder gets its own); with `amount` (still to pay), `participantName` and the payment ways (as `registration_received`) while something is unpaid |
+| `contract_ready` | workshops / contracts | in the instructor's language (`instructors.locale`: the invitation language the admin chose when creating the instructor or resending the invitation, then the invitation page's and the panel's language switch), sign link in that language |
 
 `paymentWays(await getSetting("payment"), course.paymentUrl, locale)`
 (`@/emails/payment`) builds the payment props of `registration_received`: only
@@ -629,7 +648,7 @@ site; every page is `noindex` (layout metadata and the proxy header).
 | `/<l>/instructor` | contracts waiting for a signature, next workshops |
 | `/<l>/instructor/contracts`, `/contracts/[id]` | every contract version; one contract's text (`ContractDocument`, print view) and the sign form |
 | `/<l>/instructor/workshops`, `/workshops/[id]` | my workshops with seats taken (everyone registered, paid or not yet); participants by name and photo / video consent only (contract 8.1: no contact details, no payment status) |
-| `/<l>/instructor/earnings` | per workshop: fee, received (advance, payments), owed or to return (`workshopEarnings`) |
+| `/<l>/instructor/earnings` | per workshop: fee, received (advance, payments), owed or to return (`workshopEarnings`); only money booked since this instructor's first contract for the workshop (a workshop taken over from another instructor does not show theirs) |
 | `/<l>/instructor/profile` | public profile in three languages, teaching languages (`LanguagePicker`), photo (`PhotoField` → `/api/instructor/uploads`) |
 
 - Every query starts with `requireInstructor()` and reads only the signed-in
@@ -661,22 +680,33 @@ holds a seat, not paid yet; `confirmed` = paid (or a free workshop);
 | `/<l>/workshops`, `/<l>/workshops/[slug]` | open workshops (published or confirmed, not started), seats left, "You are registered" (`features/registrations/public.ts`) |
 | `/<l>/workshops/[slug]/register` | participant name, terms (SHA-256 of the text shown), photo / video consent; confirmed email needed (`registerAction`) |
 | `/<l>/account`, `/<l>/account/registrations/[id]` | My workshops: payment status, how to pay (`PaymentInstructions`), cancel with the refund preview (`features/registrations/member.ts`, `actions.ts`) |
-| `/<l>/admin/workshops/[id]/registrations` | record a payment, cancel, CSV export (`features/registrations/admin`) |
-| `/<l>/admin/money/refunds` | refunds owed / paid back; "Mark as refunded" |
+| `/<l>/admin/workshops/[id]/registrations` | record a payment, cancel, change refund, CSV export (`features/registrations/admin`) |
+| `/<l>/admin/registrations` | every workshop's registrations: tabs not paid yet (default) / paid / cancelled / all, search by participant / member / email / phone, record a payment, cancel, change refund |
+| `/<l>/admin/money/refunds` | refunds owed / paid back; "Change refund", "Mark as refunded" |
 | `/<l>/admin/settings/payments` | which ways are on (cash, transfer with holder / bank / IBAN / note, online with a note) |
 
 - **Counting.** "Registered" is everyone with an active registration, paid or
-  not yet (`activeStatuses`): `seatsTaken(courseId)` / `seatsLeft(max, taken)`
+  not yet (`activeStatuses`): `seatsTaken(courseId)` / `seatsLeft(limit, taken)`
   on the site, the fill columns and meters of the admin and the dashboard, the
   instructor panel, the go decision (`final_participants`) and, until that is
   fixed, the participant number of money/closing.ts and reports.ts. "Paid" is
-  shown beside it where it helps (dashboard, workshop overview, finances).
+  shown beside it where it helps (dashboard, workshop overview, finances): a
+  confirmed registration with an amount above 0, so a free registration never
+  counts as paid. The dashboard's upcoming meters use the live registered
+  count, also after the go decision, with `final_participants` beside it.
+- **Places after the go decision** are capped at `final_participants`
+  (`seatLimit(course)` in `features/registrations/schema.ts`, used by
+  `registerForWorkshop` and the site's seats left). A cancelled place can be
+  taken again; more people only once the instructor agreed (contract 5.2) and
+  an admin raised the number on the workshop's overview
+  (`raiseFinalParticipants`: confirmed and not started, higher than now, at
+  most the maximum; audited `workshop.raiseFinal` with `{ from, to }`).
 - **How to pay.** `paymentWays(await getSetting("payment"), safePaymentUrl(course.paymentUrl), locale)`
   (`@/emails/payment`) gives the ways that are on and usable (a transfer needs
   an IBAN, online payment the workshop's link); `PaymentInstructions` shows
   them on the site, and `registration_received` / `workshop_reminder` email them.
 - **Lock order: workshop, then registration.** Registering, the member's
-  cancel, `recordPayment`, `cancelRegistration`, `recordRefund`
+  cancel, `recordPayment`, `cancelRegistration`, `setRefund`, `recordRefund`
   (`features/registrations/admin/payments.ts`), `cancelWorkshop` and every
   ledger posting lock the `courses` row first (`lockCourse`, FOR NO KEY
   UPDATE, or FOR UPDATE), then the registration. A seat count read under that
@@ -693,12 +723,21 @@ holds a seat, not paid yet; `confirmed` = paid (or a free workshop);
 - **Refunds.** Cancelling (the member, an admin, or the whole workshop) stores
   the amount owed as `refund_amount` (terms: 100 / 50 / 0 % by the time left,
   `refund-policy.ts`; full when the workshop is cancelled or the admin
-  chooses). It is paid back by hand, then "Mark as refunded"
+  chooses). An admin confirms or changes the stored refund before it is paid
+  back (`setRefund`, 0 up to what was paid, audited `registration.refundChange`;
+  the member is emailed the new amount), e.g. a full refund when the date,
+  venue or instructor changed. It is paid back by hand, then "Mark as refunded"
   (`recordRefund`) posts `registration_refund` and sets `refunded_at`.
   Registration payments and refunds are never reversed in the ledger
   (`reverseTransaction` refuses them, `money.errors.registrationEntry`): a
   payment is undone by cancelling the registration. A workshop's books cannot
-  be closed while refunds are still owed (`refundsOwed` closing issue).
+  be closed while refunds are still owed (`refundsOwed` closing issue), nor
+  while an active registration with an amount above 0 is still not paid
+  (`unpaidRegistrations`): record each payment (often cash at the venue) or
+  cancel the registration of anyone who didn't come first, because after
+  closing `recordPayment` and `cancelRegistration` refuse
+  (`money.errors.workshopClosed`). The finances page counts as "paid" only
+  confirmed registrations with an amount above 0.
 
 ## Jobs
 
@@ -711,8 +750,11 @@ when another failed; exit code 1 when one failed or did not finish.
   `decision_due` once (`decision_notified_at`).
 - `workshop_reminder` (`features/registrations/admin/reminders.ts`): the day
   before, everyone with an active registration in a workshop starting within
-  24 hours gets one email per member and workshop, in their language, with
-  what is still to pay and how while something is unpaid. Marked per
-  registration (`reminder_sent_at`) only when the email went out; members are
-  locked one run at a time (`SKIP LOCKED`), and the Resend idempotency key
-  stops a retry from emailing twice.
+  24 hours gets one email per member and workshop per batch of registrations,
+  in their language, with what is still to pay and how while something is
+  unpaid. Marked per registration (`reminder_sent_at`, reset when the start
+  time changes) only when the email went out; members are locked one run at
+  a time (`SKIP LOCKED`). The Resend idempotency key names the start time and
+  the registrations it covers (a short sha256 of their ids), so a retry is
+  deduplicated, a registration added later gets its own reminder, and a
+  reminder for a new date is not blocked by the one for the old date.

@@ -269,6 +269,7 @@
     "print": "Yazdır veya PDF",
     "registrations": "Kayıtlar",
     "registrationsPaid": "{count, plural, =0 {Henüz ödeme yapan yok} other {# kişi ödedi}}{pending, plural, =0 {} other {, # kişi henüz ödemedi}}",
+    "registrationsFree": "Ücretsiz atölye: ödenecek bir şey yok.",
     "finalNumber": "Kesin karardaki katılımcı sayısı: {count}",
     "revenueHint": "Ödenmiş kayıtlar, iadeler düşüldükten sonra.",
     "revenueInBooks": "Şimdiye kadar deftere işlenen: {amount}",
@@ -362,6 +363,7 @@
     "done": "Atölye kapatıldı. Rakamlar kilitlendi.",
     "fixShares": "Payları düzeltin",
     "openRefunds": "İadeler listesini aç",
+    "openRegistrations": "Kayıtları aç",
     "changed": "Siz incelerken rakamlar değişti. Lütfen yeni rakamlara bakıp tekrar kapatın.",
     "issues": {
       "closed": "Bu atölye zaten kapatıldı.",
@@ -369,6 +371,7 @@
       "notEnded": "Atölye henüz bitmedi. Bittikten sonra kapatabilirsiniz.",
       "noContract": "Bu atölyenin geçerli bir sözleşmesi yok, bu yüzden eğitmen ücreti bilinmiyor.",
       "refundsOwed": "Bu atölyenin bazı iadeleri henüz geri ödenmedi. Önce iadeleri geri ödeyip iade edildi olarak işaretleyin; sonra atölyeyi kapatabilirsiniz.",
+      "unpaidRegistrations": "{count, plural, other {# kaydın ödemesi henüz alınmadı}}. Her ödemeyi kaydedin ya da gelmeyen kişinin kaydını iptal edin; sonra atölyeyi kapatabilirsiniz.",
       "revenueMismatch": "Bu atölyenin bazı ödemeleri veya iadeleri henüz deftere işlenmedi.",
       "advanceTooBig": "Eğitmende ücretinden fazla ön ödeme kaldı. Önce iade ettiği tutarı ya da atölye için harcadığını kaydedin.",
       "sharesNot100": "Ortakların paylarının toplamı %100 değil."
@@ -414,6 +417,16 @@
       "submit": "Evet, geri ödendi",
       "done": "İade edildi olarak işaretlendi. {name} bir e-posta alacak."
     },
+    "change": {
+      "trigger": "İadeyi değiştir",
+      "title": "{participant} için iadeyi değiştir",
+      "description": "{paid} ödendi, şu an {refund} iade edilecek. Tarih, mekân veya eğitmen değiştiyse koşullar tam iade öngörür.",
+      "amount": "İade",
+      "hint": "En fazla {amount}, yani ödenen tutar. 0 iade yok demektir.",
+      "after": "Geri ödendi olarak işaretleyene kadar İadeler’de bekler. İade varsa {name} yeni tutarla bir e-posta alır.",
+      "submit": "İadeyi kaydet",
+      "done": "İade değiştirildi."
+    },
     "empty": {
       "title": "Geri ödenecek iade yok",
       "description": "Ödeme yapmış biri kaydını iptal ettiğinde ya da bir atölye iptal edildiğinde iade burada görünür."
@@ -421,7 +434,8 @@
     "errors": {
       "alreadyRefunded": "Bu iade zaten geri ödendi olarak işaretlenmiş. Yapılacak başka bir şey yok.",
       "nothingOwed": "Bu kayıt için geri ödenecek bir tutar yok.",
-      "chooseMethod": "Lütfen nasıl geri ödediğinizi seçin."
+      "chooseMethod": "Lütfen nasıl geri ödediğinizi seçin.",
+      "beforePayment": "İade tarihi, ödemenin yapıldığı günden önce olamaz."
     }
   }
 }

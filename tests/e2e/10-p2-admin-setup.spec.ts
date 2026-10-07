@@ -1,8 +1,6 @@
-import type { Page } from "@playwright/test"
-
-import { chooseSelect, expect, field, fillDateTime, fillLocalized, istanbulDate, mailMark, RUN, test, toast } from "./helpers/app"
+import { expect, field, fillLocalized, mailMark, RUN, test, toast } from "./helpers/app"
 import { one, sql } from "./helpers/db"
-import { linksOf, P2, waitMail } from "./helpers/p2"
+import { CATEGORY, createWorkshop, fillInstructor, linksOf, mailTo, P2, waitMail } from "./helpers/p2"
 
 /**
  * Phase 2, admin side, set-up: Settings → Payments (cash, bank transfer with a
@@ -11,59 +9,6 @@ import { linksOf, P2, waitMail } from "./helpers/p2"
  * of the second instructor, D for the day-before reminder). Later specs build
  * on these (11 instructor panel, 12 students, 13 admin registrations).
  */
-
-const DAY = 86_400_000
-const inDays = (n: number) => istanbulDate(new Date(Date.now() + n * DAY))
-const CATEGORY = { fa: `سفال‌گری ${RUN}`, tr: `Atölye P2 ${RUN}`, en: `Workshop P2 ${RUN}` }
-
-type Teacher = (typeof P2)["nur"]
-
-async function fillInstructor(page: Page, p: Teacher) {
-  await fillLocalized(page, "Display name", p.displayName)
-  await fillLocalized(page, "Teaching field", p.teachingField)
-  await field(page, "Official full name").getByRole("textbox").fill(p.officialName)
-  await field(page, "ID number").getByRole("textbox").fill(p.idNumber)
-  await field(page, "Mobile number").getByRole("textbox").fill(p.mobile)
-  await field(page, /^Email/).getByRole("textbox").fill(p.email)
-}
-
-type WorkshopInput = {
-  title: { fa?: string; tr: string; en?: string }
-  instructor: string
-  date: number
-  start: string
-  end: string
-  deadline: [number, string]
-  decision: [number, string]
-  venue: Record<string, string>
-  min: number
-  max: number
-  price: string
-  fee: string
-  paymentUrl?: string
-  intro?: { fa?: string; tr?: string; en?: string }
-}
-
-async function createWorkshop(page: Page, w: WorkshopInput) {
-  await page.goto("/en/admin/workshops/new")
-  await expect(page.getByRole("heading", { level: 1, name: "New workshop" })).toBeVisible()
-  await fillLocalized(page, /^Workshop name/, w.title)
-  await chooseSelect(page, /^Category/, CATEGORY.en)
-  await chooseSelect(page, /^Instructor/, w.instructor)
-  await fillDateTime(page, /^Date and time/, inDays(w.date), w.start, w.end)
-  await fillDateTime(page, /^Registration closes/, inDays(w.deadline[0]), w.deadline[1])
-  await fillDateTime(page, /^Go \/ no-go decision/, inDays(w.decision[0]), w.decision[1])
-  await fillLocalized(page, /^Place/, w.venue)
-  await field(page, /^Minimum participants/).getByRole("spinbutton").fill(String(w.min))
-  await field(page, /^Maximum participants/).getByRole("spinbutton").fill(String(w.max))
-  await field(page, /^Price per person/).getByRole("textbox").fill(w.price)
-  if (w.intro) await fillLocalized(page, /^Short introduction/, w.intro)
-  if (w.paymentUrl) await field(page, /^Online payment link/).getByRole("textbox").fill(w.paymentUrl)
-  await field(page, /^Amount per participant/).getByRole("textbox").fill(w.fee)
-  await page.getByRole("button", { name: "Create and send contract" }).click()
-  await expect(toast(page, /Workshop created\./)).toBeVisible()
-  await expect(page).toHaveURL(/\/en\/admin\/workshops\/[0-9a-f-]{36}$/)
-}
 
 test.describe.serial("phase 2 · admin set-up", () => {
   test("Settings → Payments: a wrong IBAN is refused, then bank transfer and online payment are switched on", async ({ page }) => {
@@ -161,8 +106,7 @@ test.describe.serial("phase 2 · admin set-up", () => {
       expect(link, `invite link in ${linksOf(email).join(" ")}`).toMatch(new RegExp(`^http://localhost:3100/${locale}/instructor/accept-invite\\?token=[\\w-]{20,}$`))
       const row = await one<{ password_hash: string | null; locale: string }>("select password_hash, locale from instructors where email = $1", [p.email])
       expect(row.password_hash).toBeNull()
-      // The invitation's language is not stored: instructors.locale stays the default until the
-      // instructor accepts (emails sent before that, e.g. contract_ready, go in that default).
+      // Checked outside the serial flow (the last test of this file), so a failure doesn't stop the specs that build on it.
       test.info().annotations.push({ type: `locale after invite (${locale})`, description: row.locale })
     }
   })
@@ -222,6 +166,7 @@ test.describe.serial("phase 2 · admin set-up", () => {
       fee: "250",
       paymentUrl: P2.wB.paymentUrl,
     })
+    const markC = mailMark()
     await createWorkshop(page, {
       title: P2.wC.title,
       instructor: P2.derya.displayName.en,
@@ -250,9 +195,24 @@ test.describe.serial("phase 2 · admin set-up", () => {
       price: "500",
       fee: "100",
     })
+    // Derya was invited in Persian (checked in the last test of this file).
+    const contractC = await waitMail(P2.derya.email, markC, /./)
+    test.info().annotations.push({ type: "contract_ready to Derya (invited in fa)", description: `${contractC.subject} ${linksOf(contractC).join(" ")}` })
     const rows = await sql<{ slug: string; status: string }>("select slug, status from courses where slug = any($1) order by slug", [
       [P2.wB.slug, P2.wC.slug, P2.wD.slug],
     ])
     expect(rows.map((r) => r.status)).toEqual(["awaiting_signature", "awaiting_signature", "awaiting_signature"])
   })
+})
+
+// Outside the serial flow: a failure here reports a bug without stopping the specs that build on this data.
+test("the language chosen for the invitation is the instructor's language until they choose another (contract emails before accepting)", async () => {
+  const derya = await one<{ locale: string; password_hash: string | null }>("select locale, password_hash from instructors where email = $1", [P2.derya.email])
+  test.skip(derya.password_hash !== null, "Derya has accepted the invitation already")
+  const contract = mailTo(P2.derya.email, 0).find((e) => linksOf(e).some((l) => l.includes("/instructor/contracts/")))
+  expect(contract, "contract_ready email to Derya").toBeTruthy()
+  test.info().annotations.push({ type: "contract_ready to Derya", description: `${contract!.subject} · ${linksOf(contract!).join(" ")}` })
+  // README §9: emails in the instructor's language. The admin chose Persian for the invitation (and got a Persian invitation).
+  expect.soft(derya.locale, "instructors.locale of an instructor invited in Persian").toBe("fa")
+  expect.soft(linksOf(contract!).find((l) => l.includes("/instructor/contracts/")), "the sign link of the contract email").toMatch(/\/fa\/instructor\/contracts\//)
 })

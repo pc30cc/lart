@@ -108,6 +108,8 @@
     "now": "Happening now",
     "seats": "{taken} of {max} places",
     "paid": "{count, plural, =0 {Nobody has paid yet} other {# paid}}",
+    "free": "Free workshop",
+    "final": "{count, plural, one {Final number: # participant} other {Final number: # participants}}",
     "notOpen": "Registration opens after signing",
     "alerts": {
       "awaitingSignature": "Waiting for the instructor to sign the contract",

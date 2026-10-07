@@ -23,6 +23,9 @@
     "signedOut": "Çıkış yaptınız. Görüşmek üzere!",
     "passwordSaved": "Yeni şifreniz kaydedildi ve giriş yaptınız."
   },
+  "error": {
+    "workshops": "Tüm atölyeleri görün"
+  },
   "footer": {
     "rights": "© {year} {brand}"
   }

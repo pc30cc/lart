@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button"
 import { CancelRegistration } from "@/features/registrations/components/cancel-registration"
 import { PaymentBadge } from "@/features/registrations/components/payment-badge"
 import { PaymentInstructions } from "@/features/registrations/components/payment-instructions"
+import { TermsText } from "@/features/registrations/components/terms-text"
 import { getMyRegistration } from "@/features/registrations/member"
 import { cancelPreview, canCancel, isolate, paymentState } from "@/features/registrations/schema"
 import { Link } from "@/i18n/navigation"
@@ -117,9 +118,7 @@ export default async function MyRegistrationPage({ params, searchParams }: PageP
           </Fact>
           <div className="flex items-baseline justify-between gap-3 border-t pt-3">
             <dt className="text-muted-foreground">{t("item.amount")}</dt>
-            <dd className="text-lg font-semibold">
-              <Money value={r.amount} />
-            </dd>
+            <dd className="text-lg font-semibold">{r.amount > 0 ? <Money value={r.amount} /> : t("price.free")}</dd>
           </div>
         </dl>
         {state === "paid" && r.paymentMethod && (
@@ -148,11 +147,24 @@ export default async function MyRegistrationPage({ params, searchParams }: PageP
               {t("detail.termsAccepted", { date: formatDateTime(r.termsAcceptedAt, locale, "long") })}
             </li>
           </ul>
+          {r.terms && (
+            <details className="group text-sm">
+              <summary className="text-primary focus-visible:ring-ring/50 inline-flex h-10 cursor-pointer items-center rounded-sm font-medium underline-offset-4 outline-none hover:underline focus-visible:ring-3">
+                {t("register.terms")}
+              </summary>
+              <TermsText text={r.terms} className="bg-muted/40 mt-1 max-h-96 overflow-y-auto rounded-xl p-4 text-sm" />
+            </details>
+          )}
         </div>
 
         {cancellable && (
           <div className="flex justify-end border-t pt-4">
-            <CancelRegistration id={r.id} participantName={r.participantName} preview={cancelPreview(r, r.course.startsAt, now)} />
+            <CancelRegistration
+              id={r.id}
+              participantName={r.participantName}
+              preview={cancelPreview(r, r.course.startsAt, now)}
+              free={r.amount === 0}
+            />
           </div>
         )}
       </section>

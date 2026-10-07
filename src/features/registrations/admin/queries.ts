@@ -5,7 +5,7 @@ import { likePattern, type TableParams } from "@/components/admin/data-table/par
 import { db } from "@/db"
 import { courses, members, registrations } from "@/db/schema"
 import { requireAdmin } from "@/lib/auth/admin"
-import type { refundTable, RegistrationView, registrationTable } from "./schema"
+import type { allRegistrationsTable, AllRegistrationView, refundTable, RegistrationView, registrationTable } from "./schema"
 
 /**
  * Reads of the super admin's registration pages. Every one starts with
@@ -117,6 +117,75 @@ export async function registrationSummary(courseId: string) {
 }
 
 export type RegistrationSummary = Awaited<ReturnType<typeof registrationSummary>>
+
+// ─── All workshops ────────────────────────────────────────────────────────────
+
+type AllRegistrationParams = TableParams<(typeof allRegistrationsTable.sort)[number], keyof typeof allRegistrationsTable.filters>
+
+/**
+ * One page of the registrations of every workshop (Registrations): a tab per
+ * payment state, "not paid yet" by default, the search of a workshop's list
+ * (participant, member name, email or phone: a bank transfer's description
+ * has the participant's name), and the sort by registration time,
+ * participant or the workshop's date. Each row has its workshop.
+ */
+export async function listRegistrations(params: AllRegistrationParams) {
+  await requireAdmin()
+  const view: AllRegistrationView = (params.filters.view as AllRegistrationView | undefined) ?? "unpaid"
+  const where = and(view === "all" ? undefined : eq(registrations.status, statusOf[view]), search(params.q))
+  const direction = params.dir === "desc" ? desc : asc
+  const order =
+    params.sort === "participant"
+      ? [direction(sql`lower(${registrations.participantName})`), asc(registrations.createdAt), asc(registrations.id)]
+      : params.sort === "workshop"
+        ? [direction(courses.startsAt), asc(courses.id), asc(registrations.createdAt), asc(registrations.id)]
+        : [direction(registrations.createdAt), asc(registrations.id)]
+
+  const [rows, [{ total }]] = await Promise.all([
+    db
+      .select({
+        ...columns,
+        course: {
+          id: courses.id,
+          title: courses.title,
+          slug: courses.slug,
+          startsAt: courses.startsAt,
+          status: courses.status,
+          closedAt: courses.closedAt,
+          cancelledAt: courses.cancelledAt,
+        },
+      })
+      .from(registrations)
+      .innerJoin(members, eq(members.id, registrations.memberId))
+      .innerJoin(courses, eq(courses.id, registrations.courseId))
+      .where(where)
+      .orderBy(...order)
+      .limit(params.pageSize)
+      .offset(params.offset),
+    db
+      .select({ total: count() })
+      .from(registrations)
+      .innerJoin(members, eq(members.id, registrations.memberId))
+      .where(where),
+  ])
+  return { view, rows, total }
+}
+
+export type AllRegistrationRow = Awaited<ReturnType<typeof listRegistrations>>["rows"][number]
+
+/** How many registrations each tab of Registrations has. */
+export async function countRegistrationViews(): Promise<Record<AllRegistrationView, number>> {
+  await requireAdmin()
+  const [row] = await db
+    .select({
+      unpaid: tally(sql`${registrations.status} = 'pending'`),
+      paid: tally(sql`${registrations.status} = 'confirmed'`),
+      cancelled: tally(sql`${registrations.status} = 'cancelled'`),
+      all: count(),
+    })
+    .from(registrations)
+  return row
+}
 
 /** Every registration of a workshop for the CSV export: active first, then by registration time. */
 export async function exportRegistrations(courseId: string) {

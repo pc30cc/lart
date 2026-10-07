@@ -13,7 +13,7 @@ function keys(tree: Tree, prefix = ""): string[] {
   return Object.entries(tree).flatMap(([k, v]) => (typeof v === "string" ? [`${prefix}${k}`] : keys(v, `${prefix}${k}.`)))
 }
 
-const values = { name: "Ayşe", amount: "₺1.250", count: 3, date: "1 Oct", kind: "Expense", title: "Candles", what: "Clay", total: "100%", rest: "10%", advance: "₺500", owed: "₺700", quarter: "1", year: "2026", from: "1", to: "20", pending: 2 }
+const values = { name: "Ayşe", participant: "Deniz", paid: "₺1.500", refund: "₺750", amount: "₺1.250", count: 3, date: "1 Oct", kind: "Expense", title: "Candles", what: "Clay", total: "100%", rest: "10%", advance: "₺500", owed: "₺700", quarter: "1", year: "2026", from: "1", to: "20", pending: 2 }
 
 describe("money messages", () => {
   it("have the same keys in fa, tr and en", () => {
@@ -27,7 +27,7 @@ describe("money messages", () => {
     for (const a of accounts) expect(en.accounts).toHaveProperty(a)
     for (const r of reportKinds) expect(en.reports.tabs).toHaveProperty(r)
     for (const g of periodGroups) expect(en.reports.groups).toHaveProperty(g)
-    for (const i of ["closed", "notClosable", "notEnded", "noContract", "refundsOwed", "revenueMismatch", "advanceTooBig", "sharesNot100"]) {
+    for (const i of ["closed", "notClosable", "notEnded", "noContract", "refundsOwed", "unpaidRegistrations", "revenueMismatch", "advanceTooBig", "sharesNot100"]) {
       expect(en.close.issues).toHaveProperty(i)
     }
   })

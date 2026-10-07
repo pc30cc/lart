@@ -1,7 +1,8 @@
 /**
  * The super admin's registration forms and lists (client-safe): record a
- * payment, cancel a registration, mark a refund as paid back, and the table
- * filters of the workshop's registrations and of the refunds list.
+ * payment, cancel a registration, change a refund, mark a refund as paid
+ * back, and the table filters of the registrations lists (a workshop's and
+ * all workshops') and of the refunds list.
  */
 import { z } from "zod"
 
@@ -43,6 +44,16 @@ export const markRefundedSchema = z.object({
 })
 export type MarkRefundedValues = z.input<typeof markRefundedSchema>
 
+/**
+ * "Change refund" of a cancelled, paid registration not paid back yet: the
+ * amount to give back, from 0 up to what was paid (the server checks that).
+ */
+export const setRefundSchema = z.object({
+  id: uuid(),
+  amount: kurus({ min: 0 }),
+})
+export type SetRefundValues = z.input<typeof setRefundSchema>
+
 /** Filters of a workshop's registrations: paid, not paid yet, cancelled. */
 export const registrationViews = ["unpaid", "paid", "cancelled"] as const
 export type RegistrationView = (typeof registrationViews)[number]
@@ -50,6 +61,18 @@ export type RegistrationView = (typeof registrationViews)[number]
 export const registrationTable = {
   sort: ["createdAt", "participant"] as const,
   filters: { status: registrationViews },
+}
+
+/**
+ * Registrations (all workshops): one tab per payment state, "not paid yet"
+ * when none is chosen (`?view=`), and the sort by the workshop's date too.
+ */
+export const allRegistrationViews = ["unpaid", "paid", "cancelled", "all"] as const
+export type AllRegistrationView = (typeof allRegistrationViews)[number]
+
+export const allRegistrationsTable = {
+  sort: ["createdAt", "participant", "workshop"] as const,
+  filters: { view: allRegistrationViews },
 }
 
 /** The refunds list: still to pay back (default) or already paid back. */

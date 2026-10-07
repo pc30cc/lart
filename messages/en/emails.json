@@ -86,7 +86,7 @@
     "heading": "Your place is booked!",
     "intro": "Thank you for registering! Your place in “{workshopTitle}” is confirmed. Here are the details:",
     "cta": "View workshop",
-    "note": "If your plans change, please let us know as early as you can. You’ll find the cancellation terms on the workshop page."
+    "note": "If your plans change, you can cancel in My workshops, so someone else can take your place."
   },
   "workshop_reminder": {
     "subject": "See you soon at “{workshopTitle}”",
@@ -138,7 +138,7 @@
     "heading": "Your place is confirmed!",
     "intro": "We’ve received your payment of {amount} {method, select, cash {in cash} transfer {by bank transfer} online {online} other {}} for “{workshopTitle}”. Your registration is complete, and we can’t wait to see you!",
     "cta": "My workshops",
-    "note": "If your plans change, please let us know as early as you can. You’ll find the cancellation terms on the workshop page."
+    "note": "If your plans change, you can cancel in My workshops. The refund you’d get is shown there before you confirm."
   },
   "registration_cancelled": {
     "subject": "Your registration for “{workshopTitle}” is cancelled",

@@ -475,6 +475,7 @@ function UpcomingRow({ w, today }: { w: UpcomingWorkshop; today: string }) {
   const parts = (options: Intl.DateTimeFormatOptions) =>
     new Intl.DateTimeFormat(intlLocale(locale), { timeZone: TIME_ZONE, ...options }).format(w.startsAt)
   const alert = w.alert
+  const payment = w.payment
 
   return (
     <li>
@@ -535,7 +536,14 @@ function UpcomingRow({ w, today }: { w: UpcomingWorkshop; today: string }) {
                 max={w.maxCapacity}
                 label={t("seats", { taken: num(w.registered), max: num(w.maxCapacity) })}
               />
-              {w.registered > 0 && <span className="text-muted-foreground mt-1 block text-xs">{t("paid", { count: w.paid })}</span>}
+              {payment && (
+                <span className="text-muted-foreground mt-1 block text-xs">
+                  {payment.kind === "free" ? t("free") : t("paid", { count: payment.count })}
+                </span>
+              )}
+              {w.finalParticipants !== null && (
+                <span className="text-muted-foreground mt-1 block text-xs">{t("final", { count: w.finalParticipants })}</span>
+              )}
             </>
           )}
         </span>

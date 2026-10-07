@@ -5,6 +5,8 @@ import { test as base, expect, type Locator, type Page } from "@playwright/test"
 
 /** Suffix that makes this run's names, emails and slugs unique (set in playwright.config.ts). */
 export const RUN = process.env.E2E_RUN ?? "local"
+/** The run suffix in letters only (digit d → the d-th letter), for people's names: names may not contain digits. */
+export const RUN_NAME = RUN.replace(/\d/g, (d) => "abcdefghij"[Number(d)])
 
 export const ADMIN = { email: "owner@lart.test", password: "Correct-Horse-Battery-9", name: "Owner One" }
 

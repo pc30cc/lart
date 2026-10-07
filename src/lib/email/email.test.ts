@@ -6,8 +6,11 @@ import { type EmailProps, type EmailTemplate, emailPlaceholders, emailTemplateNa
 import { env } from "@/lib/env"
 import { getBrand } from "@/lib/settings"
 import en from "../../../messages/en/emails.json"
+import siteEn from "../../../messages/en/site.json"
 import fa from "../../../messages/fa/emails.json"
+import siteFa from "../../../messages/fa/site.json"
 import tr from "../../../messages/tr/emails.json"
+import siteTr from "../../../messages/tr/site.json"
 import { sendEmail, sender } from "./index"
 
 const send = vi.hoisted(() => vi.fn())
@@ -133,6 +136,18 @@ describe("messages", () => {
     for (const template of emailTemplateNames) {
       for (const key of ["subject", "preview", "heading", "intro", "cta"]) {
         expect(flatKeys(tr)).toContain(`${template}.${key}`)
+      }
+    }
+  })
+
+  it("send a student who wants to cancel to My workshops, by the name the site uses", () => {
+    for (const [messages, nav] of [
+      [fa, siteFa],
+      [tr, siteTr],
+      [en, siteEn],
+    ] as const) {
+      for (const note of [messages.registration_confirmed.note, messages.payment_received.note]) {
+        expect(note).toContain(nav.header.myWorkshops)
       }
     }
   })

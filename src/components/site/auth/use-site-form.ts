@@ -32,7 +32,11 @@ export function useSiteForm<S extends z.ZodType<FieldValues, FieldValues>, T>({
   const form = useForm<z.input<S>, unknown, z.output<S>>({
     resolver: zodResolver(schema, { error: (issue) => zodIssueMessage(issue, (key, values) => t(key, values)) }),
     defaultValues,
-    mode: "onTouched",
+    // First check on submit, then as the visitor types. Not on blur: the first
+    // field is focused, and an error line appearing when the visitor clicks a
+    // link under the form would move the link away and lose the click.
+    mode: "onSubmit",
+    reValidateMode: "onChange",
   })
 
   const submit = form.handleSubmit(

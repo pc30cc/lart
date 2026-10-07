@@ -5,8 +5,11 @@ import { parseTableParams } from "@/components/admin/data-table/params"
 import { db } from "@/db"
 import { auditLog, categories, contracts, courses, instructors, media, members, registrations, templates } from "@/db/schema"
 import { sealSignedText } from "@/features/contracts/signed-text"
-import { cancelWorkshop, confirmWorkshop, createWorkshop, saveGallery, updateWorkshop } from "./actions"
-import { getWorkshop, listGallery, listRegistrations, listWorkshops } from "./queries"
+import { prepareClosing } from "@/features/money/closing"
+import { postAdvance, postRegistrationPayment, today } from "@/features/money/ledger"
+import { sendDayBeforeReminders } from "@/features/registrations/admin/reminders"
+import { cancelWorkshop, confirmWorkshop, createWorkshop, raiseFinalParticipants, saveGallery, updateWorkshop } from "./actions"
+import { getWorkshop, listConsents, listGallery, listRegistrations, listWorkshops } from "./queries"
 import { workshopTable } from "./schema"
 import {
   addRegistration,
@@ -49,6 +52,8 @@ const session = vi.hoisted(() => ({ sessionId: "test", admin: { id: "", email: "
 vi.mock("@/lib/auth/admin", () => ({ requireAdmin: async () => session, getAdmin: async () => session }))
 
 const run = runId()
+const HOUR = 3_600_000
+const DAY = 24 * HOUR
 const made = { courses: [] as string[], members: [] as string[], instructors: [] as string[], terms: [] as string[] }
 let refs: { categoryId: string; instructorId: string }
 let instructorEmail: string
@@ -104,7 +109,7 @@ async function edit(id: string, changes: Parameters<typeof workshopInput>[2]) {
   const w = (await getWorkshop(id))!
   const advance = w.contract?.advanceAmount ?? 0
   return updateWorkshop({
-    ...workshopInput(run, refs),
+    ...workshopInput(run, { categoryId: w.categoryId, instructorId: w.instructorId }),
     id,
     title: { fa: w.title.fa ?? "", tr: w.title.tr ?? "", en: w.title.en ?? "" },
     slug: w.slug,
@@ -141,6 +146,29 @@ async function newMember() {
   made.members.push(member.id)
   return member
 }
+
+/**
+ * Ledger rows can't be deleted: a workshop with money in the ledger stays in
+ * the test database, with a category, instructor and terms of its own (never
+ * cleaned up, unlike `refs`).
+ */
+let keptWorld: Promise<{ categoryId: string; instructorId: string; termsId: string }> | undefined
+const kept = () =>
+  (keptWorld ??= Promise.all([createCategory(run), createInstructor(run), createTermsTemplate(run)]).then(
+    ([category, instructor, terms]) => ({ categoryId: category.id, instructorId: instructor.id, termsId: terms.id }),
+  ))
+
+async function createKept(overrides: Parameters<typeof workshopInput>[2] = {}) {
+  const result = await createWorkshop(workshopInput(run, await kept(), overrides))
+  if (!result.ok) throw new Error(`${result.error} ${JSON.stringify(result.fieldErrors)}`)
+  return result.data.id
+}
+
+/** An advance paid to the workshop's instructor, or returned by them (Money → advance). */
+const moveAdvance = (courseId: string, amount: number, direction: "paid" | "returned") =>
+  db.transaction((tx) =>
+    postAdvance(tx, { courseId, amount, direction, source: "wallet", occurredOn: today(), description: "", createdBy: session.admin.id }),
+  )
 
 describe("createWorkshop", () => {
   it("creates the workshop and contract v1 in one go, audits it and emails the instructor", async () => {
@@ -356,6 +384,76 @@ describe("updateWorkshop", () => {
     expect((await courseRow(id)).decisionNotifiedAt).toBeNull()
   })
 
+  it("reminds everyone again before the new date when the workshop moves", async () => {
+    const { id } = await create()
+    await markSigned(id)
+    const member = await newMember()
+    const open = await addRegistration(id, member.id, termsId, { status: "pending" })
+    const gone = await addRegistration(id, member.id, termsId, { status: "cancelled" })
+    const w = (await getWorkshop(id))!
+    type Sent = { to: string; template: string; props: { date: string } }
+    const reminders = () =>
+      sendEmail.mock.calls.map((c) => c[0] as Sent).filter((m) => m.template === "workshop_reminder" && m.to === member.email)
+    const remindedAt = async (regId: string) =>
+      (await db.select({ at: registrations.reminderSentAt }).from(registrations).where(eq(registrations.id, regId)))[0].at
+
+    await sendDayBeforeReminders(new Date(w.startsAt.getTime() - 12 * HOUR))
+    expect(reminders()).toHaveLength(1)
+    await db.update(registrations).set({ reminderSentAt: new Date() }).where(eq(registrations.id, gone.id))
+
+    // Texts don't touch the reminder; a new start time does (only for open registrations).
+    expect(await edit(id, { intro: text({ tr: "Yeni" }) })).toMatchObject({ ok: true })
+    expect(await remindedAt(open.id)).not.toBeNull()
+    const later = (d: Date) => new Date(d.getTime() + 7 * DAY).toISOString()
+    const moved = await edit(id, {
+      startsAt: later(w.startsAt),
+      endsAt: later(w.endsAt),
+      registrationDeadline: later(w.registrationDeadline),
+      decisionAt: later(w.decisionAt),
+    })
+    expect(moved).toMatchObject({ ok: true, data: { contractVersion: 2 } })
+    expect(await remindedAt(open.id)).toBeNull()
+    expect(await remindedAt(gone.id)).not.toBeNull()
+    expect((await lastAudit(id)).data).toMatchObject({ remindersReset: 1 })
+
+    await sendDayBeforeReminders(new Date(w.startsAt.getTime() + 7 * DAY - 12 * HOUR))
+    const [first, second] = reminders()
+    expect(reminders()).toHaveLength(2)
+    expect(second.props.date).not.toBe(first.props.date)
+  })
+
+  it("won't give the workshop to another instructor while an advance is held, until it is returned", async () => {
+    const id = await createKept()
+    await markSigned(id)
+    const { instructorId: first } = await kept()
+    const other = await createInstructor(run) // kept: its contract stays with the workshop
+    await moveAdvance(id, 100_000, "paid")
+    sendEmail.mockClear()
+
+    const held =
+      "The current instructor still holds an advance of ₺1,000. Record it as returned on the Finances page before choosing another instructor."
+    expect(await edit(id, { instructorId: other.id })).toEqual({ ok: false, error: held, fieldErrors: { instructorId: held } })
+    expect(await courseRow(id)).toMatchObject({ instructorId: first, status: "published" })
+    expect((await contractsOf(id)).map((c) => [c.status, c.instructorId])).toEqual([["signed", first]])
+    expect(sendEmail).not.toHaveBeenCalled()
+
+    // Part of it returned: the rest is still held. Other changes don't depend on it.
+    await moveAdvance(id, 40_000, "returned")
+    expect(await edit(id, { instructorId: other.id })).toMatchObject({
+      ok: false,
+      fieldErrors: { instructorId: expect.stringContaining("₺600") },
+    })
+    expect(await edit(id, { intro: text({ tr: "Yeni" }) })).toMatchObject({ ok: true, data: { contractVersion: null } })
+
+    await moveAdvance(id, 60_000, "returned")
+    expect(await edit(id, { instructorId: other.id })).toMatchObject({ ok: true, data: { contractVersion: 2, emailSent: true } })
+    expect((await contractsOf(id)).map((c) => [c.status, c.instructorId])).toEqual([
+      ["void", first],
+      ["sent", other.id],
+    ])
+    expect(sendEmail.mock.calls.at(-1)?.[0]).toMatchObject({ to: other.email, template: "contract_ready" })
+  })
+
   it("locks the price and keeps the capacity above the registrations", async () => {
     const { id } = await create({ minCapacity: 1 })
     const member = await newMember()
@@ -459,6 +557,70 @@ describe("go / no-go", () => {
     expect(await courseRow(id)).toMatchObject({ status: "confirmed", finalParticipants: 3 })
     expect(await lastAudit(id)).toMatchObject({ action: "workshop.confirm", data: { finalParticipants: 3, minimum: 4 } })
     expect(await confirmWorkshop({ id })).toMatchObject({ ok: false, error: expect.stringContaining("open for registration") })
+  })
+
+  it("confirms a workshop that took place without a go decision, so it closes with the fee from its contract", async () => {
+    const id = await createKept({ hasAdvance: false, advanceAmount: null })
+    await markSigned(id)
+    const start = new Date(Date.now() - 5 * HOUR)
+    await db
+      .update(courses)
+      .set({
+        startsAt: start,
+        endsAt: new Date(start.getTime() + 2 * HOUR),
+        registrationDeadline: new Date(start.getTime() - DAY),
+        decisionAt: new Date(start.getTime() - DAY),
+      })
+      .where(eq(courses.id, id))
+    const { termsId: terms } = await kept()
+    const member = await createMember(run) // kept: its payment is in the ledger
+    const paid = await addRegistration(id, member.id, terms, { status: "confirmed", amount: 150_000 })
+    await addRegistration(id, member.id, terms, { status: "pending", amount: 150_000 })
+    await addRegistration(id, member.id, terms, { status: "cancelled" })
+    await db.transaction((tx) => postRegistrationPayment(tx, { registrationId: paid.id, occurredOn: today(), createdBy: session.admin.id }))
+
+    expect(await confirmWorkshop({ id })).toEqual({ ok: true, data: { id, finalParticipants: 2 } })
+    expect(await courseRow(id)).toMatchObject({ status: "confirmed", finalParticipants: 2 })
+
+    // It ended 3 hours ago: it can be closed, nobody is owed a refund, the fee is per participant (2 × ₺500).
+    const closing = (await prepareClosing(db, id))!
+    // (The partners' shares depend on the other admins in the test database.) The registration
+    // not paid yet must be paid or cancelled before closing (`unpaidRegistrations`).
+    expect(closing.issues.filter((i) => i !== "sharesNot100")).toEqual(["unpaidRegistrations"])
+    expect(closing.plan.figures).toMatchObject({ revenue: 150_000, instructorFee: 100_000, participants: 2, owedToInstructor: 100_000 })
+  })
+
+  it("raises the final number after the go decision, once the instructor agreed: higher, at most the maximum, before the start", async () => {
+    const { id } = await create({ minCapacity: 2, maxCapacity: 6 })
+    expect(await raiseFinalParticipants({ id, finalParticipants: 4 })).toMatchObject({
+      ok: false,
+      error: "The final number can only be raised for a confirmed workshop that hasn’t started yet.",
+    })
+    await markSigned(id)
+    const member = await newMember()
+    await addRegistration(id, member.id, termsId, { status: "confirmed" })
+    await addRegistration(id, member.id, termsId, { status: "pending" })
+    expect(await confirmWorkshop({ id })).toMatchObject({ ok: true, data: { finalParticipants: 2 } })
+
+    expect(await raiseFinalParticipants({ id, finalParticipants: 2 })).toMatchObject({
+      ok: false,
+      fieldErrors: { finalParticipants: "The new number must be higher than the current final number (2)." },
+    })
+    expect(await raiseFinalParticipants({ id, finalParticipants: 7 })).toMatchObject({
+      ok: false,
+      fieldErrors: { finalParticipants: "The new number can’t be more than the maximum of 6." },
+    })
+    expect(await raiseFinalParticipants({ id, finalParticipants: 4 })).toEqual({ ok: true, data: { id, finalParticipants: 4 } })
+    expect(await courseRow(id)).toMatchObject({ status: "confirmed", finalParticipants: 4 })
+    expect(await lastAudit(id)).toMatchObject({
+      action: "workshop.raiseFinal",
+      data: { from: 2, to: 4, instructorApproved: true },
+    })
+
+    // Once it has started, the number stays.
+    await db.update(courses).set({ startsAt: new Date(Date.now() - HOUR) }).where(eq(courses.id, id))
+    expect(await raiseFinalParticipants({ id, finalParticipants: 5 })).toMatchObject({ ok: false })
+    expect(await courseRow(id)).toMatchObject({ finalParticipants: 4 })
   })
 
   it("cancels: open registrations are cancelled and refunded, everyone registered is emailed once", async () => {
@@ -576,6 +738,24 @@ describe("gallery", () => {
     expect(await saveGallery({ id: b, items: [shared] })).toMatchObject({ ok: false, error: expect.stringContaining("already used") })
     // A new item that reuses another photo's original is refused too.
     expect(await saveGallery({ id: b, items: [{ ...photo("x"), originalPath: shared.originalPath }] })).toMatchObject({ ok: false })
+  })
+})
+
+describe("listConsents", () => {
+  it("lists everyone registered and not cancelled, paid or not yet", async () => {
+    const { id } = await create()
+    const member = await newMember()
+    const paid = await addRegistration(id, member.id, termsId, { status: "confirmed", photo: true })
+    const unpaid = await addRegistration(id, member.id, termsId, { status: "pending", video: true })
+    await addRegistration(id, member.id, termsId, { status: "cancelled", photo: true, video: true })
+    const rows = await listConsents(id)
+    expect(rows).toHaveLength(2)
+    expect(rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: paid.id, photoConsent: true, videoConsent: false }),
+        expect.objectContaining({ id: unpaid.id, photoConsent: false, videoConsent: true }),
+      ]),
+    )
   })
 })
 

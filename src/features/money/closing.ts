@@ -31,6 +31,7 @@ export type ClosingIssue =
   | "notEnded"
   | "noContract"
   | "refundsOwed"
+  | "unpaidRegistrations"
   | "revenueMismatch"
   | "advanceTooBig"
   | "sharesNot100"
@@ -159,6 +160,10 @@ export async function prepareClosing(exec: Exec, courseId: string, now: Date = n
     .select({
       confirmed: sql<number>`count(*) filter (where ${registrations.status} = 'confirmed')`.mapWith(Number),
       pending: sql<number>`count(*) filter (where ${registrations.status} = 'pending')`.mapWith(Number),
+      // Paid places (a free registration is confirmed straight away and pays nothing).
+      paid: sql<number>`count(*) filter (where ${registrations.status} = 'confirmed' and ${registrations.amount} > 0)`.mapWith(Number),
+      // Registered and still to pay: once closed, a payment can no longer be booked.
+      unpaid: sql<number>`count(*) filter (where ${registrations.status} = 'pending' and ${registrations.amount} > 0)`.mapWith(Number),
       // What the registrations say the workshop earned: paid amounts minus refunds.
       expectedRevenue: sql<number>`coalesce(sum(case when ${registrations.status} = 'confirmed' or ${registrations.paidAt} is not null then ${registrations.amount} else 0 end) - sum(coalesce(${registrations.refundAmount}, 0)), 0)`.mapWith(Number),
       // Refunds owed and not paid back yet (Money → Refunds): still in the books as revenue.
@@ -198,6 +203,9 @@ export async function prepareClosing(exec: Exec, courseId: string, now: Date = n
   if (course.status === "confirmed" && !contract) issues.push("noContract")
   // A refund owed is paid back (and booked) before the books close; anything else that differs is a mismatch.
   if (regs.refundsOwed > 0) issues.push("refundsOwed")
+  // Each payment (often cash at the workshop) is recorded, or the registration cancelled, before the books close.
+  // (A cancelled workshop has none: cancelling it cancels its registrations.)
+  if (regs.unpaid > 0 && !cancelled) issues.push("unpaidRegistrations")
   if (balances.revenue - regs.refundsOwed !== regs.expectedRevenue) issues.push("revenueMismatch")
   issues.push(...plan.issues)
 
@@ -209,6 +217,8 @@ export async function prepareClosing(exec: Exec, courseId: string, now: Date = n
     registrations: {
       confirmed: regs.confirmed,
       pending: regs.pending,
+      paid: regs.paid,
+      unpaid: regs.unpaid,
       expectedRevenue: regs.expectedRevenue,
       refundsOwed: regs.refundsOwed,
     },
@@ -263,7 +273,9 @@ export async function closeCourse(
 
   const prep = await prepareClosing(tx, courseId, now, true)
   if (!prep) throw new UserError("money.errors.workshopGone")
-  if (prep.issues.length) throw new UserError(`money.close.issues.${prep.issues[0]}`)
+  if (prep.issues.length) {
+    throw new UserError(`money.close.issues.${prep.issues[0]}`, { values: { count: prep.registrations.unpaid } })
+  }
   const { figures, settlement, close } = prep.plan
   if (expected && changedSince(expected, figures)) throw new UserError("money.close.changed")
 

@@ -67,6 +67,18 @@ export function workshopAlert(
   return null
 }
 
+export type PaymentNote = { kind: "free" } | { kind: "paid"; count: number } | null
+
+/**
+ * What an upcoming workshop's row says about payment: "free" for a free
+ * workshop (nothing to pay, so no paid count), how many have paid once
+ * someone registered, otherwise nothing.
+ */
+export function paymentNote(w: { price: number; registered: number; paid: number }): PaymentNote {
+  if (w.price === 0) return { kind: "free" }
+  return w.registered > 0 ? { kind: "paid", count: w.paid } : null
+}
+
 /** Part of the day for the greeting, from an Istanbul "HH:mm" time. */
 export function partOfDay(time: string): "morning" | "afternoon" | "evening" {
   const hour = Number(time.slice(0, 2))

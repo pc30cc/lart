@@ -2,7 +2,7 @@
 
 import { BanknoteIcon, CheckIcon, CopyIcon, CreditCardIcon, ExternalLinkIcon, LandmarkIcon, type LucideIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
-import { useEffect, useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -55,20 +55,34 @@ export function PaymentInstructions({
       {ways.transfer && (
         <Way icon={LandmarkIcon} title={t("transfer.title")}>
           <p>{t("transfer.text", { amount: price })}</p>
-          <dl className="bg-muted/50 divide-border/70 divide-y rounded-xl text-sm">
+          {/* A container: two columns only when the card itself is wide (not in the narrow settings preview). */}
+          <dl className="bg-muted/50 divide-border/70 @container divide-y rounded-xl text-sm">
             {ways.transfer.accountHolder && <Row label={t("transfer.holder")}>{ways.transfer.accountHolder}</Row>}
             {ways.transfer.bankName && <Row label={t("transfer.bank")}>{ways.transfer.bankName}</Row>}
             <Row label={t("transfer.iban")}>
-              <div className="flex items-center justify-between gap-2">
-                <span dir="ltr" className="font-mono text-[0.95rem] tracking-wide break-all select-all">
-                  {formatIban(ways.transfer.iban)}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                {/* A line breaks only between groups of four, never inside one (read out or typed at the bank). */}
+                <span dir="ltr" className="min-w-0 font-mono text-[0.95rem] tracking-wide select-all">
+                  {formatIban(ways.transfer.iban)
+                    .split(" ")
+                    .map((group, i) => (
+                      <Fragment key={i}>
+                        {i > 0 && " "}
+                        <span className="whitespace-nowrap">{group}</span>
+                      </Fragment>
+                    ))}
                 </span>
                 <CopyIban iban={ways.transfer.iban} />
               </div>
             </Row>
           </dl>
           <p className="font-medium">{t("transfer.reference", { name: participantName })}</p>
-          {ways.transfer.note && <p className="text-muted-foreground whitespace-pre-line">{ways.transfer.note}</p>}
+          {/* Admin-written, maybe in another language: its own direction, aligned with the card. */}
+          {ways.transfer.note && (
+            <p dir="auto" className="text-muted-foreground whitespace-pre-line rtl:text-right">
+              {ways.transfer.note}
+            </p>
+          )}
         </Way>
       )}
 
@@ -83,7 +97,11 @@ export function PaymentInstructions({
             </a>
           </Button>
           <p className="text-muted-foreground">{t("online.after")}</p>
-          {ways.onlineNote && <p className="text-muted-foreground whitespace-pre-line">{ways.onlineNote}</p>}
+          {ways.onlineNote && (
+            <p dir="auto" className="text-muted-foreground whitespace-pre-line rtl:text-right">
+              {ways.onlineNote}
+            </p>
+          )}
         </Way>
       )}
 
@@ -108,8 +126,8 @@ function Way({ icon: Icon, title, children }: { icon: LucideIcon; title: string;
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="grid gap-0.5 px-3.5 py-2.5 sm:grid-cols-[8rem_minmax(0,1fr)] sm:items-center sm:gap-3">
-      <dt className="text-muted-foreground text-xs sm:text-sm">{label}</dt>
+    <div className="grid gap-0.5 px-3.5 py-2.5 @sm:grid-cols-[8rem_minmax(0,1fr)] @sm:items-center @sm:gap-3">
+      <dt className="text-muted-foreground text-xs @sm:text-sm">{label}</dt>
       <dd className="min-w-0 font-medium">{children}</dd>
     </div>
   )

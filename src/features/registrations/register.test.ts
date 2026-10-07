@@ -21,6 +21,7 @@ import {
   registrationWindow,
   safePaymentUrl,
   sameParticipant,
+  seatLimit,
 } from "./schema"
 
 vi.mock("next-intl/server", async () => {
@@ -280,6 +281,32 @@ describe("registerForWorkshop", () => {
     await rejectsWith(registerForWorkshop(member.id, await input(randomUUID())), "registration.errors.notFound")
   })
 
+  it("after the go decision takes no one beyond the final number; a place given up can be taken again", async () => {
+    const course = await newCourse({ maxCapacity: 10 })
+    const member = await newMember()
+    const first = await paidRegistration(course.id, member.id)
+    await registerForWorkshop(member.id, await input(course.id, { participantName: "Second" }))
+    // The go decision with 2 registered: what confirmWorkshop stores (the instructor is paid for 2).
+    await db.update(courses).set({ status: "confirmed", finalParticipants: 2 }).where(eq(courses.id, course.id))
+
+    const other = await newMember()
+    await rejectsWith(registerForWorkshop(other.id, await input(course.id)), "registration.errors.full")
+    expect(await seatsTaken(course.id)).toBe(2)
+    expect(await getPublicWorkshop(course.slug, "en")).toMatchObject({ seatsLeft: 0, window: "full" })
+
+    // Someone cancels after the decision: their place can be taken again, still 2 in all.
+    await cancelMyRegistration(member.id, first)
+    expect((await listOpenWorkshops("en")).find((w) => w.id === course.id)).toMatchObject({ seatsLeft: 1, window: "open" })
+    await registerForWorkshop(other.id, await input(course.id))
+    expect(await seatsTaken(course.id)).toBe(2)
+    await rejectsWith(registerForWorkshop((await newMember()).id, await input(course.id)), "registration.errors.full")
+
+    // The instructor agreed to one more (contract 5.2) and an admin raised the number.
+    await db.update(courses).set({ finalParticipants: 3 }).where(eq(courses.id, course.id))
+    await registerForWorkshop((await newMember()).id, await input(course.id))
+    expect(await seatsTaken(course.id)).toBe(3)
+  })
+
   it("lets a member register several people, but the same participant only once", async () => {
     const course = await newCourse()
     const member = await newMember()
@@ -449,7 +476,8 @@ describe("emails", () => {
     expect(refundDue.find((e) => e.to === admin.email)?.props).toMatchObject({
       adminName: "Mina Partner",
       participantName: (await registrationOf(id)).participantName,
-      url: expect.stringContaining(`/admin/workshops/${course.id}/registrations`),
+      // The refunds list, where "Mark as refunded" is.
+      url: expect.stringMatching(/\/admin\/money\/refunds$/),
     })
   })
 
@@ -584,6 +612,13 @@ describe("rules", () => {
     expect(registrationWindow({ ...base, status: "closed" })).toBe("past")
     expect(registrationWindow(base, new Date(base.startsAt.getTime() + 1))).toBe("started")
     expect(registrationWindow(base, new Date(base.endsAt.getTime() + 1))).toBe("past")
+  })
+
+  it("seatLimit: the maximum, and after the go decision the final number (never above the maximum)", () => {
+    expect(seatLimit({ maxCapacity: 10, finalParticipants: null })).toBe(10)
+    expect(seatLimit({ maxCapacity: 10, finalParticipants: 6 })).toBe(6)
+    expect(seatLimit({ maxCapacity: 8, finalParticipants: 9 })).toBe(8)
+    expect(seatLimit({ maxCapacity: 10, finalParticipants: 0 })).toBe(0)
   })
 
   it("cancelPreview: nothing to refund when not paid, or for a free workshop", () => {

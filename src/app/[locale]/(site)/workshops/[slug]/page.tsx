@@ -124,7 +124,8 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/work
         )}
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-12">
+      {/* Two rows beside the aside: header (as tall as it is) and the rest, so a tall aside never pushes the content down. */}
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:grid-rows-[auto_1fr] lg:gap-12">
         <header className="space-y-2 lg:col-start-1">
           {w.category && <p className="text-primary text-sm font-medium">{w.category}</p>}
           <h1 className="text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-4xl rtl:tracking-normal">
@@ -218,6 +219,8 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/work
           )}
         </div>
       </div>
+
+      {mine.length === 0 && w.window === "open" && <PhoneRegisterBar workshop={w} />}
     </article>
   )
 }
@@ -275,6 +278,28 @@ async function Register({ slug }: { slug: string }) {
         </Link>
       </Button>
       <p className="text-muted-foreground text-center text-sm">{t("registerHint")}</p>
+    </div>
+  )
+}
+
+/**
+ * Phones: the price and "Register" kept at the bottom of the screen while the
+ * page is read (the aside's button is below the cover and the facts there).
+ * Sticky at the end of the article, so it never covers the footer.
+ */
+async function PhoneRegisterBar({ workshop: w }: { workshop: PublicWorkshop }) {
+  const t = await getTranslations("registration.workshop")
+  return (
+    <div className="bg-background/95 sticky bottom-0 z-30 -mx-4 mt-10 border-t px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
+      <div className="flex items-center gap-3">
+        <Price value={w.price} className="text-xl" />
+        <Button asChild className="h-12 flex-1 rounded-xl text-base">
+          <Link href={`/workshops/${w.slug}/register`}>
+            <TicketIcon className="size-5" aria-hidden />
+            {t("register")}
+          </Link>
+        </Button>
+      </div>
     </div>
   )
 }

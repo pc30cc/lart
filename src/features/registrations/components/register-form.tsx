@@ -153,7 +153,8 @@ function CheckField({ name, label, strong }: { name: "acceptTerms" | "photoConse
             checked={value === true}
             onCheckedChange={(checked) => onChange(checked === true)}
             onBlur={onBlur}
-            className="mt-0.5 size-5 rounded-md"
+            // A square with a clear border (rounded-md would make a 20px box a circle, like a radio button).
+            className="border-foreground/50 mt-0.5 size-5 rounded-[5px] border-2 [&_svg]:size-4!"
             {...aria}
           />
           <span className={cn("text-base leading-snug text-pretty", strong && "font-medium")}>{label}</span>

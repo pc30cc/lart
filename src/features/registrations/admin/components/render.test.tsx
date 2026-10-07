@@ -3,7 +3,7 @@ import { renderToString } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 
 import { PaymentSettingsForm } from "@/app/[locale]/admin/(panel)/settings/payments/payment-form"
-import { MarkRefundedButton, RegistrationActions } from "./dialogs"
+import { ChangeRefundButton, MarkRefundedButton, RegistrationActions } from "./dialogs"
 
 // Outside a Next.js request: plain links.
 vi.mock("@/i18n/navigation", () => ({
@@ -81,5 +81,28 @@ describe.each(["fa", "en", "tr"])("renders in %s", (locale) => {
       />,
     )
     expect(cancelled).toBe("")
+  })
+
+  it("a cancelled, paid registration's refund can be changed before it is paid back", async () => {
+    const messages = await load(locale)
+    const owed = await render(
+      <RegistrationActions
+        registration={{
+          id: "11111111-1111-4111-8111-111111111111",
+          participantName: "Deniz",
+          memberName: "Ayşe",
+          status: "cancelled",
+          amount: 150_000,
+          refundOwed: 0,
+        }}
+        startsAt={new Date().toISOString()}
+        defaultMethod="cash"
+      />,
+    )
+    expect(owed).toContain(messages.money.refunds.change.trigger)
+    const button = await render(
+      <ChangeRefundButton id="11111111-1111-4111-8111-111111111111" paid={150_000} refund={75_000} name="Ayşe" participant="Deniz" />,
+    )
+    expect(button).toContain(messages.money.refunds.change.trigger)
   })
 })

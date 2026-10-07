@@ -59,7 +59,7 @@ export function AccountMenu({ member }: { member: { name: string; email: string 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="h-10 max-w-44 gap-1.5 rounded-full ps-2.5 pe-3 text-sm" aria-label={t("account")}>
+        <Button variant="outline" className="h-10 max-w-32 gap-1.5 rounded-full ps-2.5 pe-3 text-sm sm:max-w-44" aria-label={t("account")}>
           <span className="bg-primary/12 text-primary flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
             {firstName.charAt(0).toUpperCase()}
           </span>
@@ -70,7 +70,7 @@ export function AccountMenu({ member }: { member: { name: string; email: string 
       <DropdownMenuContent align="end" className="w-auto min-w-60">
         <DropdownMenuLabel className="flex flex-col gap-0.5 py-2 font-normal">
           <span className="text-foreground truncate text-sm font-medium">{member.name}</span>
-          <span className="text-muted-foreground truncate text-xs" dir="ltr">
+          <span className="text-muted-foreground truncate text-xs rtl:text-right" dir="ltr">
             {member.email}
           </span>
         </DropdownMenuLabel>
@@ -99,7 +99,7 @@ export function AccountMenu({ member }: { member: { name: string; email: string 
             startLeaving(() => memberLogoutAction())
           }}
         >
-          {leaving ? <Spinner aria-hidden /> : <LogOutIcon />}
+          {leaving ? <Spinner aria-hidden /> : <LogOutIcon className="rtl:-scale-x-100" />}
           {t("logOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>

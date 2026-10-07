@@ -38,9 +38,10 @@ export default async function MyContractPage({ params, searchParams }: PageProps
   const [{ locale, id }, query] = await Promise.all([params, searchParams])
   const contract = await getMyContract(id, locale as Locale)
   if (!contract) notFound()
-  const [t, tList, brand] = await Promise.all([
+  const [t, tList, tc, brand] = await Promise.all([
     getTranslations("instructorPanel.contract"),
     getTranslations("instructorPanel.contracts"),
+    getTranslations("common"),
     getBrand(locale),
   ])
   const { course, doc } = contract
@@ -101,6 +102,14 @@ export default async function MyContractPage({ params, searchParams }: PageProps
       {contract.state === "signed" && contract.signedAt && !justSigned && (
         <Notice icon={CircleCheckBigIcon} tone="success" title={t("signedNotice.title")} action={doc?.text ? <PrintButton /> : null}>
           {t("signedNotice.text", { date: formatDateTime(contract.signedAt, locale, "long") })}
+          {/* The signed text stays in the language it was signed in: say so when the panel is in another one. */}
+          {doc?.text && doc.locale !== locale && (
+            <>
+              {" "}
+              {/* The language name isolated, so "Türkçe" reads correctly inside a Persian sentence. */}
+              {t("signedNotice.otherLanguage", { language: `\u2068${tc(`locales.${doc.locale}`)}\u2069` })}
+            </>
+          )}
         </Notice>
       )}
       {contract.state === "replaced" && (

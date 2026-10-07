@@ -210,6 +210,7 @@
     "button": "Cancel my registration",
     "title": "Cancel this registration?",
     "unpaid": "The place for {name} will be freed for someone else. You haven’t paid, so there’s nothing else to do.",
+    "free": "The place for {name} will be freed for someone else. This workshop is free, so there’s nothing else to do.",
     "full": "You paid {paid}. Under the terms you get it all back: we’ll send {refund} back to you within five business days.",
     "partial": "The workshop starts in less than 72 hours, so under the terms you get {percent, number}% back: we’ll send {refund} back to you within five business days.",
     "none": "The workshop starts in less than 24 hours, so under the terms this payment can’t be refunded.",

@@ -28,6 +28,7 @@ const values = {
   amount: "₺100",
   size: "15 MB",
   progress: 0.5,
+  language: "Türkçe",
 }
 
 describe("instructor panel messages", () => {
@@ -48,6 +49,12 @@ describe("instructor panel messages", () => {
     }
   })
 
+  it.each(locales)("name the language of a contract signed in another one in %s", async (locale) => {
+    const t = createTranslator({ locale, messages: await load(locale), onError: (error) => { throw error } })
+    const text = t("instructorPanel.contract.signedNotice.otherLanguage" as never, { language: "\u2068English\u2069" } as never)
+    expect(text).toContain("\u2068English\u2069")
+  })
+
   it("write numbers with Persian digits in Persian", async () => {
     const t = createTranslator({ locale: "fa", messages: await load("fa") })
     for (const text of [
@@ -59,5 +66,9 @@ describe("instructor panel messages", () => {
       expect(text).toMatch(/[۰-۹]/)
       expect(text).not.toMatch(/[0-9]/)
     }
+  })
+
+  it("call a link «لینک» in Persian, as the emails do (not the formal «پیوند»)", async () => {
+    expect(JSON.stringify((await load("fa")).instructorPanel)).not.toMatch(/پیوند/)
   })
 })

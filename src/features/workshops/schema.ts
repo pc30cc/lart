@@ -120,6 +120,14 @@ export const workshopEditSchema = fields.superRefine(crossCheck)
 export const workshopUpdateSchema = fields.extend({ id: uuid() }).superRefine(crossCheck)
 export const workshopIdSchema = z.object({ id: uuid() })
 
+/**
+ * More places after the go decision (contract 5.2: the instructor agreed): the
+ * new final number. The checks against the current number and the maximum
+ * are made under the workshop's lock (`raiseFinalParticipants`).
+ */
+export const raiseFinalSchema = z.object({ id: uuid(), finalParticipants: count(1, 500) })
+export type RaiseFinalValues = z.input<typeof raiseFinalSchema>
+
 export type WorkshopFormValues = z.input<typeof workshopSchema>
 export type WorkshopInput = z.output<typeof workshopSchema>
 

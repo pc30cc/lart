@@ -3,7 +3,7 @@
 import { ImageOffIcon, TriangleAlertIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { useEffect, useId, useState } from "react"
-import { useWatch } from "react-hook-form"
+import { useFormState, useWatch } from "react-hook-form"
 import { RadioGroup as RadioGroupPrimitive } from "radix-ui"
 
 import { Form, FormActions, FormField, SubmitButton } from "@/components/admin/form/form"
@@ -185,13 +185,17 @@ function RangeField({
   )
 }
 
-/** The admin-only preview route renders the sample photo with the current (unsaved) values. */
+/**
+ * The admin-only preview route renders the sample photo with the values in the
+ * form. While the form has changes, the caption says they are not saved yet.
+ */
 function Preview() {
   const t = useTranslations("settings.watermark")
   const id = useId()
   const [position, sizePct, opacity, marginPct, logoPath] = useWatch<Values>({
     name: ["position", "sizePct", "opacity", "marginPct", "logoPath"],
   }) as [WatermarkPosition, number, number, number, string | null]
+  const { isDirty } = useFormState<Values>()
 
   const query = logoPath
     ? new URLSearchParams({
@@ -233,6 +237,7 @@ function Preview() {
       </div>
       <figcaption id={id} className="text-muted-foreground px-1 pb-1 text-xs text-pretty">
         {t("previewCaption")}
+        {isDirty && <span className="text-warning mt-1 block font-medium">{t("previewUnsaved")}</span>}
       </figcaption>
     </figure>
   )

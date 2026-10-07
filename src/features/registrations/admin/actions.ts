@@ -9,13 +9,14 @@ import { adminAction } from "@/lib/action"
 import { changes } from "@/lib/audit"
 import { errorForLog } from "@/lib/errors"
 import { getSetting, setSetting } from "@/lib/settings"
-import { sendPaymentReceived, sendRefundSent, sendRegistrationCancelled } from "./notify"
-import { cancelRegistration, momentOf, recordPayment, recordRefund } from "./payments"
-import { cancelRegistrationSchema, markRefundedSchema, recordPaymentSchema } from "./schema"
+import { sendPaymentReceived, sendRefundChanged, sendRefundSent, sendRegistrationCancelled } from "./notify"
+import { cancelRegistration, momentOf, recordPayment, recordRefund, setRefund } from "./payments"
+import { cancelRegistrationSchema, markRefundedSchema, recordPaymentSchema, setRefundSchema } from "./schema"
 
 /**
  * The super admin's registration actions: record a payment, cancel a
- * registration, mark a refund as paid back, and the payment settings. Each
+ * registration, change a refund, mark a refund as paid back, and the payment
+ * settings. Each
  * change and its audit entry share one transaction; the member's email goes
  * out after the response (`after`), in the member's language.
  */
@@ -71,6 +72,34 @@ export const cancelRegistrationAction = adminAction(cancelRegistrationSchema, as
   after(() => sendRegistrationCancelled(cancelled).catch(logFailure("cancellation email")))
   revalidate()
   return { id, refund: cancelled.refund }
+})
+
+/**
+ * Confirm or change the refund of a cancelled, paid registration before it is
+ * paid back (e.g. in full when the workshop's date, venue or instructor
+ * changed). Unchanged: nothing is written. Changed: audited, and the member
+ * is told the new refund.
+ */
+export const setRefundAction = adminAction(setRefundSchema, async ({ id, amount }, ctx) => {
+  const changed = await db.transaction(async (tx) => {
+    const changed = await setRefund(tx, { registrationId: id, amount })
+    if (changed.to !== changed.from) {
+      await ctx.audit(
+        {
+          action: "registration.refundChange",
+          entity: "registration",
+          entityId: id,
+          data: { courseId: changed.courseId, paid: changed.paid, from: changed.from, to: changed.to },
+        },
+        tx,
+      )
+    }
+    return changed
+  })
+  if (changed.to === changed.from) return { id, amount: changed.to, changed: false }
+  after(() => sendRefundChanged(changed).catch(logFailure("refund change email")))
+  revalidate()
+  return { id, amount: changed.to, changed: true }
 })
 
 /** A refund owed was paid back by hand: posted to the ledger once, then "Your refund is on its way". */

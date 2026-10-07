@@ -116,7 +116,11 @@ function LiveView({
   const waiting = finances.issues.find((i) => i === "notClosable" || i === "notEnded")
   const issues = waiting ? [waiting] : finances.issues.filter((i) => i !== "closed")
   const agreedAdvance = contract?.advanceAmount ?? 0
-  const advancePaidSoFar = advances.filter((e) => !e.reversedBy && e.direction === "paid").reduce((s, e) => s + e.amount, 0)
+  // Paid to the current instructor: an earlier instructor's advances (before this one's contract) don't count.
+  const since = finances.contractSince
+  const advancePaidSoFar = advances
+    .filter((e) => !e.reversedBy && e.direction === "paid" && (!since || e.createdAt >= since))
+    .reduce((s, e) => s + e.amount, 0)
 
   return (
     <div className="space-y-6">
@@ -126,9 +130,15 @@ function LiveView({
           label={t("finances.registrations")}
           value={formatNumber(regs.confirmed + regs.pending, locale)}
           hint={
-            finalNumber && projection.participants !== regs.confirmed + regs.pending
-              ? t("finances.finalNumber", { count: formatNumber(projection.participants, locale) })
-              : t("finances.registrationsPaid", { count: regs.confirmed, pending: regs.pending })
+            <>
+              {/* A free workshop's registrations are confirmed straight away, with nothing paid. */}
+              {regs.confirmed > 0 && regs.paid === 0 && regs.pending === 0
+                ? t("finances.registrationsFree")
+                : t("finances.registrationsPaid", { count: regs.paid, pending: regs.pending })}
+              {finalNumber && projection.participants !== regs.confirmed + regs.pending && (
+                <span className="block">{t("finances.finalNumber", { count: formatNumber(projection.participants, locale) })}</span>
+              )}
+            </>
           }
         />
         <Stat
@@ -243,6 +253,7 @@ function LiveView({
               title={title}
               figures={finances.plan.figures}
               issues={issues}
+              unpaid={regs.unpaid}
               feeText={feeText(finances, t, locale, finances.plan.figures.participants)}
             />
           </Panel>

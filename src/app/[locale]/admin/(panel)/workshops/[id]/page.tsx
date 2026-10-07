@@ -28,7 +28,7 @@ import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
 import { formatDate, formatDateTime, formatNumber, formatTimeRange, localized } from "@/lib/format"
 import { cn } from "@/lib/utils"
-import { CancelWorkshopButton, ConfirmWorkshopButton, ResendContractButton } from "../_components/lifecycle-actions"
+import { CancelWorkshopButton, ConfirmWorkshopButton, RaiseFinalButton, ResendContractButton } from "../_components/lifecycle-actions"
 import { WorkshopHeader } from "../_components/workshop-header"
 import { FillMeter } from "../_components/workshop-status"
 
@@ -157,9 +157,18 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/admi
             />
             <ul className="text-muted-foreground mt-4 space-y-1.5 text-sm">
               <li>{t("overview.minimum", { count: w.minCapacity })}</li>
-              {w.registered.pending + w.registered.confirmed > 0 && <li>{t("overview.paid", { count: w.registered.confirmed })}</li>}
+              {/* Paid: confirmed with an amount above 0 (a free workshop's registrations are never "paid"). */}
+              {w.registered.pending + w.registered.confirmed > 0 && (w.price > 0 || w.paid > 0) && (
+                <li>{t("overview.paid", { count: w.paid })}</li>
+              )}
               {w.finalParticipants !== null && (
-                <li className="text-foreground font-medium">{t("overview.final", { count: w.finalParticipants })}</li>
+                <li className="text-foreground flex flex-wrap items-center justify-between gap-2 font-medium">
+                  {t("overview.final", { count: w.finalParticipants })}
+                  {/* More people after the go decision, once the instructor agreed (contract 5.2). */}
+                  {w.status === "confirmed" && !w.cancelledAt && w.startsAt > new Date() && w.finalParticipants < w.maxCapacity && (
+                    <RaiseFinalButton id={w.id} current={w.finalParticipants} max={w.maxCapacity} />
+                  )}
+                </li>
               )}
             </ul>
             <Button asChild variant="link" className="mt-2 h-auto px-0">
@@ -269,17 +278,21 @@ async function NextStep({ workshop: w }: { workshop: Workshop }) {
       break
     case "published": {
       const due = w.decisionAt <= now
+      // The go decision was missed: confirming now records that it was held, so it can be closed.
+      const started = w.startsAt <= now
       step = {
         icon: due ? TimerIcon : CalendarCheck2Icon,
         tone: due ? "warning" : "info",
-        title: due ? t("next.published.dueTitle") : t("next.published.title"),
-        text: t("next.published.text", {
-          deadline: formatDateTime(w.registrationDeadline, locale, "long"),
-          decision: formatDateTime(w.decisionAt, locale, "long"),
-          // Paid or not yet: everyone registered counts for the go decision.
-          confirmed: open,
-          minimum: n(w.minCapacity),
-        }),
+        title: started ? t("next.published.startedTitle") : due ? t("next.published.dueTitle") : t("next.published.title"),
+        text: started
+          ? t("next.published.startedText", { date: formatDate(w.startsAt, locale, "long") })
+          : t("next.published.text", {
+              deadline: formatDateTime(w.registrationDeadline, locale, "long"),
+              decision: formatDateTime(w.decisionAt, locale, "long"),
+              // Paid or not yet: everyone registered counts for the go decision.
+              confirmed: open,
+              minimum: n(w.minCapacity),
+            }),
         actions: (
           <>
             <ConfirmWorkshopButton id={w.id} title={title} confirmed={open} minimum={w.minCapacity} />

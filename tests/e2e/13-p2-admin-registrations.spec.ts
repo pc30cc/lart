@@ -1,12 +1,12 @@
 import { execFileSync } from "node:child_process"
 import path from "node:path"
 
-import type { Page } from "@playwright/test"
+import type { Locator, Page } from "@playwright/test"
 
 import { formatLira } from "../../src/lib/money"
-import { expect, mailMark, MAIL_LOG, RUN, test, toast } from "./helpers/app"
+import { expect, field, mailMark, MAIL_LOG, RUN, test, toast } from "./helpers/app"
 import { E2E_DATABASE_URL, one, sql } from "./helpers/db"
-import { courseId, lead, mailTo, P2, personContext, tr, waitMail } from "./helpers/p2"
+import { courseId, lead, linksOf, mailTo, P2, personContext, tr, waitMail } from "./helpers/p2"
 
 /**
  * Phase 2, the admin side of registrations: the Registrations tab, recording
@@ -20,6 +20,12 @@ import { courseId, lead, mailTo, P2, personContext, tr, waitMail } from "./helpe
 
 const ROOT = path.resolve(__dirname, "../..")
 const lira = (kurus: number, locale = "en") => formatLira(kurus, locale)
+
+/** The text of an element without the bidi isolates the app puts around amounts (⁨₺800⁩). */
+const plain = (s: string) => s.replace(/[\u2066-\u2069]/g, "")
+async function expectText(locator: Locator, expected: string) {
+  await expect.poll(async () => plain((await locator.textContent()) ?? ""), { message: `text: ${expected}` }).toContain(expected)
+}
 
 async function regId(memberEmail: string, slug: string, participant?: string) {
   return (
@@ -37,9 +43,14 @@ async function registrationsTab(page: Page, slug: string) {
   await expect(page).toHaveURL(/\/registrations$/)
 }
 
+/** The row of one participant (the "Registered by" column repeats the member's name on their other people's rows). */
+function regRow(page: Page, participant: string) {
+  return page.getByRole("row").filter({ has: page.getByRole("button", { name: `Actions for ${participant}`, exact: true }) })
+}
+
 /** "Record payment" on a row: choose the way, confirm. */
 async function recordPayment(page: Page, participant: string, method: "Cash" | "Bank transfer" | "Online payment link") {
-  const row = page.getByRole("row").filter({ hasText: participant })
+  const row = regRow(page, participant)
   await row.getByRole("button", { name: "Record payment" }).click()
   const dialog = page.getByRole("dialog")
   await expect(dialog).toContainText(`Has ${participant} paid`)
@@ -95,7 +106,7 @@ test.describe.serial("phase 2 · admin: registrations, payments, refunds", () =>
     const id = await regId(P2.ayla.email, P2.wA.slug)
     await registrationsTab(page, P2.wA.slug)
     await recordPayment(page, P2.ayla.name, "Cash")
-    await expect(page.getByRole("row").filter({ hasText: P2.ayla.name })).toContainText("Cash")
+    await expect(regRow(page, P2.ayla.name)).toContainText("Cash")
     const reg = await one<{ status: string; payment_method: string; paid_at: Date | null }>("select status, payment_method, paid_at from registrations where id = $1", [id])
     expect(reg).toMatchObject({ status: "confirmed", payment_method: "cash" })
     expect(reg.paid_at).not.toBeNull()
@@ -129,8 +140,30 @@ test.describe.serial("phase 2 · admin: registrations, payments, refunds", () =>
 
   test("workshop B: Ayla paid by bank transfer, Cemre through the online link; Deniz not yet", async ({ page }) => {
     const mark = mailMark()
+    // A bank transfer names the participant in its description: Registrations (all workshops), search, record it there.
+    await page.goto("/en/admin/registrations")
+    await expect(page.getByRole("heading", { level: 1, name: "Registrations" })).toBeVisible()
+    await page.getByPlaceholder("Search by name, email or phone").fill(P2.ayla.name)
+    await expect(page).toHaveURL(/[?&]q=/)
+    const aylaB = page
+      .getByRole("row")
+      .filter({ hasText: P2.wB.title.en })
+      .filter({ has: page.getByRole("button", { name: `Actions for ${P2.ayla.name}`, exact: true }) })
+    await expect(aylaB).toContainText("Not paid yet")
+    await aylaB.getByRole("button", { name: "Record payment" }).click()
+    const pay = page.getByRole("dialog")
+    await expect(pay).toContainText(`Has ${P2.ayla.name} paid`)
+    await pay.getByRole("radio", { name: /^Bank transfer/ }).click()
+    await pay.getByRole("button", { name: "Yes, it’s paid" }).click()
+    await expect(toast(page, /^Payment recorded\./)).toBeVisible()
+    await expect(pay).toBeHidden()
+    // It leaves "Not paid yet" (the default tab) and is listed under Paid.
+    await expect(aylaB).toHaveCount(0)
+    await page.getByRole("navigation", { name: "Payment" }).getByRole("link", { name: /^Paid/ }).click()
+    await expect(page).toHaveURL(/view=paid/)
+    await expect(page.getByRole("row").filter({ hasText: P2.wB.title.en }).filter({ hasText: P2.ayla.name }).first()).toContainText("Bank transfer")
+
     await registrationsTab(page, P2.wB.slug)
-    await recordPayment(page, P2.ayla.name, "Bank transfer")
     await recordPayment(page, P2.cemre.name, "Online payment link")
     const rows = await sql<{ participant_name: string; status: string; payment_method: string | null }>(
       "select participant_name, status, payment_method from registrations where course_id = $1 order by participant_name",
@@ -153,11 +186,11 @@ test.describe.serial("phase 2 · admin: registrations, payments, refunds", () =>
     await page.getByRole("button", { name: `Actions for ${P2.cemre.name}` }).click()
     await page.getByRole("menuitem", { name: "Cancel registration" }).click()
     const dialog = page.getByRole("dialog")
-    await expect(dialog).toContainText(`${lira(80_000)} was paid. How much should go back?`)
+    await expectText(dialog, `${lira(80_000)} was paid. How much should go back?`)
     // More than 72 hours before the start: all of it under the terms.
     const terms = dialog.getByRole("radio", { name: /^Under the terms/ })
     await expect(terms).toBeChecked()
-    await expect(dialog).toContainText(`Under the terms: 100% · ${lira(80_000)}`)
+    await expectText(dialog, `Under the terms: 100% · ${lira(80_000)}`)
     await expect(dialog).toContainText("Cancelled 72 hours or more before the start.")
     await dialog.getByRole("button", { name: "Yes, cancel it" }).click()
     await expect(toast(page, "Registration cancelled.")).toBeVisible()
@@ -177,7 +210,7 @@ test.describe.serial("phase 2 · admin: registrations, payments, refunds", () =>
     mark = mailMark()
     await row.getByRole("button", { name: "Mark as refunded" }).click()
     const mdialog = page.getByRole("dialog")
-    await expect(mdialog).toContainText(`Paid ${lira(80_000)} back?`)
+    await expectText(mdialog, `Paid ${lira(80_000)} back?`)
     await mdialog.getByRole("button", { name: "Yes, it’s paid back" }).click()
     await expect(toast(page, /^Marked as refunded\./)).toBeVisible()
     const after = await one<{ refunded_at: Date | null }>("select refunded_at from registrations where id = $1", [id])
@@ -226,7 +259,8 @@ test.describe.serial("phase 2 · admin: registrations, payments, refunds", () =>
     const due = await waitMail("owner@lart.test", mark, P2.ayla.name)
     test.info().annotations.push({ type: "refund_due", description: `${due.subject}\n${due.text}`.slice(0, 1500) })
     expect(`${due.text} ${due.html}`).toMatch(/800/)
-    expect(due.html).toMatch(/\/admin\/money\/refunds/)
+    // Its link ("Open the refunds list") is checked in the last test of this file, outside the serial flow.
+    test.info().annotations.push({ type: "refund_due links", description: linksOf(due).join(" ") })
 
     await page.goto("/en/admin/money/refunds")
     await expect(page.getByRole("row").filter({ hasText: P2.ayla.name })).toContainText(lira(80_000))
@@ -286,6 +320,102 @@ test.describe.serial("phase 2 · admin: registrations, payments, refunds", () =>
     await anon.close()
   })
 
+  test("the 50 % band: two days before workshop D, Cemre cancels her paid place and the admin cancels Bahar's", async ({ page, browser }) => {
+    // Cemre and Bahar register in D and pay (recorded by the admin).
+    for (const [who, locale] of [
+      ["cemre", "en"],
+      ["bahar", "fa"],
+    ] as const) {
+      const t = tr(locale)
+      const context = await personContext(browser, who)
+      const p = await context.newPage()
+      await p.goto(`/${locale}/workshops/${P2.wD.slug}/register`)
+      await p.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).click()
+      await p.getByRole("button", { name: t("registration.register.submit"), exact: true }).click()
+      await expect(p).toHaveURL(/\/account\/registrations\/[0-9a-f-]{36}\?welcome=1$/)
+      await context.close()
+    }
+    await registrationsTab(page, P2.wD.slug)
+    await recordPayment(page, P2.cemre.name, "Bank transfer")
+    await recordPayment(page, P2.bahar.name, "Cash")
+    // Workshop D now starts in two days (the form only takes dates further away; done in the database).
+    await sql(
+      `update courses set starts_at = now() + interval '48 hours', ends_at = now() + interval '50 hours',
+         registration_deadline = now() + interval '30 hours', decision_at = now() + interval '26 hours' where slug = $1`,
+      [P2.wD.slug],
+    )
+    test.info().annotations.push({ type: "note", description: "workshop D moved to start in 48 hours via SQL" })
+
+    // The member's side: 50 % shown before confirming, then refund_due to the admins.
+    const cemreReg = await regId(P2.cemre.email, P2.wD.slug)
+    let mark = mailMark()
+    const t = tr("en")
+    const context = await personContext(browser, "cemre")
+    const member = await context.newPage()
+    await member.goto("/en/account")
+    const card = member.locator("article").filter({ hasText: P2.wD.title.en })
+    await expect(card).toContainText(t("registration.status.paid"))
+    await card.getByRole("button", { name: t("registration.cancel.button") }).click()
+    const dialog = member.getByRole("alertdialog")
+    await expect(dialog).toContainText(lead("en", "registration.cancel.partial"))
+    await expect(dialog).toContainText("50%")
+    await expect(dialog).toContainText(lira(25_000))
+    await dialog.getByRole("button", { name: t("registration.cancel.confirm") }).click()
+    await expect(toast(member, lead("en", "registration.cancel.doneRefund"))).toBeVisible()
+    await context.close()
+    expect(Number((await one<{ refund_amount: string }>("select refund_amount from registrations where id = $1", [cemreReg])).refund_amount)).toBe(25_000)
+    const cancelled = await waitMail(P2.cemre.email, mark, P2.wD.title.en)
+    expect(`${cancelled.text} ${cancelled.html}`).toContain(lira(25_000))
+    expect(`${cancelled.text} ${cancelled.html}`).toContain("50%")
+    const due = await waitMail("owner@lart.test", mark, P2.cemre.name)
+    expect(`${due.text} ${due.html}`).toContain(lira(25_000))
+
+    // The admin's side: "Under the terms: 50%", the band explained.
+    const baharReg = await regId(P2.bahar.email, P2.wD.slug)
+    mark = mailMark()
+    await registrationsTab(page, P2.wD.slug)
+    await page.getByRole("button", { name: `Actions for ${P2.bahar.name}` }).click()
+    await page.getByRole("menuitem", { name: "Cancel registration" }).click()
+    const admin = page.getByRole("dialog")
+    await expectText(admin, `${lira(50_000)} was paid. How much should go back?`)
+    await expect(admin.getByRole("radio", { name: /^Under the terms/ })).toBeChecked()
+    await expectText(admin, `Under the terms: 50% · ${lira(25_000)}`)
+    await expect(admin).toContainText("Cancelled between 72 and 24 hours before the start.")
+    await admin.getByRole("button", { name: "Yes, cancel it" }).click()
+    await expect(toast(page, "Registration cancelled.")).toBeVisible()
+    expect(Number((await one<{ refund_amount: string }>("select refund_amount from registrations where id = $1", [baharReg])).refund_amount)).toBe(25_000)
+    const baharMail = await waitMail(P2.bahar.email, mark, P2.wD.title.fa)
+    expect(`${baharMail.text} ${baharMail.html}`).toContain(lira(25_000, "fa"))
+    await page.goto("/en/admin/money/refunds")
+    for (const who of [P2.cemre, P2.bahar]) {
+      await expect(page.getByRole("row").filter({ hasText: who.name }).filter({ hasText: P2.wD.title.en })).toContainText(lira(25_000))
+    }
+
+    // The admin decides on a full refund for Bahar after all ("Change refund"), then pays it back.
+    mark = mailMark()
+    const baharRow = page.getByRole("row").filter({ hasText: P2.bahar.name }).filter({ hasText: P2.wD.title.en })
+    await baharRow.getByRole("button", { name: "Change refund" }).click()
+    const change = page.getByRole("dialog")
+    await expect(change).toContainText(`Change the refund for ${P2.bahar.name}`)
+    await expectText(change, `${lira(50_000)} was paid, and ${lira(25_000)} is to go back now.`)
+    await field(change, /^Refund/).getByRole("textbox").fill("500")
+    await change.getByRole("button", { name: "Save refund" }).click()
+    await expect(toast(page, "Refund changed.")).toBeVisible()
+    await expect(change).toBeHidden()
+    expect(Number((await one<{ refund_amount: string }>("select refund_amount from registrations where id = $1", [baharReg])).refund_amount)).toBe(50_000)
+    expect(await sql("select 1 from audit_log where action = 'registration.refundChange' and entity_id = $1", [baharReg])).toHaveLength(1)
+    const changed = await waitMail(P2.bahar.email, mark, P2.wD.title.fa)
+    expect(`${changed.text} ${changed.html}`).toContain(lira(50_000, "fa"))
+    await expect(baharRow).toContainText(lira(50_000))
+    await baharRow.getByRole("button", { name: "Mark as refunded" }).click()
+    const paidBack = page.getByRole("dialog")
+    await expectText(paidBack, `Paid ${lira(50_000)} back?`)
+    await paidBack.getByRole("button", { name: "Yes, it’s paid back" }).click()
+    await expect(toast(page, /^Marked as refunded\./)).toBeVisible()
+    const refunded = await one<{ refunded_at: Date | null }>("select refunded_at from registrations where id = $1", [baharReg])
+    expect(refunded.refunded_at).not.toBeNull()
+  })
+
   test("the day-before reminder job emails Ayla once, with what is still to pay and how", async () => {
     // Workshop D moves to tomorrow (the form only accepts dates further away; done in the database).
     await sql(
@@ -314,4 +444,15 @@ test.describe.serial("phase 2 · admin: registrations, payments, refunds", () =>
     test.info().annotations.push({ type: "jobs run 2", description: out2 })
     expect(mailTo(P2.ayla.email, mark2)).toHaveLength(0)
   })
+})
+
+// Outside the serial flow: a failure here reports a bug without stopping the specs that build on this data.
+test("refund_due: its button “Open the refunds list” opens the refunds list (the only page with “Mark as refunded”)", async () => {
+  const due = mailTo("owner@lart.test", 0)
+    .filter((e) => e.subject.includes(P2.ayla.name) && e.subject.includes(P2.wB.title.en))
+    .pop()
+  test.skip(!due, "no refund_due email for Ayla's cancellation in B (run the flow above first)")
+  const admin = linksOf(due!).filter((l) => l.includes("/admin/"))
+  test.info().annotations.push({ type: "refund_due links", description: admin.join(" ") })
+  expect(admin).toContainEqual(expect.stringMatching(/\/admin\/money\/refunds$/))
 })

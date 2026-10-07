@@ -419,19 +419,22 @@ test.describe.serial("phase 2 · students", () => {
 })
 
 // Not part of the serial flow, so a failure here does not stop the rest.
-test("login page: the first click on “Create an account” or “Forgot your password?” is not lost", async ({ browser }) => {
-  // The email field is focused on arrival and checked when it loses focus ("Please fill this in"):
-  // that message pushes the links below it down by a line between mouse down and mouse up.
-  const t = tr("tr")
+test("sign-in pages: the first click on a link under the form is not lost", async ({ browser }) => {
+  // The first field is focused on arrival. Were it checked when it loses focus ("Please fill this in"),
+  // that message would push the links below it down by a line between mouse down and mouse up.
+  const [t, en] = [tr("tr"), tr("en")]
   const context = await anonContext(browser)
   const page = await context.newPage()
-  for (const [link, target] of [
-    [t("account.login.signUp"), /\/tr\/account\/signup/],
-    [t("account.login.forgot"), /\/tr\/account\/forgot/],
+  for (const [from, link, target] of [
+    ["/tr/account/login", t("account.login.signUp"), /\/tr\/account\/signup/],
+    ["/tr/account/login", t("account.login.forgot"), /\/tr\/account\/forgot/],
+    ["/en/account/signup", en("account.signup.logIn"), /\/en\/account\/login/],
+    ["/tr/account/forgot", t("account.forgot.back"), /\/tr\/account\/login/],
+    ["/tr/instructor/login", t("account.login.forgot"), /\/tr\/instructor\/forgot/],
   ] as const) {
-    await page.goto("/tr/account/login")
-    await page.getByRole("link", { name: link }).click()
-    await expect(page, `one click on “${link}”`).toHaveURL(target, { timeout: 3_000 })
+    await page.goto(from)
+    await page.locator("main").getByRole("link", { name: link, exact: true }).click()
+    await expect(page, `one click on “${link}” (${from})`).toHaveURL(target, { timeout: 3_000 })
   }
   await context.close()
 })

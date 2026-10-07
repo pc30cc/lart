@@ -40,14 +40,22 @@ describe("sitemap.xml", () => {
 })
 
 describe("robots.txt", () => {
-  it("keeps crawlers out of the private areas and the APIs, and points to the sitemap", async () => {
+  it("keeps crawlers out of the super-admin panel and the APIs, and points to the sitemap", async () => {
     const { rules, sitemap: map } = await robots()
     expect(rules).toMatchObject({ userAgent: "*", allow: "/" })
     const disallow = (rules as { disallow: string[] }).disallow
-    for (const area of ["admin", "instructor", "account"]) {
-      for (const locale of ["fa", "tr", "en"]) expect(disallow).toContain(`/${locale}/${area}`)
-    }
+    for (const locale of ["fa", "tr", "en"]) expect(disallow).toContain(`/${locale}/admin`)
     expect(disallow).toContain("/api")
     expect(map).toBe(url("/sitemap.xml"))
+  })
+
+  it("does not name the instructor panel or the account pages, so crawlers see their noindex and the panel's address stays private", async () => {
+    const { rules } = await robots()
+    const disallow = (rules as { disallow: string[] }).disallow
+    for (const locale of ["fa", "tr", "en"]) {
+      expect(disallow).not.toContain(`/${locale}/instructor`)
+      expect(disallow).not.toContain(`/${locale}/account`)
+    }
+    expect(disallow.some((path) => /instructor|account/.test(path))).toBe(false)
   })
 })

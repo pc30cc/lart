@@ -289,7 +289,7 @@ export async function getMyEarnings() {
     .innerJoin(live, eq(live.courseId, courses.id))
     .where(eq(courses.instructorId, instructor.id))
     .orderBy(desc(courses.startsAt), asc(courses.id))
-  const moved = await instructorMoney(rows.map((r) => r.id))
+  const moved = await instructorMoney(instructor.id, rows.map((r) => r.id))
 
   const workshops = rows.flatMap((r) => {
     const money = moved.get(r.id) ?? { advancePaid: 0, advanceForCosts: 0, payments: 0 }
@@ -335,16 +335,26 @@ export async function getMyEarnings() {
 }
 
 /**
- * Money moved between the business and the instructor, per workshop, from the
+ * Money moved between the business and this instructor, per workshop, from the
  * ledger (a reversal counts under the kind it cancels, with the opposite sign):
  * advances paid (minus returned), the part of the advance booked as workshop
- * costs, and payments of the fee.
+ * costs, and payments of the fee. Only what was booked on or after this
+ * instructor's first contract for the workshop (a reversal by the time of what
+ * it cancels): when a workshop moved from another instructor, that one's
+ * advance, the costs paid from it and their payments are not this one's.
  */
-async function instructorMoney(courseIds: string[]) {
+async function instructorMoney(instructorId: string, courseIds: string[]) {
   const out = new Map<string, { advancePaid: number; advanceForCosts: number; payments: number }>()
   if (!courseIds.length) return out
+  const first = db
+    .select({ courseId: contracts.courseId, since: sql<Date>`min(${contracts.sentAt})`.as("since") })
+    .from(contracts)
+    .where(and(eq(contracts.instructorId, instructorId), inArray(contracts.courseId, courseIds)))
+    .groupBy(contracts.courseId)
+    .as("first_contract")
   const original = alias(ledgerTransactions, "original")
   const kind = sql`coalesce(${original.kind}, ${ledgerTransactions.kind})`
+  const bookedAt = sql`coalesce(${original.createdAt}, ${ledgerTransactions.createdAt})`
   const sum = (account: string, of: string) =>
     sql<number>`coalesce(sum(${ledgerLines.amount}) filter (where ${ledgerLines.account} = ${account} and ${kind} = ${of}), 0)`.mapWith(
       Number,
@@ -358,8 +368,9 @@ async function instructorMoney(courseIds: string[]) {
     })
     .from(ledgerLines)
     .innerJoin(ledgerTransactions, eq(ledgerTransactions.id, ledgerLines.transactionId))
+    .innerJoin(first, eq(first.courseId, ledgerTransactions.courseId))
     .leftJoin(original, eq(original.id, ledgerTransactions.reversalOf))
-    .where(inArray(ledgerTransactions.courseId, courseIds))
+    .where(and(inArray(ledgerTransactions.courseId, courseIds), sql`${bookedAt} >= ${first.since}`))
     .groupBy(ledgerTransactions.courseId)
   for (const r of rows) {
     if (!r.courseId) continue

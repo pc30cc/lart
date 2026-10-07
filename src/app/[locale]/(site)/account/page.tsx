@@ -90,8 +90,9 @@ export default async function MyWorkshopsPage({ params }: PageProps<"/[locale]/a
         <div className="bg-card ring-foreground/8 space-y-6 rounded-2xl p-5 shadow-xs ring-1 sm:p-6">
           <div className="space-y-1">
             <p className="text-muted-foreground text-sm">{t("email")}</p>
-            <p className="text-base font-medium break-all" dir="ltr">
-              {member.email}
+            {/* The block keeps the page direction (under its label); only the address is left to right. */}
+            <p className="text-base font-medium break-all">
+              <bdi dir="ltr">{member.email}</bdi>
             </p>
           </div>
           <ProfileForm name={member.name} phone={member.phone} locale={member.locale} />

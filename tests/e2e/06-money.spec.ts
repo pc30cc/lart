@@ -17,9 +17,9 @@ async function walletInDb() {
   return Number((await one<{ n: string }>("select coalesce(sum(amount), 0) as n from ledger_lines where account = 'wallet'")).n)
 }
 
-/** A <Stat> card (label + big value + hint) by its exact label. */
+/** A <Stat> card (label + big value + hint) by its exact label, in the page (not the sidebar's "Registrations"). */
 function stat(page: Page, label: string) {
-  return page.getByText(label, { exact: true }).first().locator("xpath=../..")
+  return page.locator("main").getByText(label, { exact: true }).first().locator("xpath=../..")
 }
 
 /** Open a dialog form from its trigger button and return the dialog. */
@@ -194,6 +194,24 @@ test.describe.serial("money", () => {
       [id],
     )
     test.info().annotations.push({ type: "note", description: "starts_at/ends_at of the held workshop moved to yesterday via SQL before closing" })
+
+    await page.goto(`/en/admin/workshops/${id}/finances`)
+    // Leyla Demir never paid: it can't be closed until her registration is paid or cancelled
+    // (after closing, a payment or a cancellation could no longer be booked).
+    await expect(page.getByRole("button", { name: "Close workshop…" })).toBeDisabled()
+    await expect(
+      page.getByText("1 registration is still not paid. Record the payment, or cancel the registration if the person didn’t come; then you can close it."),
+    ).toBeVisible()
+    await page.getByRole("link", { name: "Open the registrations" }).click()
+    await expect(page).toHaveURL(new RegExp(`/admin/workshops/${id}/registrations`))
+    // She didn't come: her registration is cancelled (nothing was paid, nothing to refund). The final number stays 4.
+    await page.getByRole("button", { name: "Actions for Leyla Demir", exact: true }).click()
+    await page.getByRole("menuitem", { name: "Cancel registration" }).click()
+    const cancel = page.getByRole("dialog")
+    await expect(cancel).toContainText("Nothing has been paid yet, so there’s nothing to refund.")
+    await cancel.getByRole("button", { name: "Yes, cancel it" }).click()
+    await expect(toast(page, "Registration cancelled.")).toBeVisible()
+    test.info().annotations.push({ type: "note", description: "Leyla Demir's unpaid registration cancelled before closing (unpaidRegistrations)" })
 
     await page.goto(`/en/admin/workshops/${id}/finances`)
     await expect(page.getByText("Everything is ready.")).toBeVisible()

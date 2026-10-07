@@ -66,6 +66,10 @@ describe("registration messages", () => {
     expect(JSON.stringify(fa)).not.toMatch(/کارگاه/)
   })
 
+  it("call a link «لینک» in Persian, as the emails do (not the formal «پیوند»)", () => {
+    expect(JSON.stringify(fa)).not.toMatch(/پیوند/)
+  })
+
   it("cover every message key the module's code uses", () => {
     const files = [
       "register.ts",

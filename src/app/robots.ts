@@ -5,12 +5,16 @@ import { absoluteUrl } from "@/app/[locale]/(site)/workshops/_components/seo"
 import { locales } from "@/i18n/routing"
 
 /**
- * /robots.txt: the public site is open to crawlers; the super-admin panel,
- * the instructor panel, the member's account pages (`/<locale>/admin`, …, one
- * line per language rather than a wildcard over the language, which would also
- * hide a workshop whose address starts with "admin") and the APIs are not (they also
- * answer `X-Robots-Tag: noindex`, src/proxy.ts). Built per request so the
- * sitemap link uses the running site's APP_URL.
+ * /robots.txt: the public site is open to crawlers; the super-admin panel
+ * (`/<locale>/admin`, one line per language rather than a wildcard over the
+ * language, which would also hide a workshop whose address starts with
+ * "admin") and the APIs are not. The instructor panel and the member's account
+ * pages are left crawlable on purpose: a Disallow would stop crawlers from
+ * fetching them, so they would never see the `X-Robots-Tag: noindex`
+ * (src/proxy.ts) and the meta noindex, and a leaked link could still be indexed
+ * as a bare URL; it would also publish the instructor panel's private address
+ * (README §5). Built per request so the sitemap link uses the running site's
+ * APP_URL.
  */
 export default async function robots(): Promise<MetadataRoute.Robots> {
   await connection()
@@ -18,7 +22,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: [...locales.flatMap((l) => [`/${l}/admin`, `/${l}/instructor`, `/${l}/account`]), "/api"],
+      disallow: [...locales.map((l) => `/${l}/admin`), "/api"],
     },
     sitemap: absoluteUrl("/sitemap.xml"),
   }

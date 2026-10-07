@@ -9,6 +9,7 @@ import {
   LayoutDashboardIcon,
   SettingsIcon,
   TagsIcon,
+  TicketIcon,
   UsersRoundIcon,
   WalletIcon,
   type LucideIcon,
@@ -38,6 +39,7 @@ export const adminNav: NavGroup[] = [
     label: "groups.workshops",
     items: [
       { href: "/admin/workshops", label: "workshops", icon: CalendarRangeIcon },
+      { href: "/admin/registrations", label: "registrations", icon: TicketIcon },
       { href: "/admin/instructors", label: "instructors", icon: UsersRoundIcon },
       { href: "/admin/categories", label: "categories", icon: TagsIcon },
     ],

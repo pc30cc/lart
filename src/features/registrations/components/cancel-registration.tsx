@@ -22,19 +22,23 @@ import { cancelRegistrationAction } from "../actions"
 import { isolate, type CancelPreview } from "../schema"
 
 /**
- * "Cancel my registration" with a clear "are you sure" first: not paid yet,
- * the place is simply freed; paid, the refund under the terms (all, half or
- * nothing, with the amount). `preview` is worked out on the server when the
- * page is shown; the action works it out again at the moment of cancelling.
+ * "Cancel my registration" with a clear "are you sure" first: a free workshop
+ * (`free`) or not paid yet, the place is simply freed; paid, the refund under
+ * the terms (all, half or nothing, with the amount). `preview` is worked out
+ * on the server when the page is shown; the action works it out again at the
+ * moment of cancelling.
  */
 export function CancelRegistration({
   id,
   participantName,
   preview,
+  free = false,
 }: {
   id: string
   participantName: string
   preview: CancelPreview
+  /** A workshop without a price: nothing was owed, so never "you haven't paid". */
+  free?: boolean
 }) {
   const t = useTranslations("registration.cancel")
   const tc = useTranslations("common")
@@ -43,8 +47,9 @@ export function CancelRegistration({
   const [pending, startTransition] = useTransition()
   const lira = (kurus: number) => isolate(formatLira(kurus, locale))
 
-  const description =
-    preview.paid <= 0
+  const description = free
+    ? t("free", { name: isolate(participantName) })
+    : preview.paid <= 0
       ? t("unpaid", { name: isolate(participantName) })
       : preview.percent === 100
         ? t("full", { paid: lira(preview.paid), refund: lira(preview.refund) })

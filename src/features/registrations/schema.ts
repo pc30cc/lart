@@ -6,7 +6,7 @@
 import { z } from "zod"
 
 import { uuid } from "@/components/admin/form/schemas"
-import { normalizePhone } from "@/features/accounts/schema"
+import { normalizePhone, personName } from "@/features/accounts/schema"
 import { locales } from "@/i18n/routing"
 import { refundAmount, refundPercent, type RefundPercent } from "./refund-policy"
 
@@ -52,9 +52,13 @@ export type RegisterValues = z.input<typeof registerSchema>
 /** One of the member's own registrations (cancel). */
 export const registrationIdSchema = z.object({ id: uuid() })
 
-/** "My details" on the My workshops page. The language is the language of the member's emails. */
+/**
+ * "My details" on the My workshops page. The language is the language of the
+ * member's emails. The name follows the sign-up rule (`personName`: no link,
+ * email address or phone number), as it is the greeting of those emails.
+ */
 export const profileSchema = z.object({
-  name: z.string().trim().min(2).max(80),
+  name: personName(),
   phone: z
     .string()
     .max(40)
@@ -109,8 +113,20 @@ export const formatIban = (iban: string) => iban.replace(/\s+/g, "").replace(/(.
 // ─── Registration window ──────────────────────────────────────────────────────
 
 /**
+ * The places a workshop has. Before the go decision, its maximum capacity.
+ * After it, the number fixed then (`final_participants`, the number the
+ * instructor's per-participant fee is paid on): a place that is cancelled can
+ * be taken again, but more people than that only come after the instructor
+ * agreed (contract 5.2) and an admin raised the number. Never above the maximum.
+ */
+export function seatLimit(course: { maxCapacity: number; finalParticipants: number | null }): number {
+  return course.finalParticipants === null ? course.maxCapacity : Math.min(course.maxCapacity, course.finalParticipants)
+}
+
+/**
  * Whether a workshop takes registrations right now, and if not, why:
- * - open: published or confirmed, before the deadline, seats left,
+ * - open: published or confirmed, before the deadline, seats left (after the
+ *   go decision, only up to its final number: `seatLimit`),
  * - full: no seats left, closed: the registration deadline has passed,
  * - started: it has begun, past: it is over (or closed), cancelled,
  * - paused: waiting for a new contract signature after a change.

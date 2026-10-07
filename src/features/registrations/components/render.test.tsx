@@ -92,9 +92,11 @@ describe.each(["fa", "en", "tr"])("renders in %s", (locale) => {
           <RegisterForm courseId={registration.id} defaultName="Ayşe" terms={terms} brand="Lart" ageRange={null} price={0} ways={[]} />,
         ),
         render(<CancelRegistration id={registration.id} participantName="Deniz" preview={{ paid: 150_000, percent: 50, refund: 75_000 }} />),
+        render(<CancelRegistration id={registration.id} participantName="Deniz" preview={{ paid: 0, percent: 100, refund: 0 }} free />),
         render(<ProfileForm name="Ayşe" phone={null} locale="fa" />),
         render(<RegistrationCard registration={registration} now={new Date()} />),
         render(<RegistrationCard registration={{ ...registration, status: "cancelled", refundAmount: 75_000 }} now={new Date()} />),
+        render(<RegistrationCard registration={{ ...registration, status: "confirmed", amount: 0 }} now={new Date()} />),
         render(<PaymentBadge registration={{ status: "cancelled", amount: 1, refundAmount: 500, refundedAt: new Date() }} />),
         render(
           <WorkshopCard
@@ -121,11 +123,22 @@ describe.each(["fa", "en", "tr"])("renders in %s", (locale) => {
       ])
     ).join("\n")
 
-    expect(html).toContain("TR33 0006 1005 1978 6457 8413 26")
+    // The IBAN in groups of four that never break inside (one nowrap span each).
+    expect(html).toContain(
+      ["TR33", "0006", "1005", "1978", "6457", "8413", "26"].map((g) => `<span class="whitespace-nowrap">${g}</span>`).join(" "),
+    )
+    expect(html).not.toContain("break-all")
     expect(html).toContain('href="https://iyzi.link/AK" target="_blank" rel="noopener noreferrer"')
     if (locale === "fa") {
       expect(html).toContain("ورکشاپ")
       expect(html).toContain("۱٬۵۰۰")
     }
+  })
+
+  it("a free workshop's registration says Free, never a zero price", async () => {
+    const free = (await load(locale)).registration.price.free as string
+    const html = await render(<RegistrationCard registration={{ ...registration, status: "confirmed", amount: 0 }} now={new Date()} />)
+    expect(html).toContain(free)
+    expect(html).not.toContain("data-money")
   })
 })

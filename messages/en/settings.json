@@ -133,7 +133,8 @@
     "marginHint": "Space from the edge of the photo (between logos when repeated).",
     "previewAlt": "A sample photo with the watermark",
     "previewNoLogo": "Add a logo to see the preview.",
-    "previewCaption": "A sample photo with your current choices (not saved yet).",
+    "previewCaption": "A sample photo with your current choices.",
+    "previewUnsaved": "Showing changes you haven’t saved yet.",
     "errors": {
       "logo": "Please upload the logo again."
     }
@@ -177,6 +178,7 @@
       "instructor": "Instructor",
       "ledger_transaction": "Transaction",
       "media": "Media",
+      "registration": "Registration",
       "report": "Report",
       "setting": "Setting",
       "template": "Template",
@@ -213,7 +215,8 @@
         "update": "Instructor edited",
         "delete": "Instructor deleted",
         "invite": "Invitation sent",
-        "reveal_id": "ID number viewed"
+        "reveal_id": "ID number viewed",
+        "profile_update": "Profile edited by the instructor"
       },
       "media": {
         "upload": "File uploaded"
@@ -231,6 +234,13 @@
       "partner": {
         "shares": "Partner shares changed"
       },
+      "registration": {
+        "payment": "Payment recorded",
+        "cancel": "Registration cancelled",
+        "refund": "Refund marked as paid back",
+        "refundChange": "Refund changed",
+        "export": "Registrations exported"
+      },
       "setting": {
         "update": "Settings changed"
       },
@@ -246,7 +256,8 @@
         "confirm": "Workshop confirmed",
         "cancel": "Workshop cancelled",
         "close": "Workshop closed",
-        "gallery": "Gallery updated"
+        "gallery": "Gallery updated",
+        "raiseFinal": "Final number of participants raised"
       }
     }
   },
@@ -284,7 +295,8 @@
     },
     "preview": {
       "title": "What students see",
-      "description": "After registering for a workshop of {amount}, in your language. Not saved yet.",
+      "description": "After registering for a workshop of {amount}, in your language.",
+      "unsaved": "Showing changes you haven’t saved yet.",
       "participant": "Deniz",
       "onlineHint": "The “Pay online” button appears only for workshops that have a payment link."
     },

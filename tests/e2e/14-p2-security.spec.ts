@@ -1,8 +1,8 @@
 import type { Page, Route } from "@playwright/test"
 
-import { expect, mailMark, RUN, test, toast } from "./helpers/app"
+import { expect, mailMark, RUN, RUN_NAME, test, toast } from "./helpers/app"
 import { one, sql } from "./helpers/db"
-import { anonContext, courseId, linksOf, memberLogin, P2, PASSWORD, personContext, tr, waitMail } from "./helpers/p2"
+import { anonContext, captureAction, courseId, linksOf, memberLogin, P2, PASSWORD, personContext, replayAction, tr, waitMail } from "./helpers/p2"
 
 /**
  * Phase 2 security probes, against the data of specs 10–13: one member can't
@@ -140,6 +140,84 @@ test.describe("phase 2 · security: members", () => {
   })
 })
 
+test.describe("phase 2 · security: server actions replayed with someone else's session", () => {
+  test("an unverified member is asked to confirm the email first; the register action replayed with her session is refused", async ({ browser }) => {
+    const t = tr("tr")
+    const who = { name: `Eda Onay ${RUN_NAME}`, email: `eda.${RUN}@member.test` }
+    // Eda signs up and doesn't open the link yet.
+    const eda = await anonContext(browser)
+    const page = await eda.newPage()
+    await page.goto("/tr/account/signup")
+    await page.getByLabel(t("account.signup.name")).fill(who.name)
+    await page.getByLabel(t("account.form.email")).fill(who.email)
+    await page.getByLabel(t("account.form.password"), { exact: true }).fill(PASSWORD)
+    await page.getByRole("button", { name: t("account.signup.submit") }).click()
+    await expect(page).toHaveURL(/\/tr\/workshops/)
+    await expect(page.getByRole("region", { name: t("site.verifyBanner.label") })).toBeVisible()
+    // The register page asks, in plain words, with "send it again".
+    await page.goto(`/tr/workshops/${P2.wB.slug}/register`)
+    await expect(page.locator("main").getByText(t("registration.register.verify.title"))).toBeVisible()
+    await expect(page.getByRole("button", { name: t("registration.register.submit"), exact: true })).toHaveCount(0)
+    const mark = mailMark()
+    await page.locator("main").getByRole("button", { name: t("registration.register.verify.resend") }).click()
+    await expect(page.locator("main").getByText(t("registration.register.verify.sent"))).toBeVisible()
+    const again = await waitMail(who.email, mark, /./)
+    expect(linksOf(again).some((l) => l.includes("/account/verify?token="))).toBe(true)
+
+    // Ayla (confirmed) fills in the form; her click is caught before it reaches the server.
+    const ayla = await personContext(browser, "ayla")
+    const form = await ayla.newPage()
+    await form.goto(`/tr/workshops/${P2.wB.slug}/register`)
+    await form.getByLabel(t("registration.register.participant")).fill(`Captured ${RUN}`)
+    await form.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).click()
+    const action = await captureAction(form, () => form.getByRole("button", { name: t("registration.register.submit"), exact: true }).click())
+    expect(action.body).toContain(`Captured ${RUN}`)
+
+    // Replayed with Eda's session: refused, nothing stored.
+    const refused = await replayAction(eda.request, action, action.body.split(`Captured ${RUN}`).join(`Unverified ${RUN}`))
+    test.info().annotations.push({ type: "replay as unverified", description: `${refused.status} ${refused.text.slice(0, 400)}` })
+    expect(await sql("select 1 from registrations where participant_name = $1", [`Unverified ${RUN}`])).toHaveLength(0)
+    // Replayed by a visitor: refused too.
+    const visitor = await anonContext(browser)
+    await replayAction(visitor.request, action, action.body.split(`Captured ${RUN}`).join(`Visitor ${RUN}`))
+    expect(await sql("select 1 from registrations where participant_name = $1", [`Visitor ${RUN}`])).toHaveLength(0)
+    // Control: the same replay with Ayla's own session does register (so the refusals above are the server's checks).
+    const control = await replayAction(ayla.request, action, action.body.split(`Captured ${RUN}`).join(`Replay ${RUN}`))
+    test.info().annotations.push({ type: "replay as Ayla (control)", description: `${control.status} ${control.text.slice(0, 300)}` })
+    await expect.poll(async () => (await sql("select 1 from registrations where participant_name = $1", [`Replay ${RUN}`])).length).toBe(1)
+    // Clean up the control registration (not paid, nothing in the ledger).
+    await sql("delete from registrations where participant_name = $1 and status = 'pending'", [`Replay ${RUN}`])
+    await visitor.close()
+    await ayla.close()
+    await eda.close()
+  })
+
+  test("a member or a visitor can't run the admin's Record payment action", async ({ page, browser }) => {
+    const deniz = await regOf(P2.ayla.email, P2.wB.slug, `Deniz Kurt ${RUN}`)
+    expect(deniz.status).toBe("pending")
+    await page.goto(`/en/admin/workshops/${await courseId(P2.wB.slug)}/registrations`)
+    const row = page.getByRole("row").filter({ has: page.getByRole("button", { name: `Actions for Deniz Kurt ${RUN}`, exact: true }) })
+    await row.getByRole("button", { name: "Record payment" }).click()
+    const dialog = page.getByRole("dialog")
+    await dialog.getByRole("radio", { name: /^Cash/ }).click()
+    const action = await captureAction(page, () => dialog.getByRole("button", { name: "Yes, it’s paid" }).click())
+    expect(action.body).toContain(deniz.id)
+    await page.keyboard.press("Escape")
+
+    const member = await personContext(browser, "ayla")
+    const asMember = await replayAction(member.request, action)
+    test.info().annotations.push({ type: "admin action as member", description: `${asMember.status} ${asMember.text.slice(0, 400)}` })
+    const visitor = await anonContext(browser)
+    const asVisitor = await replayAction(visitor.request, action)
+    test.info().annotations.push({ type: "admin action as visitor", description: `${asVisitor.status} ${asVisitor.text.slice(0, 400)}` })
+    const instructor = await personContext(browser, "nur")
+    await replayAction(instructor.request, action)
+    expect((await regOf(P2.ayla.email, P2.wB.slug, `Deniz Kurt ${RUN}`)).status).toBe("pending")
+    expect(await sql("select 1 from ledger_transactions where registration_id = $1", [deniz.id])).toHaveLength(0)
+    await Promise.all([member.close(), visitor.close(), instructor.close()])
+  })
+})
+
 test.describe("phase 2 · security: private areas and indexing", () => {
   test("signed out, the instructor panel and the account pages redirect to their login, with noindex", async ({ browser }) => {
     const context = await anonContext(browser)
@@ -204,7 +282,14 @@ test.describe("phase 2 · security: private areas and indexing", () => {
     expect(robots.status()).toBe(200)
     const txt = await robots.text()
     test.info().annotations.push({ type: "robots.txt", description: txt })
-    for (const l of ["fa", "tr", "en"]) for (const area of ["admin", "instructor", "account"]) expect(txt).toContain(`Disallow: /${l}/${area}`)
+    // Only the admin panel and the API are disallowed. The instructor panel and the account pages rely on their
+    // noindex (a disallowed page can still be indexed as a bare URL), and robots.txt must not publish the panel's address.
+    for (const l of ["fa", "tr", "en"]) {
+      expect(txt).toContain(`Disallow: /${l}/admin`)
+      expect(txt).not.toContain(`/${l}/instructor`)
+      expect(txt).not.toContain(`/${l}/account`)
+    }
+    expect(txt).toContain("Disallow: /api")
     expect(txt).toContain("Sitemap: http://localhost:3100/sitemap.xml")
 
     const sitemap = await request.get("/sitemap.xml")
@@ -255,7 +340,7 @@ test.describe("phase 2 · security: private areas and indexing", () => {
 test.describe("phase 2 · password reset (member)", () => {
   test("a new member forgets the password: one-time link, new password, signed in and the email confirmed", async ({ browser }) => {
     const t = tr("en")
-    const who = { name: `Dila Reset ${RUN}`, email: `dila.${RUN}@member.test` }
+    const who = { name: `Dila Reset ${RUN_NAME}`, email: `dila.${RUN}@member.test` }
     const context = await anonContext(browser)
     const page = await context.newPage()
     await page.goto("/en/account/signup")
@@ -292,6 +377,35 @@ test.describe("phase 2 · password reset (member)", () => {
     // Used once.
     await page.goto(link!.replace("http://localhost:3100", ""))
     await expect(page.locator("main").getByText(t("account.reset.invalidTitle"))).toBeVisible()
+    await context.close()
+  })
+})
+
+test.describe("phase 2 · member: language and my details", () => {
+  test("the header's language switch and My details change the language of Cemre's emails; her phone is saved", async ({ browser }) => {
+    const en = tr("en")
+    const context = await personContext(browser, "cemre")
+    const page = await context.newPage()
+    const locale = async () => (await one<{ locale: string }>("select locale from members where email = $1", [P2.cemre.email])).locale
+    expect(await locale()).toBe("en")
+    await page.goto("/en/account")
+    // The header's switch: the same page in Turkish, and her emails follow.
+    await page.getByRole("button", { name: en("common.language") }).click()
+    await page.getByRole("menuitemradio", { name: "Türkçe" }).click()
+    await expect(page).toHaveURL(/\/tr\/account$/)
+    await expect.poll(locale).toBe("tr")
+
+    // My details (now in Turkish): a new phone number and English again.
+    const t = tr("tr")
+    const details = page.locator("section").filter({ has: page.getByRole("heading", { name: t("registration.account.details") }) })
+    await details.getByLabel(new RegExp(`^${t("registration.account.phone")}`)).fill("+90 535 000 99 88")
+    await details.getByRole("radio", { name: "English" }).click()
+    await details.getByRole("button", { name: t("registration.account.save") }).click()
+    await expect(page).toHaveURL(/\/en\/account$/)
+    await expect.poll(locale).toBe("en")
+    const row = await one<{ phone: string | null; name: string }>("select phone, name from members where email = $1", [P2.cemre.email])
+    expect(row.name).toBe(P2.cemre.name)
+    expect(row.phone?.replace(/\s/g, "")).toBe("+905350009988")
     await context.close()
   })
 })

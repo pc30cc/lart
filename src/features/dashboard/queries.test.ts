@@ -62,6 +62,7 @@ async function seed(tx: Tx) {
       instructorId?: string
       finalParticipants?: number
       closedTotals?: ClosedTotals
+      price?: number
     },
   ) => {
     const startsAt = at(o.starts)
@@ -78,7 +79,7 @@ async function seed(tx: Tx) {
         endsAt: new Date(startsAt.getTime() + 2 * 3_600_000),
         minCapacity: o.min ?? 1,
         maxCapacity: o.max ?? 10,
-        price: 15000,
+        price: o.price ?? 15000,
         registrationDeadline: startsAt,
         decisionAt: o.decision ? at(o.decision) : startsAt,
         finalParticipants: o.finalParticipants ?? null,
@@ -105,13 +106,17 @@ async function seed(tx: Tx) {
     w8: await course("W8", { status: "published", starts: "2026-10-12T10:00:00", decision: "2026-10-08T12:00:00", min: 2, max: 6 }),
     w9: await course("W9", { status: "cancelled", starts: "2026-10-02T10:00:00" }),
   }
-  const register = (courseId: string, status: "pending" | "confirmed" | "cancelled") =>
+  const register = (courseId: string, status: "pending" | "confirmed" | "cancelled", amount = 15000) =>
     tx.insert(registrations).values({
-      courseId, memberId: member.id, participantName: "P", status, amount: 15000,
+      courseId, memberId: member.id, participantName: "P", status, amount,
       termsTemplateId: terms.id, termsSha256: "0".repeat(64), termsAcceptedAt: NOW,
     })
   for (const status of ["confirmed", "confirmed", "confirmed", "pending", "cancelled"] as const) await register(w.w5, status)
   for (let i = 0; i < 2; i++) await register(w.w8, "confirmed")
+  // W7 went ahead with 9; since then some cancelled and others registered: 7 active now.
+  for (const status of ["confirmed", "confirmed", "confirmed", "confirmed", "confirmed", "pending", "pending", "cancelled"] as const) {
+    await register(w.w7, status)
+  }
 
   // Money. Revenue is posted directly (phase 2 posts it from registrations).
   const common = { description: "", createdBy: a.id }
@@ -141,7 +146,7 @@ async function seed(tx: Tx) {
   await tx.update(courses).set({ status: "closed", closedAt: NOW, closedTotals: totals(999, 2) }).where(eq(courses.id, w.w3))
   await tx.update(admins).set({ active: false }).where(eq(admins.id, c.id))
 
-  return { partners: { a: a.id, b: b.id, c: c.id, gone: gone.id }, instructors: { i1: i1.id, i2: i2.id }, w, course, totals }
+  return { partners: { a: a.id, b: b.id, c: c.id, gone: gone.id }, instructors: { i1: i1.id, i2: i2.id }, w, course, totals, register }
 }
 
 const month = (d: Dashboard, m: string) => d.months.find((x) => x.month === m)!
@@ -172,11 +177,12 @@ describe("dashboard queries", () => {
       expect(d.kpis.netThisYear - before.kpis.netThisYear).toBe(67_000)
       if (before.kpis.revenueLastMonth === 0) expect(d.kpis.revenueChange).toBe(0.5)
 
-      // Upcoming: W7, W8, W5 open (15 of 28 seats: registered counts paid and not paid yet), W6 still awaiting signature.
+      // Upcoming: W7, W8, W5 open (13 of 28 seats: registered counts paid and not paid yet, live, also
+      // after the go decision: W7 went ahead with 9 and has 7 now), W6 still awaiting signature.
       expect(d.kpis.upcoming - before.kpis.upcoming).toBe(4)
       expect(d.kpis.upcomingSeats - before.kpis.upcomingSeats).toBe(10 + 6 + 12)
-      expect(d.kpis.upcomingTaken - before.kpis.upcomingTaken).toBe(9 + 2 + 4)
-      // Held in the last 12 months: W1 (8/10), W2 (4/10), W4 (6/8); W3 is older.
+      expect(d.kpis.upcomingTaken - before.kpis.upcomingTaken).toBe(7 + 2 + 4)
+      // Held in the last 12 months: W1 (8/10), W2 (4/10), W4 (6/8, its go-decision number); W3 is older.
       expect(d.kpis.held - before.kpis.held).toBe(3)
       expect(d.kpis.heldSeats - before.kpis.heldSeats).toBe(28)
       expect(d.kpis.heldTaken - before.kpis.heldTaken).toBe(18)
@@ -189,14 +195,18 @@ describe("dashboard queries", () => {
       const mine = new Set(Object.values(w))
       const upcoming = d.upcoming.filter((x) => mine.has(x.id))
       expect(upcoming.map((x) => [x.id, x.registered, x.alert?.kind ?? null])).toEqual([
-        [w.w7, 9, null],
+        [w.w7, 7, null],
         [w.w8, 2, "decisionSoon"],
         [w.w5, 4, "decisionDue"],
         [w.w6, 0, "awaitingSignature"],
       ])
       // W5: 3 paid + 1 not paid yet registered (the cancelled one never counts), 1 short of the minimum of 5.
       expect(upcoming.find((x) => x.id === w.w5)).toMatchObject({ paid: 3, alert: { kind: "decisionDue", missing: 1 } })
-      expect(upcoming.find((x) => x.id === w.w8)).toMatchObject({ registered: 2, paid: 2 })
+      expect(upcoming.find((x) => x.id === w.w5)).toMatchObject({ payment: { kind: "paid", count: 3 } })
+      expect(upcoming.find((x) => x.id === w.w8)).toMatchObject({ registered: 2, paid: 2, payment: { kind: "paid", count: 2 } })
+      // W7: the live count (5 paid + 2 not yet), with the go-decision number beside it.
+      expect(upcoming.find((x) => x.id === w.w7)).toMatchObject({ registered: 7, paid: 5, finalParticipants: 9 })
+      expect(upcoming.find((x) => x.id === w.w6)).toMatchObject({ registered: 0, payment: null })
       expect(upcoming.find((x) => x.id === w.w8)!.alert).toEqual({ kind: "decisionSoon", at: at("2026-10-08T12:00:00"), missing: 0 })
 
       // Seats: held ones oldest first, then the open upcoming ones (never W6, W9).
@@ -209,7 +219,7 @@ describe("dashboard queries", () => {
         [w.w1, 8, 10, false],
         [w.w2, 4, 10, false],
         [w.w4, 6, 8, false],
-        [w.w7, 9, 10, true],
+        [w.w7, 7, 10, true],
         [w.w8, 2, 6, true],
         [w.w5, 4, 12, true],
       ]
@@ -245,6 +255,27 @@ describe("dashboard queries", () => {
       expect(d.setup.categories - before.setup.categories).toBe(1)
       expect(d.setup.ledger).toBe(true)
       expect(typeof d.setup.contract).toBe("boolean")
+    })
+  })
+
+  it("never counts a free workshop's registrations as paid", async () => {
+    await rolledBack(async (tx) => {
+      const { course, register } = await seed(tx)
+      const before = await getDashboard(NOW, tx)
+      // Free: registrations are confirmed at once, with amount 0.
+      const free = await course("Free", { status: "published", starts: "2026-10-07T10:00:00", decision: "2026-10-06T18:00:00", min: 2, max: 12, price: 0 })
+      for (const status of ["confirmed", "confirmed", "confirmed", "cancelled"] as const) await register(free, status, 0)
+
+      const d = await getDashboard(NOW, tx)
+      expect(d.upcoming.find((x) => x.id === free)).toMatchObject({
+        registered: 3,
+        paid: 0,
+        price: 0,
+        payment: { kind: "free" },
+        alert: { kind: "decisionSoon", missing: 0 },
+      })
+      expect(d.kpis.upcomingTaken - before.kpis.upcomingTaken).toBe(3)
+      expect(d.kpis.upcomingSeats - before.kpis.upcomingSeats).toBe(12)
     })
   })
 

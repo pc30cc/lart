@@ -19,12 +19,12 @@
     "logOut": "Çıkış yap"
   },
   "verifyBanner": {
-    "label": "E-postanızı onaylayın",
-    "text": "Lütfen e-postanızı onaylayın: {email} adresine bir bağlantı gönderdik. Bağlantıyı açmanız yeterli.",
+    "label": "E-postanızı doğrulayın",
+    "text": "Lütfen e-postanızı doğrulayın: {email} adresine bir bağlantı gönderdik. Bağlantıyı açmanız yeterli.",
     "textSent": "{email} adresine yeni bir bağlantı gönderdik. Lütfen gelen kutunuza, istenmeyen klasörüne de bakın.",
     "resend": "Tekrar gönder",
     "sent": "Gönderildi! Lütfen gelen kutunuza bakın.",
-    "alreadyVerified": "E-postanız zaten onaylı. Teşekkürler!"
+    "alreadyVerified": "E-postanız zaten doğrulanmış. Teşekkürler!"
   },
   "status": {
     "toSign": "İmzanızı bekliyor",
@@ -125,7 +125,8 @@
     },
     "signedNotice": {
       "title": "Bu sözleşmeyi imzaladınız",
-      "text": "İmza tarihi: {date}. Yazdırabilir ya da PDF olarak kaydedebilirsiniz."
+      "text": "İmza tarihi: {date}. Yazdırabilir ya da PDF olarak kaydedebilirsiniz.",
+      "otherLanguage": "Bu, {language} dilinde imzaladığınız metnin aynısıdır."
     },
     "replaced": {
       "title": "Bu sürümün yerine yenisi geldi",
@@ -234,7 +235,7 @@
       "idNumber": "Kimlik numarası",
       "mobile": "Cep telefonu",
       "email": "E-posta",
-      "emailUnverified": "Henüz onaylanmadı",
+      "emailUnverified": "Henüz doğrulanmadı",
       "change": "Bunlardan birini değiştirmeniz mi gerekiyor? Lütfen {brand} ekibine yazın, sizin için güncelleyelim."
     }
   }

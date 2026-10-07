@@ -210,6 +210,7 @@
     "button": "Kaydımı iptal et",
     "title": "Bu kayıt iptal edilsin mi?",
     "unpaid": "{name} için ayrılan yer başka birine açılacak. Henüz ödeme yapmadığınız için başka bir şey yapmanıza gerek yok.",
+    "free": "{name} için ayrılan yer başka birine açılacak. Bu atölye ücretsiz, başka bir şey yapmanıza gerek yok.",
     "full": "{paid} ödediniz. Koşullara göre tamamı iade edilir: {refund} tutarını beş iş günü içinde size geri göndereceğiz.",
     "partial": "Atölyenin başlamasına 72 saatten az kaldı; koşullara göre ödemenizin %{percent, number} kadarı iade edilir: {refund} tutarını beş iş günü içinde size geri göndereceğiz.",
     "none": "Atölyenin başlamasına 24 saatten az kaldı; koşullara göre bu ödeme iade edilemiyor.",

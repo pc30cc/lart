@@ -212,6 +212,8 @@ describe("createInstructor", () => {
   it("creates a one-time invitation token (hash only, 7 days) and emails its link", async () => {
     const before = Date.now()
     const id = await create("deniz", { inviteLocale: "fa" })
+    // The invitation's language is the instructor's until they choose one: contract emails use it.
+    expect((await row(id)).locale).toBe("fa")
     expect(sendEmail).toHaveBeenCalledTimes(1)
     const input = sendEmail.mock.calls[0][0] as { to: string; template: string; locale: string; props: { name: string } }
     expect(input).toMatchObject({ to: `deniz-${run}@test.local`, template: "instructor_invite", locale: "fa" })
@@ -235,6 +237,12 @@ describe("createInstructor", () => {
     // The real template accepts the link (it must be on this site) and shows it.
     const email = await renderEmail("instructor_invite", input.props as never, "fa")
     expect(email.html).toContain(token)
+  })
+
+  it("without a chosen language, invites (and stores) the admin's own language", async () => {
+    const id = await create("kaan", { inviteLocale: undefined })
+    expect(sendEmail.mock.calls[0][0]).toMatchObject({ locale: "en" })
+    expect((await row(id)).locale).toBe("en")
   })
 
   it("still creates the instructor when the email can't be sent, and says so", async () => {
@@ -392,8 +400,11 @@ describe("ID number reveal", () => {
 describe("resendInvite", () => {
   it("replaces the previous link with a new one in the chosen language", async () => {
     const id = await create("hande")
+    expect((await row(id)).locale).toBe("tr")
     const [first] = await tokens(id)
     expect(await resendInvite({ id, locale: "en" })).toEqual({ ok: true, data: { id } })
+    // They haven't accepted yet, so their emails (e.g. contracts) follow the new invitation's language.
+    expect((await row(id)).locale).toBe("en")
     const link = lastInviteLink()
     expect(link.pathname).toBe("/en/instructor/accept-invite")
     const live = await tokens(id)
@@ -405,11 +416,13 @@ describe("resendInvite", () => {
 
   it("is refused once a password is set, or while the instructor is inactive", async () => {
     const id = await create("set")
-    await db.update(instructors).set({ passwordHash: "hash" }).where(eq(instructors.id, id))
+    await db.update(instructors).set({ passwordHash: "hash", locale: "fa" }).where(eq(instructors.id, id))
     expect(await resendInvite({ id, locale: "tr" })).toEqual({
       ok: false,
       error: "This instructor has already set a password, so they don’t need an invitation.",
     })
+    // The language they chose themselves is kept.
+    expect((await row(id)).locale).toBe("fa")
     const inactive = await create("sleepy")
     await setInstructorActive({ id: inactive, active: false })
     expect(await resendInvite({ id: inactive, locale: "tr" })).toMatchObject({ ok: false })

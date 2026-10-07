@@ -194,7 +194,11 @@ export const getWorkshop = cache(async (id: string) => {
       .orderBy(sql`${contracts.status} = 'void'`, desc(contracts.version))
       .limit(1),
     db
-      .select({ status: registrations.status, n: count() })
+      .select({
+        status: registrations.status,
+        n: count(),
+        withAmount: sql<number>`count(*) filter (where ${registrations.amount} > 0)`.mapWith(Number),
+      })
       .from(registrations)
       .where(eq(registrations.courseId, id))
       .groupBy(registrations.status),
@@ -212,6 +216,8 @@ export const getWorkshop = cache(async (id: string) => {
 
   const registered = { pending: 0, confirmed: 0, cancelled: 0 }
   for (const c of counts) registered[c.status] = c.n
+  /** Paid: confirmed with an amount above 0 (a free workshop's confirmed registrations paid nothing). */
+  const paid = counts.find((c) => c.status === "confirmed")?.withAmount ?? 0
   return {
     ...course.course,
     category: course.category,
@@ -219,6 +225,7 @@ export const getWorkshop = cache(async (id: string) => {
     termsTemplateName: course.termsTemplate,
     contract: contract ?? null,
     registered,
+    paid,
     galleryCount: gallery.n,
     coverUrl: urlOf(files, course.course.coverPath),
     samples: samples.map((s) => ({
@@ -314,7 +321,7 @@ export async function listGallery(courseId: string) {
   }))
 }
 
-/** Photo / video consent of the people who attended (confirmed registrations). */
+/** Photo / video consent of everyone registered who was not cancelled (paid or not yet): the people who may appear in the media. */
 export async function listConsents(courseId: string) {
   await requireAdmin()
   return db
@@ -325,6 +332,6 @@ export async function listConsents(courseId: string) {
       videoConsent: registrations.videoConsent,
     })
     .from(registrations)
-    .where(and(eq(registrations.courseId, courseId), eq(registrations.status, "confirmed")))
+    .where(and(eq(registrations.courseId, courseId), inArray(registrations.status, ["pending", "confirmed"])))
     .orderBy(asc(registrations.participantName))
 }

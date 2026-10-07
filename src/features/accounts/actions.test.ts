@@ -167,6 +167,19 @@ describe("memberSignupAction", () => {
     })
   })
 
+  it("refuses a name with a link or a phone number, and sends no email", async () => {
+    const email = address("spam")
+    for (const name of ["Your order failed, visit evil.example", "Call +90 555 123 45 67"]) {
+      expect(await signup({ email, name })).toEqual({
+        ok: false,
+        error: "Please check the highlighted fields.",
+        fieldErrors: { name: "Please enter just your name (no links, emails or numbers)." },
+      })
+    }
+    expect(await db.select().from(members).where(eq(members.email, email))).toEqual([])
+    expect(await emails()).toEqual([])
+  })
+
   it("is rate limited per network", async () => {
     for (let i = 0; i < 10; i++) await signup({ password: "short" })
     expect(await signup()).toEqual({

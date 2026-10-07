@@ -180,7 +180,9 @@ example when a new design reference is given:
 
 **Automatic refunds:** when a participant cancels, the system calculates
 the refund (100 %, 50 % or 0 %) from the time left before the start, and an
-admin confirms it.
+admin confirms it, or changes it (for example to a full refund when the
+date, venue or instructor changed), in Money → Refunds or on the workshop's
+Registrations tab.
 
 #### Photo and video consent
 
@@ -386,10 +388,12 @@ combination can be switched on:
   after registering. Payment links are what iyzico and PayTR offer to
   individuals without a company.
 
-In every case an admin records the payment in the workshop's registrations
-list (cash, transfer or online), which marks the registration as paid and
-books the income in the wallet. Refunds are paid back by hand and marked as
-refunded in the refunds list.
+In every case an admin records the payment (cash, transfer or online) in
+the workshop's registrations list, or in Registrations, which lists every
+workshop's registrations and finds a bank transfer by the name in its
+description. That marks the registration as paid and books the income in
+the wallet. Refunds are paid back by hand and marked as refunded in the
+refunds list.
 
 **Later:** a full gateway integration (iyzico checkout / PayTR iFrame) with
 automatic confirmation. It needs a merchant account, which iyzico and PayTR

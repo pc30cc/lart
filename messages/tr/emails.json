@@ -41,11 +41,11 @@
     }
   },
   "welcome_verify": {
-    "subject": "{brand} ailesine hoş geldiniz! Lütfen e-postanızı onaylayın",
-    "preview": "Küçük bir adım kaldı: e-posta adresinizi onaylayın.",
+    "subject": "{brand} ailesine hoş geldiniz! Lütfen e-postanızı doğrulayın",
+    "preview": "Küçük bir adım kaldı: e-posta adresinizi doğrulayın.",
     "heading": "{brand} ailesine hoş geldiniz!",
-    "intro": "Aramıza katıldığınız için çok mutluyuz. Geriye yalnızca küçük bir adım kaldı: lütfen aşağıdaki butona tıklayarak e-posta adresinizi onaylayın.",
-    "cta": "E-postamı onayla",
+    "intro": "Aramıza katıldığınız için çok mutluyuz. Geriye yalnızca küçük bir adım kaldı: lütfen aşağıdaki butona tıklayarak e-posta adresinizi doğrulayın.",
+    "cta": "E-postamı doğrula",
     "note": "Bu hesabı siz oluşturmadıysanız bu e-postayı görmezden gelebilirsiniz."
   },
   "instructor_invite": {
@@ -86,7 +86,7 @@
     "heading": "Yeriniz ayrıldı!",
     "intro": "Kaydınız için teşekkür ederiz! “{workshopTitle}” için yeriniz onaylandı. İşte detaylar:",
     "cta": "Atölyeyi görüntüle",
-    "note": "Planlarınız değişirse lütfen bize olabildiğince erken haber verin. İptal koşullarını atölye sayfasında bulabilirsiniz."
+    "note": "Planlarınız değişirse kaydınızı Atölyelerim sayfasından iptal edebilirsiniz; böylece yerinizi başka biri alabilir."
   },
   "workshop_reminder": {
     "subject": "“{workshopTitle}” yaklaşıyor, görüşmek üzere!",
@@ -138,7 +138,7 @@
     "heading": "Yeriniz kesinleşti!",
     "intro": "“{workshopTitle}” için {method, select, cash {nakit olarak yaptığınız} transfer {banka havalesiyle yaptığınız} online {online olarak yaptığınız} other {yaptığınız}} {amount} tutarındaki ödeme bize ulaştı. Kaydınız tamamlandı; sizi görmek için sabırsızlanıyoruz!",
     "cta": "Atölyelerim",
-    "note": "Planlarınız değişirse lütfen bize olabildiğince erken haber verin. İptal koşullarını atölye sayfasında bulabilirsiniz."
+    "note": "Planlarınız değişirse kaydınızı Atölyelerim sayfasından iptal edebilirsiniz. Alacağınız iade, onaylamadan önce orada gösterilir."
   },
   "registration_cancelled": {
     "subject": "“{workshopTitle}” kaydınız iptal edildi",

@@ -227,16 +227,19 @@
     "choiceGone": "One of the options you chose no longer exists. Please choose again.",
     "noContractTemplate": "There’s no default contract text yet. Please set it in Templates first.",
     "instructorUnavailable": "This instructor isn’t active. Please choose another one.",
+    "advanceHeld": "The current instructor still holds an advance of {amount}. Record it as returned on the Finances page before choosing another instructor.",
     "notFound": "This workshop no longer exists.",
     "contractLocked": "This workshop is cancelled or closed, or it has started after it was confirmed, so its date, place, capacity, instructor and fee can’t change.",
     "priceLocked": "People have already registered at this price, so it can’t be changed.",
     "capacityBelowRegistrations": "{count, plural, one {# person has} other {# people have}} already registered, so the maximum can’t be lower than that.",
     "cannotConfirm": "Only a workshop that is open for registration can be confirmed.",
-    "alreadyStarted": "This workshop has already started, so it can’t be confirmed any more.",
     "cannotCancel": "This workshop is already cancelled or closed.",
     "galleryClosedOnly": "Photos and videos can be added once the workshop is closed.",
     "galleryCancelled": "This workshop was cancelled, so it has no gallery.",
-    "mediaInUse": "One of these files is already used elsewhere. Please upload it again."
+    "mediaInUse": "One of these files is already used elsewhere. Please upload it again.",
+    "cannotRaiseFinal": "The final number can only be raised for a confirmed workshop that hasn’t started yet.",
+    "finalNotHigher": "The new number must be higher than the current final number ({count, number}).",
+    "finalAboveMax": "The new number can’t be more than the maximum of {max, number}."
   },
   "overview": {
     "edit": "Edit",
@@ -275,6 +278,8 @@
     "published": {
       "title": "Registration is open",
       "dueTitle": "Time for the go / no-go decision",
+      "startedTitle": "Started without a go decision",
+      "startedText": "This workshop started on {date}, but it was never confirmed. If it took place, confirm it now: then it can be closed and the instructor paid as the contract says. If it didn’t take place, cancel it.",
       "text": "Registration closes {deadline}, and the decision is due {decision}. So far {confirmed, plural, =0 {nobody has} one {# person has} other {# people have}} registered; the minimum is {minimum}."
     },
     "confirmed": {
@@ -330,6 +335,16 @@
     "resend": {
       "trigger": "Email the contract again",
       "done": "The contract was emailed again."
+    },
+    "raise": {
+      "trigger": "Raise",
+      "title": "Raise the final number",
+      "description": "The final number is {count} now. Raise it only when the instructor has agreed to teach more people (contract 5.2): more can then register, and a per-participant fee is paid on the new number.",
+      "field": "New final number",
+      "hint": "More than {current}, at most {max} (the maximum).",
+      "after": "The site takes registrations again up to the new number. This is recorded in the activity log.",
+      "action": "Raise the number",
+      "done": "Final number raised."
     }
   },
   "contractPage": {
@@ -506,6 +521,12 @@
       "registeredOn": "Registered on",
       "yes": "Yes",
       "no": "No"
+    },
+    "all": {
+      "title": "Registrations",
+      "description": "Everyone registered, across all workshops. To find who a bank transfer is from, search for the name in its description.",
+      "workshop": "Workshop",
+      "empty": "People who register for a workshop appear here."
     }
   },
   "gallery": {
@@ -524,7 +545,7 @@
     "consent": {
       "title": "Who may be recognisable",
       "description": "Only publish photos or videos where people can be recognised if they agreed to it when they registered.",
-      "nobody": "Nobody attended through a paid registration.",
+      "nobody": "Nobody was registered for this workshop.",
       "summary": "{photos} of {total} agreed to photos, {videos} of {total} to videos.",
       "photoYes": "Photos: yes",
       "photoNo": "Photos: no",

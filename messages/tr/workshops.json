@@ -227,16 +227,19 @@
     "choiceGone": "Seçtiğiniz seçeneklerden biri artık yok. Lütfen yeniden seçin.",
     "noContractTemplate": "Henüz varsayılan bir sözleşme metni yok. Lütfen önce Şablonlar bölümünden belirleyin.",
     "instructorUnavailable": "Bu eğitmen aktif değil. Lütfen başka bir eğitmen seçin.",
+    "advanceHeld": "Mevcut eğitmende hâlâ {amount} ön ödeme var. Başka bir eğitmen seçmeden önce Finans sayfasında iade edildiğini kaydedin.",
     "notFound": "Bu atölye artık yok.",
     "contractLocked": "Bu atölye iptal edildi ya da kapandı, ya da kesinleştikten sonra başladı; bu yüzden tarihi, yeri, kontenjanı, eğitmeni ve ücreti değiştirilemez.",
     "priceLocked": "Bu fiyattan kayıt yaptıranlar var, bu yüzden fiyat değiştirilemez.",
     "capacityBelowRegistrations": "Şimdiden {count, plural, one {# kişi} other {# kişi}} kayıt yaptırdı; en fazla katılımcı sayısı bundan az olamaz.",
     "cannotConfirm": "Yalnızca kayda açık bir atölye onaylanabilir.",
-    "alreadyStarted": "Bu atölye başladı, artık onaylanamaz.",
     "cannotCancel": "Bu atölye zaten iptal edildi ya da kapandı.",
     "galleryClosedOnly": "Fotoğraf ve videolar, atölye kapandıktan sonra eklenebilir.",
     "galleryCancelled": "Bu atölye iptal edildi, bu yüzden galerisi yok.",
-    "mediaInUse": "Bu dosyalardan biri başka bir yerde kullanılıyor. Lütfen yeniden yükleyin."
+    "mediaInUse": "Bu dosyalardan biri başka bir yerde kullanılıyor. Lütfen yeniden yükleyin.",
+    "cannotRaiseFinal": "Kesin sayı yalnızca onaylanmış ve henüz başlamamış bir atölyede artırılabilir.",
+    "finalNotHigher": "Yeni sayı şu anki kesin sayıdan ({count, number}) büyük olmalı.",
+    "finalAboveMax": "Yeni sayı en fazla katılımcı sayısından ({max, number}) fazla olamaz."
   },
   "overview": {
     "edit": "Düzenle",
@@ -275,6 +278,8 @@
     "published": {
       "title": "Kayıtlar açık",
       "dueTitle": "Karar zamanı geldi",
+      "startedTitle": "Karar verilmeden başladı",
+      "startedText": "Bu atölye {date} tarihinde başladı ama hiç onaylanmadı. Yapıldıysa şimdi onaylayın: böylece kapatılabilir ve eğitmene sözleşmedeki ücret ödenir. Yapılmadıysa iptal edin.",
       "text": "Son kayıt: {deadline}. Karar zamanı: {decision}. {confirmed, plural, =0 {Henüz kimse kayıt yaptırmadı} one {Şu ana kadar # kişi kayıt yaptırdı} other {Şu ana kadar # kişi kayıt yaptırdı}}; en az {minimum} kişi gerekiyor."
     },
     "confirmed": {
@@ -330,6 +335,16 @@
     "resend": {
       "trigger": "Sözleşmeyi yeniden gönder",
       "done": "Sözleşme yeniden e-postayla gönderildi."
+    },
+    "raise": {
+      "trigger": "Artır",
+      "title": "Kesin sayıyı artır",
+      "description": "Kesin sayı şu an {count}. Yalnızca eğitmen daha fazla kişiye ders vermeyi kabul ettiyse artırın (sözleşme 5.2): o zaman daha fazla kişi kaydolabilir ve kişi başı ücret yeni sayı üzerinden ödenir.",
+      "field": "Yeni kesin sayı",
+      "hint": "{current} sayısından fazla, en çok {max} (en fazla katılımcı).",
+      "after": "Site yeni sayıya kadar yeniden kayıt alır. Bu, etkinlik kaydına yazılır.",
+      "action": "Sayıyı artır",
+      "done": "Kesin sayı artırıldı."
     }
   },
   "contractPage": {
@@ -506,6 +521,12 @@
       "registeredOn": "Kayıt tarihi",
       "yes": "Evet",
       "no": "Hayır"
+    },
+    "all": {
+      "title": "Kayıtlar",
+      "description": "Tüm atölyelerdeki kayıtlar. Bir havalenin kimden geldiğini bulmak için açıklamadaki ismi arayın.",
+      "workshop": "Atölye",
+      "empty": "Bir atölyeye kaydolanlar burada görünür."
     }
   },
   "gallery": {
@@ -524,7 +545,7 @@
     "consent": {
       "title": "Kimler tanınabilir?",
       "description": "İnsanların tanınabildiği fotoğraf ve videoları yalnızca kayıt sırasında izin verdilerse yayımlayın.",
-      "nobody": "Ödemeli bir kayıtla katılan kimse olmadı.",
+      "nobody": "Bu atölyeye kayıtlı kimse yoktu.",
       "summary": "{total} kişiden {photos} kişi fotoğrafa, {videos} kişi videoya izin verdi.",
       "photoYes": "Fotoğraf: evet",
       "photoNo": "Fotoğraf: hayır",

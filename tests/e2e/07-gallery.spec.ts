@@ -33,7 +33,7 @@ test.describe.serial("gallery", () => {
 
     await page.goto(`/en/admin/workshops/${id}/gallery`)
     await expect(page.getByRole("heading", { name: "Photos and videos" })).toBeVisible()
-    // Consent reminder: Ayşe (photos + videos), Zeynep (photos), Mina (neither); Leyla never paid.
+    // Consent reminder: Ayşe (photos + videos), Zeynep (photos), Mina (neither); Leyla's registration was cancelled (she didn't come).
     await expect(page.getByText("2 of 3 agreed to photos, 1 of 3 to videos.")).toBeVisible()
     await expect(page.getByText("Leyla Demir")).toHaveCount(0)
 
