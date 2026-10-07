@@ -52,6 +52,8 @@ export type DetailLabel =
   | "minimum"
   | "decisionAt"
   | "refund"
+  | "price"
+  | "participant"
 
 type Out<S extends z.ZodObject> = z.output<S>
 type Key<S extends z.ZodObject> = Extract<keyof Out<S>, string>
@@ -64,6 +66,8 @@ export type EmailDefinition<S extends z.ZodObject = z.ZodObject> = {
   cta: Key<S>
   /** Rows of the details box, in order (label → prop). Empty optional props are skipped. */
   details?: Partial<Record<DetailLabel, Key<S>>>
+  /** Prop with a link for the note: the note text becomes that link (a second, quieter way on). */
+  noteLink?: Key<S>
   /** Extra message values computed from the props; `valueKeys` lists their names (placeholders). */
   values?(props: Out<S>): Record<string, string | number>
   valueKeys?: readonly string[]
@@ -149,6 +153,66 @@ export const emailTemplates = {
     schema: z.object({ name: text(), resetUrl: siteUrl }),
     greet: "name",
     cta: "resetUrl",
+  }),
+  /** Someone signed up with the email of an existing member: log in, or choose a new password (the note links to "forgot"). */
+  member_exists: define({
+    schema: z.object({ name: text(), loginUrl: siteUrl, resetUrl: siteUrl }),
+    greet: "name",
+    cta: "loginUrl",
+    noteLink: "resetUrl",
+  }),
+  /** Registered while online payment is off: the place is saved, the team sends payment instructions. */
+  registration_pending: define({
+    schema: z.object({
+      name: text(),
+      workshopTitle: text(),
+      date: text(100),
+      time: text(50),
+      /** The venue in the email's language: `localized(course.venue, locale)`. */
+      venue: text(300),
+      /** The price to pay, formatted (`formatLira`). */
+      amount: text(50),
+      accountUrl: siteUrl,
+    }),
+    greet: "name",
+    cta: "accountUrl",
+    details: { workshop: "workshopTitle", date: "date", time: "time", venue: "venue", price: "amount" },
+  }),
+  /** The participant cancelled; `refundPercent` (100, 50 or 0) picks the text. */
+  registration_cancelled: define({
+    schema: z.object({
+      name: text(),
+      workshopTitle: text(),
+      refundAmount: text(50),
+      refundPercent: z.number().int().min(0).max(100),
+      workshopsUrl: siteUrl.optional(),
+    }),
+    greet: "name",
+    cta: "workshopsUrl",
+    details: { workshop: "workshopTitle", refund: "refundAmount" },
+    values: (p) => ({ refund: p.refundPercent >= 100 ? "full" : p.refundPercent > 0 ? "partial" : "none" }),
+    valueKeys: ["refund"],
+  }),
+  /** The refund was paid back. */
+  refund_sent: define({
+    schema: z.object({ name: text(), workshopTitle: text(), amount: text(50), workshopsUrl: siteUrl.optional() }),
+    greet: "name",
+    cta: "workshopsUrl",
+    details: { workshop: "workshopTitle", refund: "amount" },
+  }),
+  /** To super admins: a refund is owed and needs paying. */
+  refund_due: define({
+    schema: z.object({ adminName: text(), participantName: text(), workshopTitle: text(), amount: text(50), url: siteUrl }),
+    greet: "adminName",
+    cta: "url",
+    details: { workshop: "workshopTitle", participant: "participantName", refund: "amount" },
+  }),
+  /** To super admins: money was taken but the seat could not be given (refund needed). */
+  payment_problem: define({
+    schema: z.object({ adminName: text(), participantName: text(), workshopTitle: text(), amount: text(50), url: siteUrl }),
+    greet: "adminName",
+    cta: "url",
+    details: { workshop: "workshopTitle", participant: "participantName", amount: "amount" },
   }),
 } satisfies Record<EmailTemplate, unknown>
 

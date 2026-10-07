@@ -110,6 +110,7 @@ async function build(
       details={details}
       cta={{ label: msg("cta"), href: (p[def.cta] as string | undefined) ?? home }}
       note={optional("note")}
+      noteHref={def.noteLink ? (p[def.noteLink] as string | undefined) : undefined}
       linkHint={t("layout.linkHint")}
       signoff={t("layout.signoff")}
       team={t("layout.team", { brand })}

@@ -6,6 +6,8 @@ import { z } from "zod"
 
 export const PASSWORD_MIN_LENGTH = 12
 export const PASSWORD_MAX_LENGTH = 256
+/** Members and instructors (`features/accounts/schema.ts`); super admins keep PASSWORD_MIN_LENGTH. */
+export const ACCOUNT_PASSWORD_MIN_LENGTH = 10
 
 /** Length rules only: a long passphrase beats character-class rules. */
 const newPassword = () => z.string().min(PASSWORD_MIN_LENGTH).max(PASSWORD_MAX_LENGTH)

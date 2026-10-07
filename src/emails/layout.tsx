@@ -20,6 +20,8 @@ export type EmailLayoutProps = {
   details: { label: string; value: string }[]
   cta: { label: string; href: string }
   note?: string
+  /** Makes the note a link (a second, quieter way on). */
+  noteHref?: string
   linkHint: string
   signoff: string
   team: string
@@ -107,6 +109,7 @@ function styles(rtl: boolean) {
       padding: "14px 32px",
     },
     note: { ...base, color: light.muted, fontSize: 14, lineHeight: rtl ? "26px" : "22px", margin: "0 0 24px" },
+    noteLink: { color: light.accent, textDecoration: "underline" },
     signoff: { ...base, fontSize: 16, lineHeight: rtl ? "30px" : "26px", margin: 0 },
     rule: { border: "none", borderTop: `1px solid ${light.border}`, margin: "28px 0 20px" },
     hint: { ...base, color: light.muted, fontSize: 13, lineHeight: "20px", margin: 0 },
@@ -176,7 +179,13 @@ export function EmailLayout(props: EmailLayoutProps) {
 
             {props.note && (
               <Text className="e-muted" style={s.note}>
-                {props.note}
+                {props.noteHref ? (
+                  <Link className="e-link" href={props.noteHref} style={s.noteLink}>
+                    {props.note}
+                  </Link>
+                ) : (
+                  props.note
+                )}
               </Text>
             )}
             <Text className="e-text" style={s.signoff}>
