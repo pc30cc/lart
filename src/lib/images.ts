@@ -1,5 +1,5 @@
 import "server-only"
-import sharp, { type Sharp } from "sharp"
+import type { Sharp } from "sharp"
 
 import type { SettingValue } from "@/lib/settings"
 import { MAX_MEGAPIXELS, UploadError, type ImagePurpose } from "@/lib/storage/shared"
@@ -30,12 +30,32 @@ const MAX_ORIGINAL_SIDE = 8192
 const WEBP_QUALITY = 82
 const SHARP_FORMAT: Record<ImageType, string> = { jpeg: "jpeg", png: "png", webp: "webp", avif: "heif", heic: "heif" }
 
-const load = (input: Buffer) => sharp(input, { limitInputPixels: MAX_INPUT_PIXELS, autoOrient: true })
+type SharpModule = (typeof import("sharp"))["default"]
+let sharpModule: Promise<SharpModule> | undefined
+
+/**
+ * sharp is loaded on first use, not at import: its native and WebAssembly
+ * builds need a CPU with SSE4 (x86-64-v2). On an older CPU the site still
+ * builds and runs; only image uploads answer "processing_unavailable".
+ */
+async function loadSharp(): Promise<SharpModule> {
+  sharpModule ??= import("sharp").then((m) => m.default)
+  try {
+    return await sharpModule
+  } catch (error) {
+    sharpModule = undefined
+    console.error("[images] sharp cannot run on this server:", error instanceof Error ? error.message.split("\n")[0] : error)
+    throw new UploadError("processing_unavailable")
+  }
+}
+
+const load = async (input: Buffer) => (await loadSharp())(input, { limitInputPixels: MAX_INPUT_PIXELS, autoOrient: true })
 
 /** Checks the type and size before any pixel is decoded. Returns the type and the upright size. */
 async function inspect(input: Buffer) {
   const type = sniffImage(input)
   if (!type) throw new UploadError("unsupported_type")
+  const sharp = await loadSharp()
   const meta = await sharp(input, { limitInputPixels: false })
     .metadata()
     .catch(() => {
@@ -88,7 +108,7 @@ export async function processImage(
 ): Promise<ProcessedImage> {
   const { type, width, height } = await inspect(input)
   return guard(type, async () => {
-    const image = load(input)
+    const image = await load(input)
     switch (purpose) {
       case "instructor_photo": {
         const side = Math.min(800, width, height)
@@ -113,8 +133,8 @@ export async function processImage(
 /** The full-size original (upright, metadata stripped, high quality) kept privately for gallery photos. */
 export async function processOriginal(input: Buffer): Promise<ProcessedImage> {
   const { type } = await inspect(input)
-  return guard(type, () =>
-    encode(load(input).resize(MAX_ORIGINAL_SIDE, MAX_ORIGINAL_SIDE, { fit: "inside", withoutEnlargement: true }), "webp", 90),
+  return guard(type, async () =>
+    encode((await load(input)).resize(MAX_ORIGINAL_SIDE, MAX_ORIGINAL_SIDE, { fit: "inside", withoutEnlargement: true }), "webp", 90),
   )
 }
 
@@ -133,6 +153,7 @@ const place = (slot: 0 | 1 | 2, outer: number, inner: number, margin: number) =>
  * percentage of the photo width). Returns the pipeline, ready to encode.
  */
 export async function applyWatermark(image: Buffer | RawImage, settings: WatermarkLayout, logo: Buffer): Promise<Sharp> {
+  const sharp = await loadSharp()
   let base: Sharp
   let width: number
   let height: number
@@ -178,7 +199,7 @@ let samplePhoto: Promise<RawImage> | undefined
 
 /** A neutral, photo-like sample (soft warm gradient with shapes), generated once. */
 function getSamplePhoto() {
-  samplePhoto ??= sharp(
+  samplePhoto ??= loadSharp().then((sharp) => sharp(
     Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
       <defs>
         <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
@@ -197,7 +218,7 @@ function getSamplePhoto() {
   )
     .removeAlpha()
     .raw()
-    .toBuffer({ resolveWithObject: true })
+    .toBuffer({ resolveWithObject: true }))
     .then((r) => r as RawImage)
     .catch((error) => {
       samplePhoto = undefined
@@ -212,6 +233,6 @@ function getSamplePhoto() {
  */
 export async function renderWatermarkPreview(settings: WatermarkLayout, logo?: Buffer | null): Promise<Buffer> {
   const photo = await getSamplePhoto()
-  const image = logo ? await applyWatermark(photo, settings, logo) : sharp(photo.data, { raw: photo.info })
+  const image = logo ? await applyWatermark(photo, settings, logo) : (await loadSharp())(photo.data, { raw: photo.info })
   return image.webp({ quality: 80 }).toBuffer()
 }

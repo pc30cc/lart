@@ -38,6 +38,7 @@
     "invalid_image": "This photo seems to be damaged and can't be opened. Please try another file.",
     "watermark_missing": "Gallery photos are always published with your watermark. Please add a watermark logo in Settings first.",
     "watermark_unavailable": "The watermark logo couldn't be loaded, so the photo wasn't published. Please upload the logo again in Settings.",
+    "processing_unavailable": "Photos can't be processed on this server right now, so the photo wasn't saved. Please tell the site's technical contact.",
     "storage": "The file couldn't be saved to storage. Please check the CDN settings, or try again in a moment.",
     "server": "Something went wrong on our side. Please try again.",
     "network": "The connection was interrupted. Please check your internet connection and try again."

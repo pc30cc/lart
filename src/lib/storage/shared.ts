@@ -61,6 +61,7 @@ export const uploadErrorStatus = {
   /** A gallery photo while no watermark logo is set: it is never published unwatermarked. */
   watermark_missing: 409,
   watermark_unavailable: 503,
+  processing_unavailable: 503,
   storage: 502,
   server: 500,
 } as const

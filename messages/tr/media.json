@@ -38,6 +38,7 @@
     "invalid_image": "Bu fotoğraf bozuk görünüyor ve açılamıyor. Lütfen başka bir dosya deneyin.",
     "watermark_missing": "Galeri fotoğrafları her zaman filigranınızla yayınlanır. Lütfen önce Ayarlar'dan bir filigran logosu ekleyin.",
     "watermark_unavailable": "Filigran logosu yüklenemediği için fotoğraf yayınlanmadı. Lütfen logoyu Ayarlar'dan yeniden yükleyin.",
+    "processing_unavailable": "Bu sunucuda şu anda fotoğraf işlenemiyor, bu yüzden fotoğraf kaydedilmedi. Lütfen sitenin teknik sorumlusuna haber verin.",
     "storage": "Dosya depolama alanına kaydedilemedi. Lütfen CDN ayarlarını kontrol edin veya biraz sonra tekrar deneyin.",
     "server": "Bizim tarafımızda bir sorun oluştu. Lütfen tekrar deneyin.",
     "network": "Bağlantı kesildi. Lütfen internet bağlantınızı kontrol edip tekrar deneyin."
