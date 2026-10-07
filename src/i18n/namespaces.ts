@@ -16,4 +16,9 @@ export const namespaces = [
   "templates",
   "emails",
   "media",
+  "site",
+  "account",
+  "instructorPanel",
+  "registration",
+  "payments",
 ] as const

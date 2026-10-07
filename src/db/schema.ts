@@ -306,6 +306,8 @@ export const registrations = pgTable("registrations", {
   /** Owed back to the payer (set at cancellation); refunded_at once paid back. */
   refundAmount: money("refund_amount"),
   refundedAt: timestamp("refunded_at", { withTimezone: true }),
+  /** When the day-before reminder email was sent (the job sends it once). */
+  reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
   createdAt: createdAt(),
 }, (t) => [
   index("registrations_course_idx").on(t.courseId, t.status),

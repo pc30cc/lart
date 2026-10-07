@@ -1,5 +1,5 @@
 {
-  "id": "67aeb129-d8c1-48db-957f-b463fdb7daba",
+  "id": "be18c6da-f673-4ae4-861d-7b5d56572f77",
   "prevId": "e90a0e3e-f2f8-4b55-a6e4-631d5c126f85",
   "version": "7",
   "dialect": "postgresql",
@@ -1531,6 +1531,12 @@
         },
         "refunded_at": {
           "name": "refunded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reminder_sent_at": {
+          "name": "reminder_sent_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
