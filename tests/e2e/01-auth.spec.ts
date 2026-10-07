@@ -10,17 +10,28 @@ test.use({
 
 test.describe("sign in and out", () => {
   test("the panel redirects to the login when signed out", async ({ page, request }) => {
-    // The proxy answers with a redirect before any page renders.
-    const bare = await request.get("/tr/admin", { maxRedirects: 0 })
+    // The proxy answers with a redirect before any page renders. The main
+    // language (tr) has no prefix; the others keep theirs.
+    const bare = await request.get("/admin", { maxRedirects: 0 })
     expect(bare.status()).toBe(307)
-    expect(bare.headers()["location"]).toMatch(/\/tr\/admin\/login$/)
+    expect(bare.headers()["location"]).toMatch(/^(http:\/\/localhost:3100)?\/admin\/login$/)
     expect(bare.headers()["x-robots-tag"]).toContain("noindex")
 
-    const deep = await request.get("/tr/admin/workshops", { maxRedirects: 0 })
-    expect(deep.headers()["location"]).toMatch(/\/tr\/admin\/login\?next=%2Ftr%2Fadmin%2Fworkshops$/)
+    const deep = await request.get("/admin/workshops", { maxRedirects: 0 })
+    expect(deep.headers()["location"]).toMatch(/\/admin\/login\?next=%2Fadmin%2Fworkshops$/)
+    const fa = await request.get("/fa/admin/workshops", { maxRedirects: 0 })
+    expect(fa.status()).toBe(307)
+    expect(fa.headers()["location"]).toMatch(/\/fa\/admin\/login\?next=%2Ffa%2Fadmin%2Fworkshops$/)
 
-    await page.goto("/tr/admin")
-    await expect(page).toHaveURL(/\/tr\/admin\/login$/)
+    // The main language's prefix is an old address: one permanent redirect, not cached.
+    const prefixed = await request.get("/tr/admin", { maxRedirects: 0 })
+    expect(prefixed.status()).toBe(308)
+    expect(prefixed.headers()["location"]).toMatch(/^(http:\/\/localhost:3100)?\/admin$/)
+    expect(prefixed.headers()["cache-control"]).toBe("no-store")
+
+    await page.goto("/admin")
+    await expect(page).toHaveURL(/localhost:3100\/admin\/login$/)
+    await expect(page.locator("html")).toHaveAttribute("lang", "tr")
     await expect(page.getByRole("button", { name: "Giriş yap" })).toBeVisible()
   })
 

@@ -198,7 +198,7 @@ describe("createWorkshop", () => {
       to: instructorEmail,
       template: "contract_ready",
       locale: "tr",
-      props: { instructorName: "Zeynep", signUrl: `/tr/instructor/contracts/${contract.id}` },
+      props: { instructorName: "Zeynep", signUrl: `/instructor/contracts/${contract.id}` },
     })
   })
 
@@ -273,7 +273,7 @@ describe("updateWorkshop", () => {
       venue: { from: { tr: "Moda Sanat Evi", en: "Moda Art House" }, to: { tr: "Kadıköy Atölye", fa: "آتلیهٔ کادیکوی" } },
       contract: { voidedVersion: 1, newVersion: 2 },
     })
-    expect(sendEmail.mock.calls[0][0]).toMatchObject({ template: "contract_ready", props: { signUrl: `/tr/instructor/contracts/${v2.id}` } })
+    expect(sendEmail.mock.calls[0][0]).toMatchObject({ template: "contract_ready", props: { signUrl: `/instructor/contracts/${v2.id}` } })
   })
 
   it("re-issues when a filled-in venue text changes, not when a missing translation is filled in", async () => {

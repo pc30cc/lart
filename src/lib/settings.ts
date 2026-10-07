@@ -6,6 +6,7 @@ import { z } from "zod"
 import { db, type Tx } from "@/db"
 import { settings } from "@/db/schema"
 import { EMAIL_TEXT_MAX, emailTemplateNames, emailTextFields } from "@/emails/names"
+import { FALLBACK_LOCALE } from "@/i18n/locales"
 
 /**
  * Typed site settings. Each key has a Zod schema and a default, so a missing
@@ -30,7 +31,11 @@ const emailText = z.object({
 export const settingSchemas = {
   /** Brand name shown everywhere as {brand}. */
   brand: localized,
-  /** Language of "/" and of emails when no language is known. */
+  /**
+   * The main language: its addresses have no prefix (docs/DEVELOPMENT.md, "URL
+   * rules"; read it for URLs through `getMainLocale()`, src/i18n/main-locale);
+   * also the language of emails when none is known.
+   */
   defaultLocale: locale,
   seo: z.object({ title: localized, description: localized }),
   /** Active public-site theme folder name (src/themes/<name>). */
@@ -137,7 +142,7 @@ export type SettingValue<K extends SettingKey> = z.infer<(typeof settingSchemas)
 
 export const settingDefaults: { [K in SettingKey]: SettingValue<K> } = {
   brand: { fa: "لارت", tr: "Lart", en: "Lart" },
-  defaultLocale: "tr",
+  defaultLocale: FALLBACK_LOCALE,
   seo: { title: {}, description: {} },
   theme: "default",
   cdn: { provider: "local" },

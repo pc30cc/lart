@@ -1,33 +1,39 @@
 import type { MetadataRoute } from "next"
 import { connection } from "next/server"
 
-import { absoluteUrl } from "@/app/[locale]/(site)/workshops/_components/seo"
 import { sitemapWorkshops } from "@/features/registrations/public"
+import { getMainLocale } from "@/i18n/main-locale"
+import { localePath } from "@/i18n/paths"
 import { locales } from "@/i18n/routing"
-import { getSetting } from "@/lib/settings"
+import { absoluteUrl } from "@/lib/seo"
 
 /**
- * /sitemap.xml: the workshops list and every open workshop page, in each
- * language, each with its hreflang alternates (fa, tr, en, and x-default: the
- * default language), as the pages' own metadata gives them. Built on each
- * request, so a workshop appears as soon as it is published. Private areas
- * (admin, instructor, account) are never listed.
+ * /sitemap.xml: the home page, the workshops list and every open workshop
+ * page, in each language, each with its hreflang alternates (fa, tr, en, and
+ * x-default: the main language), as the pages' own metadata gives them. The
+ * main language's addresses have no prefix (docs/DEVELOPMENT.md, "URL
+ * rules"). Built on each request, so a workshop appears as soon as it is
+ * published. Private areas (admin, instructor, account) are never listed.
+ * The proxy does not run here (a file extension): the main language is read
+ * directly, never from a request header.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   await connection()
-  const [workshops, defaultLocale] = await Promise.all([sitemapWorkshops(), getSetting("defaultLocale")])
+  const [workshops, main] = await Promise.all([sitemapWorkshops(), getMainLocale()])
   const latest = workshops.reduce<Date | undefined>((a, w) => (!a || w.updatedAt > a ? w.updatedAt : a), undefined)
   const pages = [
-    { path: "/workshops", lastModified: latest, priority: 1 },
+    { path: "/", lastModified: latest, priority: 1 },
+    { path: "/workshops", lastModified: latest, priority: 0.9 },
     ...workshops.map((w) => ({ path: `/workshops/${w.slug}`, lastModified: w.updatedAt, priority: 0.8 })),
   ]
+  const url = (locale: string, path: string) => absoluteUrl(localePath(locale, path, main))
   return pages.flatMap(({ path, lastModified, priority }) => {
     const languages = {
-      ...Object.fromEntries(locales.map((l) => [l, absoluteUrl(`/${l}${path}`)])),
-      "x-default": absoluteUrl(`/${defaultLocale}${path}`),
+      ...Object.fromEntries(locales.map((l) => [l, url(l, path)])),
+      "x-default": url(main, path),
     }
     return locales.map((locale) => ({
-      url: absoluteUrl(`/${locale}${path}`),
+      url: url(locale, path),
       ...(lastModified ? { lastModified } : {}),
       changeFrequency: "daily" as const,
       priority,

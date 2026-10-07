@@ -121,7 +121,7 @@ describe("invitePartner", () => {
       data: {
         id: expect.any(String),
         emailed: true,
-        inviteUrl: expect.stringMatching(/^http:\/\/localhost:3000\/fa\/admin\/accept-invite\?token=[\w-]{43}$/),
+        inviteUrl: expect.stringMatching(/^http:\/\/localhost:3000\/fa\/admin\/invite\?token=[\w-]{43}$/),
       },
     })
     if (!result.ok) return
@@ -145,7 +145,7 @@ describe("invitePartner", () => {
   it("still gives the link to copy when the email could not be sent", async () => {
     vi.mocked(sendEmail).mockResolvedValueOnce({ ok: false, error: "no provider" })
     const result = await invitePartner({ name: "Leyla Ahmadi", email: address("nomail"), locale: "tr" })
-    expect(result).toMatchObject({ ok: true, data: { emailed: false, inviteUrl: expect.stringContaining("/tr/admin/accept-invite?token=") } })
+    expect(result).toMatchObject({ ok: true, data: { emailed: false, inviteUrl: expect.stringMatching(/^http:\/\/localhost:3000\/admin\/invite\?token=/) } })
   })
 
   it("puts friendly messages on the fields: invalid input, an admin's email, an email already invited", async () => {

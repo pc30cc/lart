@@ -10,6 +10,7 @@ import { contracts, courses, instructors, members, registrations, templates } fr
 import { sendContractReady } from "@/features/contracts/notify"
 import { courseBalances } from "@/features/money/ledger"
 import { memberLocale } from "@/features/registrations/admin/notify"
+import { localeHref } from "@/i18n/links"
 import { adminAction, UserError } from "@/lib/action"
 import { changes } from "@/lib/audit"
 import { errorForLog, PG, pgError } from "@/lib/errors"
@@ -445,7 +446,7 @@ async function emailCancellation(courseId: string, title: Record<string, string 
         name: person.name,
         workshopTitle: localized(title, locale),
         ...(refund > 0 ? { refundAmount: formatLira(refund, locale) } : {}),
-        workshopsUrl: `/${locale}/workshops`,
+        workshopsUrl: await localeHref(locale, "/workshops"),
       },
     })
   }

@@ -4,7 +4,7 @@ import path from "node:path"
 import type { APIRequestContext, Browser, BrowserContext, Page } from "@playwright/test"
 import { createTranslator } from "next-intl"
 
-import { chooseSelect, E2E_DIR, emailsSince, expect, field, fillDateTime, fillLocalized, istanbulDate, PROBLEMS_FILE, RUN, RUN_NAME, test, toast, type Problem, type SentEmail } from "./app"
+import { at, chooseSelect, E2E_DIR, emailsSince, expect, field, fillDateTime, fillLocalized, istanbulDate, PROBLEMS_FILE, RUN, RUN_NAME, test, toast, type Problem, type SentEmail } from "./app"
 import { one } from "./db"
 
 /**
@@ -215,7 +215,7 @@ export async function courseId(slug: string) {
 /** Sign a member in on the site (login page), in a language. */
 export async function memberLogin(page: Page, locale: Locale, email: string, password = PASSWORD, next?: string) {
   const t = tr(locale)
-  await page.goto(`/${locale}/account/login${next ? `?next=${encodeURIComponent(next)}` : ""}`)
+  await page.goto(at(locale, `/account/login${next ? `?next=${encodeURIComponent(next)}` : ""}`))
   await page.getByLabel(t("account.form.email")).fill(email)
   await page.getByLabel(t("account.form.password"), { exact: true }).fill(password)
   await page.getByRole("button", { name: t("account.login.submit") }).click()

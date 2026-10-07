@@ -9,6 +9,7 @@ import { RegisterForm } from "@/features/registrations/components/register-form"
 import { ResendVerify } from "@/features/registrations/components/resend-verify"
 import { getPublicWorkshop, myActiveRegistrations, workshopTerms } from "@/features/registrations/public"
 import { isolate, paymentWayNames, sameParticipant } from "@/features/registrations/schema"
+import { localeHref } from "@/i18n/links"
 import { Link } from "@/i18n/navigation"
 import { getMember } from "@/lib/auth/member"
 import { formatDate, formatTimeRange } from "@/lib/format"
@@ -33,7 +34,7 @@ export default async function RegisterPage({ params }: PageProps<"/[locale]/work
   const w = await getPublicWorkshop(slug, locale)
   if (!w) notFound()
   const [t, session] = await Promise.all([getTranslations("registration.register"), getMember()])
-  const here = `/${locale}/workshops/${w.slug}/register`
+  const here = await localeHref(locale, `/workshops/${w.slug}/register`)
 
   if (!session) {
     const next = encodeURIComponent(here)

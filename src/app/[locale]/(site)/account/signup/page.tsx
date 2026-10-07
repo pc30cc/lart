@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server"
 
 import { AuthCard } from "@/components/site/auth-card"
 import { SignupForm } from "@/components/site/auth/signup-form"
+import { localeHref, mainLocale } from "@/i18n/links"
 import { Link } from "@/i18n/navigation"
 import { getMember } from "@/lib/auth/member"
 import { safeNext } from "@/lib/auth/safe-next"
@@ -19,8 +20,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function SignupPage({ params, searchParams }: PageProps<"/[locale]/account/signup">) {
   const { locale } = await params
   const query = await searchParams
-  const next = safeNext(query.next, "member", "")
-  if (await getMember()) redirect(next || `/${locale}/workshops`)
+  const next = safeNext(query.next, "member", "", await mainLocale())
+  if (await getMember()) redirect(next || (await localeHref(locale, "/workshops")))
   const t = await getTranslations("account.signup")
   const login = next ? `/account/login?next=${encodeURIComponent(next)}` : "/account/login"
 

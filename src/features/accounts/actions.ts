@@ -6,6 +6,7 @@ import { after } from "next/server"
 import { getLocale } from "next-intl/server"
 import { z } from "zod"
 
+import { localeHref, mainLocale } from "@/i18n/links"
 import { instructorAction, memberAction, publicAction, UserError } from "@/lib/action"
 import { getMember } from "@/lib/auth/member"
 import { LOCKOUT, verifyCredentials } from "@/lib/auth/login"
@@ -58,8 +59,8 @@ const resendLimiter = createRateLimiter({ limit: 3, windowMs: 15 * MINUTE })
 const logFailure = (what: string) => (err: unknown) => console.error(`[accounts] ${what} failed`, errorForLog(err))
 
 /** The site's workshops list: where members land by default. */
-const workshopsPath = (locale: string) => `/${locale}/workshops`
-const panelPath = (locale: string) => `/${locale}/instructor`
+const workshopsPath = (locale: string) => localeHref(locale, "/workshops")
+const panelPath = (locale: string) => localeHref(locale, "/instructor")
 
 // ─── Members ──────────────────────────────────────────────────────────────────
 
@@ -80,7 +81,7 @@ export const memberSignupAction = publicAction(
     } else if (existsEmailLimiter.consume(input.email).ok) {
       after(() => sendMemberExists(input.email, locale).catch(logFailure("member exists email")))
     }
-    redirect(withNotice(safeNext(next, "member", workshopsPath(locale)), "checkEmail"))
+    redirect(withNotice(safeNext(next, "member", await workshopsPath(locale), await mainLocale()), "checkEmail"))
   },
   perNetwork(10, 60),
 )
@@ -92,7 +93,7 @@ export const memberLoginAction = publicAction(
     const result = await verifyCredentials("member", email, password)
     if (!result.ok) throw new UserError("account.login.errors.invalid", { values: { minutes: LOCKOUT.lockMs / MINUTE } })
     await startSession("member", result.id)
-    redirect(safeNext(next, "member", workshopsPath(await getLocale())))
+    redirect(safeNext(next, "member", await workshopsPath(await getLocale()), await mainLocale()))
   },
   perNetwork(10, 15),
 )
@@ -100,7 +101,7 @@ export const memberLoginAction = publicAction(
 /** Sign out, then the workshops list with a short "you're signed out" notice. */
 export async function memberLogoutAction(): Promise<void> {
   await endSession("member")
-  redirect(withNotice(workshopsPath(await getLocale()), "signedOut"))
+  redirect(withNotice(await workshopsPath(await getLocale()), "signedOut"))
 }
 
 /** The banner's "Send it again". `{ verified: true }` when there is nothing to send. */
@@ -130,7 +131,7 @@ export const resetMemberPasswordAction = publicAction(
     const id = await resetPassword("member", token, password)
     if (!id) throw new UserError("account.reset.errors.invalidLink")
     await startSession("member", id)
-    redirect(withNotice(workshopsPath(await getLocale()), "passwordSaved"))
+    redirect(withNotice(await workshopsPath(await getLocale()), "passwordSaved"))
   },
   perNetwork(10, 15),
 )
@@ -181,7 +182,7 @@ export const instructorSignupAction = publicAction(
       await sendVerifyLink("instructor", id).catch(logFailure("instructor welcome email"))
       await sendInstructorSignup(id).catch(logFailure("new instructor email"))
     })
-    redirect(panelPath(locale))
+    redirect(await panelPath(locale))
   },
   perNetwork(5, 60),
 )
@@ -195,7 +196,7 @@ export const instructorLoginAction = publicAction(
       throw new UserError("auth.instructor.login.errors.invalid", { values: { minutes: LOCKOUT.lockMs / MINUTE } })
     }
     await startSession("instructor", result.id)
-    redirect(safeNext(next, "instructor", panelPath(await getLocale())))
+    redirect(safeNext(next, "instructor", await panelPath(await getLocale()), await mainLocale()))
   },
   perNetwork(10, 15),
 )
@@ -203,7 +204,7 @@ export const instructorLoginAction = publicAction(
 /** Sign out, then the instructor sign-in page ("you're signed out"). */
 export async function instructorLogoutAction(): Promise<void> {
   await endSession("instructor")
-  redirect(withNotice(`${panelPath(await getLocale())}/login`, "signedOut"))
+  redirect(withNotice(await localeHref(await getLocale(), "/instructor/login"), "signedOut"))
 }
 
 /** The invitation link's page: choose a password, then straight into the panel. */
@@ -215,7 +216,7 @@ export const acceptInviteAction = publicAction(
     const id = await acceptInvite(token, password, locale)
     if (!id) throw new UserError("auth.instructor.invite.errors.invalidLink")
     await startSession("instructor", id)
-    redirect(panelPath(locale))
+    redirect(await panelPath(locale))
   },
   perNetwork(10, 15),
 )
@@ -234,7 +235,7 @@ export const resetInstructorPasswordAction = publicAction(
     const id = await resetPassword("instructor", token, password)
     if (!id) throw new UserError("auth.instructor.reset.errors.invalidLink")
     await startSession("instructor", id)
-    redirect(panelPath(await getLocale()))
+    redirect(await panelPath(await getLocale()))
   },
   perNetwork(10, 15),
 )

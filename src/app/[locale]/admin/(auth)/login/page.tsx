@@ -2,9 +2,10 @@ import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 
+import { localeHref } from "@/i18n/links"
 import { getAdmin } from "@/lib/auth/admin"
 import { getBrand } from "@/lib/settings"
-import { AuthShell } from "./auth-shell"
+import { AuthShell } from "../auth-shell"
 import { LoginForm } from "./login-form"
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -15,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function AdminLoginPage({ params, searchParams }: PageProps<"/[locale]/admin/login">) {
   const { locale } = await params
-  if (await getAdmin()) redirect(`/${locale}/admin`)
+  if (await getAdmin()) redirect(await localeHref(locale, "/admin"))
   const [t, brand, query] = await Promise.all([getTranslations("auth.login"), getBrand(locale), searchParams])
   const next = typeof query.next === "string" ? query.next : undefined
 

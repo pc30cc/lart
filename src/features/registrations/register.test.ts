@@ -422,7 +422,7 @@ describe("emails", () => {
         participantName: "Deniz",
         workshopTitle: "Mum Yapımı",
         venue: "Moda Sanat Evi",
-        accountUrl: `/tr/account/registrations/${id}`,
+        accountUrl: `/account/registrations/${id}`,
         cash: true,
         transfer: { accountHolder: "Lart Sanat", bankName: "Ziraat Bankası", iban: "TR330006100519786457841326" },
         paymentUrl: "https://iyzi.link/AKtest",
@@ -629,7 +629,7 @@ describe("rules", () => {
 
   it("safePaymentUrl: only plain https links", () => {
     expect(safePaymentUrl("https://iyzi.link/AKxyz")).toBe("https://iyzi.link/AKxyz")
-    for (const bad of ["http://iyzi.link/x", "javascript:alert(1)", "https://user:pw@iyzi.link/x", "/tr/pay", "https://localhost/x", "", null]) {
+    for (const bad of ["http://iyzi.link/x", "javascript:alert(1)", "https://user:pw@iyzi.link/x", "/pay", "https://localhost/x", "", null]) {
       expect(safePaymentUrl(bad)).toBeUndefined()
     }
   })

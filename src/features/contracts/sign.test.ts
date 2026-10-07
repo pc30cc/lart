@@ -130,7 +130,7 @@ describe("signContract", () => {
     expect(recipients).toContain(adminEmail)
     expect(sendEmail.mock.calls[0][0]).toMatchObject({
       template: "contract_signed",
-      props: { workshopTitle: "Seramik", workshopUrl: `/tr/admin/workshops/${course.id}` },
+      props: { workshopTitle: "Seramik", workshopUrl: `/admin/workshops/${course.id}` },
     })
   })
 

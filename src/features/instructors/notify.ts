@@ -4,6 +4,7 @@ import { hasLocale } from "next-intl"
 
 import { db } from "@/db"
 import { admins, instructors } from "@/db/schema"
+import { localeHref } from "@/i18n/links"
 import { locales } from "@/i18n/routing"
 import { sendEmail } from "@/lib/email"
 import { getSetting } from "@/lib/settings"
@@ -48,7 +49,7 @@ export async function sendInstructorSignup(id: string): Promise<number> {
         instructorName: profileText(person.displayName, locale),
         teachingField: profileText(person.teachingField, locale),
         instructorEmail: person.email,
-        instructorUrl: `/${locale}/admin/instructors/${id}`,
+        instructorUrl: await localeHref(locale, `/admin/instructors/${id}`),
       },
     })
     if (result.ok) sent++
@@ -66,7 +67,7 @@ export async function sendInstructorApproved(id: string): Promise<boolean> {
     template: "instructor_approved",
     locale,
     idempotencyKey: `instructor_approved:${id}`,
-    props: { name: profileText(person.displayName, locale), panelUrl: `/${locale}/instructor` },
+    props: { name: profileText(person.displayName, locale), panelUrl: await localeHref(locale, "/instructor") },
   })
   return result.ok
 }

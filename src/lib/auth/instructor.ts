@@ -1,12 +1,12 @@
 import "server-only"
 import { eq } from "drizzle-orm"
-import { redirect } from "next/navigation"
 import { hasLocale } from "next-intl"
-import { getLocale } from "next-intl/server"
 import { cache } from "react"
 
 import { db } from "@/db"
 import { instructors, type LocalizedText } from "@/db/schema"
+import { mainLocale } from "@/i18n/links"
+import { localeRedirect } from "@/i18n/redirect"
 import { locales, type AppLocale } from "@/i18n/routing"
 import { currentPath, isSameOrigin } from "./request"
 import { safeNext } from "./safe-next"
@@ -77,8 +77,8 @@ const loadInstructor = cache(async (): Promise<InstructorSession | null> => {
 export async function requireInstructor(next?: string): Promise<InstructorSession> {
   const session = await getInstructor()
   if (session) return session
-  const back = safeNext(next ?? (await currentPath()), "instructor", "")
-  redirect(`/${await getLocale()}/instructor/login${back ? `?next=${encodeURIComponent(back)}` : ""}`)
+  const back = safeNext(next ?? (await currentPath()), "instructor", "", await mainLocale())
+  return localeRedirect(`/instructor/login${back ? `?next=${encodeURIComponent(back)}` : ""}`)
 }
 
 /** For route handlers: the signed-in instructor, or null (caller answers 401). Also checks same-origin for unsafe methods. */

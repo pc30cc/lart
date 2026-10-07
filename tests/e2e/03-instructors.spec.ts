@@ -87,7 +87,7 @@ test.describe.serial("instructors", () => {
     test.info().annotations.push({ type: "server-log", description: serverLog(logStart).slice(0, 2000) })
     expect(result, "the invitation toast says the email was not sent").toBe("sent")
     expect(email, "no invitation email was sent or logged").not.toBeNull()
-    expect(email!.links.join(" ")).toMatch(/http:\/\/localhost:3100\/en\/instructor\/accept-invite\?token=[\w-]{20,}/)
+    expect(email!.links.join(" ")).toMatch(/http:\/\/localhost:3100\/en\/instructor\/invite\?token=[\w-]{20,}/)
     expect(email!.subject).not.toMatch(/\{|\}|\w+\.\w+\.\w+/)
     test.info().annotations.push({ type: "email", description: `${email!.subject}\n${email!.text}` })
   })
@@ -150,7 +150,7 @@ test.describe.serial("instructors", () => {
     const email = await waitForEmail(INSTRUCTORS.elif.email, mark, logStart)
     expect(await ok.isVisible(), `resend failed; server log:\n${serverLog(logStart).slice(0, 1500)}`).toBe(true)
     expect(email).not.toBeNull()
-    expect(email!.links.join(" ")).toMatch(/\/tr\/instructor\/accept-invite\?token=/)
+    expect(email!.links.join(" ")).toMatch(/localhost:3100\/instructor\/invite\?token=/)
     // The new link replaces the old one: only one open invitation token.
     const tokens = await sql("select 1 from email_tokens where subject_id = $1 and purpose = 'invite' and used_at is null", [id])
     expect(tokens).toHaveLength(1)

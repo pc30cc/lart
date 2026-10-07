@@ -1,6 +1,6 @@
 {
   "header": {
-    "home": "{brand}: tüm atölyeler",
+    "home": "{brand}: ana sayfa",
     "nav": "Ana menü",
     "workshops": "Atölyeler",
     "logIn": "Giriş yap",
@@ -9,6 +9,13 @@
     "myWorkshops": "Atölyelerim",
     "language": "Dil",
     "logOut": "Çıkış yap"
+  },
+  "home": {
+    "metaDescription": "{brand} sanat atölyeleri: yaklaşan atölyelere göz atın, yerinizi ayırtın.",
+    "tagline": "Kendi ellerinizle güzel bir şey yapın. Bir atölye seçin ve yerinizi ayırtın.",
+    "cta": "Tüm atölyeleri gör",
+    "upcomingTitle": "Yaklaşan atölyeler",
+    "allWorkshops": "Tüm atölyeler"
   },
   "verifyBanner": {
     "label": "E-postanızı doğrulayın",

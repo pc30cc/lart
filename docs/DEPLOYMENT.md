@@ -102,7 +102,8 @@ Moved on 2026-10-07 from `analyticsme.site` to the Coolify on **vps-50cc1602**
 
 - Project **Limer**: application **LimerLanding** (Dockerfile build, port 3000,
   domains `limer.tr` and `www.limer.tr` behind Cloudflare, health check on
-  `/` with curl) and database **LimerPostgres** (PostgreSQL 18, internal
+  `/` with curl: the home page in the main language, 200, read from the
+  database) and database **LimerPostgres** (PostgreSQL 18, internal
   only). GitHub App "Limer" (the same app as on the old Coolify) gives access
   to `pc30cc/lart`.
 - Environment variables, the `/app/.data` volume and the `pnpm jobs` task
@@ -115,3 +116,9 @@ Moved on 2026-10-07 from `analyticsme.site` to the Coolify on **vps-50cc1602**
 - Deploys: the GitHub App's webhook must point to this Coolify
   (`http://192.99.68.134:8000/webhooks/source/github/events`) for a push to
   deploy here; otherwise use the Deploy button.
+- Addresses follow the [URL rules](DEVELOPMENT.md#url-rules): the main
+  language (Settings → General) has no prefix (`limer.tr/workshops`), the
+  others are under `/fa` and `/en`. Links sent before (`/tr/…`,
+  `/admin/accept-invite`, `/admin/login/reset`, `/instructor/accept-invite`)
+  keep working with a permanent redirect (308, not cached). Changing the
+  main language needs no redeploy (it applies within 30 seconds).

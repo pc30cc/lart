@@ -4,6 +4,7 @@ import { hasLocale } from "next-intl"
 
 import { db } from "@/db"
 import { admins, contracts, courses, instructors } from "@/db/schema"
+import { localeHref } from "@/i18n/links"
 import { locales } from "@/i18n/routing"
 import { sendEmail } from "@/lib/email"
 import { formatDate, formatTimeRange, localized } from "@/lib/format"
@@ -19,8 +20,8 @@ import { getSetting } from "@/lib/settings"
  */
 
 /** Where the instructor reads and signs a contract (instructor panel, phase 2). */
-export const signPath = (locale: string, contractId: string) => `/${locale}/instructor/contracts/${contractId}`
-export const workshopAdminPath = (locale: string, courseId: string) => `/${locale}/admin/workshops/${courseId}`
+export const signPath = (locale: string, contractId: string) => localeHref(locale, `/instructor/contracts/${contractId}`)
+export const workshopAdminPath = (locale: string, courseId: string) => localeHref(locale, `/admin/workshops/${courseId}`)
 
 /** "Contract ready to sign" to the instructor. Returns whether it was sent. */
 export async function sendContractReady(contractId: string): Promise<boolean> {
@@ -50,7 +51,7 @@ export async function sendContractReady(contractId: string): Promise<boolean> {
       workshopTitle: localized(row.title, locale),
       // Persian uses its own comma.
       workshopDate: `${formatDate(row.startsAt, locale, "full")}${locale === "fa" ? "،" : ","} ${formatTimeRange(row.startsAt, row.endsAt, locale)}`,
-      signUrl: signPath(locale, contractId),
+      signUrl: await signPath(locale, contractId),
     },
   })
   return result.ok
@@ -84,7 +85,7 @@ export async function sendContractSigned(contractId: string): Promise<number> {
         adminName: admin.name,
         instructorName: localized(row.displayName, locale) || row.officialName,
         workshopTitle: localized(row.title, locale),
-        workshopUrl: workshopAdminPath(locale, row.courseId),
+        workshopUrl: await workshopAdminPath(locale, row.courseId),
       },
     })
     if (result.ok) sent++

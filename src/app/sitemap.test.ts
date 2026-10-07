@@ -4,38 +4,49 @@ import { env } from "@/lib/env"
 import robots from "./robots"
 import sitemap from "./sitemap"
 
+// The main language is "tr" (the global mock in test/setup.ts): its addresses have no prefix.
 vi.mock("next/server", () => ({ connection: async () => {} }))
 const updatedAt = new Date("2026-10-01T09:00:00Z")
 vi.mock("@/features/registrations/public", () => ({
   sitemapWorkshops: async () => [{ slug: "candle-making", updatedAt }],
 }))
-vi.mock("@/lib/settings", () => ({ getSetting: async () => "tr" }))
 
 const url = (path: string) => new URL(path, env.APP_URL).href
 
 describe("sitemap.xml", () => {
-  it("lists the workshops page and each open workshop in every language, with hreflang alternates", async () => {
+  it("lists the home page, the workshops page and each open workshop in every language, the main one without a prefix", async () => {
     const entries = await sitemap()
     expect(entries.map((e) => e.url)).toEqual([
+      url("/fa"),
+      url("/"),
+      url("/en"),
       url("/fa/workshops"),
-      url("/tr/workshops"),
+      url("/workshops"),
       url("/en/workshops"),
       url("/fa/workshops/candle-making"),
-      url("/tr/workshops/candle-making"),
+      url("/workshops/candle-making"),
       url("/en/workshops/candle-making"),
     ])
-    expect(entries[4]).toMatchObject({
+    expect(entries[1]).toMatchObject({
+      priority: 1,
+      lastModified: updatedAt,
+      alternates: { languages: { fa: url("/fa"), tr: url("/"), en: url("/en"), "x-default": url("/") } },
+    })
+    expect(entries[7]).toMatchObject({
       lastModified: updatedAt,
       alternates: {
         languages: {
           fa: url("/fa/workshops/candle-making"),
-          tr: url("/tr/workshops/candle-making"),
+          tr: url("/workshops/candle-making"),
           en: url("/en/workshops/candle-making"),
-          "x-default": url("/tr/workshops/candle-making"),
+          "x-default": url("/workshops/candle-making"),
         },
       },
     })
     expect(entries.some((e) => /\/(admin|instructor|account)(\/|$)/.test(new URL(e.url).pathname))).toBe(false)
+    expect(entries.some((e) => /^\/tr(\/|$)/.test(new URL(e.url).pathname))).toBe(false)
+    // No trailing slash on a language's home page.
+    expect(entries.some((e) => /\/(fa|en)\/$/.test(e.url))).toBe(false)
   })
 })
 
@@ -44,6 +55,7 @@ describe("robots.txt", () => {
     const { rules, sitemap: map } = await robots()
     expect(rules).toMatchObject({ userAgent: "*", allow: "/" })
     const disallow = (rules as { disallow: string[] }).disallow
+    expect(disallow).toContain("/admin")
     for (const locale of ["fa", "tr", "en"]) expect(disallow).toContain(`/${locale}/admin`)
     expect(disallow).toContain("/api")
     expect(map).toBe(url("/sitemap.xml"))
@@ -52,10 +64,6 @@ describe("robots.txt", () => {
   it("does not name the instructor panel or the account pages, so crawlers see their noindex and the panel's address stays private", async () => {
     const { rules } = await robots()
     const disallow = (rules as { disallow: string[] }).disallow
-    for (const locale of ["fa", "tr", "en"]) {
-      expect(disallow).not.toContain(`/${locale}/instructor`)
-      expect(disallow).not.toContain(`/${locale}/account`)
-    }
     expect(disallow.some((path) => /instructor|account/.test(path))).toBe(false)
   })
 })

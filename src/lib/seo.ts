@@ -1,10 +1,11 @@
 import "server-only"
 
+import { mainLocale } from "@/i18n/links"
+import { localePath } from "@/i18n/paths"
 import { locales } from "@/i18n/routing"
 import { env } from "@/lib/env"
-import { getSetting } from "@/lib/settings"
 
-/** An absolute link on the site (canonical URLs, Open Graph, JSON-LD). */
+/** An absolute link on the site (canonical URLs, Open Graph, JSON-LD, sitemap). */
 export const absoluteUrl = (path: string) => new URL(path, env.APP_URL).href
 
 /** Open Graph locale of each language. */
@@ -13,15 +14,15 @@ export const ogLocale: Record<string, string> = { fa: "fa_IR", tr: "tr_TR", en: 
 /**
  * Canonical URL and hreflang alternates of a page that exists in every
  * language: `path` without the language, e.g. "/workshops/candle-making".
- * x-default is the site's default language (a setting).
+ * The main language's address has no prefix, and it is the x-default too.
  */
 export async function alternates(path: string, locale: string) {
-  const defaultLocale = await getSetting("defaultLocale")
+  const main = await mainLocale()
   return {
-    canonical: absoluteUrl(`/${locale}${path}`),
+    canonical: absoluteUrl(localePath(locale, path, main)),
     languages: {
-      ...Object.fromEntries(locales.map((l) => [l, absoluteUrl(`/${l}${path}`)])),
-      "x-default": absoluteUrl(`/${defaultLocale}${path}`),
+      ...Object.fromEntries(locales.map((l) => [l, absoluteUrl(localePath(l, path, main))])),
+      "x-default": absoluteUrl(localePath(main, path, main)),
     },
   }
 }

@@ -19,35 +19,40 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Spinner } from "@/components/ui/spinner"
 import { memberLogoutAction } from "@/features/accounts/actions"
+import { useMainLocale } from "@/i18n/main-locale-context"
 import { Link, usePathname } from "@/i18n/navigation"
+import { localePath } from "@/i18n/paths"
+import { areaOf, isOpenPath } from "@/lib/routes"
 import { LocaleChoices } from "./locale-menu"
 import { useSwitchLocale } from "./use-switch-locale"
 
-/** Pages where "Log in" should not come back to (they would loop or make no sense). */
-const AUTH_PAGE = /^\/account\/(?:login|signup|verify|forgot|reset)(?:\/|$)/
+/** Pages where "Log in" should not come back to: the member's sign-in pages (they would loop or make no sense). */
+const isAuthPage = (pathname: string) => areaOf(pathname) === "account" && isOpenPath(pathname)
 
 /**
  * The account button in the site header: "Log in / Sign up" (which comes back
  * to this page), or the member's first name with a small menu: My workshops,
- * language, log out.
+ * language, log out. On a phone only the icon or the initial shows (the
+ * brand needs the room); the text stays for screen readers.
  */
 export function AccountMenu({ member }: { member: { name: string; email: string } | null }) {
   const t = useTranslations("site.header")
   const locale = useLocale()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const main = useMainLocale()
   const { switchTo, pending: switching } = useSwitchLocale(true)
   const [leaving, startLeaving] = useTransition()
 
   if (!member) {
     const query = searchParams.toString()
-    const here = `/${locale}${pathname === "/" ? "" : pathname}${query ? `?${query}` : ""}`
-    const href = AUTH_PAGE.test(pathname) ? "/account/login" : `/account/login?next=${encodeURIComponent(here)}`
+    const here = localePath(locale, pathname + (query ? `?${query}` : ""), main)
+    const href = isAuthPage(pathname) ? "/account/login" : `/account/login?next=${encodeURIComponent(here)}`
     return (
-      <Button asChild className="h-10 rounded-full px-4 text-sm">
+      <Button asChild className="h-10 rounded-full px-4 text-sm max-sm:w-10 max-sm:px-0">
         <Link href={href}>
           <UserRoundIcon className="size-4.5" />
-          <span className="sm:hidden">{t("logIn")}</span>
+          <span className="sr-only sm:hidden">{t("logIn")}</span>
           <span className="hidden sm:inline">{t("logInOrSignUp")}</span>
         </Link>
       </Button>
@@ -59,12 +64,16 @@ export function AccountMenu({ member }: { member: { name: string; email: string 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="h-10 max-w-32 gap-1.5 rounded-full ps-2.5 pe-3 text-sm sm:max-w-44" aria-label={t("account")}>
+        <Button
+          variant="outline"
+          className="h-10 max-w-32 gap-1.5 rounded-full ps-2.5 pe-3 text-sm max-sm:w-10 max-sm:px-0 sm:max-w-44"
+          aria-label={t("account")}
+        >
           <span className="bg-primary/12 text-primary flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
             {firstName.charAt(0).toUpperCase()}
           </span>
-          <span className="truncate">{firstName}</span>
-          <ChevronDownIcon className="text-muted-foreground size-4 shrink-0" />
+          <span className="truncate max-sm:hidden">{firstName}</span>
+          <ChevronDownIcon className="text-muted-foreground size-4 shrink-0 max-sm:hidden" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-auto min-w-60">

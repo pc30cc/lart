@@ -97,6 +97,14 @@ describe("members", () => {
     await expect(requireMember()).rejects.toMatchObject(redirectTo("/fa/account/login"))
   })
 
+  it("requireMember comes back to the page's address today, not to the main language's old prefix (R1)", async () => {
+    // A tab opened with the main language's prefix (tr here) posts a server action there.
+    request.path = "/tr/workshops/candles?x=1"
+    await expect(requireMember()).rejects.toMatchObject(
+      redirectTo(`/fa/account/login?next=${encodeURIComponent("/workshops/candles?x=1")}`),
+    )
+  })
+
   it("requireMemberApi refuses a cross-site POST even with a session", async () => {
     const m = await newMember()
     await signIn("member", m.id)
@@ -128,6 +136,10 @@ describe("instructors", () => {
     )
     request.path = "/fa/workshops"
     await expect(requireInstructor()).rejects.toMatchObject(redirectTo("/fa/instructor/login"))
+    request.path = "/tr/instructor/contracts?c=1"
+    await expect(requireInstructor()).rejects.toMatchObject(
+      redirectTo(`/fa/instructor/login?next=${encodeURIComponent("/instructor/contracts?c=1")}`),
+    )
   })
 
   it("requireInstructorApi refuses a cross-site POST", async () => {

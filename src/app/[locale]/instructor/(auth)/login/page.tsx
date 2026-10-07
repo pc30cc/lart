@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server"
 
 import { AuthCard } from "@/components/site/auth-card"
 import { LoginForm } from "@/components/site/auth/login-form"
+import { localeHref, mainLocale } from "@/i18n/links"
 import { Link } from "@/i18n/navigation"
 import { getInstructor } from "@/lib/auth/instructor"
 import { safeNext } from "@/lib/auth/safe-next"
@@ -19,8 +20,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function InstructorLoginPage({ params, searchParams }: PageProps<"/[locale]/instructor/login">) {
   const { locale } = await params
   const query = await searchParams
-  const next = safeNext(query.next, "instructor", "")
-  if (await getInstructor()) redirect(next || `/${locale}/instructor`)
+  const next = safeNext(query.next, "instructor", "", await mainLocale())
+  if (await getInstructor()) redirect(next || (await localeHref(locale, "/instructor")))
   const [t, brand] = await Promise.all([getTranslations("auth.instructor.login"), getBrand(locale)])
 
   return (

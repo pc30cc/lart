@@ -1,13 +1,13 @@
 import sharp from "sharp"
 
-import { expect, field, fillLocalized, RUN, test, toast } from "./helpers/app"
+import { expect, field, fillLocalized, MAIN, RUN, test, toast } from "./helpers/app"
 import { one, sql } from "./helpers/db"
 import { makeLogo } from "./helpers/files"
 
 const BRAND = { fa: `لارت ${RUN}`, tr: `Lart Atölye ${RUN}`, en: `Lart Studio ${RUN}` }
 
 test.describe.serial("settings", () => {
-  test("general: brand name, default language, SEO", async ({ page, browser }) => {
+  test("general: brand name, main language, SEO", async ({ page, browser }) => {
     await page.goto("/en/admin/settings")
     await expect(page.getByRole("heading", { level: 1, name: "Settings" })).toBeVisible()
     const save = page.getByRole("button", { name: "Save changes" })
@@ -32,16 +32,50 @@ test.describe.serial("settings", () => {
     expect(byKey.defaultLocale).toBe("en")
     expect(JSON.stringify(byKey.seo)).toContain("Arts and crafts workshops in Istanbul.")
 
-    // The new brand shows in the panel and on the login page.
+    // The new brand shows in the panel and on the login page. English is now
+    // the main language, so this page's address has no prefix any more (308).
     await page.reload()
+    await expect(page).toHaveURL(/localhost:3100\/admin\/settings$/)
     await expect(page.getByText(BRAND.en).first()).toBeVisible()
     const fresh = await browser.newContext({ storageState: { cookies: [], origins: [] } })
     const anon = await fresh.newPage()
     await anon.goto("/tr/admin/login")
+    await expect(anon).toHaveURL(/localhost:3100\/tr\/admin\/login$/)
+    await expect(anon.locator("html")).toHaveAttribute("lang", "tr")
     await expect(anon.getByText(BRAND.tr).first()).toBeVisible()
-    // "/" goes to the default language when there is no language cookie.
-    const root = await anon.request.get("/", { maxRedirects: 0, headers: { cookie: "" } })
-    expect(root.headers()["location"]).toMatch(/\/en\/?$/)
+    // "/" is the home page in the main language at once (the saving process
+    // updates its cache), with no redirect, whatever the browser prefers.
+    const root = await anon.request.get("/", { maxRedirects: 0, headers: { cookie: "", "accept-language": "tr" } })
+    expect(root.status()).toBe(200)
+    expect(root.headers()["location"]).toBeUndefined()
+    expect(await root.text()).toMatch(/<html[^>]*lang="en"/)
+    const old = await anon.request.get("/en/admin/settings", { maxRedirects: 0 })
+    expect(old.status()).toBe(308)
+    expect(old.headers()["location"]).toMatch(/^(http:\/\/localhost:3100)?\/admin\/settings$/)
+    expect(old.headers()["cache-control"]).toBe("no-store")
+
+    // Back to Turkish, the suite's main language (the other specs expect it).
+    // This page's address now means Turkish, so it may come back in Turkish.
+    await field(page, /^Language/).getByRole("radio", { name: "Türkçe" }).click()
+    await save.click()
+    await expect(toast(page, /^(Settings saved\.|Ayarlar kaydedildi\.)$/)).toBeVisible()
+    await expect.poll(async () => (await sql("select value from settings where key = 'defaultLocale'"))[0]?.value).toBe(MAIN)
+    const home = await anon.request.get("/", { maxRedirects: 0 })
+    expect(await home.text()).toMatch(/<html[^>]*lang="tr"/)
+    const trOld = await anon.request.get("/tr/workshops?x=1", { maxRedirects: 0 })
+    expect(trOld.status()).toBe(308)
+    expect(trOld.headers()["location"]).toMatch(/^(http:\/\/localhost:3100)?\/workshops\?x=1$/)
+
+    // The home pages of the other languages: their own brand, SEO texts, canonical and hreflang.
+    await anon.goto("/fa")
+    await expect(anon.locator("html")).toHaveAttribute("dir", "rtl")
+    await expect(anon.getByRole("heading", { level: 1 })).toHaveText(BRAND.fa)
+    await expect(anon.locator('link[rel="canonical"]')).toHaveAttribute("href", "http://localhost:3100/fa")
+    await expect(anon.locator('link[rel="alternate"][hreflang="tr"]')).toHaveAttribute("href", "http://localhost:3100/")
+    await expect(anon.locator('link[rel="alternate"][hreflang="x-default"]')).toHaveAttribute("href", "http://localhost:3100/")
+    await anon.goto("/en")
+    await expect(anon).toHaveTitle("Art workshops")
+    await expect(anon.getByText("Arts and crafts workshops in Istanbul.").first()).toBeVisible()
     await fresh.close()
   })
 

@@ -4,6 +4,7 @@ import { refresh } from "next/cache"
 import { getTranslations } from "next-intl/server"
 
 import { db } from "@/db"
+import { setMainLocale } from "@/i18n/main-locale"
 import { adminAction, UserError } from "@/lib/action"
 import { changes } from "@/lib/audit"
 import { deliver, emailConfig, sender } from "@/lib/email"
@@ -18,7 +19,7 @@ import { cdnSettingsSchema, emailSettingsSchema, generalSettingsSchema, watermar
 const settingAudit = (key: SettingKey, data: Record<string, unknown>) =>
   ({ action: "setting.update", entity: "setting", entityId: key, data }) as const
 
-/** Brand, default language, SEO defaults and theme: only the settings that changed are written. */
+/** Brand, main language, SEO defaults and theme: only the settings that changed are written. */
 export const saveGeneralSettings = adminAction(generalSettingsSchema, async (input, ctx) => {
   const keys = ["brand", "defaultLocale", "seo", "theme"] as const
   const before = await Promise.all(keys.map((key) => getSetting(key)))
@@ -32,6 +33,9 @@ export const saveGeneralSettings = adminAction(generalSettingsSchema, async (inp
       await ctx.audit(settingAudit(key, { from: before[keys.indexOf(key)], to: value }), tx)
     }
   })
+  // The addresses follow the main language: at once in this process, within
+  // the cache time (30 s) in the others.
+  if (changed.includes("defaultLocale")) setMainLocale(input.defaultLocale)
   refresh() // the brand is in the panel header too
   return { changed }
 })

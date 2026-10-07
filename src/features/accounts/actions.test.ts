@@ -204,6 +204,20 @@ describe("memberLoginAction", () => {
     )
   })
 
+  it("goes back to the page's address today: no main-language prefix, no capitals (R1)", async () => {
+    const m = await newMember()
+    for (const [next, to] of [
+      ["/tr/account", "/account"],
+      ["/tr?x=1", "/?x=1"],
+      ["/FA/account", "/fa/account"],
+    ]) {
+      request.cookies.clear()
+      await expect(memberLoginAction({ email: m.email, password: PASSWORD, next }), next).rejects.toMatchObject(redirectTo(to))
+    }
+    request.cookies.clear()
+    await expect(signup({ next: "/tr/workshops" })).rejects.toMatchObject(redirectTo("/workshops?notice=checkEmail"))
+  })
+
   it("gives one message for an unknown email, a wrong password and a locked account", async () => {
     const m = await newMember()
     const message = `That email and password don’t match. If you’ve tried several times, please wait ${LOCKOUT.lockMs / 60_000} minutes and try again.`
@@ -306,6 +320,10 @@ describe("instructors", () => {
     await expect(
       instructorLoginAction({ email: i.email, password: PASSWORD, next: "/en/workshops" }),
     ).rejects.toMatchObject(redirectTo("/en/instructor"))
+    request.cookies.clear()
+    await expect(
+      instructorLoginAction({ email: i.email, password: PASSWORD, next: "/tr/instructor/contracts?c=1" }),
+    ).rejects.toMatchObject(redirectTo("/instructor/contracts?c=1"))
   })
 
   it("cannot sign in while deactivated, or before accepting the invitation", async () => {

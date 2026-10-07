@@ -32,7 +32,10 @@ export function LocaleChoices({ value, onChange }: { value: string; onChange: (l
   )
 }
 
-/** FA / TR / EN in the site header. A signed-in member's emails follow the choice. */
+/**
+ * FA / TR / EN in the site header (on a phone the icon only, so the brand
+ * keeps its room). A signed-in member's emails follow the choice.
+ */
 export function LocaleMenu({ signedIn }: { signedIn: boolean }) {
   const t = useTranslations("common")
   const locale = useLocale()
@@ -43,11 +46,11 @@ export function LocaleMenu({ signedIn }: { signedIn: boolean }) {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className={cn("h-10 gap-1.5 px-2.5 font-normal", pending && "opacity-60")}
+          className={cn("h-10 gap-1.5 px-2.5 font-normal max-sm:w-10 max-sm:px-0", pending && "opacity-60")}
           aria-label={t("language")}
         >
           <LanguagesIcon className="size-4.5" />
-          <span className="text-xs font-medium tracking-wide uppercase">{locale}</span>
+          <span className="text-xs font-medium tracking-wide uppercase max-sm:hidden">{locale}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-auto min-w-40">

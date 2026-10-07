@@ -19,11 +19,12 @@ import { Button } from "@/components/ui/button"
 import { PaymentBadge } from "@/features/registrations/components/payment-badge"
 import { getPublicWorkshop, myActiveRegistrations, type PublicWorkshop } from "@/features/registrations/public"
 import { Link } from "@/i18n/navigation"
+import { absoluteLocaleUrl, localeHref } from "@/i18n/links"
 import { formatDate, formatDateTime, formatTimeRange } from "@/lib/format"
+import { absoluteUrl, alternates, jsonLdText, ogLocale } from "@/lib/seo"
 import { getBrand } from "@/lib/settings"
 import { cn } from "@/lib/utils"
 import { AgeLabel, AvailabilityBadge, Price } from "../_components/labels"
-import { absoluteUrl, alternates, jsonLdText, ogLocale } from "../_components/seo"
 
 /** Search engines get a summary of at most this many characters. */
 const DESCRIPTION_MAX = 160
@@ -71,7 +72,7 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/work
     getBrand(locale),
     myActiveRegistrations(w.id),
   ])
-  const canonical = absoluteUrl(`/${locale}/workshops/${w.slug}`)
+  const canonical = absoluteUrl(await localeHref(locale, `/workshops/${w.slug}`))
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -88,7 +89,7 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/work
     ...(w.coverUrl || w.samples.length
       ? { image: [w.coverUrl, ...w.samples.map((s) => s.url)].filter(Boolean).map((u) => absoluteUrl(u!)) }
       : {}),
-    organizer: { "@type": "Organization", name: brand, url: absoluteUrl(`/${locale}`) },
+    organizer: { "@type": "Organization", name: brand, url: await absoluteLocaleUrl(locale, "/") },
     ...(w.instructor.name ? { performer: { "@type": "Person", name: w.instructor.name } } : {}),
     ...(w.ageMin !== null && w.ageMax !== null ? { typicalAgeRange: `${w.ageMin}-${w.ageMax}` } : {}),
     offers: {

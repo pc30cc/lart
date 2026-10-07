@@ -63,8 +63,9 @@ export const viewport: Viewport = {
 }
 
 /**
- * The document shell. The language comes from the locale prefix (set by the
- * proxy); `[locale]/layout.tsx` validates it and adds the translated providers.
+ * The document shell. The language comes from the proxy (the address's prefix,
+ * or the main language for an address without one); `[locale]/layout.tsx`
+ * validates it and adds the translated providers.
  */
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const locale = await getLocale()

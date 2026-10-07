@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm"
 import { db } from "@/db"
 import { admins, courses, members, registrations } from "@/db/schema"
 import { paymentWays } from "@/emails/payment"
+import { localeHref } from "@/i18n/links"
 import { sendEmail } from "@/lib/email"
 import { formatDate, formatTimeRange, localized } from "@/lib/format"
 import { formatLira } from "@/lib/money"
@@ -66,7 +67,7 @@ export async function sendRegistrationReceived(registrationId: string): Promise<
       to: member.email,
       template: "registration_confirmed",
       locale,
-      props: { ...details, workshopUrl: `/${locale}/workshops/${course.slug}` },
+      props: { ...details, workshopUrl: await localeHref(locale, `/workshops/${course.slug}`) },
     })
     return sent.ok
   }
@@ -79,7 +80,7 @@ export async function sendRegistrationReceived(registrationId: string): Promise<
     props: {
       ...details,
       participantName: row.participantName,
-      accountUrl: `/${locale}/account/registrations/${registrationId}`,
+      accountUrl: await localeHref(locale, `/account/registrations/${registrationId}`),
       ...paymentWays(await getSetting("payment"), safePaymentUrl(course.paymentUrl), locale),
     },
   })
@@ -109,7 +110,7 @@ export async function sendRegistrationCancelled(cancelled: Cancelled): Promise<n
       // Left out when nothing was paid: the email then has no refund line.
       ...(cancelled.paid > 0 ? { refundAmount: formatLira(cancelled.refund, locale) } : {}),
       refundPercent: cancelled.percent,
-      workshopsUrl: `/${locale}/workshops`,
+      workshopsUrl: await localeHref(locale, "/workshops"),
     },
   })
   if (toMember.ok) sent++
@@ -132,7 +133,7 @@ export async function sendRegistrationCancelled(cancelled: Cancelled): Promise<n
           workshopTitle: localized(course.title, adminLocale),
           amount: formatLira(cancelled.refund, adminLocale),
           // "Mark as refunded" is on Money › Refunds (its default view lists the refunds still owed).
-          url: `/${adminLocale}/admin/money/refunds`,
+          url: await localeHref(adminLocale, "/admin/money/refunds"),
         },
       })
       if (result.ok) sent++

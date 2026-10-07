@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm"
 
 import { db } from "@/db"
 import { admins, courses, members, registrations } from "@/db/schema"
+import { localeHref } from "@/i18n/links"
 import { locales, type AppLocale } from "@/i18n/routing"
 import { sendEmail } from "@/lib/email"
 import { formatDate, formatTimeRange, localized } from "@/lib/format"
@@ -60,7 +61,7 @@ export async function sendPaymentReceived(registrationId: string, method: Paymen
       date: formatDate(course.startsAt, locale, "full"),
       time: formatTimeRange(course.startsAt, course.endsAt, locale),
       venue: localized(course.venue, locale),
-      accountUrl: `/${locale}/account/registrations/${registrationId}`,
+      accountUrl: await localeHref(locale, `/account/registrations/${registrationId}`),
     },
   })
   return sent.ok
@@ -84,7 +85,7 @@ export async function sendRegistrationCancelled(cancelled: CancelledRegistration
       refundPercent: cancelled.percent,
       // An admin cancelled it: not "as you asked".
       byUs: true,
-      workshopsUrl: `/${locale}/workshops`,
+      workshopsUrl: await localeHref(locale, "/workshops"),
     },
   })
   return sent.ok
@@ -123,7 +124,7 @@ export async function sendRefundChanged(changed: ChangedRefund): Promise<number>
         refundAmount: formatLira(changed.to, locale),
         refundPercent: sharePercent(changed.to, changed.paid),
         byUs: true,
-        workshopsUrl: `/${locale}/workshops`,
+        workshopsUrl: await localeHref(locale, "/workshops"),
       },
     })
     if (toMember.ok) sent++
@@ -143,7 +144,7 @@ export async function sendRefundChanged(changed: ChangedRefund): Promise<number>
           participantName: row.participantName,
           workshopTitle: localized(row.course.title, adminLocale),
           amount: formatLira(changed.to, adminLocale),
-          url: `/${adminLocale}/admin/money/refunds`,
+          url: await localeHref(adminLocale, "/admin/money/refunds"),
         },
       })
       if (result.ok) sent++
@@ -166,7 +167,7 @@ export async function sendRefundSent(registrationId: string): Promise<boolean> {
       name: row.member.name,
       workshopTitle: localized(row.course.title, locale),
       amount: formatLira(row.refundAmount, locale),
-      workshopsUrl: `/${locale}/workshops`,
+      workshopsUrl: await localeHref(locale, "/workshops"),
     },
   })
   return sent.ok

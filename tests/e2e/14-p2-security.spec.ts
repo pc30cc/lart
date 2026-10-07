@@ -1,6 +1,6 @@
 import type { Page, Route } from "@playwright/test"
 
-import { expect, mailMark, RUN, RUN_NAME, test, toast } from "./helpers/app"
+import { at, expect, mailMark, RUN, RUN_NAME, test, toast } from "./helpers/app"
 import { one, sql } from "./helpers/db"
 import { anonContext, captureAction, courseId, linksOf, memberLogin, P2, PASSWORD, personContext, replayAction, tr, waitMail } from "./helpers/p2"
 
@@ -43,14 +43,14 @@ test.describe("phase 2 · security: members", () => {
     const cemre = await regOf(P2.cemre.email, P2.wA.slug)
     const context = await personContext(browser, "ayla")
     const page = await context.newPage()
-    const res = await page.goto(`/tr/account/registrations/${cemre.id}`)
+    const res = await page.goto(`/account/registrations/${cemre.id}`)
     expect(res?.status()).toBe(404)
     await expect(page.locator("body")).not.toContainText(P2.cemre.name)
-    const raw = await page.request.get(`/tr/account/registrations/${cemre.id}`)
+    const raw = await page.request.get(`/account/registrations/${cemre.id}`)
     expect(raw.status()).toBe(404)
     expect(await raw.text()).not.toContain(P2.cemre.name)
     // A made-up id is simply not found too.
-    expect((await page.goto("/tr/account/registrations/not-a-uuid"))?.status()).toBe(404)
+    expect((await page.goto("/account/registrations/not-a-uuid"))?.status()).toBe(404)
     await context.close()
   })
 
@@ -62,7 +62,7 @@ test.describe("phase 2 · security: members", () => {
     expect(theirs.status).toBe("pending")
     const context = await personContext(browser, "ayla")
     const page = await context.newPage()
-    await page.goto(`/tr/account/registrations/${mine.id}`)
+    await page.goto(`/account/registrations/${mine.id}`)
     const seen = await forgeNextAction(page, mine.id, theirs.id)
     await page.locator("main").getByRole("button", { name: t("registration.cancel.button") }).click()
     await page.getByRole("alertdialog").getByRole("button", { name: t("registration.cancel.confirm") }).click()
@@ -79,7 +79,7 @@ test.describe("phase 2 · security: members", () => {
     const c = await courseId(P2.wC.slug)
     const context = await personContext(browser, "ayla")
     const page = await context.newPage()
-    await page.goto(`/tr/workshops/${P2.wB.slug}/register`)
+    await page.goto(`/workshops/${P2.wB.slug}/register`)
     await page.getByLabel(t("registration.register.participant")).fill(`Forged ${RUN}`)
     await page.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).click()
     await forgeNextAction(page, b, c)
@@ -92,8 +92,9 @@ test.describe("phase 2 · security: members", () => {
   test("sessions don't cross areas: a member can't open the admin or instructor panels, an instructor isn't a member", async ({ browser }) => {
     const member = await personContext(browser, "ayla")
     for (const [url, login] of [
-      ["/tr/admin", /\/tr\/admin\/login/],
-      ["/tr/instructor", /\/tr\/instructor\/login/],
+      ["/admin", /^\/admin\/login/],
+      ["/fa/admin", /^\/fa\/admin\/login/],
+      ["/instructor", /^\/instructor\/login/],
     ] as const) {
       const res = await member.request.get(url, { maxRedirects: 0 })
       expect(res.status(), url).toBe(307)
@@ -101,9 +102,9 @@ test.describe("phase 2 · security: members", () => {
     }
     await member.close()
     const instructor = await personContext(browser, "nur")
-    const res = await instructor.request.get("/tr/account", { maxRedirects: 0 })
+    const res = await instructor.request.get("/account", { maxRedirects: 0 })
     expect(res.status()).toBe(307)
-    expect(res.headers()["location"]).toMatch(/\/tr\/account\/login\?next=%2Ftr%2Faccount$/)
+    expect(res.headers()["location"]).toMatch(/^\/account\/login\?next=%2Faccount$/)
     await instructor.close()
   })
 
@@ -119,7 +120,7 @@ test.describe("phase 2 · security: members", () => {
     for (const next of ["https://evil.example/", "//evil.example/x", "/\\evil.example"]) {
       await context.clearCookies()
       await memberLogin(page, "tr", P2.ayla.email, PASSWORD, next)
-      await expect(page).toHaveURL(/^http:\/\/localhost:3100\/tr\/workshops/)
+      await expect(page).toHaveURL(/^http:\/\/localhost:3100\/workshops/)
     }
     await context.close()
   })
@@ -147,15 +148,15 @@ test.describe("phase 2 · security: server actions replayed with someone else's 
     // Eda signs up and doesn't open the link yet.
     const eda = await anonContext(browser)
     const page = await eda.newPage()
-    await page.goto("/tr/account/signup")
+    await page.goto("/account/signup")
     await page.getByLabel(t("account.signup.name")).fill(who.name)
     await page.getByLabel(t("account.form.email")).fill(who.email)
     await page.getByLabel(t("account.form.password"), { exact: true }).fill(PASSWORD)
     await page.getByRole("button", { name: t("account.signup.submit") }).click()
-    await expect(page).toHaveURL(/\/tr\/workshops/)
+    await expect(page).toHaveURL(/localhost:3100\/workshops/)
     await expect(page.getByRole("region", { name: t("site.verifyBanner.label") })).toBeVisible()
     // The register page asks, in plain words, with "send it again".
-    await page.goto(`/tr/workshops/${P2.wB.slug}/register`)
+    await page.goto(`/workshops/${P2.wB.slug}/register`)
     await expect(page.locator("main").getByText(t("registration.register.verify.title"))).toBeVisible()
     await expect(page.getByRole("button", { name: t("registration.register.submit"), exact: true })).toHaveCount(0)
     const mark = mailMark()
@@ -167,7 +168,7 @@ test.describe("phase 2 · security: server actions replayed with someone else's 
     // Ayla (confirmed) fills in the form; her click is caught before it reaches the server.
     const ayla = await personContext(browser, "ayla")
     const form = await ayla.newPage()
-    await form.goto(`/tr/workshops/${P2.wB.slug}/register`)
+    await form.goto(`/workshops/${P2.wB.slug}/register`)
     await form.getByLabel(t("registration.register.participant")).fill(`Captured ${RUN}`)
     await form.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).click()
     const action = await captureAction(form, () => form.getByRole("button", { name: t("registration.register.submit"), exact: true }).click())
@@ -232,8 +233,8 @@ test.describe("phase 2 · security: private areas and indexing", () => {
       ["/fa/instructor/workshops", /\/fa\/instructor\/login\?next=/],
       ["/fa/instructor/earnings", /\/fa\/instructor\/login\?next=/],
       ["/fa/instructor/profile", /\/fa\/instructor\/login\?next=/],
-      ["/tr/account", /\/tr\/account\/login\?next=%2Ftr%2Faccount$/],
-      [`/tr/account/registrations/${(await regOf(P2.ayla.email, P2.wA.slug)).id}`, /\/tr\/account\/login\?next=/],
+      ["/account", /^\/account\/login\?next=%2Faccount$/],
+      [`/account/registrations/${(await regOf(P2.ayla.email, P2.wA.slug)).id}`, /^\/account\/login\?next=/],
     ]
     for (const [url, location] of cases) {
       const res = await context.request.get(url, { maxRedirects: 0 })
@@ -242,7 +243,7 @@ test.describe("phase 2 · security: private areas and indexing", () => {
       expect(res.headers()["x-robots-tag"] ?? "", `${url}: X-Robots-Tag`).toContain("noindex")
     }
     // The sign-in pages themselves open, never indexed.
-    for (const url of ["/fa/instructor/login", "/fa/instructor/forgot", "/tr/account/login", "/tr/account/signup", "/tr/account/forgot"]) {
+    for (const url of ["/fa/instructor/login", "/fa/instructor/forgot", "/account/login", "/account/signup", "/account/forgot"]) {
       const res = await context.request.get(url, { maxRedirects: 0 })
       expect(res.status(), url).toBe(200)
       expect(res.headers()["x-robots-tag"] ?? "", `${url}: X-Robots-Tag`).toContain("noindex")
@@ -257,7 +258,7 @@ test.describe("phase 2 · security: private areas and indexing", () => {
 
   test("public pages are indexable, with the security headers; the register page is not indexed", async ({ browser, problems }) => {
     const context = await anonContext(browser)
-    for (const url of ["/tr/workshops", `/tr/workshops/${P2.wB.slug}`]) {
+    for (const url of ["/workshops", `/workshops/${P2.wB.slug}`]) {
       const res = await context.request.get(url)
       expect(res.status(), url).toBe(200)
       const h = res.headers()
@@ -267,11 +268,11 @@ test.describe("phase 2 · security: private areas and indexing", () => {
       expect(h["x-content-type-options"]).toBe("nosniff")
     }
     const page = await context.newPage()
-    await page.goto(`/tr/workshops/${P2.wB.slug}`)
+    await page.goto(`/workshops/${P2.wB.slug}`)
     // The JSON-LD can't close its <script> tag.
     const ld = (await page.locator('script[type="application/ld+json"]').first().innerHTML()) ?? ""
     expect(ld).not.toContain("<")
-    await page.goto(`/tr/workshops/${P2.wB.slug}/register`)
+    await page.goto(`/workshops/${P2.wB.slug}/register`)
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/)
     expect(problems.filter((p) => p.type === "console" && /Content Security Policy/i.test(p.text))).toEqual([])
     await context.close()
@@ -284,21 +285,25 @@ test.describe("phase 2 · security: private areas and indexing", () => {
     test.info().annotations.push({ type: "robots.txt", description: txt })
     // Only the admin panel and the API are disallowed. The instructor panel and the account pages rely on their
     // noindex (a disallowed page can still be indexed as a bare URL), and robots.txt must not publish the panel's address.
-    for (const l of ["fa", "tr", "en"]) {
-      expect(txt).toContain(`Disallow: /${l}/admin`)
-      expect(txt).not.toContain(`/${l}/instructor`)
-      expect(txt).not.toContain(`/${l}/account`)
-    }
+    expect(txt).toMatch(/^Disallow: \/admin$/m)
+    for (const l of ["fa", "tr", "en"]) expect(txt).toContain(`Disallow: /${l}/admin`)
+    expect(txt).not.toContain("/instructor")
+    expect(txt).not.toContain("/account")
     expect(txt).toContain("Disallow: /api")
     expect(txt).toContain("Sitemap: http://localhost:3100/sitemap.xml")
 
     const sitemap = await request.get("/sitemap.xml")
     expect(sitemap.status()).toBe(200)
     const xml = await sitemap.text()
+    // The main language (tr) without a prefix, the others with theirs.
     for (const l of ["fa", "tr", "en"]) {
-      expect(xml).toContain(`<loc>http://localhost:3100/${l}/workshops/${P2.wB.slug}</loc>`)
-      expect(xml).toContain(`http://localhost:3100/${l}/workshops</loc>`)
+      expect(xml).toContain(`<loc>http://localhost:3100${at(l, `/workshops/${P2.wB.slug}`)}</loc>`)
+      expect(xml).toContain(`<loc>http://localhost:3100${at(l, "/workshops")}</loc>`)
+      expect(xml).toContain(`<loc>http://localhost:3100${at(l, "/")}</loc>`)
     }
+    expect(xml).toContain("<loc>http://localhost:3100/</loc>")
+    expect(xml).not.toMatch(/localhost:3100\/tr(\/|<)/)
+    expect(xml).toContain(`hreflang="x-default" href="http://localhost:3100/workshops/${P2.wB.slug}"`)
     expect(xml).toMatch(new RegExp(`hreflang="fa"[^>]*href="http://localhost:3100/fa/workshops/${P2.wB.slug}"`))
     expect(xml).toContain('hreflang="x-default"')
     expect(xml).not.toContain(P2.wC.slug)
@@ -309,12 +314,12 @@ test.describe("phase 2 · security: private areas and indexing", () => {
     const t = tr("tr")
     const context = await personContext(browser, "nur")
     const page = await context.newPage()
-    await page.goto(`/tr/instructor/workshops/${await courseId(P2.wA.slug)}`)
+    await page.goto(`/instructor/workshops/${await courseId(P2.wA.slug)}`)
     const main = page.locator("main")
     await expect(main).toContainText(P2.ayla.name)
     await expect(main).toContainText(P2.cemre.name)
     await expect(main).toContainText(t("instructorPanel.workshop.places", { count: 2, max: 2 }))
-    const html = await (await page.request.get(`/tr/instructor/workshops/${await courseId(P2.wA.slug)}`)).text()
+    const html = await (await page.request.get(`/instructor/workshops/${await courseId(P2.wA.slug)}`)).text()
     for (const secret of [P2.ayla.email, P2.cemre.email, "+905320001122", "+905350003344"]) expect(html.includes(secret), secret).toBe(false)
     for (const word of [t("registration.status.paid"), t("registration.status.unpaid")]) await expect(main).not.toContainText(word)
     await context.close()
@@ -334,6 +339,68 @@ test.describe("phase 2 · security: private areas and indexing", () => {
     expect((await member.request.post("/api/instructor/uploads", { multipart: { purpose: "instructor_photo" } })).status()).toBe(401)
     await member.close()
     await context.close()
+  })
+})
+
+test.describe("URL rules: old addresses, the main language, encoded paths", () => {
+  test("every old address answers with one permanent redirect, the query kept", async ({ request }) => {
+    for (const [from, to] of [
+      ["/tr/workshops?x=1", "/workshops?x=1"],
+      ["/tr", "/"],
+      ["/TR/workshops", "/workshops"],
+      ["/Fa/workshops", "/fa/workshops"],
+      ["/admin/login/forgot", "/admin/forgot"],
+      ["/en/admin/login/reset?token=abc", "/en/admin/reset?token=abc"],
+      ["/tr/admin/accept-invite?token=abc", "/admin/invite?token=abc"],
+      ["/fa/admin/accept-invite?token=abc", "/fa/admin/invite?token=abc"],
+      ["/instructor/accept-invite?token=abc", "/instructor/invite?token=abc"],
+      ["/tr/instructor/accept-invite?token=abc", "/instructor/invite?token=abc"],
+    ]) {
+      const res = await request.get(from, { maxRedirects: 0 })
+      expect(res.status(), from).toBe(308)
+      expect(res.headers()["location"], from).toBe(to)
+      expect(res.headers()["cache-control"], from).toBe("no-store")
+      expect(res.headers()["set-cookie"], from).toBeUndefined()
+    }
+  })
+
+  test("a sign-in that comes back to an old address ends at today's address", async ({ browser }) => {
+    // `next` from before the URL rules (the main language's /tr prefix) or with a prefix in capitals.
+    for (const [next, to] of [
+      ["/tr/account", /localhost:3100\/account$/],
+      ["/tr/workshops?x=1", /localhost:3100\/workshops\?x=1$/],
+      ["/FA/account", /localhost:3100\/fa\/account$/],
+    ] as const) {
+      const context = await anonContext(browser)
+      const page = await context.newPage()
+      await memberLogin(page, "en", P2.ayla.email, PASSWORD, next)
+      await expect(page, next).toHaveURL(to)
+      await context.close()
+    }
+  })
+
+  test("an encoded private path still goes through the sign-in gate", async ({ browser }) => {
+    const context = await anonContext(browser)
+    const res = await context.request.get("/%61dmin/categories", { maxRedirects: 0 })
+    expect(res.status()).toBe(307)
+    expect(res.headers()["location"]).toBe("/admin/login?next=%2Fadmin%2Fcategories")
+    expect(res.headers()["x-robots-tag"]).toContain("noindex")
+    await context.close()
+  })
+
+  test("/ is the home page in the main language, whatever the browser prefers", async ({ request }) => {
+    const res = await request.get("/", { maxRedirects: 0, headers: { "accept-language": "fa", cookie: "NEXT_LOCALE=en" } })
+    expect(res.status()).toBe(200)
+    expect(res.headers()["set-cookie"]).toBeUndefined()
+    const html = await res.text()
+    expect(html).toMatch(/<html[^>]*lang="tr"/)
+    expect(html).toContain('<link rel="canonical" href="http://localhost:3100/"')
+    expect(html).toContain('hrefLang="fa" href="http://localhost:3100/fa"')
+    for (const path of ["/fa", "/en"]) {
+      const other = await request.get(path, { maxRedirects: 0 })
+      expect(other.status(), path).toBe(200)
+      expect(await other.text(), path).toMatch(new RegExp(`<html[^>]*lang="${path.slice(1)}"`))
+    }
   })
 })
 
@@ -392,7 +459,7 @@ test.describe("phase 2 · member: language and my details", () => {
     // The header's switch: the same page in Turkish, and her emails follow.
     await page.getByRole("button", { name: en("common.language") }).click()
     await page.getByRole("menuitemradio", { name: "Türkçe" }).click()
-    await expect(page).toHaveURL(/\/tr\/account$/)
+    await expect(page).toHaveURL(/localhost:3100\/account$/)
     await expect.poll(locale).toBe("tr")
 
     // My details (now in Turkish): a new phone number and English again.

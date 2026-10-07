@@ -3,6 +3,7 @@ import { and, eq, gt, inArray, isNull } from "drizzle-orm"
 
 import { db, type Tx } from "@/db"
 import { admins, emailTokens } from "@/db/schema"
+import { localeHref } from "@/i18n/links"
 import { audit } from "@/lib/audit"
 import { randomToken, sha256 } from "@/lib/crypto"
 import { sendEmail } from "@/lib/email"
@@ -121,7 +122,7 @@ export async function sendAdminResetLink(emailInput: string, locale: string): Pr
   const sent = await sendEmail({
     to: admin.email,
     template: "password_reset",
-    props: { name: admin.name, resetUrl: `/${locale}/admin/login/reset?token=${token}` },
+    props: { name: admin.name, resetUrl: await localeHref(locale, `/admin/reset?token=${token}`) },
     locale,
   })
   await audit({

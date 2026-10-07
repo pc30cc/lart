@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test"
 import sharp from "sharp"
 
 import { folderName } from "../../src/lib/storage/shared"
-import { emailsSince, expect, mailMark, RUN, test, toast, type SentEmail } from "./helpers/app"
+import { at, emailsSince, expect, mailMark, RUN, test, toast, type SentEmail } from "./helpers/app"
 import { one, sql } from "./helpers/db"
 import { makePhoto } from "./helpers/files"
 import { anonContext, courseId, lead, linksOf, P2, PASSWORD, personContext, saveSession, tr } from "./helpers/p2"
@@ -20,7 +20,7 @@ function inviteLink(address: string): string {
   const all = emailsSince(0).filter((e: SentEmail) => [e.to].flat().includes(address))
   const link = all
     .flatMap((e) => linksOf(e))
-    .filter((l) => l.includes("/instructor/accept-invite?token="))
+    .filter((l) => l.includes("/instructor/invite?token="))
     .pop()
   if (!link) throw new Error(`no invitation email to ${address}: run 10-p2-admin-setup first`)
   return link.replace("http://localhost:3100", "")
@@ -36,7 +36,7 @@ async function liveContract(slug: string) {
 /** Sign one contract on its page, as the instructor: tick, type the name, "Sign". */
 async function sign(page: Page, locale: "fa" | "tr" | "en", contractId: string, typedName: string) {
   const t = tr(locale)
-  await page.goto(`/${locale}/instructor/contracts/${contractId}`)
+  await page.goto(at(locale, `/instructor/contracts/${contractId}`))
   await page.getByRole("checkbox", { name: t("instructorPanel.sign.agree") }).click()
   await page.getByLabel(t("instructorPanel.sign.name"), { exact: true }).fill(typedName)
   await expect(page.locator("main").getByText(t("instructorPanel.sign.nameMatches"))).toBeVisible()
@@ -59,10 +59,10 @@ test.describe.serial("phase 2 · instructor panel", () => {
     const password = page.getByLabel(t("auth.instructor.invite.password"), { exact: true })
     await password.fill("kisa")
     await page.getByRole("button", { name: t("auth.instructor.invite.submit") }).click()
-    await expect(page).toHaveURL(/accept-invite/)
+    await expect(page).toHaveURL(/\/instructor\/invite\?token=/)
     await password.fill(PASSWORD)
     await page.getByRole("button", { name: t("auth.instructor.invite.submit") }).click()
-    await expect(page).toHaveURL(/\/tr\/instructor$/)
+    await expect(page).toHaveURL(/localhost:3100\/instructor$/)
     await expect(page.getByRole("heading", { level: 1 })).toContainText(lead("tr", "instructorPanel.home.hello"))
     // Accepting the invitation confirms the email: no banner.
     await expect(page.getByRole("region", { name: t("instructorPanel.verifyBanner.label") })).toHaveCount(0)
@@ -92,13 +92,13 @@ test.describe.serial("phase 2 · instructor panel", () => {
     const t = tr("tr")
     const context = await personContext(browser, "nur")
     const page = await context.newPage()
-    await page.goto("/tr/instructor")
+    await page.goto("/instructor")
     await expect(page.getByRole("link", { name: t("instructorPanel.home.toSign.button") })).toHaveCount(3)
     // The menu shows the count.
     await expect(page.getByText(t("instructorPanel.nav.toSign", { count: 3 })).first()).toBeAttached()
 
     await page.getByRole("navigation", { name: t("instructorPanel.nav.label") }).first().getByRole("link", { name: t("instructorPanel.nav.contracts") }).click()
-    await expect(page).toHaveURL(/\/tr\/instructor\/contracts$/)
+    await expect(page).toHaveURL(/localhost:3100\/instructor\/contracts$/)
     for (const w of [P2.wA, P2.wB, P2.wD]) await expect(page.locator("main").getByText(w.title.tr).first()).toBeVisible()
     await expect(page.locator("main").getByText(t("instructorPanel.contracts.state.toSign"), { exact: true })).toHaveCount(3)
     await context.close()
@@ -110,7 +110,7 @@ test.describe.serial("phase 2 · instructor panel", () => {
     const page = await context.newPage()
     const contract = await liveContract(P2.wA.slug)
     const mark = mailMark()
-    await page.goto(`/tr/instructor/contracts/${contract.id}`)
+    await page.goto(`/instructor/contracts/${contract.id}`)
     await expect(page.getByRole("heading", { level: 1 })).toContainText(P2.wA.title.tr)
     // The contract text, with her own private details (it is her contract) and the fee.
     const main = page.locator("main")
@@ -152,7 +152,7 @@ test.describe.serial("phase 2 · instructor panel", () => {
     await expect.poll(() => emailsSince(mark).filter((e) => [e.to].flat().includes("owner@lart.test")).length).toBeGreaterThanOrEqual(1)
 
     // Signed: the notice, the signature line, no form; the contracts list says "Signed".
-    await page.goto(`/tr/instructor/contracts/${contract.id}`)
+    await page.goto(`/instructor/contracts/${contract.id}`)
     await expect(page.locator("main").getByText(t("instructorPanel.contract.signedNotice.title"))).toBeVisible()
     await expect(page.getByRole("button", { name: t("instructorPanel.sign.submit"), exact: true })).toHaveCount(0)
     // Signing again through the action is refused (the form is gone; the page says signed).
@@ -168,7 +168,7 @@ test.describe.serial("phase 2 · instructor panel", () => {
     }
     const rows = await sql<{ status: string }>("select status from courses where slug = any($1)", [[P2.wB.slug, P2.wD.slug]])
     expect(rows.map((r) => r.status)).toEqual(["published", "published"])
-    await page.goto("/tr/instructor")
+    await page.goto("/instructor")
     await expect(page.getByRole("link", { name: tr("tr")("instructorPanel.home.toSign.button") })).toHaveCount(0)
     await context.close()
   })
@@ -177,18 +177,18 @@ test.describe.serial("phase 2 · instructor panel", () => {
     const t = tr("tr")
     const context = await personContext(browser, "nur")
     const page = await context.newPage()
-    await page.goto("/tr/instructor/workshops")
+    await page.goto("/instructor/workshops")
     await expect(page.getByRole("heading", { level: 1, name: t("instructorPanel.workshops.title") })).toBeVisible()
     for (const w of [P2.wA, P2.wB, P2.wD]) await expect(page.getByRole("link", { name: new RegExp(w.title.tr) }).first()).toBeVisible()
     await expect(page.locator("main").getByText(P2.wC.title.tr)).toHaveCount(0)
 
     const a = await courseId(P2.wA.slug)
-    await page.goto(`/tr/instructor/workshops/${a}`)
+    await page.goto(`/instructor/workshops/${a}`)
     await expect(page.getByRole("heading", { level: 1 })).toContainText(P2.wA.title.tr)
     await expect(page.locator("main")).toContainText(t("instructorPanel.workshop.places", { count: 0, max: 2 }))
     await expect(page.locator("main").getByText(t("instructorPanel.workshop.people.none"))).toBeVisible()
 
-    await page.goto("/tr/instructor/earnings")
+    await page.goto("/instructor/earnings")
     await expect(page.getByRole("heading", { level: 1, name: t("instructorPanel.earnings.title") })).toBeVisible()
     for (const w of [P2.wA, P2.wB, P2.wD]) await expect(page.locator("main")).toContainText(w.title.tr)
     await expect(page.locator("main")).not.toContainText(P2.wC.title.tr)
@@ -200,7 +200,7 @@ test.describe.serial("phase 2 · instructor panel", () => {
     const context = await personContext(browser, "nur")
     const page = await context.newPage()
     const photo = await makePhoto("nur.jpg", 1200, 1600, 330)
-    await page.goto("/tr/instructor/profile")
+    await page.goto("/instructor/profile")
     await expect(page.getByRole("heading", { level: 1, name: t("instructorPanel.profile.title") })).toBeVisible()
     // Private details are shown read-only, the ID number masked.
     await expect(page.locator("main")).toContainText(P2.nur.officialName)
@@ -231,7 +231,7 @@ test.describe.serial("phase 2 · instructor panel", () => {
   test("language switch: the panel and her emails follow it", async ({ browser }) => {
     const context = await personContext(browser, "nur")
     const page = await context.newPage()
-    await page.goto("/tr/instructor/profile")
+    await page.goto("/instructor/profile")
     await page.getByRole("button", { name: tr("tr")("common.language") }).click()
     await page.getByRole("menuitemradio", { name: "English" }).click()
     await expect(page).toHaveURL(/\/en\/instructor\/profile$/)
@@ -240,7 +240,7 @@ test.describe.serial("phase 2 · instructor panel", () => {
     // And back to Turkish (the later specs read her Turkish pages).
     await page.getByRole("button", { name: tr("en")("common.language") }).click()
     await page.getByRole("menuitemradio", { name: "Türkçe" }).click()
-    await expect(page).toHaveURL(/\/tr\/instructor\/profile$/)
+    await expect(page).toHaveURL(/localhost:3100\/instructor\/profile$/)
     await expect.poll(async () => (await one<{ locale: string }>("select locale from instructors where email = $1", [P2.nur.email])).locale).toBe("tr")
     await context.close()
   })

@@ -1,6 +1,6 @@
 {
   "header": {
-    "home": "{brand}: all workshops",
+    "home": "{brand}: home page",
     "nav": "Main",
     "workshops": "Workshops",
     "logIn": "Log in",
@@ -9,6 +9,13 @@
     "myWorkshops": "My workshops",
     "language": "Language",
     "logOut": "Log out"
+  },
+  "home": {
+    "metaDescription": "Art and craft workshops at {brand}: see what’s coming up and save your place.",
+    "tagline": "Make something beautiful with your own hands. Choose a workshop and save your place.",
+    "cta": "See all workshops",
+    "upcomingTitle": "Coming up",
+    "allWorkshops": "All workshops"
   },
   "verifyBanner": {
     "label": "Confirm your email",

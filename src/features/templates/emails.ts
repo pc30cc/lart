@@ -6,6 +6,8 @@ import { defaultEmailTexts, type EmailLocale, type EmailTexts } from "@/emails"
 import { emailTemplateNames, emailTextFields, type EmailTemplate, type EmailTextField } from "@/emails/names"
 import { accountEmailSamples } from "@/emails/samples"
 import { emailPlaceholders, type EmailProps } from "@/emails/templates"
+import { mainLocale } from "@/i18n/links"
+import { localePath } from "@/i18n/paths"
 import { requireAdmin } from "@/lib/auth/admin"
 import { formatDate, formatDateTime, formatTimeRange, zonedParts, zonedToIso } from "@/lib/format"
 import { formatLira } from "@/lib/money"
@@ -69,7 +71,9 @@ export async function sampleEmailProps<T extends EmailTemplate>(template: T, loc
   const workshopTitle = t("preview.sample.workshopTitle")
   const date = formatDate(startsAt, locale, "full")
   const time = formatTimeRange(startsAt, endsAt, locale)
-  const workshopUrl = `/${locale}`
+  const main = await mainLocale()
+  const href = (path: string) => localePath(locale, path, main)
+  const workshopUrl = href("/workshops")
   const venue = t("preview.sample.venue")
   const amount = formatLira(150_000, locale)
   const account = accountEmailSamples({
@@ -82,28 +86,29 @@ export async function sampleEmailProps<T extends EmailTemplate>(template: T, loc
     time,
     amount,
     halfAmount: formatLira(75_000, locale),
+    href,
   })
   const samples: { [K in EmailTemplate]: EmailProps<K> } = {
-    welcome_verify: { name: person, verifyUrl: `/${locale}` },
-    instructor_invite: { name: instructorName, acceptUrl: `/${locale}` },
+    welcome_verify: { name: person, verifyUrl: href("/") },
+    instructor_invite: { name: instructorName, acceptUrl: href("/") },
     instructor_signup: {
       adminName,
       instructorName,
       teachingField: t("emails.sample.teachingField"),
       instructorEmail: "instructor@example.com",
-      instructorUrl: `/${locale}/admin/instructors`,
+      instructorUrl: href("/admin/instructors"),
     },
-    instructor_approved: { name: instructorName, panelUrl: `/${locale}/instructor` },
-    partner_invite: { name: person, inviterName: adminName, acceptUrl: `/${locale}/admin` },
-    contract_ready: { instructorName, workshopTitle, workshopDate: `${date}${locale === "fa" ? "،" : ","} ${time}`, signUrl: `/${locale}` },
-    contract_signed: { adminName, instructorName, workshopTitle, workshopUrl: `/${locale}/admin` },
+    instructor_approved: { name: instructorName, panelUrl: href("/instructor") },
+    partner_invite: { name: person, inviterName: adminName, acceptUrl: href("/admin") },
+    contract_ready: { instructorName, workshopTitle, workshopDate: `${date}${locale === "fa" ? "،" : ","} ${time}`, signUrl: href("/") },
+    contract_signed: { adminName, instructorName, workshopTitle, workshopUrl: href("/admin") },
     decision_due: {
       adminName,
       workshopTitle,
       registrations: 5,
       minimum: 4,
       decisionAt: formatDateTime(new Date(startsAt.getTime() - 3 * DAY), locale, "long"),
-      workshopUrl: `/${locale}/admin`,
+      workshopUrl: href("/admin"),
     },
     registration_confirmed: { name: person, workshopTitle, date, time, venue, amount, workshopUrl },
     // Not paid yet: shows the payment part too (the bundled texts leave it out once everything is paid).
@@ -122,7 +127,7 @@ export async function sampleEmailProps<T extends EmailTemplate>(template: T, loc
       paymentUrl: account.registration_received.paymentUrl,
     },
     workshop_cancelled: { name: person, workshopTitle, refundAmount: amount, workshopsUrl: workshopUrl },
-    password_reset: { name: person, resetUrl: `/${locale}` },
+    password_reset: { name: person, resetUrl: href("/") },
     ...account,
   }
   return samples[template]

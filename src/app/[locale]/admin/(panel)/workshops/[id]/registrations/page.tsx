@@ -15,6 +15,7 @@ import { listWorkshopRegistrations, registrationSummary, type AdminRegistrationR
 import { paymentMethods, registrationTable, registrationViews, type PaymentMethod } from "@/features/registrations/admin/schema"
 import { getWorkshop } from "@/features/workshops/queries"
 import { isCancelled } from "@/features/workshops/schema"
+import { localeHref } from "@/i18n/links"
 import { requireAdmin } from "@/lib/auth/admin"
 import { formatDate, formatNumber, localized } from "@/lib/format"
 import { getSetting } from "@/lib/settings"
@@ -56,6 +57,7 @@ export default async function WorkshopRegistrationsPage({
     getLocale(),
   ])
   if (!workshop) notFound()
+  const exportHref = await localeHref(locale, `/admin/workshops/${workshop.id}/registrations/export`)
 
   const n = (v: number) => formatNumber(v, locale)
   // A cancelled workshop's registrations are all cancelled; closed books can't change.
@@ -207,7 +209,7 @@ export default async function WorkshopRegistrationsPage({
         actions={
           summary.active + summary.cancelled > 0 ? (
             <Button asChild variant="outline" size="lg" className="px-4">
-              <a href={`/${locale}/admin/workshops/${workshop.id}/registrations/export`} download>
+              <a href={exportHref} download>
                 <DownloadIcon />
                 {t("export")}
               </a>

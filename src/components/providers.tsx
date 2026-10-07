@@ -6,7 +6,8 @@ import { useEffect } from "react"
 
 import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { isRtl } from "@/i18n/routing"
+import { MainLocaleProvider } from "@/i18n/main-locale-context"
+import { isRtl, type AppLocale } from "@/i18n/routing"
 
 /** Light / dark / system theme, stored per browser. Wraps the whole document (root layout). */
 export function ThemeProvider({ nonce, children }: { nonce?: string; children: React.ReactNode }) {
@@ -18,11 +19,20 @@ export function ThemeProvider({ nonce, children }: { nonce?: string; children: R
 }
 
 /**
- * Everything that depends on the language: text direction for Radix
- * primitives, tooltips and toasts. Also keeps <html lang dir> in sync after a
- * client-side language switch (the root layout is not re-rendered then).
+ * Everything that depends on the language: the main language for links
+ * (`@/i18n/navigation`), text direction for Radix primitives, tooltips and
+ * toasts. Also keeps <html lang dir> in sync after a client-side language
+ * switch (the root layout is not re-rendered then).
  */
-export function LocaleProviders({ locale, children }: { locale: string; children: React.ReactNode }) {
+export function LocaleProviders({
+  locale,
+  mainLocale,
+  children,
+}: {
+  locale: string
+  mainLocale: AppLocale
+  children: React.ReactNode
+}) {
   const dir = isRtl(locale) ? "rtl" : "ltr"
 
   useEffect(() => {
@@ -31,11 +41,13 @@ export function LocaleProviders({ locale, children }: { locale: string; children
   }, [locale, dir])
 
   return (
-    <Direction.Provider dir={dir}>
-      <TooltipProvider delayDuration={300}>
-        {children}
-        <Toaster dir={dir} position={dir === "rtl" ? "bottom-left" : "bottom-right"} className="toaster group font-sans!" />
-      </TooltipProvider>
-    </Direction.Provider>
+    <MainLocaleProvider value={mainLocale}>
+      <Direction.Provider dir={dir}>
+        <TooltipProvider delayDuration={300}>
+          {children}
+          <Toaster dir={dir} position={dir === "rtl" ? "bottom-left" : "bottom-right"} className="toaster group font-sans!" />
+        </TooltipProvider>
+      </Direction.Provider>
+    </MainLocaleProvider>
   )
 }

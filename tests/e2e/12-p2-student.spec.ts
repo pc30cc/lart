@@ -1,6 +1,6 @@
 import type { BrowserContext, Page } from "@playwright/test"
 
-import { expect, mailMark, RUN, settle, test, toast } from "./helpers/app"
+import { at, expect, mailMark, RUN, settle, test, toast } from "./helpers/app"
 import { one, sql } from "./helpers/db"
 import { anonContext, courseId, lead, linksOf, mailTo, P2, PASSWORD, personContext, saveSession, tr, waitMail, type Member } from "./helpers/p2"
 
@@ -22,24 +22,24 @@ async function signUpAndVerify(context: BrowserContext, who: Member, locale: Loc
   const t = tr(locale)
   const page = await context.newPage()
   const mark = mailMark()
-  await page.goto(`/${locale}/account/signup`)
+  await page.goto(at(locale, "/account/signup"))
   await page.getByLabel(t("account.signup.name")).fill(who.name)
   await page.getByLabel(t("account.form.email")).fill(who.email)
   await page.getByLabel(t("account.form.password"), { exact: true }).fill(PASSWORD)
   if (who.phone) await page.getByLabel(new RegExp(`^${escape(t("account.signup.phone"))}`)).fill(who.phone)
   await page.getByRole("button", { name: t("account.signup.submit") }).click()
-  await expect(page).toHaveURL(new RegExp(`/${locale}/workshops`))
+  await expect(page).toHaveURL(new RegExp(`localhost:3100${at(locale, "/workshops")}`))
   await expect(toast(page, t("site.notices.checkEmail"))).toBeVisible()
   await expect(page.getByRole("region", { name: t("site.verifyBanner.label") })).toBeVisible()
 
   // The first email to a new address is the welcome email with the confirmation link.
   const email = await waitMail(who.email, mark, /./)
   const link = linksOf(email).find((l) => l.includes("/account/verify?token="))
-  expect(link, linksOf(email).join(" ")).toMatch(new RegExp(`^http://localhost:3100/${locale}/account/verify\\?token=[\\w-]{20,}$`))
+  expect(link, linksOf(email).join(" ")).toMatch(new RegExp(`^http://localhost:3100${at(locale, "/account/verify")}\\?token=[\\w-]{20,}$`))
   await page.goto(link!.replace("http://localhost:3100", ""))
   await expect(page.locator("main").getByText(t("account.verify.doneTitle"))).toBeVisible()
   await page.getByRole("link", { name: t("account.verify.continue") }).click()
-  await expect(page).toHaveURL(new RegExp(`/${locale}/workshops$`))
+  await expect(page).toHaveURL(new RegExp(`localhost:3100${at(locale, "/workshops")}$`))
   await expect(page.getByRole("region", { name: t("site.verifyBanner.label") })).toHaveCount(0)
   const row = await one<{ email_verified_at: Date | null; locale: string }>("select email_verified_at, locale from members where email = $1", [who.email])
   expect(row.email_verified_at).not.toBeNull()
@@ -50,7 +50,7 @@ async function signUpAndVerify(context: BrowserContext, who: Member, locale: Loc
 /** Register on a workshop's register page; returns the new registration's id. */
 async function register(page: Page, locale: Locale, slug: string, participant?: string, consent: { photo?: boolean; video?: boolean } = {}) {
   const t = tr(locale)
-  await page.goto(`/${locale}/workshops/${slug}/register`)
+  await page.goto(at(locale, `/workshops/${slug}/register`))
   if (participant !== undefined) await page.getByLabel(t("registration.register.participant")).fill(participant)
   await page.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).click()
   if (consent.photo) await page.getByRole("checkbox", { name: t("registration.register.consent.photo") }).click()
@@ -66,15 +66,15 @@ test.describe.serial("phase 2 · students", () => {
     const context = await anonContext(browser)
     const page = await context.newPage()
     // The header offers "Log in / Sign up", coming back to this page.
-    await page.goto("/tr/workshops")
+    await page.goto("/workshops")
     const login = page.getByRole("link", { name: t("site.header.logInOrSignUp") })
-    await expect(login).toHaveAttribute("href", /\/tr\/account\/login\?next=%2Ftr%2Fworkshops$/)
+    await expect(login).toHaveAttribute("href", /^\/account\/login\?next=%2Fworkshops$/)
     await login.click()
-    await expect(page).toHaveURL(/\/tr\/account\/login\?next=/)
+    await expect(page).toHaveURL(/localhost:3100\/account\/login\?next=/)
     // The first click can be lost (see the standalone test below); a second one goes through.
     await page.getByRole("link", { name: t("account.login.signUp") }).click()
-    await page.waitForURL(/\/tr\/account\/signup/, { timeout: 3_000 }).catch(() => page.getByRole("link", { name: t("account.login.signUp") }).click())
-    await expect(page).toHaveURL(/\/tr\/account\/signup/)
+    await page.waitForURL(/localhost:3100\/account\/signup/, { timeout: 3_000 }).catch(() => page.getByRole("link", { name: t("account.login.signUp") }).click())
+    await expect(page).toHaveURL(/localhost:3100\/account\/signup/)
     // Empty form: the friendly messages, nothing sent.
     await page.getByRole("button", { name: t("account.signup.submit") }).click()
     await expect(page.getByRole("alert").first()).toBeVisible()
@@ -97,12 +97,12 @@ test.describe.serial("phase 2 · students", () => {
     const context = await anonContext(browser)
     const page = await context.newPage()
     const mark = mailMark()
-    await page.goto("/tr/account/signup")
+    await page.goto("/account/signup")
     await page.getByLabel(t("account.signup.name")).fill("Someone Else")
     await page.getByLabel(t("account.form.email")).fill(P2.ayla.email.toUpperCase())
     await page.getByLabel(t("account.form.password"), { exact: true }).fill("Another-Password-123")
     await page.getByRole("button", { name: t("account.signup.submit") }).click()
-    await expect(page).toHaveURL(/\/tr\/workshops/)
+    await expect(page).toHaveURL(/localhost:3100\/workshops/)
     await expect(toast(page, t("site.notices.checkEmail"))).toBeVisible()
     // Not signed in: no banner, the header still offers to log in.
     await expect(page.getByRole("region", { name: t("site.verifyBanner.label") })).toHaveCount(0)
@@ -124,7 +124,7 @@ test.describe.serial("phase 2 · students", () => {
     const t = tr("tr")
     const context = await anonContext(browser)
     const page = await context.newPage()
-    const res = await page.goto("/tr/workshops")
+    const res = await page.goto("/workshops")
     expect(res?.status()).toBe(200)
     expect(res?.headers()["x-robots-tag"] ?? "").not.toContain("noindex")
     await expect(page.getByRole("heading", { level: 1, name: t("registration.list.title") })).toBeVisible()
@@ -132,11 +132,11 @@ test.describe.serial("phase 2 · students", () => {
     const card = page.locator("a, article, li").filter({ hasText: P2.wA.title.tr }).last()
     await expect(page.locator("main")).toContainText(t("registration.seats.left", { count: 2 }))
     await expect(page).toHaveTitle(new RegExp(escape(t("registration.list.metaTitle"))))
-    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "http://localhost:3100/tr/workshops")
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "http://localhost:3100/workshops")
     void card
 
     await page.getByRole("link", { name: new RegExp(escape(P2.wA.title.tr)) }).first().click()
-    await expect(page).toHaveURL(new RegExp(`/tr/workshops/${P2.wA.slug}$`))
+    await expect(page).toHaveURL(new RegExp(`localhost:3100/workshops/${P2.wA.slug}$`))
     await expect(page.getByRole("heading", { level: 1, name: P2.wA.title.tr })).toBeVisible()
     await expect(page.locator("main")).toContainText(P2.wA.venue.tr)
     await expect(page.locator("main")).toContainText(P2.nur.displayName.tr)
@@ -146,11 +146,11 @@ test.describe.serial("phase 2 · students", () => {
     // SEO: title, description, canonical, hreflang, Open Graph.
     await expect(page).toHaveTitle(new RegExp(escape(P2.wA.title.tr)))
     await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", /Seramik tabak boyuyoruz/)
-    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `http://localhost:3100/tr/workshops/${P2.wA.slug}`)
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", `http://localhost:3100/workshops/${P2.wA.slug}`)
     for (const l of ["fa", "tr", "en"]) {
-      await expect(page.locator(`link[rel="alternate"][hreflang="${l}"]`)).toHaveAttribute("href", `http://localhost:3100/${l}/workshops/${P2.wA.slug}`)
+      await expect(page.locator(`link[rel="alternate"][hreflang="${l}"]`)).toHaveAttribute("href", `http://localhost:3100${at(l, `/workshops/${P2.wA.slug}`)}`)
     }
-    await expect(page.locator('link[rel="alternate"][hreflang="x-default"]')).toHaveAttribute("href", new RegExp(`/workshops/${P2.wA.slug}$`))
+    await expect(page.locator('link[rel="alternate"][hreflang="x-default"]')).toHaveAttribute("href", `http://localhost:3100/workshops/${P2.wA.slug}`)
     await expect(page.locator('meta[property="og:title"]')).toHaveAttribute("content", P2.wA.title.tr)
     await expect(page.locator('meta[property="og:locale"]')).toHaveAttribute("content", "tr_TR")
     for (const robots of await page.locator('meta[name="robots"]').all()) expect(await robots.getAttribute("content")).not.toContain("noindex")
@@ -170,7 +170,7 @@ test.describe.serial("phase 2 · students", () => {
     expect(Date.parse(ld.startDate)).toBeGreaterThan(Date.now())
 
     // Nothing private of the instructor reaches the public page (HTML and the RSC payload in it).
-    const body = await (await page.request.get(`/tr/workshops/${P2.wA.slug}`)).text()
+    const body = await (await page.request.get(`/workshops/${P2.wA.slug}`)).text()
     for (const secret of [P2.nur.officialName, P2.nur.idNumber, P2.nur.email, "+905331112233", P2.nur.mobile]) {
       expect(body.includes(secret), `public page contains ${secret}`).toBe(false)
     }
@@ -188,12 +188,12 @@ test.describe.serial("phase 2 · students", () => {
     const t = tr("tr")
     const context = await anonContext(browser)
     const page = await context.newPage()
-    await page.goto(`/tr/workshops/${P2.wA.slug}`)
+    await page.goto(`/workshops/${P2.wA.slug}`)
     await page.getByRole("link", { name: t("registration.workshop.register") }).click()
     await expect(page.locator("main").getByText(t("registration.register.signIn.title"))).toBeVisible()
     await expect(page.getByRole("link", { name: t("registration.register.signIn.logIn") })).toHaveAttribute(
       "href",
-      `/tr/account/login?next=${encodeURIComponent(`/tr/workshops/${P2.wA.slug}/register`)}`,
+      `/account/login?next=${encodeURIComponent(`/workshops/${P2.wA.slug}/register`)}`,
     )
     await context.close()
   })
@@ -203,9 +203,9 @@ test.describe.serial("phase 2 · students", () => {
     const context = await personContext(browser, "ayla", { permissions: ["clipboard-read", "clipboard-write"] })
     const page = await context.newPage()
     const mark = mailMark()
-    await page.goto(`/tr/workshops/${P2.wA.slug}`)
+    await page.goto(`/workshops/${P2.wA.slug}`)
     await page.getByRole("link", { name: t("registration.workshop.register") }).click()
-    await expect(page).toHaveURL(new RegExp(`/tr/workshops/${P2.wA.slug}/register$`))
+    await expect(page).toHaveURL(new RegExp(`localhost:3100/workshops/${P2.wA.slug}/register$`))
     await expect(page.getByRole("heading", { level: 1, name: t("registration.register.title") })).toBeVisible()
     // The terms in full, the member's name to start with, and the ways to pay that are on.
     await expect(page.getByLabel(t("registration.register.participant"))).toHaveValue(P2.ayla.name)
@@ -222,7 +222,7 @@ test.describe.serial("phase 2 · students", () => {
     await page.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).click()
     await page.getByRole("checkbox", { name: t("registration.register.consent.photo") }).click()
     await submit.click()
-    await expect(page).toHaveURL(/\/tr\/account\/registrations\/[0-9a-f-]{36}\?welcome=1$/)
+    await expect(page).toHaveURL(/localhost:3100\/account\/registrations\/[0-9a-f-]{36}\?welcome=1$/)
     const id = /registrations\/([0-9a-f-]{36})/.exec(page.url())![1]
     await expect(page.locator("main").getByText(t("registration.detail.welcomeTitle"))).toBeVisible()
 
@@ -267,13 +267,13 @@ test.describe.serial("phase 2 · students", () => {
     expect(email.html).not.toMatch(/\{[a-zA-Z]+\}/)
 
     // My workshops: the card, not paid yet, "How to pay" folded away.
-    await page.goto("/tr/account")
+    await page.goto("/account")
     const cardA = page.locator("article").filter({ hasText: P2.wA.title.tr })
     await expect(cardA).toContainText(t("registration.status.unpaid"))
     await cardA.getByRole("button", { name: t("registration.item.howToPay") }).click()
     await expect(cardA).toContainText(IBAN_GROUPED)
     // The workshop page now says "You are registered".
-    await page.goto(`/tr/workshops/${P2.wA.slug}`)
+    await page.goto(`/workshops/${P2.wA.slug}`)
     await expect(page.locator("main").getByText(t("registration.workshop.registered.title"))).toBeVisible()
     await expect(page.locator("aside")).toContainText(t("registration.status.unpaid"))
     await context.close()
@@ -360,7 +360,7 @@ test.describe.serial("phase 2 · students", () => {
     const a = await ayla.newPage()
     await register(a, "tr", P2.wB.slug, undefined, { photo: true, video: true })
     // "Register someone else": the same person twice is refused, with her name.
-    await a.goto(`/tr/workshops/${P2.wB.slug}`)
+    await a.goto(`/workshops/${P2.wB.slug}`)
     await expect(a.locator("main").getByText(tr("tr")("registration.workshop.registered.title"))).toBeVisible()
     await a.getByRole("link", { name: tr("tr")("registration.workshop.registered.another") }).click()
     await expect(a.getByLabel(tr("tr")("registration.register.participant"))).toHaveValue("")
@@ -396,7 +396,7 @@ test.describe.serial("phase 2 · students", () => {
     const t = tr("tr")
     const context = await personContext(browser, "ayla")
     const page = await context.newPage()
-    await page.goto("/tr/account")
+    await page.goto("/account")
     await settle(page)
     await expect(page.getByRole("heading", { level: 1, name: t("registration.account.title") })).toBeVisible()
     for (const w of [P2.wA, P2.wB, P2.wD]) await expect(page.locator("article").filter({ hasText: w.title.tr }).first()).toBeVisible()
@@ -410,7 +410,7 @@ test.describe.serial("phase 2 · students", () => {
       [P2.ayla.email, a],
     )
     await page.locator("article").filter({ hasText: P2.wA.title.tr }).getByRole("link", { name: t("registration.item.details") }).click()
-    await expect(page).toHaveURL(new RegExp(`/tr/account/registrations/${id}$`))
+    await expect(page).toHaveURL(new RegExp(`localhost:3100/account/registrations/${id}$`))
     await expect(page.locator("main")).toContainText(t("registration.detail.photoYes"))
     await expect(page.locator("main")).toContainText(t("registration.detail.videoNo"))
     await expect(page.locator("main")).toContainText(lead("tr", "registration.detail.termsAccepted"))
@@ -426,11 +426,11 @@ test("sign-in pages: the first click on a link under the form is not lost", asyn
   const context = await anonContext(browser)
   const page = await context.newPage()
   for (const [from, link, target] of [
-    ["/tr/account/login", t("account.login.signUp"), /\/tr\/account\/signup/],
-    ["/tr/account/login", t("account.login.forgot"), /\/tr\/account\/forgot/],
+    ["/account/login", t("account.login.signUp"), /localhost:3100\/account\/signup/],
+    ["/account/login", t("account.login.forgot"), /localhost:3100\/account\/forgot/],
     ["/en/account/signup", en("account.signup.logIn"), /\/en\/account\/login/],
-    ["/tr/account/forgot", t("account.forgot.back"), /\/tr\/account\/login/],
-    ["/tr/instructor/login", t("account.login.forgot"), /\/tr\/instructor\/forgot/],
+    ["/account/forgot", t("account.forgot.back"), /localhost:3100\/account\/login/],
+    ["/instructor/login", t("account.login.forgot"), /localhost:3100\/instructor\/forgot/],
   ] as const) {
     await page.goto(from)
     await page.locator("main").getByRole("link", { name: link, exact: true }).click()

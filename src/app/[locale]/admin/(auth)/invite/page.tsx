@@ -6,11 +6,12 @@ import { getTranslations } from "next-intl/server"
 import { Button } from "@/components/ui/button"
 import { partnerInviteDetails } from "@/features/partners/invites"
 import { PARTNER_INVITE_TTL_MS } from "@/features/partners/schema"
+import { localeHref } from "@/i18n/links"
 import { Link } from "@/i18n/navigation"
 import { getAdmin } from "@/lib/auth/admin"
 import { PASSWORD_MIN_LENGTH } from "@/lib/auth/schemas"
 import { getBrand } from "@/lib/settings"
-import { AuthShell } from "../login/auth-shell"
+import { AuthShell } from "../auth-shell"
 import { AcceptForm } from "./accept-form"
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -26,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
  * A link that no longer works takes someone signed in straight to the panel
  * (most likely the new partner opening the email's link again).
  */
-export default async function AcceptPartnerInvitePage({ params, searchParams }: PageProps<"/[locale]/admin/accept-invite">) {
+export default async function AcceptPartnerInvitePage({ params, searchParams }: PageProps<"/[locale]/admin/invite">) {
   const { locale } = await params
   const query = await searchParams
   const token = typeof query.token === "string" ? query.token : ""
@@ -37,7 +38,7 @@ export default async function AcceptPartnerInvitePage({ params, searchParams }: 
   ])
 
   if (!invite) {
-    if (await getAdmin()) redirect(`/${locale}/admin`)
+    if (await getAdmin()) redirect(await localeHref(locale, "/admin"))
     return (
       <AuthShell brand={brand} title={t("invalidTitle")} subtitle={t("invalid", { days: PARTNER_INVITE_TTL_MS / 86_400_000 })}>
         <Button asChild size="lg" className="h-10 w-full px-4">

@@ -6,6 +6,8 @@ import { after } from "next/server"
 import { getLocale, getTranslations } from "next-intl/server"
 import { z } from "zod"
 
+import { localeHref, mainLocale } from "@/i18n/links"
+import { localeRedirect } from "@/i18n/redirect"
 import { adminAction, runAction, UserError, type ActionResult } from "@/lib/action"
 import { audit } from "@/lib/audit"
 import { errorForLog } from "@/lib/errors"
@@ -14,6 +16,7 @@ import { getAdmin } from "./admin"
 import { LOCKOUT, normalizeEmail, verifyCredentials } from "./login"
 import { createRateLimiter, loginRateLimiter, rateLimitClient } from "./rate-limit"
 import { clientIp } from "./request"
+import { safeNext } from "./safe-next"
 import {
   changePasswordSchema,
   forgotPasswordSchema,
@@ -29,12 +32,6 @@ const loginSchema = z.object({
   password: z.string().min(1).max(PASSWORD_MAX_LENGTH),
   next: z.string().max(300).optional(),
 })
-
-/** Only paths inside the admin panel of a known locale; anything else falls back to the dashboard. */
-function safeNext(next: string | undefined, locale: string): string {
-  if (next && /^\/(fa|tr|en)\/admin(\/[\w-]+)*$/.test(next) && !/\/admin\/login(\/|$)/.test(next)) return next
-  return `/${locale}/admin`
-}
 
 /** Super-admin sign-in (`useActionState`). One generic message for every failure. */
 export async function adminLoginAction(_prev: LoginState, form: FormData): Promise<LoginState> {
@@ -67,7 +64,8 @@ export async function adminLoginAction(_prev: LoginState, form: FormData): Promi
 
   await startSession("admin", result.id)
   await audit({ adminId: result.id, action: "auth.login", entity: "admin", entityId: result.id })
-  redirect(safeNext(parsed.data.next, await getLocale()))
+  // Only a page of the admin panel; anything else goes to the dashboard.
+  redirect(safeNext(parsed.data.next, "admin", await localeHref(await getLocale(), "/admin"), await mainLocale()))
 }
 
 /** Sign out: deletes the session row and cookie, then goes to the login page. */
@@ -77,7 +75,7 @@ export async function adminLogoutAction(): Promise<void> {
   if (session) {
     await audit({ adminId: session.admin.id, action: "auth.logout", entity: "admin", entityId: session.admin.id })
   }
-  redirect(`/${await getLocale()}/admin/login`)
+  await localeRedirect("/admin/login")
 }
 
 // ─── Password change and reset ────────────────────────────────────────────────
@@ -134,6 +132,6 @@ export async function resetAdminPasswordAction(
       throw new UserError("auth.reset.errors.rateLimited")
     }
     if (!(await resetAdminPassword(token, next))) throw new UserError("auth.reset.errors.invalidLink")
-    redirect(`/${await getLocale()}/admin/login?reset=done`)
+    await localeRedirect("/admin/login?reset=done")
   })
 }

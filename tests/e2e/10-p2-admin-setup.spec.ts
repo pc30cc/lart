@@ -1,4 +1,4 @@
-import { expect, field, fillLocalized, mailMark, RUN, test, toast } from "./helpers/app"
+import { at, expect, field, fillLocalized, mailMark, RUN, test, toast } from "./helpers/app"
 import { one, sql } from "./helpers/db"
 import { CATEGORY, createWorkshop, fillInstructor, linksOf, mailTo, P2, waitMail } from "./helpers/p2"
 
@@ -102,8 +102,8 @@ test.describe.serial("phase 2 · admin set-up", () => {
       await page.getByRole("button", { name: "Add and send invitation" }).click()
       await expect(toast(page, "Instructor added. We’ve emailed them their invitation.")).toBeVisible()
       const email = await waitMail(p.email, mark, /./)
-      const link = linksOf(email).find((l) => l.includes("/instructor/accept-invite?token="))
-      expect(link, `invite link in ${linksOf(email).join(" ")}`).toMatch(new RegExp(`^http://localhost:3100/${locale}/instructor/accept-invite\\?token=[\\w-]{20,}$`))
+      const link = linksOf(email).find((l) => l.includes("/instructor/invite?token="))
+      expect(link, `invite link in ${linksOf(email).join(" ")}`).toMatch(new RegExp(`^http://localhost:3100${at(locale, "/instructor/invite")}\\?token=[\\w-]{20,}$`))
       const row = await one<{ password_hash: string | null; locale: string }>("select password_hash, locale from instructors where email = $1", [p.email])
       expect(row.password_hash).toBeNull()
       // Checked outside the serial flow (the last test of this file), so a failure doesn't stop the specs that build on it.
@@ -147,7 +147,7 @@ test.describe.serial("phase 2 · admin set-up", () => {
     await expect(page.locator("main")).toContainText(P2.wA.paymentUrl)
     // The contract email went to Nur, in Turkish, with a link to the panel.
     const email = await waitMail(P2.nur.email, mark, /./)
-    expect(linksOf(email).join(" ")).toMatch(/\/tr\/instructor\/contracts\/[0-9a-f-]{36}/)
+    expect(linksOf(email).join(" ")).toMatch(/localhost:3100\/instructor\/contracts\/[0-9a-f-]{36}/)
   })
 
   test("workshops B, C and D", async ({ page }) => {

@@ -4,6 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 
 import { db } from "@/db"
 import { admins, auditLog, settings } from "@/db/schema"
+import { getMainLocale, resetMainLocaleCache } from "@/i18n/main-locale"
 import { decrypt, encrypt } from "@/lib/crypto"
 import { getSetting, settingSchemas, type SettingValue } from "@/lib/settings"
 import { getStorage } from "@/lib/storage"
@@ -30,6 +31,8 @@ vi.mock("next-intl/server", async () => {
   }
 })
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn(), refresh: vi.fn() }))
+// The real main-language cache (test/setup.ts mocks it for every other file).
+vi.unmock("@/i18n/main-locale")
 const storage = vi.hoisted(() => ({
   testStorage: vi.fn<(config: unknown) => Promise<{ ok: true }>>(async () => ({ ok: true })),
   remove: vi.fn<(path: string) => Promise<void>>(async () => {}),
@@ -69,6 +72,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await db.delete(settings).where(inArray(settings.key, [...KEYS]))
+  resetMainLocaleCache()
 })
 
 beforeEach(() => {
@@ -251,6 +255,16 @@ describe("general settings", () => {
 
     expect(await saveGeneralSettings(input)).toEqual({ ok: true, data: { changed: [] } })
     expect(await auditsOf("brand")).toHaveLength(1)
+  })
+
+  it("switches the addresses' main language at once in the process that saved it", async () => {
+    await db.delete(settings).where(eq(settings.key, "defaultLocale"))
+    resetMainLocaleCache()
+    expect(await getMainLocale()).toBe("tr")
+    expect(await saveGeneralSettings({ ...input, defaultLocale: "en" })).toEqual({ ok: true, data: { changed: ["defaultLocale"] } })
+    // Changed behind the cache's back: the saved value is served without reading the database again.
+    await db.update(settings).set({ value: "fa" }).where(eq(settings.key, "defaultLocale"))
+    expect(await getMainLocale()).toBe("en")
   })
 
   it("needs the brand name in all three languages and a known theme and language", async () => {

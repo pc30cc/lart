@@ -6,11 +6,11 @@ import { getLocale } from "next-intl/server"
 
 import { db, type Tx } from "@/db"
 import { contracts, courses, emailTokens, instructors, sessions, type LocalizedText } from "@/db/schema"
+import { absoluteLocaleUrl } from "@/i18n/links"
 import { adminAction, UserError } from "@/lib/action"
 import { changes } from "@/lib/audit"
 import { decrypt, encrypt, randomToken, sha256 } from "@/lib/crypto"
 import { sendEmail } from "@/lib/email"
-import { env } from "@/lib/env"
 import { errorForLog, PG, pgError } from "@/lib/errors"
 import { remove } from "@/lib/storage"
 import { sendInstructorApproved } from "./notify"
@@ -76,7 +76,7 @@ async function issueInvite(tx: Tx, instructorId: string): Promise<string> {
 
 /** Email the invitation link. Returns false when the email could not be sent (already logged). */
 async function sendInvite(to: string, displayName: LocalizedText, locale: InviteLocale, token: string) {
-  const acceptUrl = new URL(`/${locale}/instructor/accept-invite?token=${encodeURIComponent(token)}`, env.APP_URL).href
+  const acceptUrl = await absoluteLocaleUrl(locale, `/instructor/invite?token=${encodeURIComponent(token)}`)
   const result = await sendEmail({
     to,
     template: "instructor_invite",
