@@ -113,3 +113,59 @@ export const watermarkSettingsSchema = z.object({
 })
 
 export type WatermarkSettingsValues = z.input<typeof watermarkSettingsSchema>
+
+// ─── Email ───────────────────────────────────────────────────────────────────
+
+/** Resend (API) or any SMTP server: our own mail server, or a service such as Brevo. */
+export const emailProviders = ["resend", "smtp"] as const
+export type EmailProvider = (typeof emailProviders)[number]
+
+/** starttls: port 587 (the usual one); tls: port 465; none: only a relay on the same server. */
+export const smtpSecurities = ["starttls", "tls", "none"] as const
+export type SmtpSecurity = (typeof smtpSecurities)[number]
+export const smtpDefaultPorts = { starttls: 587, tls: 465, none: 25 } as const satisfies Record<SmtpSecurity, number>
+
+const address = z.string().trim().toLowerCase().max(254)
+const isEmail = (v: string) => z.email().safeParse(v).success
+/** A host name (also a container name on the server's network) or an IPv4 address. */
+const SMTP_HOST = /^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/
+
+export const emailSettingsSchema = z
+  .object({
+    provider: z.enum(emailProviders),
+    fromAddress: address.min(1).refine(isEmail, { error: "common.validation.email" }),
+    replyTo: address.refine((v) => v === "" || isEmail(v), { error: "common.validation.email" }),
+    /** Empty means "keep the saved key". */
+    resendKey: z
+      .string()
+      .trim()
+      .max(256)
+      .refine((v) => v === "" || /^re_[A-Za-z0-9_]{8,}$/.test(v), { error: "settings.email.errors.resendKey" }),
+    smtpHost: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .refine((v) => v === "" || SMTP_HOST.test(v), { error: "settings.email.errors.host" }),
+    smtpPort: z.number().int().min(1).max(65535),
+    smtpSecurity: z.enum(smtpSecurities),
+    smtpUser: z.string().trim().max(254),
+    /** Empty means "keep the saved password". */
+    smtpPassword: z.string().max(256),
+  })
+  .refine((v) => v.provider !== "smtp" || v.smtpHost !== "", {
+    path: ["smtpHost"],
+    error: "common.validation.required",
+  })
+
+export type EmailSettingsInput = z.input<typeof emailSettingsSchema>
+
+/** What the email page knows about the saved setting: no key or password, only whether they are saved. */
+export type EmailView = {
+  provider: EmailProvider | "env"
+  fromAddress: string
+  replyTo: string
+  smtp: { host: string; port: number; security: SmtpSecurity; user: string }
+  saved: { resendKey: boolean; smtpPassword: boolean }
+  /** The server has RESEND_API_KEY / EMAIL_FROM (used when the page has none of its own). */
+  server: { resendKey: boolean; fromAddress: string }
+}

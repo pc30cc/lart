@@ -5,6 +5,7 @@
     "label": "Ayar bölümleri",
     "general": "Genel",
     "payments": "Ödemeler",
+    "email": "E-posta",
     "storage": "Depolama",
     "watermark": "Filigran"
   },
@@ -30,6 +31,72 @@
     "themeHint": "Yeni temalar eklendikçe burada görünür.",
     "themes": {
       "default": "Varsayılan"
+    }
+  },
+  "email": {
+    "providerTitle": "E-postalar nasıl gönderilsin",
+    "providerDescription": "Hoş geldin, doğrulama, davet, sözleşme ve kayıt e-postalarının hepsi bu yolla gider.",
+    "provider": "Gönderim yolu",
+    "providers": {
+      "resend": {
+        "title": "Resend",
+        "hint": "Bir e-posta servisi; gelen kutusuna ulaşmanın en kolay yolu."
+      },
+      "smtp": {
+        "title": "SMTP sunucusu",
+        "hint": "Kendi posta sunucunuz ya da Brevo, Gmail gibi bir servis."
+      }
+    },
+    "serverNote": "Bu sayfada henüz bir şey kaydedilmedi; varsa sunucudaki anahtar (RESEND_API_KEY) kullanılıyor. Buradan kaydettiğinizde bu ayar geçerli olur.",
+    "senderTitle": "Gönderen",
+    "senderDescription": "Gönderen adı olarak her zaman marka adı görünür.",
+    "resendTitle": "Resend",
+    "resendDescription": "Resend’de alan adınızı ekleyip doğrulayın (SPF ve DKIM için DNS kayıtları verir), sonra “Sending access” yetkili bir API anahtarı oluşturun.",
+    "smtpTitle": "SMTP sunucusu",
+    "smtpDescription": "Posta sunucunuzun ya da e-posta servisinizin bilgileri.",
+    "smtpNote": "E-postaların gelen kutusuna düşmesi için alan adında bu sunucuya ait SPF, DKIM ve DMARC kayıtları, sunucunun IP adresinde de uyumlu bir ters DNS (PTR) adı olmalı.",
+    "fields": {
+      "fromAddress": "Gönderen adresi",
+      "replyTo": "Yanıt adresi",
+      "resendKey": "API anahtarı",
+      "smtpHost": "Sunucu",
+      "smtpPort": "Port",
+      "smtpSecurity": "Şifreleme",
+      "smtpUser": "Kullanıcı adı",
+      "smtpPassword": "Şifre"
+    },
+    "hints": {
+      "fromAddress": "Servisinizde doğrulanmış bir alan adında adres, örn. hello@limer.tr.",
+      "replyTo": "İsteğe bağlı. Yanıtların gideceği adres; boşsa gönderen adresi.",
+      "resendKey": "re_ ile başlar. Şifrelenerek saklanır ve bir daha gösterilmez.",
+      "resendKeyServer": "İsteğe bağlı: sunucuda zaten bir anahtar var (RESEND_API_KEY). Başkasını kullanmak için buraya girin.",
+      "smtpHost": "Örn. smtp.example.com ya da bu sunucudaki posta konteynerinin adı.",
+      "smtpUser": "Genelde e-posta adresinin tamamı. Giriş istemeyen bir sunucu için boş bırakın."
+    },
+    "security": {
+      "starttls": "STARTTLS (port 587)",
+      "tls": "SSL/TLS (port 465)",
+      "none": "Yok (port 25, yalnızca aynı sunucu)"
+    },
+    "keySaved": "Kayıtlı (gizli)",
+    "replaceKey": "Değiştir",
+    "keepSaved": "Kayıtlı olanı koru",
+    "keyPlaceholderReplace": "Yeni değer",
+    "test": {
+      "action": "{email} adresine deneme e-postası gönder",
+      "running": "Gönderiliyor…",
+      "sent": "Deneme e-postası {email} adresine gönderildi. Gelen kutusunu (ve spam klasörünü) kontrol edin.",
+      "failed": "Deneme e-postası gönderilemedi: {error}"
+    },
+    "testEmail": {
+      "subject": "{brand}: deneme e-postası",
+      "text": "Merhaba! {brand} deneme e-postası {provider} ile gönderildi. Bunu okuyabiliyorsanız e-postalar çalışıyor."
+    },
+    "errors": {
+      "resendKey": "Resend API anahtarı re_ ile başlar.",
+      "host": "smtp.example.com gibi bir sunucu adı girin.",
+      "keyRequired": "API anahtarını girin.",
+      "passwordRequired": "Şifreyi girin."
     }
   },
   "storage": {

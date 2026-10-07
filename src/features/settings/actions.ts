@@ -1,15 +1,18 @@
 "use server"
 
 import { refresh } from "next/cache"
+import { getTranslations } from "next-intl/server"
 
 import { db } from "@/db"
-import { adminAction } from "@/lib/action"
+import { adminAction, UserError } from "@/lib/action"
 import { changes } from "@/lib/audit"
+import { deliver, emailConfig, sender } from "@/lib/email"
 import { errorForLog } from "@/lib/errors"
-import { getSetting, setSetting, type SettingKey, type SettingValue } from "@/lib/settings"
+import { getBrand, getSetting, setSetting, type SettingKey, type SettingValue } from "@/lib/settings"
 import { remove, testStorage } from "@/lib/storage"
 import { buildCdnConfig, cdnView } from "./cdn"
-import { cdnSettingsSchema, generalSettingsSchema, watermarkSettingsSchema } from "./schema"
+import { buildEmailSetting, emailView } from "./email"
+import { cdnSettingsSchema, emailSettingsSchema, generalSettingsSchema, watermarkSettingsSchema } from "./schema"
 
 /** Every change of a setting is one audit entry: "setting.update" with the setting's key as id. */
 const settingAudit = (key: SettingKey, data: Record<string, unknown>) =>
@@ -78,4 +81,57 @@ export const saveWatermarkSettings = adminAction(watermarkSettingsSchema, async 
   }
   refresh()
   return { changed: true }
+})
+
+/**
+ * How emails are sent: Resend or an SMTP server, the sender and reply-to
+ * addresses. A new key or password is encrypted; an empty one keeps the saved
+ * one. The audit entry names the secrets that were replaced, never their values.
+ */
+export const saveEmailSettings = adminAction(emailSettingsSchema, async (input, ctx) => {
+  const current = await getSetting("email")
+  const { setting, replaced } = buildEmailSetting(input, current)
+  const before = emailView(current)
+  const after = emailView(setting)
+  const plain = (v: typeof before) => ({ provider: v.provider, fromAddress: v.fromAddress, replyTo: v.replyTo, smtp: v.smtp })
+  const diff = changes(plain(before), plain(after))
+  if (Object.keys(diff).length === 0 && replaced.length === 0 && before.saved.smtpPassword === after.saved.smtpPassword) {
+    return { saved: before.saved }
+  }
+
+  await db.transaction(async (tx) => {
+    await setSetting("email", setting, tx)
+    await ctx.audit(settingAudit("email", { ...diff, ...(replaced.length ? { keysReplaced: replaced } : {}) }), tx)
+  })
+  return { saved: after.saved }
+})
+
+/**
+ * "Send a test email" with the values in the form (not saved yet), to the
+ * signed-in admin's own address. The provider's answer is shown to the admin
+ * when it fails (wrong password, unknown host, domain not verified...).
+ */
+export const testEmailSettings = adminAction(emailSettingsSchema, async (input, ctx) => {
+  const { setting } = buildEmailSetting(input, await getSetting("email"))
+  const config = emailConfig(setting)
+  if (!config.transport) throw new UserError("settings.email.errors.keyRequired", { field: "resendKey" })
+  const locale = await getSetting("defaultLocale")
+  const [t, brand] = await Promise.all([getTranslations({ locale, namespace: "settings.email.testEmail" }), getBrand(locale)])
+  const from = sender(config.fromAddress, brand)
+  if (!from) throw new UserError("common.validation.email", { field: "fromAddress" })
+
+  const text = t("text", { brand, provider: config.transport.kind === "smtp" ? "SMTP" : "Resend" })
+  const result = await deliver(config.transport, {
+    from,
+    to: ctx.admin.email,
+    subject: t("subject", { brand }),
+    text,
+    html: `<p style="font-family:sans-serif;font-size:15px">${text.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`)}</p>`,
+    ...(config.replyTo ? { replyTo: config.replyTo } : {}),
+  })
+  if (!result.ok) {
+    console.warn("[settings] test email failed", result.error)
+    throw new UserError("settings.email.test.failed", { values: { error: result.error.slice(0, 300) } })
+  }
+  return { to: ctx.admin.email }
 })

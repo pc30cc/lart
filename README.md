@@ -412,7 +412,10 @@ enough), not to individuals.
 
 ## 9. Emails
 
-- Sent with **Resend**.
+- Sent with **Resend** or any **SMTP server** (our own mail server or a
+  service such as Brevo): chosen in **Settings → Email**, with the sender
+  address and a "Send a test email" button. Keys and passwords are stored
+  encrypted.
 - **Beautiful branded templates** (React Email): logo, brand colours, clean
   layout, readable on phones and in dark mode.
 - In each person's own language (the student's or instructor's language,

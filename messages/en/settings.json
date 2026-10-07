@@ -5,6 +5,7 @@
     "label": "Settings sections",
     "general": "General",
     "payments": "Payments",
+    "email": "Email",
     "storage": "Storage",
     "watermark": "Watermark"
   },
@@ -30,6 +31,72 @@
     "themeHint": "New themes will appear here as they are added.",
     "themes": {
       "default": "Default"
+    }
+  },
+  "email": {
+    "providerTitle": "How emails are sent",
+    "providerDescription": "Welcome, verification, invitation, contract and registration emails all go out this way.",
+    "provider": "Send with",
+    "providers": {
+      "resend": {
+        "title": "Resend",
+        "hint": "An email service; the easiest way to land in the inbox."
+      },
+      "smtp": {
+        "title": "SMTP server",
+        "hint": "Your own mail server, or a service such as Brevo or Gmail."
+      }
+    },
+    "serverNote": "Nothing is saved on this page yet, so the key set on the server (RESEND_API_KEY) is used, if there is one. Saving here takes over.",
+    "senderTitle": "Sender",
+    "senderDescription": "The name shown as the sender is always the brand name.",
+    "resendTitle": "Resend",
+    "resendDescription": "In Resend, add and verify your domain (it gives you DNS records for SPF and DKIM), then create an API key with “Sending access”.",
+    "smtpTitle": "SMTP server",
+    "smtpDescription": "The details from your mail server or email service.",
+    "smtpNote": "For emails to land in the inbox, the domain needs SPF, DKIM and DMARC records for this server, and the server’s IP address a matching reverse DNS (PTR) name.",
+    "fields": {
+      "fromAddress": "Sender address",
+      "replyTo": "Reply-to address",
+      "resendKey": "API key",
+      "smtpHost": "Server",
+      "smtpPort": "Port",
+      "smtpSecurity": "Encryption",
+      "smtpUser": "User name",
+      "smtpPassword": "Password"
+    },
+    "hints": {
+      "fromAddress": "An address on a domain verified with your provider, e.g. hello@limer.tr.",
+      "replyTo": "Optional. Where replies go; empty means the sender address.",
+      "resendKey": "Starts with re_. It is stored encrypted and never shown again.",
+      "resendKeyServer": "Optional: the server already has a key (RESEND_API_KEY). Enter one here to use another.",
+      "smtpHost": "e.g. smtp.example.com, or the name of a mail container on this server.",
+      "smtpUser": "Usually the full email address. Leave empty for a server that needs no sign-in."
+    },
+    "security": {
+      "starttls": "STARTTLS (port 587)",
+      "tls": "SSL/TLS (port 465)",
+      "none": "None (port 25, same server only)"
+    },
+    "keySaved": "Saved (hidden)",
+    "replaceKey": "Replace",
+    "keepSaved": "Keep the saved one",
+    "keyPlaceholderReplace": "New value",
+    "test": {
+      "action": "Send a test email to {email}",
+      "running": "Sending…",
+      "sent": "Test email sent to {email}. Check the inbox (and the spam folder).",
+      "failed": "The test email couldn’t be sent: {error}"
+    },
+    "testEmail": {
+      "subject": "{brand}: test email",
+      "text": "Hello! This test email from {brand} was sent with {provider}. If you can read it, emails work."
+    },
+    "errors": {
+      "resendKey": "A Resend API key starts with re_.",
+      "host": "Enter a server name like smtp.example.com.",
+      "keyRequired": "Enter the API key.",
+      "passwordRequired": "Enter the password."
     }
   },
   "storage": {

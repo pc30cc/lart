@@ -4,7 +4,8 @@ import { requireAdmin } from "@/lib/auth/admin"
 import { getSetting } from "@/lib/settings"
 import { privateUrl } from "@/lib/storage/shared"
 import { cdnView } from "./cdn"
-import type { CdnView } from "./schema"
+import { emailView } from "./email"
+import type { CdnView, EmailView } from "./schema"
 
 /** Brand, default language, SEO defaults and theme. */
 export async function getGeneralSettings() {
@@ -29,4 +30,10 @@ export async function getWatermarkSettings() {
   await requireAdmin()
   const watermark = await getSetting("watermark")
   return { ...watermark, logoUrl: watermark.logoPath ? privateUrl(watermark.logoPath) : null }
+}
+
+/** The email setting without any key or password (see `emailView`). */
+export async function getEmailSettings(): Promise<EmailView> {
+  await requireAdmin()
+  return emailView(await getSetting("email"))
 }

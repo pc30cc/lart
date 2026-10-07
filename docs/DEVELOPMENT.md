@@ -318,6 +318,17 @@ await sendEmail({ to, template: "contract_ready", props: { … }, locale }) // n
   if one cannot be used, the email goes out with the bundled texts and the
   problem is logged. `checkEmailText` checks a text (braces, unknown
   placeholders) before it is saved.
+- **How they are sent** is the `email` setting (Settings → Email,
+  `features/settings/email.ts`): **Resend** (API key) or **SMTP** (our own
+  mail server, a mail container on the server's network, or a service such
+  as Brevo), the sender address (the display name is always the brand) and
+  an optional reply-to. Both providers' values are kept, so switching back
+  loses nothing; the key and password are stored encrypted and never sent to
+  the browser. "Send a test email" sends the form's values (not saved) to the
+  signed-in admin. While nothing is saved there (`provider: "env"`), the
+  server's `RESEND_API_KEY` / `EMAIL_FROM` are used, as before. `emailConfig()`
+  resolves the setting, `deliver()` sends one message (`lib/email`). The
+  idempotency key only exists with Resend.
 
 ### List pages: `PageHeader` + `DataTable`
 

@@ -296,7 +296,7 @@ describe("registerForWorkshop", () => {
 
     // Someone cancels after the decision: their place can be taken again, still 2 in all.
     await cancelMyRegistration(member.id, first)
-    expect((await listOpenWorkshops("en")).find((w) => w.id === course.id)).toMatchObject({ seatsLeft: 1, window: "open" })
+    expect(await getPublicWorkshop(course.slug, "en")).toMatchObject({ seatsLeft: 1, window: "open" })
     await registerForWorkshop(other.id, await input(course.id))
     expect(await seatsTaken(course.id)).toBe(2)
     await rejectsWith(registerForWorkshop((await newMember()).id, await input(course.id)), "registration.errors.full")

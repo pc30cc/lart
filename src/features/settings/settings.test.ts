@@ -6,9 +6,16 @@ import { db } from "@/db"
 import { admins, auditLog, settings } from "@/db/schema"
 import { decrypt } from "@/lib/crypto"
 import { settingSchemas, type SettingValue } from "@/lib/settings"
-import { saveGeneralSettings, saveStorageSettings, saveWatermarkSettings, testStorageSettings } from "./actions"
-import { getGeneralSettings, getStorageSettings, getWatermarkSettings } from "./queries"
-import { watermarkRange, watermarkSettingsSchema } from "./schema"
+import {
+  saveEmailSettings,
+  saveGeneralSettings,
+  saveStorageSettings,
+  saveWatermarkSettings,
+  testEmailSettings,
+  testStorageSettings,
+} from "./actions"
+import { getEmailSettings, getGeneralSettings, getStorageSettings, getWatermarkSettings } from "./queries"
+import { type EmailSettingsInput, watermarkRange, watermarkSettingsSchema } from "./schema"
 
 vi.mock("next-intl/server", async () => {
   const { createTranslator } = await import("next-intl")
@@ -27,6 +34,8 @@ const storage = vi.hoisted(() => ({
   remove: vi.fn<(path: string, zone?: string) => Promise<void>>(async () => {}),
 }))
 vi.mock("@/lib/storage", () => storage)
+const mail = vi.hoisted(() => ({ deliver: vi.fn() }))
+vi.mock("@/lib/email", async (importOriginal) => ({ ...(await importOriginal<typeof import("@/lib/email")>()), deliver: mail.deliver }))
 
 const session = vi.hoisted(() => ({
   sessionId: "test",
@@ -34,7 +43,7 @@ const session = vi.hoisted(() => ({
 }))
 vi.mock("@/lib/auth/admin", () => ({ requireAdmin: async () => session, getAdmin: async () => session }))
 
-const KEYS = ["brand", "defaultLocale", "seo", "theme", "cdn", "watermark"] as const
+const KEYS = ["brand", "defaultLocale", "seo", "theme", "cdn", "watermark", "email"] as const
 const run = randomUUID().slice(0, 8)
 let startedAt: Date
 
@@ -62,6 +71,7 @@ afterAll(async () => {
 })
 
 beforeEach(() => {
+  mail.deliver.mockReset()
   storage.testStorage.mockClear()
   storage.remove.mockClear()
 })
@@ -256,5 +266,96 @@ describe("watermark settings", () => {
         expect(stored.safeParse(candidate).success).toBe(ok)
       }
     }
+  })
+})
+
+describe("email settings", () => {
+  const RESEND_KEY = `re_${randomUUID().replaceAll("-", "")}`
+  const SMTP_PASSWORD = `pw-${randomUUID()}`
+  const resend: EmailSettingsInput = {
+    provider: "resend",
+    fromAddress: " Hello@Limer.tr ",
+    replyTo: "",
+    resendKey: RESEND_KEY,
+    smtpHost: "",
+    smtpPort: 587,
+    smtpSecurity: "starttls",
+    smtpUser: "",
+    smtpPassword: "",
+  }
+  const smtp: EmailSettingsInput = {
+    ...resend,
+    provider: "smtp",
+    resendKey: "",
+    smtpHost: "Mail.Limer.tr",
+    smtpUser: "hello@limer.tr",
+    smtpPassword: SMTP_PASSWORD,
+  }
+
+  it("stores the key and password encrypted, never sends them back, and never audits them", async () => {
+    expect(await saveEmailSettings(resend)).toEqual({ ok: true, data: { saved: { resendKey: true, smtpPassword: false } } })
+    expect(await saveEmailSettings(smtp)).toEqual({ ok: true, data: { saved: { resendKey: true, smtpPassword: true } } })
+    const value = (await stored("email"))!
+    expect(value).toMatchObject({ provider: "smtp", fromAddress: "hello@limer.tr", smtp: { host: "mail.limer.tr", user: "hello@limer.tr" } })
+    expect(decrypt(value.resendKeyEnc)).toBe(RESEND_KEY)
+    expect(decrypt(value.smtp.passwordEnc)).toBe(SMTP_PASSWORD)
+
+    const view = JSON.stringify(await getEmailSettings())
+    const audits = JSON.stringify(await auditsOf("email"))
+    for (const text of [view, audits]) {
+      expect(text).not.toContain(RESEND_KEY)
+      expect(text).not.toContain(SMTP_PASSWORD)
+      expect(text).not.toContain(value.resendKeyEnc)
+    }
+    expect(audits).toContain("keysReplaced")
+  })
+
+  it("keeps a saved key or password when its field is left empty, and switching back loses nothing", async () => {
+    const tls = { ...smtp, smtpPassword: "", smtpPort: 465, smtpSecurity: "tls" as const }
+    await saveEmailSettings(tls)
+    // The form always sends both providers' fields, so switching keeps the other's.
+    await saveEmailSettings({ ...tls, provider: "resend" })
+    const value = (await stored("email"))!
+    expect(value.provider).toBe("resend")
+    expect(decrypt(value.resendKeyEnc)).toBe(RESEND_KEY)
+    expect(value.smtp).toMatchObject({ port: 465, security: "tls" })
+    expect(decrypt(value.smtp.passwordEnc)).toBe(SMTP_PASSWORD)
+  })
+
+  it("asks for what is missing in friendly words", async () => {
+    await db.delete(settings).where(eq(settings.key, "email"))
+    expect(await saveEmailSettings({ ...resend, resendKey: "" })).toMatchObject({ ok: false, fieldErrors: { resendKey: "Enter the API key." } })
+    expect(await saveEmailSettings({ ...smtp, smtpPassword: "" })).toMatchObject({ ok: false, fieldErrors: { smtpPassword: "Enter the password." } })
+    expect(await saveEmailSettings({ ...smtp, smtpHost: "" })).toMatchObject({ ok: false, fieldErrors: { smtpHost: expect.any(String) } })
+    expect(await saveEmailSettings({ ...resend, resendKey: "sk_live_123456789" })).toMatchObject({
+      ok: false,
+      fieldErrors: { resendKey: "A Resend API key starts with re_." },
+    })
+    expect(await saveEmailSettings({ ...resend, fromAddress: "not an address" })).toMatchObject({ ok: false })
+    expect(await stored("email")).toBeUndefined()
+  })
+
+  it("a server without sign-in needs no password", async () => {
+    expect(await saveEmailSettings({ ...smtp, smtpHost: "relay", smtpPort: 25, smtpSecurity: "none", smtpUser: "", smtpPassword: "" })).toMatchObject({
+      ok: true,
+    })
+    expect((await stored("email"))!.smtp).toMatchObject({ host: "relay", user: "", passwordEnc: "" })
+  })
+
+  it("sends a test email to the signed-in admin with the form's values, without saving them", async () => {
+    await saveEmailSettings(resend)
+    mail.deliver.mockResolvedValue({ ok: true, id: "t1" })
+    expect(await testEmailSettings({ ...smtp, smtpHost: "smtp.other.example" })).toEqual({ ok: true, data: { to: session.admin.email } })
+    const [transport, message] = mail.deliver.mock.calls[0]
+    expect(transport).toEqual({ kind: "smtp", host: "smtp.other.example", port: 587, security: "starttls", user: "hello@limer.tr", password: SMTP_PASSWORD })
+    expect(message).toMatchObject({ to: session.admin.email, from: expect.stringContaining("<hello@limer.tr>") })
+    expect((await stored("email"))!.provider).toBe("resend")
+
+    mail.deliver.mockResolvedValue({ ok: false, error: "SMTP: Invalid login: 535 Authentication failed" })
+    vi.spyOn(console, "warn").mockImplementation(() => {})
+    expect(await testEmailSettings(smtp)).toEqual({
+      ok: false,
+      error: "The test email couldn’t be sent: SMTP: Invalid login: 535 Authentication failed",
+    })
   })
 })

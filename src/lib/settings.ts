@@ -108,6 +108,29 @@ export const settingSchemas = {
     /** Pay online with the workshop's own payment link (courses.payment_url). */
     online: z.object({ enabled: z.boolean(), note: localized }),
   }),
+  /**
+   * How emails are sent: Resend (API) or any SMTP server (our own mail server,
+   * or a service such as Brevo). Both configurations are kept, so switching
+   * back and forth keeps what was entered. `env` (the default) means "use the
+   * server's RESEND_API_KEY / EMAIL_FROM", as before this setting existed.
+   * Keys and passwords are stored encrypted (lib/crypto).
+   */
+  email: z.object({
+    provider: z.enum(["env", "resend", "smtp"]),
+    /** The sender address; the display name is always the brand. Empty: EMAIL_FROM. */
+    fromAddress: z.string().max(254),
+    /** Where replies go. Empty: to the sender address. */
+    replyTo: z.string().max(254),
+    resendKeyEnc: z.string(),
+    smtp: z.object({
+      host: z.string().max(253),
+      port: z.number().int().min(1).max(65535),
+      /** tls: encrypted from the start (465); starttls: upgraded (587); none: only for a relay on the same server. */
+      security: z.enum(["tls", "starttls", "none"]),
+      user: z.string().max(254),
+      passwordEnc: z.string(),
+    }),
+  }),
 } as const
 
 export type SettingKey = keyof typeof settingSchemas
@@ -131,6 +154,13 @@ export const settingDefaults: { [K in SettingKey]: SettingValue<K> } = {
     cash: true,
     transfer: { enabled: false, accountHolder: "", bankName: "", iban: "", note: {} },
     online: { enabled: false, note: {} },
+  },
+  email: {
+    provider: "env",
+    fromAddress: "",
+    replyTo: "",
+    resendKeyEnc: "",
+    smtp: { host: "", port: 587, security: "starttls", user: "", passwordEnc: "" },
   },
 }
 

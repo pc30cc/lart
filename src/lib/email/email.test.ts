@@ -4,25 +4,29 @@ import { checkEmailText, type EmailLocale, renderEmail } from "@/emails"
 import { paymentWays } from "@/emails/payment"
 import { type EmailProps, type EmailTemplate, emailPlaceholders, emailTemplateNames } from "@/emails/templates"
 import { env } from "@/lib/env"
-import { getBrand } from "@/lib/settings"
+import { encrypt } from "@/lib/crypto"
+import { getBrand, settingDefaults, type SettingValue } from "@/lib/settings"
 import en from "../../../messages/en/emails.json"
 import siteEn from "../../../messages/en/site.json"
 import fa from "../../../messages/fa/emails.json"
 import siteFa from "../../../messages/fa/site.json"
 import tr from "../../../messages/tr/emails.json"
 import siteTr from "../../../messages/tr/site.json"
-import { sendEmail, sender } from "./index"
+import { emailConfig, sendEmail, sender } from "./index"
 
 const send = vi.hoisted(() => vi.fn())
 vi.mock("resend", () => ({ Resend: class { emails = { send } } }))
+const smtp = vi.hoisted(() => ({ createTransport: vi.fn(), sendMail: vi.fn() }))
+vi.mock("nodemailer", () => ({ default: { createTransport: smtp.createTransport } }))
 
 // The admin's email texts come from here, never from the shared test database (other files save some).
-const saved = vi.hoisted(() => ({ emailTexts: {} as Record<string, unknown> }))
+const saved = vi.hoisted(() => ({ emailTexts: {} as Record<string, unknown>, email: undefined as unknown }))
 vi.mock("@/lib/settings", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/settings")>()
   return {
     ...actual,
-    getSetting: async (key: string) => (key === "emailTexts" ? saved.emailTexts : actual.getSetting(key as never)),
+    getSetting: async (key: string) =>
+      key === "emailTexts" ? saved.emailTexts : key === "email" ? (saved.email ?? actual.settingDefaults.email) : actual.getSetting(key as never),
   }
 })
 
@@ -126,6 +130,9 @@ const flatKeys = (obj: object, prefix = ""): string[] =>
 
 afterEach(() => {
   saved.emailTexts = {}
+  saved.email = undefined
+  smtp.createTransport.mockReset()
+  smtp.sendMail.mockReset()
   vi.restoreAllMocks()
   send.mockReset()
   env.RESEND_API_KEY = undefined
@@ -448,7 +455,7 @@ describe("sendEmail", () => {
     const log = vi.spyOn(console, "info").mockImplementation(() => {})
     vi.spyOn(console, "error").mockImplementation(() => {})
     const result = await sendEmail({ to: "a@example.com", template: "password_reset", props: samples.password_reset })
-    expect(result).toEqual({ ok: false, error: "RESEND_API_KEY is not set" })
+    expect(result).toEqual({ ok: false, error: "no email provider (Settings → Email, or RESEND_API_KEY)" })
     expect(log).not.toHaveBeenCalled()
   })
 
@@ -494,7 +501,7 @@ describe("sendEmail", () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
     send.mockRejectedValue(new Error("fetch failed"))
     const result = await sendEmail({ to: "a@example.com", template: "password_reset", props: samples.password_reset })
-    expect(result).toEqual({ ok: false, error: "Error: fetch failed" })
+    expect(result).toEqual({ ok: false, error: "RESEND: fetch failed" })
   })
 
   it("returns an error for bad input without sending", async () => {
@@ -530,4 +537,68 @@ describe("sender", () => {
   it.each([undefined, "", "no address", "Name <not-an-email>"])("rejects %s", (from) =>
     expect(sender(from, "Lart")).toBeNull(),
   )
+})
+
+describe("email providers (Settings → Email)", () => {
+  const setting = (over: Partial<SettingValue<"email">> = {}): SettingValue<"email"> => ({ ...settingDefaults.email, ...over })
+
+  it("without the setting, uses the server's RESEND_API_KEY and EMAIL_FROM", () => {
+    expect(emailConfig(setting())).toEqual({ transport: null, fromAddress: "", replyTo: "" })
+    env.RESEND_API_KEY = "re_server"
+    env.EMAIL_FROM = "Limer <hello@limer.tr>"
+    expect(emailConfig(setting())).toEqual({
+      transport: { kind: "resend", apiKey: "re_server" },
+      fromAddress: "Limer <hello@limer.tr>",
+      replyTo: "",
+    })
+  })
+
+  it("Resend with its own key (stored encrypted) wins over the server's; the page's sender too", () => {
+    env.RESEND_API_KEY = "re_server"
+    env.EMAIL_FROM = "old@limer.tr"
+    const config = emailConfig(setting({ provider: "resend", resendKeyEnc: encrypt("re_own_key"), fromAddress: "hello@limer.tr" }))
+    expect(config).toMatchObject({ transport: { kind: "resend", apiKey: "re_own_key" }, fromAddress: "hello@limer.tr" })
+  })
+
+  it("sends through SMTP with the brand as sender name and the reply-to address", async () => {
+    smtp.createTransport.mockReturnValue({ sendMail: smtp.sendMail })
+    smtp.sendMail.mockResolvedValue({ messageId: "<m1@limer.tr>" })
+    saved.email = setting({
+      provider: "smtp",
+      fromAddress: "hello@limer.tr",
+      replyTo: "info@limer.tr",
+      smtp: { host: "mail.limer.tr", port: 587, security: "starttls", user: "hello@limer.tr", passwordEnc: encrypt("s3cret") },
+    })
+    const result = await sendEmail({ to: "a@example.com", template: "password_reset", props: samples.password_reset, locale: "en" })
+    expect(result).toEqual({ ok: true, id: "<m1@limer.tr>" })
+    expect(smtp.createTransport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        host: "mail.limer.tr",
+        port: 587,
+        secure: false,
+        requireTLS: true,
+        ignoreTLS: false,
+        auth: { user: "hello@limer.tr", pass: "s3cret" },
+      }),
+    )
+    const message = smtp.sendMail.mock.calls[0][0]
+    expect(message).toMatchObject({ to: "a@example.com", replyTo: "info@limer.tr" })
+    expect(message.from).toBe(`"${await getBrand("en")}" <hello@limer.tr>`)
+    expect(message.html).toContain("<html")
+    expect(send).not.toHaveBeenCalled()
+  })
+
+  it("an SMTP server without sign-in gets no credentials; a failure is reported, not thrown", async () => {
+    smtp.createTransport.mockReturnValue({ sendMail: smtp.sendMail })
+    smtp.sendMail.mockRejectedValue(new Error("connect ECONNREFUSED 10.0.0.5:25"))
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    saved.email = setting({
+      provider: "smtp",
+      fromAddress: "hello@limer.tr",
+      smtp: { host: "relay", port: 25, security: "none", user: "", passwordEnc: "" },
+    })
+    const result = await sendEmail({ to: "a@example.com", template: "password_reset", props: samples.password_reset })
+    expect(result).toEqual({ ok: false, error: "SMTP: connect ECONNREFUSED 10.0.0.5:25" })
+    expect(smtp.createTransport).toHaveBeenCalledWith(expect.objectContaining({ ignoreTLS: true, auth: undefined }))
+  })
 })

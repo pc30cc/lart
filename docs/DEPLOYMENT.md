@@ -9,14 +9,17 @@ it. Do every step marked **required**.
 - [ ] **Environment variables** in Coolify (never in the code): `DATABASE_URL`,
       `APP_URL` (https, no trailing slash), `ENCRYPTION_KEY` (32 bytes, base64:
       `openssl rand -base64 32`; keep a safe copy: without it encrypted ID
-      numbers and signed contracts cannot be read), `RESEND_API_KEY`,
-      `EMAIL_FROM`.
-- [ ] **Resend:** verify the sending domain (SPF / DKIM) before the first email.
-      **Required before inviting instructors:** an instructor can only get into
-      the panel through the invitation email (and later the contract emails),
-      and students need the "confirm your email" link to register. Without a
-      working `RESEND_API_KEY` nothing is sent in production (each email fails
-      and is logged).
+      numbers and signed contracts cannot be read). Optional:
+      `RESEND_API_KEY`, `EMAIL_FROM` (used only while Settings → Email is
+      not saved).
+- [ ] **Email:** in **Settings → Email** choose Resend (verify the sending
+      domain there: SPF / DKIM) or an SMTP server (SPF, DKIM, DMARC and a
+      matching reverse DNS for the server's IP), enter the sender address,
+      then **Send a test email**. **Required before inviting instructors:**
+      an instructor can only get into the panel through the invitation email
+      (or sign up on their own and confirm their email), and students need
+      the "confirm your email" link. Without a working provider nothing is
+      sent in production (each email fails and is logged).
 
 ## Right after each deploy
 
@@ -67,7 +70,8 @@ Moving on 2026-10-07 from `analyticsme.site` to the Coolify on **vps-50cc1602**
 - Environment variables, the `/app/.data` volume and the `pnpm jobs` task
   (every 15 minutes) are set in Coolify. `ENCRYPTION_KEY` is the one from the
   first install (checked equal by hash after the move): never change it.
-  `RESEND_API_KEY` is **not set yet**: until it is, no email is sent.
+  No email provider is set yet: until one is saved in Settings → Email (or
+  `RESEND_API_KEY` is set), no email is sent.
 - The database was moved with `pg_dump -Fc` / `pg_restore --no-owner`; the
   old server keeps its copy until the move is confirmed.
 - Done on the first deploy: migrations, `pnpm db:seed`, and
