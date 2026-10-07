@@ -4,6 +4,7 @@ import { useFormatter, useTranslations } from "next-intl"
 import { useCallback, useEffect, useRef, useState, type DragEvent } from "react"
 
 import {
+  folderName,
   isImagePurpose,
   MAX_MEGAPIXELS,
   maxUploadBytes,
@@ -11,6 +12,7 @@ import {
   type UploadErrorCode,
   type UploadPurpose,
   type UploadResult,
+  type UploadTarget,
   type VideoPartReceived,
 } from "@/lib/storage/shared"
 
@@ -46,6 +48,8 @@ type Options = {
   signal?: AbortSignal
   /** Where to send it; the admin route unless given. */
   endpoint?: UploadEndpoint
+  /** Whose folder it goes to (the admin route). */
+  target?: UploadTarget
 }
 type Answer = { status: number; body: unknown }
 
@@ -74,6 +78,16 @@ function send(
   })
 }
 
+/** The target as form fields; a folder name is sent already short and safe (the route takes 64 bytes per field). */
+function targetFields({ courseId, instructorId, folder }: UploadTarget = {}): Record<string, string> {
+  const fields: Record<string, string> = {}
+  if (courseId) fields.courseId = courseId
+  if (instructorId) fields.instructorId = instructorId
+  const name = folderName([folder], "")
+  if (name) fields.folder = name
+  return fields
+}
+
 const failure = ({ status, body }: Answer) =>
   new UploadFailure((body as { error?: ClientUploadError } | null)?.error ?? (status === 413 ? "too_large" : "server"))
 
@@ -96,7 +110,7 @@ const wait = (ms: number, signal?: AbortSignal) =>
  */
 export async function uploadFile(file: File, purpose: UploadPurpose, options: Options = {}): Promise<UploadResult> {
   if (isImagePurpose(purpose)) {
-    const answer = await send({ purpose }, file, file.name, options)
+    const answer = await send({ purpose, ...targetFields(options.target) }, file, file.name, options)
     if (answer.status === 201) return answer.body as UploadResult
     throw failure(answer)
   }
@@ -105,7 +119,7 @@ export async function uploadFile(file: File, purpose: UploadPurpose, options: Op
   let offset = 0
   for (let attempt = 0; ; ) {
     const part = file.slice(offset, offset + VIDEO_PART_BYTES)
-    const fields: Record<string, string> = { purpose, total: String(file.size) }
+    const fields: Record<string, string> = { purpose, ...targetFields(options.target), total: String(file.size) }
     if (upload) Object.assign(fields, { upload, offset: String(offset) })
     let answer: Answer
     try {
@@ -162,14 +176,24 @@ export type SingleUploadPhase =
   | { kind: "uploading"; file: File; preview: string; progress: number }
   | { kind: "error"; code: ClientUploadError; file?: File }
 
-/** One file at a time: progress, cancel, retry, and a local preview while it uploads. */
-export function useSingleUpload(purpose: UploadPurpose, onDone: (result: UploadResult) => void, endpoint?: UploadEndpoint) {
+/**
+ * One file at a time: progress, cancel, retry, and a local preview while it
+ * uploads. `target` is read when an upload starts (e.g. the slug typed so far).
+ */
+export function useSingleUpload(
+  purpose: UploadPurpose,
+  onDone: (result: UploadResult) => void,
+  endpoint?: UploadEndpoint,
+  target?: UploadTarget,
+) {
   const [phase, setPhase] = useState<SingleUploadPhase>({ kind: "idle" })
   const controller = useRef<AbortController | null>(null)
   const preview = useRef<string | null>(null)
   const done = useRef(onDone)
+  const targetRef = useRef(target)
   useEffect(() => {
     done.current = onDone
+    targetRef.current = target
   })
   useEffect(
     () => () => {
@@ -196,6 +220,7 @@ export function useSingleUpload(purpose: UploadPurpose, onDone: (result: UploadR
         const result = await uploadFile(file, purpose, {
           signal: own.signal,
           endpoint,
+          target: targetRef.current,
           onProgress: (progress) => setPhase((p) => (p.kind === "uploading" && p.file === file ? { ...p, progress } : p)),
         })
         if (controller.current !== own) return

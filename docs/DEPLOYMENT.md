@@ -37,6 +37,30 @@ it. Do every step marked **required**.
       first and refuses a wrong one. Safe to run again. Details:
       [DEVELOPMENT.md → Encrypting older signed contract texts](DEVELOPMENT.md#encrypting-older-signed-contract-texts-once).
 
+## Once, when deploying the single storage (October 2026)
+
+Until then uploads used two zones: a public one and a private one (gallery
+originals, the watermark logo, partners' photos). Now there is one.
+
+- [ ] Nothing to re-enter: the saved storage setting keeps working (its
+      private zone fields are ignored, and dropped at the next save of
+      Settings → storage).
+- [ ] The watermark logo and any partner photos uploaded before are still in
+      the **old private zone**, which the app no longer reads. Copy them to
+      the same paths in the storage zone (the logo's path is
+      `value->>'logoPath'` of the `watermark` row in `settings`, e.g.
+      `brand/2026-10/….png`; partners' photos are `admins/…`), or upload the
+      logo again (Settings → watermark) and the photos again (My profile).
+      Until then gallery photo uploads are refused ("the watermark logo
+      couldn't be loaded") and partners show their initials.
+- [ ] The unwatermarked gallery originals (`originals/…` in the private
+      zone) are no longer used: migration `0007_single_storage` drops their
+      paths. Download them first if you want to keep them, then delete the
+      private zone (Bunny) or bucket (R2).
+- [ ] The migration runs when the new container starts, while the old one
+      may still answer for a moment: a gallery or workshop save in that
+      moment can fail once; saving again works.
+
 ## Scheduled tasks (Coolify)
 
 - [ ] `pnpm jobs` every 15 minutes: go / no-go decision reminders to the
@@ -48,7 +72,17 @@ it. Do every step marked **required**.
 ## In the super-admin panel after the first login
 
 - [ ] Settings → brand name, default language, SEO.
-- [ ] Settings → storage: Bunny or Cloudflare, then "Test connection".
+- [ ] Settings → storage: **Bunny** (one storage zone with a pull zone
+      connected to it: zone name, its password from FTP & API Access, the
+      pull zone's hostname) or **Cloudflare** (one R2 bucket with a custom
+      domain, an R2 API token with read and write access to it), then "Test
+      connection". Everything goes into that one zone / bucket, in folders
+      per section (`workshops/…`, `instructors/…`, `partners/…`, `brand/…`).
+      A private zone or bucket created for the earlier setup is no longer
+      used: once the logo and partners' photos are copied out of it, it can
+      be deleted (see
+      [Once, when deploying the single storage](#once-when-deploying-the-single-storage-october-2026)
+      above).
 - [ ] Settings → watermark: upload the logo (gallery photos are refused until
       there is one).
 - [ ] Settings → payments: switch on the ways students may pay (cash at the

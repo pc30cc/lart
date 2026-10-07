@@ -2,7 +2,7 @@ import "server-only"
 
 import { requireAdmin } from "@/lib/auth/admin"
 import { getSetting } from "@/lib/settings"
-import { privateUrl } from "@/lib/storage/shared"
+import { publicUrls } from "@/lib/storage"
 import { cdnView } from "./cdn"
 import { emailView } from "./email"
 import type { CdnView, EmailView } from "./schema"
@@ -25,11 +25,11 @@ export async function getStorageSettings(): Promise<CdnView> {
   return cdnView(await getSetting("cdn"))
 }
 
-/** The watermark setting, with the admin-only URL of the logo. */
+/** The watermark setting, with the logo's URL (null when the storage setting cannot be used). */
 export async function getWatermarkSettings() {
   await requireAdmin()
-  const watermark = await getSetting("watermark")
-  return { ...watermark, logoUrl: watermark.logoPath ? privateUrl(watermark.logoPath) : null }
+  const [watermark, url] = await Promise.all([getSetting("watermark"), publicUrls()])
+  return { ...watermark, logoUrl: url(watermark.logoPath) }
 }
 
 /** The email setting without any key or password (see `emailView`). */

@@ -6,89 +6,70 @@ import os from "node:os"
 import path from "node:path"
 import { pipeline } from "node:stream/promises"
 
-import { processImage, processOriginal, type WatermarkSettings } from "@/lib/images"
+import { processImage, type WatermarkSettings } from "@/lib/images"
 import { newObjectPath, type Storage } from "./index"
 import {
-  isPrivatePurpose,
+  folderName,
   MAX_VIDEO_BYTES,
-  privateUrl,
   UploadError,
   type ImagePurpose,
+  type UploadPurpose,
   type UploadResult,
   type VideoPartReceived,
 } from "./shared"
 import { SNIFF_BYTES, sniffVideo, videoContentType } from "./sniff"
 
-const prefixes: Record<ImagePurpose, string> = {
-  instructor_photo: "instructors",
-  course_cover: "courses",
-  course_sample: "courses",
-  gallery_photo: "gallery",
-  watermark_logo: "brand",
-  admin_photo: "admins",
+/** Each purpose's folder and file name prefix; `name` is the workshop's or person's folder name. */
+const layouts: Record<UploadPurpose, (name: string) => [dir: string, prefix: string]> = {
+  course_cover: (name) => [`workshops/${name}`, "cover-"],
+  course_sample: (name) => [`workshops/${name}/samples`, ""],
+  gallery_photo: (name) => [`workshops/${name}/gallery`, ""],
+  gallery_video: (name) => [`workshops/${name}/videos`, ""],
+  instructor_photo: (name) => [`instructors/${name}`, "photo-"],
+  admin_photo: (name) => [`partners/${name}`, "photo-"],
+  watermark_logo: () => ["brand", "watermark-logo-"],
+}
+
+/**
+ * A new random path in the purpose's folder, e.g. `workshops/<slug>/cover-<random>.webp`
+ * or `partners/<name>/photo-<random>.webp`. `folder` is sanitized again here.
+ */
+export function uploadPath(purpose: UploadPurpose, folder: string | undefined, ext: string): string {
+  const [dir, prefix] = layouts[purpose](folderName([folder]))
+  return newObjectPath(dir, ext, prefix)
 }
 
 /**
  * Check, process and store one uploaded image (the byte limit is enforced by
- * the stream). Images are re-encoded; gallery photos keep a private
- * unwatermarked original; the watermark logo and partners' photos are private
- * (`isPrivatePurpose`).
+ * the stream). Images are re-encoded. A gallery photo is stored only
+ * watermarked (README §10): without a logo, or when it cannot be read,
+ * nothing is stored, and the original is never stored.
  */
 export async function storeImage({
   storage,
   purpose,
   file,
   watermark,
+  folder,
 }: {
   storage: Storage
   purpose: ImagePurpose
   file: ReadableStream<Uint8Array>
   watermark: WatermarkSettings
+  /** The workshop's or person's folder name (`folderName`); not used by the watermark logo. */
+  folder?: string
 }): Promise<UploadResult> {
   const input = Buffer.from(await new Response(file).arrayBuffer())
-  if (purpose === "gallery_photo") return storeGalleryPhoto(storage, input, watermark)
-
-  const image = await processImage(input, purpose)
-  const path = newObjectPath(prefixes[purpose], image.ext)
-  const size = { width: image.width, height: image.height }
-  if (isPrivatePurpose(purpose)) {
-    await storage.putPrivate(path, image.data, image.contentType)
-    return { path, url: privateUrl(path), ...size }
-  }
-  await storage.putPublic(path, image.data, image.contentType)
-  return { path, url: storage.publicUrl(path), ...size }
+  const mark = purpose === "gallery_photo" ? { settings: watermark, logo: await readLogo(storage, watermark.logoPath) } : null
+  const image = await processImage(input, purpose, mark)
+  const path = uploadPath(purpose, folder, image.ext)
+  await storage.put(path, image.data, image.contentType)
+  return { path, url: storage.publicUrl(path), width: image.width, height: image.height }
 }
 
-/**
- * Every gallery photo reaches the CDN watermarked (README §10): without a
- * logo, or when it cannot be read, nothing is stored.
- */
-async function storeGalleryPhoto(storage: Storage, input: Buffer, settings: WatermarkSettings): Promise<UploadResult> {
-  if (!settings.logoPath) throw new UploadError("watermark_missing")
-  const logo = await readLogo(storage, settings.logoPath)
-  const original = await processOriginal(input)
-  const photo = await processImage(input, "gallery_photo", { settings, logo })
-
-  const originalPath = newObjectPath("originals", original.ext)
-  const path = newObjectPath(prefixes.gallery_photo, photo.ext)
-  await storage.putPrivate(originalPath, original.data, original.contentType)
-  try {
-    await storage.putPublic(path, photo.data, photo.contentType)
-  } catch (error) {
-    await storage.remove(originalPath, "private").catch(() => {})
-    throw error
-  }
-  return {
-    path,
-    url: storage.publicUrl(path),
-    width: photo.width,
-    height: photo.height,
-    originalPath,
-  }
-}
-
-async function readLogo(storage: Storage, logoPath: string): Promise<Buffer> {
-  const file = await storage.readPrivate(logoPath).catch(() => null)
+async function readLogo(storage: Storage, logoPath: string | null): Promise<Buffer> {
+  if (!logoPath) throw new UploadError("watermark_missing")
+  const file = await storage.read(logoPath).catch(() => null)
   if (!file) throw new UploadError("watermark_unavailable")
   return Buffer.from(await new Response(file.body).arrayBuffer())
 }
@@ -160,6 +141,7 @@ export async function storeVideoPart({
   upload,
   offset = 0,
   total,
+  folder,
 }: {
   storage: Storage
   /** The admin id: an upload can only be continued by the admin who started it. */
@@ -168,6 +150,8 @@ export async function storeVideoPart({
   upload?: string
   offset?: number
   total?: number
+  /** The workshop's folder name (`folderName`), used when the last part arrives. */
+  folder?: string
 }): Promise<UploadResult | VideoPartReceived> {
   if ((upload ? !UPLOAD_ID.test(upload) : offset !== 0) || !/^[\w-]{1,64}$/.test(owner)) throw new UploadError("bad_request")
   if (total !== undefined && (total < 1 || offset >= total)) throw new UploadError("bad_request")
@@ -218,8 +202,8 @@ export async function storeVideoPart({
       const type = sniffVideo(await fileHead(temp))
       if (!type) throw new UploadError("unsupported_type")
       const contentType = videoContentType[type]
-      const storagePath = newObjectPath("gallery", type)
-      await storage.putPublic(storagePath, await openAsBlob(temp, { type: contentType }), contentType)
+      const storagePath = uploadPath("gallery_video", folder, type)
+      await storage.put(storagePath, await openAsBlob(temp, { type: contentType }), contentType)
       return { path: storagePath, url: storage.publicUrl(storagePath) }
     } finally {
       await rm(temp, { force: true })

@@ -101,7 +101,7 @@
   },
   "storage": {
     "providerTitle": "Dosyaların saklandığı yer",
-    "providerDescription": "Fotoğraflar ve videolar, hızlı açılmaları için bir CDN üzerinde dosya olarak saklanır. Orijinal fotoğraflar ve filigran logosu, dışarıdan açılamayan ayrı bir özel alanda durur.",
+    "providerDescription": "Fotoğraflar, videolar ve filigran logosu, hızlı açılmaları için bir CDN üzerinde dosya olarak saklanır. Her dosyanın kimsenin tahmin edemeyeceği bir adı olur.",
     "provider": "Depolama",
     "providers": {
       "local": {
@@ -120,33 +120,26 @@
     "switchWarning": "Daha önce yüklenen dosyalar şu anki yerlerinde kalır, taşınmaz. Bu ayarı dosya yüklemeden önce değiştirin ya da dosyaları kendiniz taşıyın.",
     "localNote": "Dosyalar bu sunucudaki .data klasöründe tutulur. Geliştirme için uygundur; ancak canlı site için Bunny’yi veya Cloudflare’ı seçin ki dosyalar hızlı olsun ve yeni bir yayına almada kaybolmasın.",
     "bunnyTitle": "Bunny Storage",
-    "bunnyDescription": "Bu bilgileri Bunny panelinde, Storage bölümünde bulabilirsiniz. Herkese açık dosyalar için bir storage zone, özel dosyalar için de pull zone bağlanmamış ayrı bir storage zone kullanın.",
+    "bunnyDescription": "Bu bilgileri Bunny panelinde, Storage bölümünde bulabilirsiniz: pull zone bağlı tek bir storage zone.",
     "cloudflareTitle": "Cloudflare R2",
-    "cloudflareDescription": "Bu bilgileri Cloudflare panelinde, R2 bölümünde bulabilirsiniz. Herkese açık dosyalar için bir bucket, özel dosyalar için de herkese açık erişimi olmayan ayrı bir bucket kullanın.",
-    "publicGroup": "Herkese açık dosyalar",
-    "publicGroupHint": "Sitede gösterilen fotoğraflar, videolar ve kapak görselleri.",
-    "privateGroup": "Özel dosyalar",
-    "privateGroupHint": "Galerideki orijinal fotoğraflar ve filigran logosu. Bunları yalnızca yöneticiler görebilir.",
+    "cloudflareDescription": "Bu bilgileri Cloudflare panelinde, R2 bölümünde bulabilirsiniz: özel alan adı bağlı tek bir bucket.",
     "fields": {
-      "storageHost": "Depolama adresi",
-      "publicZone": "Storage zone adı",
+      "storageHost": "Depolama uç noktası (bölgenin ana bölgesi)",
+      "publicZone": "Storage zone",
       "publicZoneKey": "Storage zone parolası",
       "publicHost": "CDN alan adı",
-      "privateZone": "Storage zone adı",
-      "privateZoneKey": "Storage zone parolası",
       "accountId": "Hesap kimliği (Account ID)",
       "accessKeyId": "Access Key ID",
       "secretAccessKey": "Secret Access Key",
-      "publicBucket": "Bucket adı",
-      "privateBucket": "Bucket adı"
+      "publicBucket": "Bucket"
     },
     "hints": {
-      "storageHost": "Zone’un ana bölgesine göre değişir; örneğin storage.bunnycdn.com veya uk.storage.bunnycdn.com.",
+      "storageHost": "Depolama bölgesini oluştururken seçtiğiniz ana bölgeyi seçin. Bunny’de depolama bölgesinin FTP & API Access sayfasında bulabilirsiniz.",
       "bunnyKey": "Storage zone → FTP & API Access → Password.",
       "bunnyHost": "Bu storage zone’a bağlı pull zone’un alan adı; örneğin cdn.example.com.",
       "accountId": "R2 genel bakış sayfasındaki 32 karakterlik kimlik.",
-      "r2Keys": "İki bucket’a da okuma ve yazma izni olan bir R2 API token’ı oluşturun.",
-      "r2Host": "Herkese açık bucket’a bağlı özel alan adı; örneğin cdn.example.com."
+      "r2Keys": "Bu bucket’a okuma ve yazma izni olan bir R2 API token’ı oluşturun.",
+      "r2Host": "Bucket’a bağlı özel alan adı; örneğin cdn.example.com."
     },
     "keySaved": "Güvenli şekilde kaydedildi",
     "replaceKey": "Değiştir",
@@ -155,26 +148,36 @@
     "test": {
       "action": "Bağlantıyı test et",
       "running": "Test ediliyor…",
-      "ok": "Bağlantı kuruldu. Dosyalar iki alanda da kaydedilebiliyor, okunabiliyor ve silinebiliyor.",
+      "ok": "Bağlantı kuruldu. Dosyalar kaydedilebiliyor, okunabiliyor ve silinebiliyor.",
       "config": "Kayıtlı anahtarlar okunamadı. Lütfen yeniden girin.",
-      "write": "Test dosyası {zone, select, private {özel depolamaya} other {herkese açık depolamaya}} kaydedilemedi. Lütfen adını ve anahtarını kontrol edin.",
-      "read": "Test dosyası {zone, select, private {özel depolamaya} other {herkese açık depolamaya}} kaydedildi ama geri okunamadı. Lütfen anahtarın izinlerini kontrol edin.",
+      "write": "Test dosyası kaydedilemedi. Lütfen adı ve anahtarı kontrol edin.",
+      "read": "Test dosyası kaydedildi ama geri okunamadı. Lütfen anahtarın izinlerini kontrol edin.",
       "url": "Dosyalar kaydediliyor ama CDN alan adından açılmıyor. Lütfen alan adını kontrol edin.",
-      "delete": "Test dosyası {zone, select, private {özel depolamadan} other {herkese açık depolamadan}} silinemedi. Lütfen anahtarın dosya silme izni olduğunu kontrol edin."
+      "delete": "Test dosyası silinemedi. Lütfen anahtarın dosya silme izni olduğunu kontrol edin."
     },
     "errors": {
       "host": "Lütfen cdn.example.com gibi bir alan adı yazın (https:// olmadan).",
-      "bunnyHost": "Lütfen storage.bunnycdn.com gibi bir Bunny depolama adresi yazın.",
+      "bunnyHost": "Lütfen depolama bölgenizin bölgesini seçin.",
       "bucket": "Yalnızca küçük harf, rakam ve kısa çizgi kullanın.",
-      "sameZone": "Özel dosyalar için herkese açık olandan farklı, ayrı bir zone veya bucket gerekir.",
       "accountId": "Hesap kimliği 32 karakterdir; yalnızca 0–9 rakamlarını ve a–f harflerini içerir.",
       "key": "Anahtar boşluk içeremez.",
       "keyRequired": "Lütfen anahtarı yapıştırın. Şifrelenmiş olarak saklanır ve bir daha gösterilmez."
+    },
+    "regions": {
+      "de": "Frankfurt, Almanya",
+      "uk": "Londra, Birleşik Krallık",
+      "se": "Stockholm, İsveç",
+      "ny": "New York, ABD",
+      "la": "Los Angeles, ABD",
+      "sg": "Singapur",
+      "syd": "Sidney, Avustralya",
+      "br": "São Paulo, Brezilya",
+      "jh": "Johannesburg, Güney Afrika"
     }
   },
   "watermark": {
     "logoTitle": "Filigran",
-    "logoDescription": "Logonuz, galeri fotoğraflarına yüklenirken eklenir. Logosuz orijinal, yöneticiler için özel olarak saklanır. Arka planı şeffaf bir PNG en iyi sonucu verir.",
+    "logoDescription": "Logonuz, galeri fotoğraflarına yüklenirken eklenir. Arka planı şeffaf bir PNG en iyi sonucu verir.",
     "logo": "Filigran logosu",
     "noLogo": "Bir logo ekleyin: logo olmadan galeri fotoğrafları yüklenemez.",
     "placementTitle": "Konum ve boyut",

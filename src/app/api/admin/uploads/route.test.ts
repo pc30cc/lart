@@ -1,15 +1,28 @@
-import { mkdtemp, rm } from "node:fs/promises"
+import { randomUUID } from "node:crypto"
+import { mkdtemp, readdir, rm, stat } from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
+import { eq } from "drizzle-orm"
 import sharp from "sharp"
-import { afterAll, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
-const state = vi.hoisted(() => ({ admin: true, root: "", audit: vi.fn(async (entry: unknown) => void entry) }))
+import { db } from "@/db"
+import { admins, categories, courses, instructors } from "@/db/schema"
+import { createAdmin, createCategory, createInstructor, runId } from "@/features/workshops/test-fixtures"
+
+const state = vi.hoisted(() => ({
+  admin: true,
+  name: "A",
+  email: "a@x",
+  root: "",
+  audit: vi.fn(async (entry: unknown) => void entry),
+}))
 
 vi.mock("@/lib/audit", () => ({ audit: state.audit }))
 
 vi.mock("@/lib/auth/admin", () => ({
-  requireAdminApi: async () => (state.admin ? { sessionId: "s", admin: { id: "a", email: "a@x", name: "A", shareBp: 0 } } : null),
+  requireAdminApi: async () =>
+    state.admin ? { sessionId: "s", admin: { id: "a", email: state.email, name: state.name, shareBp: 0 } } : null,
 }))
 vi.mock("@/lib/settings", async (original) => ({
   ...(await original<typeof import("@/lib/settings")>()),
@@ -24,9 +37,41 @@ vi.mock("@/lib/storage", async (original) => {
 const { POST } = await import("./route")
 
 state.root = await mkdtemp(path.join(os.tmpdir(), "lart-route-"))
-afterAll(() => rm(state.root, { recursive: true, force: true }))
+/** A saved workshop and instructor, whose folders the server looks up. */
+const saved = { courseId: "", slug: `mum-yapimi-${runId()}`, instructorId: "", categoryId: "", adminId: "" }
+beforeAll(async () => {
+  const run = runId()
+  const [admin, category, instructor] = await Promise.all([createAdmin(run), createCategory(run), createInstructor(run)])
+  const start = new Date(Date.now() + 7 * 86_400_000)
+  const [course] = await db
+    .insert(courses)
+    .values({
+      slug: saved.slug,
+      categoryId: category.id,
+      instructorId: instructor.id,
+      title: { tr: "Mum Yapımı" },
+      venue: { tr: "Studio" },
+      startsAt: start,
+      endsAt: new Date(start.getTime() + 2 * 3_600_000),
+      minCapacity: 3,
+      maxCapacity: 10,
+      price: 150000,
+      registrationDeadline: start,
+      decisionAt: start,
+      createdBy: admin.id,
+    })
+    .returning({ id: courses.id })
+  Object.assign(saved, { courseId: course.id, instructorId: instructor.id, categoryId: category.id, adminId: admin.id })
+})
+afterAll(async () => {
+  await rm(state.root, { recursive: true, force: true })
+  await db.delete(courses).where(eq(courses.id, saved.courseId))
+  await db.delete(categories).where(eq(categories.id, saved.categoryId))
+  await db.delete(instructors).where(eq(instructors.id, saved.instructorId))
+  await db.delete(admins).where(eq(admins.id, saved.adminId))
+})
 beforeEach(() => {
-  state.admin = true
+  Object.assign(state, { admin: true, name: "A", email: "a@x" })
 })
 
 const upload = (form: FormData, headers?: Record<string, string>) =>
@@ -39,6 +84,16 @@ const formWith = async (purpose: string, file: Blob | null, order: "purpose-firs
   if (order === "purpose-first" && file) form.append("file", file, "IMG_0001 (copy).jpg")
   return form
 }
+
+/** Text fields first (in this order), then the file. */
+const formOf = (fields: Record<string, string>, file: Blob) => {
+  const form = new FormData()
+  for (const [key, value] of Object.entries(fields)) form.append(key, value)
+  form.append("file", file, "photo.jpg")
+  return form
+}
+/** Paths of every stored file. */
+const storedFiles = async () => (await readdir(state.root, { recursive: true }).catch(() => [])).map(String)
 
 const jpegBlob = async () =>
   new Blob([new Uint8Array(await sharp({ create: { width: 900, height: 600, channels: 3, background: "#888" } }).jpeg().toBuffer())], {
@@ -57,7 +112,7 @@ describe("POST /api/admin/uploads", () => {
     expect(res.status).toBe(201)
     const body = await res.json()
     expect(body).toMatchObject({ width: 600, height: 600 })
-    expect(body.path).toMatch(/^instructors\/\d{4}-\d{2}\/[\w-]{22}\.webp$/)
+    expect(body.path).toMatch(/^instructors\/new\/photo-[\w-]{22}\.webp$/)
     expect(body.path).not.toContain("IMG")
     expect(body.url).toBe(`/media/${body.path}`)
     expect(state.audit).toHaveBeenCalledWith({
@@ -65,7 +120,7 @@ describe("POST /api/admin/uploads", () => {
       action: "media.upload",
       entity: "media",
       entityId: body.path,
-      data: { purpose: "instructor_photo", originalPath: undefined, width: 600, height: 600 },
+      data: { purpose: "instructor_photo", width: 600, height: 600 },
     })
   })
 
@@ -74,39 +129,81 @@ describe("POST /api/admin/uploads", () => {
     state.audit.mockRejectedValueOnce(new Error("database down"))
     const res = await upload(await formWith("course_cover", await jpegBlob()))
     expect([res.status, await res.json()]).toEqual([500, { error: "server" }])
-    const { readdir } = await import("node:fs/promises")
-    const covers = await readdir(path.join(state.root, "public"), { recursive: true }).catch(() => [])
-    expect(covers.filter((name) => String(name).startsWith("courses/") && String(name).endsWith(".webp"))).toEqual([])
+    expect((await storedFiles()).filter((name) => name.includes("cover-"))).toEqual([])
   })
 
-  it("keeps a partner's photo in private storage, shown through the admin-only route", async () => {
+  it("stores a partner's photo like any other file, in a folder named after them, with its CDN URL", async () => {
+    state.name = "Mina Karimi"
     const res = await upload(await formWith("admin_photo", await jpegBlob()))
     expect(res.status).toBe(201)
     const body = await res.json()
     expect(body).toMatchObject({ width: 512, height: 512 })
-    expect(body.path).toMatch(/^admins\/\d{4}-\d{2}\/[\w-]{22}\.webp$/)
-    expect(body.url).toBe(`/api/admin/media/private/${body.path}`)
-    const { stat } = await import("node:fs/promises")
-    expect((await stat(path.join(state.root, "private", body.path))).isFile()).toBe(true)
-    await expect(stat(path.join(state.root, "public", body.path))).rejects.toThrow()
+    expect(body.path).toMatch(/^partners\/mina-karimi\/photo-[\w-]{22}\.webp$/)
+    expect(body.url).toBe(`/media/${body.path}`)
+    expect((await stat(path.join(state.root, body.path))).isFile()).toBe(true)
     expect(state.audit).toHaveBeenLastCalledWith(
       expect.objectContaining({ adminId: "a", entityId: body.path, data: expect.objectContaining({ purpose: "admin_photo" }) }),
     )
   })
 
-  it("removes a private photo when the audit entry cannot be written", async () => {
+  it.each(["مینا کریمی", "مینا 2"])("names a partner's folder after their email when their name %j has no Latin letters", async (name) => {
+    Object.assign(state, { name, email: "mina.k@example.com" })
+    const body = await (await upload(await formWith("admin_photo", await jpegBlob()))).json()
+    expect(body.path).toMatch(/^partners\/mina-k\/photo-[\w-]{22}\.webp$/)
+  })
+
+  it("removes a partner's photo when the audit entry cannot be written", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
-    const { readdir } = await import("node:fs/promises")
-    const photos = async () =>
-      (await readdir(path.join(state.root, "private"), { recursive: true }).catch(() => []))
-        .map(String)
-        .filter((name) => name.startsWith("admins/") && name.endsWith(".webp"))
-        .sort()
+    const photos = async () => (await storedFiles()).filter((name) => name.startsWith("partners/") && name.endsWith(".webp")).sort()
     const before = await photos()
     state.audit.mockRejectedValueOnce(new Error("database down"))
     const res = await upload(await formWith("admin_photo", await jpegBlob()))
     expect([res.status, await res.json()]).toEqual([500, { error: "server" }])
     expect(await photos()).toEqual(before)
+  })
+
+  it("names a saved workshop's files after its slug from the database, whatever the form says", async () => {
+    const res = await upload(formOf({ purpose: "course_cover", courseId: saved.courseId, folder: "../../brand" }, await jpegBlob()))
+    expect(res.status).toBe(201)
+    const body = await res.json()
+    expect(body.path).toMatch(new RegExp(`^workshops/${saved.slug}/cover-[\\w-]{22}\\.webp$`))
+    expect((await stat(path.join(state.root, body.path))).isFile()).toBe(true)
+  })
+
+  it.each([
+    ["Mum Yapımı Atölyesi", "workshops/mum-yapimi-atolyesi/samples/"],
+    ["../../etc/passwd", "workshops/etc-passwd/samples/"],
+    ["شمع‌سازی", "workshops/new/samples/"],
+    ["", "workshops/new/samples/"],
+  ])("puts a new workshop's files in a folder named after the form's hint %j, sanitized", async (folder, prefix) => {
+    const res = await upload(formOf({ purpose: "course_sample", ...(folder && { folder }) }, await jpegBlob()))
+    expect(res.status).toBe(201)
+    const { path: stored } = await res.json()
+    expect(stored.startsWith(prefix)).toBe(true)
+    expect(stored.slice(prefix.length)).toMatch(/^[\w-]{22}\.webp$/)
+  })
+
+  it("names an instructor's photo after the saved instructor's English name, or a new one's hint", async () => {
+    const existing = await (await upload(formOf({ purpose: "instructor_photo", instructorId: saved.instructorId }, await jpegBlob()))).json()
+    expect(existing.path).toMatch(/^instructors\/zeynep\/photo-[\w-]{22}\.webp$/)
+    const fresh = await (await upload(formOf({ purpose: "instructor_photo", folder: "Çiğdem Işık" }, await jpegBlob()))).json()
+    expect(fresh.path).toMatch(/^instructors\/cigdem-isik\/photo-[\w-]{22}\.webp$/)
+  })
+
+  it.each([
+    ["an unknown workshop", { purpose: "course_cover", courseId: randomUUID() }],
+    ["an unknown instructor", { purpose: "instructor_photo", instructorId: randomUUID() }],
+    ["a workshop id that is not a uuid", { purpose: "gallery_photo", courseId: "../x" }],
+    ["an instructor for a workshop file", { purpose: "course_cover", instructorId: randomUUID() }],
+    ["a workshop for an instructor photo", { purpose: "instructor_photo", courseId: randomUUID() }],
+    ["a folder for a partner's photo", { purpose: "admin_photo", folder: "someone-else" }],
+    ["a workshop for the watermark logo", { purpose: "watermark_logo", courseId: randomUUID() }],
+    ["a folder hint over 64 bytes", { purpose: "course_cover", folder: "a".repeat(65) }],
+  ])("answers 400 for %s, storing nothing", async (_, fields) => {
+    const before = await storedFiles()
+    const res = await upload(formOf(fields, await jpegBlob()))
+    expect([res.status, await res.json()]).toEqual([400, { error: "bad_request" }])
+    expect(await storedFiles()).toEqual(before)
   })
 
   it.each([
@@ -132,7 +229,8 @@ describe("POST /api/admin/uploads", () => {
     const video = new Uint8Array(Buffer.concat([Buffer.from([0, 0, 0, 0x18]), Buffer.from("ftypisom\0\0\0\0isommp41"), Buffer.alloc(50_000, 3)]))
     const send = (fields: Record<string, string>, from: number, to: number, extra = 0) => {
       const form = new FormData()
-      for (const [key, value] of Object.entries({ purpose: "gallery_video", total: String(video.length), ...fields })) form.append(key, value)
+      const all = { purpose: "gallery_video", courseId: saved.courseId, total: String(video.length), ...fields }
+      for (const [key, value] of Object.entries(all)) form.append(key, value)
       form.append("file", new Blob([video.subarray(from, to), new Uint8Array(extra)]), "clip.mp4")
       return upload(form)
     }
@@ -150,7 +248,7 @@ describe("POST /api/admin/uploads", () => {
     const last = await send({ upload: id, offset: "30000" }, 30_000, video.length)
     expect(last.status).toBe(201)
     const body = await last.json()
-    expect(body.path).toMatch(/^gallery\/.+\.mp4$/)
+    expect(body.path).toMatch(new RegExp(`^workshops/${saved.slug}/videos/[\\w-]{22}\\.mp4$`))
     expect(state.audit).toHaveBeenLastCalledWith(expect.objectContaining({ action: "media.upload", entityId: body.path }))
   })
 

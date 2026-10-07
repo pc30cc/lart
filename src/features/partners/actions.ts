@@ -15,7 +15,7 @@ import { unusedTokensOf } from "@/lib/auth/tokens"
 import { sendEmail } from "@/lib/email"
 import { env } from "@/lib/env"
 import { errorForLog, PG, pgError } from "@/lib/errors"
-import { readPrivate, remove } from "@/lib/storage"
+import { read, remove } from "@/lib/storage"
 import type { AppLocale } from "@/i18n/routing"
 import {
   acceptPartnerInvite,
@@ -149,13 +149,13 @@ async function uploadedBy(tx: Tx, path: string, adminId: string): Promise<boolea
 }
 
 /**
- * Whether the photo file is still in private storage. A form left open on
+ * Whether the photo file is still in storage. A form left open on
  * another device still holds the photo it was loaded with, which a later save
  * there may already have removed: taking it back would point at a missing
  * file and remove the current one. A storage error counts as missing.
  */
 async function stillStored(path: string): Promise<boolean> {
-  const file = await readPrivate(path).catch(() => null)
+  const file = await read(path).catch(() => null)
   await file?.body.cancel().catch(() => {})
   return file !== null
 }
@@ -244,7 +244,7 @@ export const updateMyProfile = adminAction(profileSchema, async ({ currentPasswo
     .catch(friendly)
 
   if (oldPhoto) {
-    await remove(oldPhoto, "private").catch((err) =>
+    await remove(oldPhoto).catch((err) =>
       console.error("[partners] could not remove the old photo", errorForLog(err)),
     )
   }

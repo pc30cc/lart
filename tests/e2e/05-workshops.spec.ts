@@ -137,11 +137,13 @@ test.describe.serial("workshops", () => {
     const course = await one<Record<string, unknown>>("select * from courses where id = $1", [id])
     expect(course).toMatchObject({ status: "awaiting_signature", age_min: 8, age_max: 14, min_capacity: 2, max_capacity: 8, experience_required: true })
     expect(Number(course.price)).toBe(150_000)
-    expect(course.cover_path).toMatch(/^courses\//)
+    // Uploaded before the workshop existed: in a folder named after the slug typed in the form.
+    expect(course.cover_path).toMatch(new RegExp(`^workshops/${w.slug}/cover-[\\w-]{22}\\.webp$`))
     // The venue is stored in three languages, like the title.
     expect(course.venue).toEqual(w.venue)
-    const samples = await sql("select 1 from media where course_id = $1 and kind = 'sample'", [id])
+    const samples = await sql<{ path: string }>("select path from media where course_id = $1 and kind = 'sample'", [id])
     expect(samples).toHaveLength(2)
+    for (const s of samples) expect(s.path).toMatch(new RegExp(`^workshops/${w.slug}/samples/[\\w-]{22}\\.webp$`))
     const contract = await one<{ fee_type: string; fee_amount: string; advance_amount: string; version: number }>(
       "select * from contracts where course_id = $1",
       [id],

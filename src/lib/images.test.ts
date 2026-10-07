@@ -2,7 +2,7 @@ import { crc32 } from "node:zlib"
 import sharp from "sharp"
 import { describe, expect, it } from "vitest"
 
-import { applyWatermark, MAX_INPUT_PIXELS, processImage, processOriginal, renderWatermarkPreview } from "./images"
+import { applyWatermark, MAX_INPUT_PIXELS, processImage, renderWatermarkPreview } from "./images"
 
 const solid = (width: number, height: number, color = { r: 20, g: 120, b: 200 }) =>
   sharp({ create: { width, height, channels: 3, background: color } })
@@ -88,14 +88,6 @@ describe("processImage", () => {
     bomb.writeUInt32BE(crc32(bomb.subarray(12, 29)), 29)
     expect((await sharp(bomb).metadata()).width).toBe(side)
     await expect(processImage(bomb, "gallery_photo")).rejects.toMatchObject({ code: "too_many_pixels" })
-  })
-})
-
-describe("processOriginal", () => {
-  it("keeps the full size, upright and without metadata", async () => {
-    const out = await processOriginal(await phoneJpeg(3000, 2000))
-    const meta = await sharp(out.data).metadata()
-    expect([meta.width, meta.height, meta.format, meta.exif]).toEqual([2000, 3000, "webp", undefined])
   })
 })
 

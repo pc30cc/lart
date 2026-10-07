@@ -65,13 +65,26 @@ describe("POST /api/instructor/uploads", () => {
     expect(res.status).toBe(201)
     const body = await res.json()
     expect(body).toMatchObject({ width: 600, height: 600 })
-    expect(body.path).toMatch(/^instructors\/\d{4}-\d{2}\/[\w-]{22}\.webp$/)
+    expect(body.path).toMatch(/^instructors\/zeynep\/photo-[\w-]{22}\.webp$/)
 
     const [entry] = await db
       .select()
       .from(auditLog)
       .where(and(eq(auditLog.action, "media.upload"), eq(auditLog.entityId, body.path)))
     expect(entry).toMatchObject({ adminId: null, entity: "media", data: { purpose: "instructor_photo", by: "instructor", instructorId } })
+  })
+
+  it("names the folder after the instructor's English name, else the Turkish one, else 'unnamed'", async () => {
+    const other = await createInstructor(run)
+    state.cookies.set(sessionCookieName("instructor"), (await createSession("instructor", other.id)).token)
+    const folderOf = async (displayName: { fa?: string; tr?: string; en?: string }) => {
+      await db.update(instructors).set({ displayName }).where(eq(instructors.id, other.id))
+      const { path } = await (await upload(formWith("instructor_photo", await jpeg()))).json()
+      return path.split("/").slice(0, 2).join("/")
+    }
+    expect(await folderOf({ fa: "چیگدم", tr: "Çiğdem Işık", en: "" })).toBe("instructors/cigdem-isik")
+    expect(await folderOf({ fa: "چیگدم", tr: "Çiğdem", en: "Chigdem Ishik" })).toBe("instructors/chigdem-ishik")
+    expect(await folderOf({ fa: "چیگدم" })).toBe("instructors/unnamed")
   })
 
   it("answers 401 without an instructor session", async () => {

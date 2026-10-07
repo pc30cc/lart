@@ -68,7 +68,7 @@
     "description": "Your photo, name and email, as the other partners see them.",
     "photo": {
       "title": "Photo",
-      "description": "Only the partners see it, here in the panel.",
+      "description": "Shown next to your name, here in the panel.",
       "label": "Your photo",
       "hint": "A square photo of your face looks best."
     },

@@ -1,19 +1,17 @@
 import "server-only"
-import { and, eq, inArray, or } from "drizzle-orm"
+import { and, eq, inArray } from "drizzle-orm"
 
 import { db, type Tx } from "@/db"
 import { courses, media } from "@/db/schema"
 import { errorForLog, UserError } from "@/lib/errors"
-import { getStorage, type Zone } from "@/lib/storage"
+import { getStorage } from "@/lib/storage"
 
 export type MediaInput = {
   path: string
   kind: "sample" | "gallery_photo" | "gallery_video"
-  originalPath?: string | null
   width?: number
   height?: number
 }
-export type MediaFile = { path: string; zone: Zone }
 
 const groups = { sample: ["sample"], gallery: ["gallery_photo", "gallery_video"] } as const
 
@@ -21,11 +19,11 @@ const groups = { sample: ["sample"], gallery: ["gallery_photo", "gallery_video"]
  * Make the media rows of one group (sample photos, or the gallery) of a
  * workshop match `items`, in that order: new paths are inserted, missing ones
  * deleted, the rest re-sorted. Paths already used elsewhere are refused.
- * Returns the files of deleted rows: remove them from storage after the commit.
+ * Returns the paths of deleted rows: remove them from storage after the commit.
  */
 export async function syncMedia(tx: Tx, courseId: string, group: keyof typeof groups, items: MediaInput[]) {
   const existing = await tx
-    .select({ id: media.id, path: media.path, originalPath: media.originalPath, sort: media.sort })
+    .select({ id: media.id, path: media.path, sort: media.sort })
     .from(media)
     .where(and(eq(media.courseId, courseId), inArray(media.kind, [...groups[group]])))
   const known = new Map(existing.map((row) => [row.path, row]))
@@ -33,11 +31,10 @@ export async function syncMedia(tx: Tx, courseId: string, group: keyof typeof gr
   const fresh = unique.filter((item) => !known.has(item.path))
 
   if (fresh.length) {
-    const paths = fresh.flatMap((f) => [f.path, ...(f.originalPath ? [f.originalPath] : [])])
     const [taken] = await tx
       .select({ id: media.id })
       .from(media)
-      .where(or(inArray(media.path, paths), inArray(media.originalPath, paths)))
+      .where(inArray(media.path, fresh.map((f) => f.path)))
       .limit(1)
     if (taken) throw new UserError("workshops.errors.mediaInUse")
   }
@@ -60,8 +57,6 @@ export async function syncMedia(tx: Tx, courseId: string, group: keyof typeof gr
         courseId,
         kind: item.kind,
         path: item.path,
-        // Only a new row takes an original; an existing row's original never changes.
-        originalPath: item.originalPath ?? null,
         width: item.width ?? null,
         height: item.height ?? null,
         sort: unique.indexOf(item),
@@ -69,30 +64,19 @@ export async function syncMedia(tx: Tx, courseId: string, group: keyof typeof gr
     )
   }
 
-  return {
-    added: fresh.length,
-    reordered,
-    removed: removed.flatMap((r): MediaFile[] => [
-      { path: r.path, zone: "public" },
-      ...(r.originalPath ? [{ path: r.originalPath, zone: "private" as const }] : []),
-    ]),
-  }
+  return { added: fresh.length, reordered, removed: removed.map((r) => r.path) }
 }
 
 /** Delete files from storage that no workshop refers to any more. Never throws (logged). */
-export async function removeFiles(files: MediaFile[]): Promise<void> {
-  if (!files.length) return
+export async function removeFiles(paths: string[]): Promise<void> {
+  if (!paths.length) return
   try {
     const storage = await getStorage()
-    for (const file of files) {
-      const [inMedia] = await db
-        .select({ id: media.id })
-        .from(media)
-        .where(or(eq(media.path, file.path), eq(media.originalPath, file.path)))
-        .limit(1)
-      const [asCover] = await db.select({ id: courses.id }).from(courses).where(eq(courses.coverPath, file.path)).limit(1)
+    for (const path of paths) {
+      const [inMedia] = await db.select({ id: media.id }).from(media).where(eq(media.path, path)).limit(1)
+      const [asCover] = await db.select({ id: courses.id }).from(courses).where(eq(courses.coverPath, path)).limit(1)
       if (inMedia || asCover) continue
-      await storage.remove(file.path, file.zone).catch((err) => console.error("[workshops] could not remove", file.path, errorForLog(err)))
+      await storage.remove(path).catch((err) => console.error("[workshops] could not remove", path, errorForLog(err)))
     }
   } catch (err) {
     console.error("[workshops] file clean-up failed", errorForLog(err))

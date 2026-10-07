@@ -8,19 +8,18 @@ import { z } from "zod"
 import { uuid } from "@/components/admin/form/schemas"
 import { locales } from "@/i18n/routing"
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@/lib/auth/schemas"
-import { isSafePath, privateUrl } from "@/lib/storage/shared"
+import { isSafePath } from "@/lib/storage/shared"
 
 export { MAX_PARTNERS, PARTNER_INVITE_TTL_MS } from "./limits"
 
-/** Storage prefix of partners' photos (the `admin_photo` upload purpose, private storage). */
-export const ADMIN_PHOTO_PREFIX = "admins/"
+/** Storage prefix of partners' photos (the `admin_photo` upload purpose): `partners/<name>/photo-<random>.webp`. */
+export const ADMIN_PHOTO_PREFIX = "partners/"
+/** Where partners' photos uploaded before the named folders are (`admins/<yyyy-mm>/<random>.webp`). */
+const OLD_ADMIN_PHOTO_PREFIX = "admins/"
 
-/** A path the `admin_photo` upload can have produced: `admins/<yyyy-mm>/<random>.webp`. */
+/** A path the `admin_photo` upload can have produced. */
 export const isAdminPhotoPath = (path: unknown): path is string =>
-  isSafePath(path) && path.startsWith(ADMIN_PHOTO_PREFIX) && path.endsWith(".webp")
-
-/** A partner's photo for `<img>` / `AvatarImage` (the admin-only private route), or null. */
-export const adminPhotoUrl = (photoPath: string | null | undefined) => (photoPath ? privateUrl(photoPath) : null)
+  isSafePath(path) && (path.startsWith(ADMIN_PHOTO_PREFIX) || path.startsWith(OLD_ADMIN_PHOTO_PREFIX)) && path.endsWith(".webp")
 
 /** Trimmed and lower-case, as admin emails are stored (the admin login compares them exactly). */
 const email = () => z.string().trim().toLowerCase().min(1).max(254).pipe(z.email())

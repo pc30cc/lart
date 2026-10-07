@@ -458,10 +458,20 @@ enough), not to individuals.
 
 ### CDN
 
-Chosen in the super-admin settings: **Bunny CDN** (Bunny Storage) or
-**Cloudflare** (R2 + Cloudflare CDN), with their keys. Every uploaded image
-**and video** is stored as a plain file on the selected CDN and served from
-it (no streaming service). The database stores only the file path.
+Chosen in the super-admin settings: **Bunny CDN** (one Bunny storage zone
+with a pull zone) or **Cloudflare** (one R2 bucket with a custom domain),
+with their keys. Every uploaded file (images, **videos**, the watermark logo
+and the partners' photos) is stored as a plain file in that one storage
+space and served from the CDN under a name nobody can guess (no streaming
+service). The database stores only the file path.
+
+Each part of the site has its own folder, named after the workshop or the
+person: `workshops/<workshop>/` (the cover, `samples/`, `gallery/`,
+`videos/`), `instructors/<name>/`, `partners/<name>/` and `brand/` (the
+watermark logo). Folder names are written in plain Latin letters (Turkish
+letters without their marks); a partner whose name has no Latin letters
+gets the name part of their email. A file keeps its folder when the
+workshop or person is renamed later.
 
 ### Past workshops gallery
 
@@ -473,7 +483,8 @@ gave consent may be identifiable in published media.
 ### Watermark
 
 Every gallery photo is **watermarked automatically on upload**, before it
-is sent to the CDN; the original stays private for admins. Settings:
+is sent to the CDN; only the watermarked photo is kept (the original is
+never stored). Settings:
 
 - watermark logo (PNG with transparency),
 - position: any of nine positions (corners, edges, centre) or tiled,
@@ -562,7 +573,7 @@ Kept minimal; the whole schema is `src/db/schema.ts`.
 | `courses` | workshop fields, status, terms template, online payment link, final participant number, closed totals |
 | `contracts` | one row per contract version: fee type, amount, advance, status (sent, signed, void), signature evidence, the exact signed text (encrypted) and its SHA-256 |
 | `registrations` | member ↔ course: participant, status (registered, paid, cancelled), amount, payment method (cash, transfer, online), accepted terms and time, photo / video consent, refund owed and refunded date, reminder sent |
-| `media` | sample work, gallery photos and videos (CDN paths; private unwatermarked originals) |
+| `media` | sample work, gallery photos (watermarked) and videos (CDN paths) |
 | `ledger_transactions` | double-entry accounting: one row per movement of money (registration, refund, expense, capital, instructor advance or payment, closing, reversal) |
 | `ledger_lines` | the lines of each transaction (account, partner, amount); they always sum to zero |
 | `settings` | key / value: brand name, default language, SEO, theme, CDN, watermark, email texts |

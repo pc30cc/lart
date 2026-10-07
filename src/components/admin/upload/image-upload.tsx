@@ -4,7 +4,7 @@ import { ImageIcon, ImagePlusIcon, RefreshCwIcon, Trash2Icon } from "lucide-reac
 import { useId, useRef, useState, type Ref } from "react"
 
 import { Button } from "@/components/ui/button"
-import { IMAGE_ACCEPT, MAX_IMAGE_BYTES, type ImagePurpose, type UploadResult } from "@/lib/storage/shared"
+import { IMAGE_ACCEPT, MAX_IMAGE_BYTES, type ImagePurpose, type UploadResult, type UploadTarget } from "@/lib/storage/shared"
 import { cn } from "@/lib/utils"
 import { Dropzone, OverlayButton, UploadMessage, UploadOverlay } from "./parts"
 import { useFileDrop, useMediaText, useSingleUpload, type UploadEndpoint } from "./upload-client"
@@ -37,6 +37,8 @@ export type ImageUploadProps = {
   previewUrl?: string | null
   /** Upload route: the admin one by default; the instructor panel passes "/api/instructor/uploads". */
   endpoint?: UploadEndpoint
+  /** Whose folder the file goes to: the saved workshop or instructor, or a name for a new one. */
+  target?: UploadTarget
   onBlur?: () => void
   disabled?: boolean
   id?: string
@@ -59,6 +61,7 @@ export function ImageUpload({
   onChange,
   previewUrl,
   endpoint,
+  target,
   onBlur,
   disabled,
   id,
@@ -80,6 +83,7 @@ export function ImageUpload({
       onBlur?.()
     },
     endpoint,
+    target,
   )
   const { dragging, dropProps } = useFileDrop((files) => start(files[0]), disabled)
 
@@ -124,7 +128,7 @@ export function ImageUpload({
               className={cn("size-full scale-105 blur-[2px]", isLogo ? "object-contain p-4" : "object-cover")}
             />
           ) : url && broken !== url ? (
-            // eslint-disable-next-line @next/next/no-img-element -- CDN or admin-only URL, any host
+            // eslint-disable-next-line @next/next/no-img-element -- CDN URL, any host
             <img
               src={url}
               alt={t("upload.photoAlt")}

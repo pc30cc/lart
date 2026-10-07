@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray } from "drizzle-orm"
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm"
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { parseTableParams } from "@/components/admin/data-table/params"
@@ -41,11 +41,11 @@ const background = vi.hoisted(() => [] as Promise<unknown>[])
 vi.mock("next/server", () => ({ after: (fn: () => unknown) => void background.push(Promise.resolve().then(fn)) }))
 const sendEmail = vi.hoisted(() => vi.fn<(input: unknown) => Promise<{ ok: boolean }>>(async () => ({ ok: true })))
 vi.mock("@/lib/email", () => ({ sendEmail }))
-const removed = vi.hoisted(() => [] as { path: string; zone: string }[])
+const removed = vi.hoisted(() => [] as string[])
 vi.mock("@/lib/storage", () => ({
   getStorage: async () => ({
     publicUrl: (path: string) => `https://cdn.test/${path}`,
-    remove: async (path: string, zone = "public") => void removed.push({ path, zone }),
+    remove: async (path: string) => void removed.push(path),
   }),
 }))
 const session = vi.hoisted(() => ({ sessionId: "test", admin: { id: "", email: "", name: "Workshop Tester", shareBp: 0 } }))
@@ -172,8 +172,8 @@ const moveAdvance = (courseId: string, amount: number, direction: "paid" | "retu
 
 describe("createWorkshop", () => {
   it("creates the workshop and contract v1 in one go, audits it and emails the instructor", async () => {
-    const sample = { path: `courses/2026-10/sample${run}.webp`, width: 1600, height: 1200 }
-    const { id, emailSent, contractVersion } = await create({ samples: [sample], coverPath: `courses/2026-10/cover${run}.webp` })
+    const sample = { path: `workshops/new/samples/sample${run}.webp`, width: 1600, height: 1200 }
+    const { id, emailSent, contractVersion } = await create({ samples: [sample], coverPath: `workshops/new/cover-${run}.webp` })
     expect(emailSent).toBe(true)
     expect(contractVersion).toBe(1)
 
@@ -469,12 +469,13 @@ describe("updateWorkshop", () => {
   })
 
   it("removes a replaced cover and dropped samples from storage after saving", async () => {
+    // Files stored before the named folders (courses/<yyyy-mm>/…) are still accepted when the workshop is saved again.
     const cover = `courses/2026-10/old${run}.webp`
     const a = { path: `courses/2026-10/a${run}.webp` }
-    const b = { path: `courses/2026-10/b${run}.webp` }
+    const b = { path: `workshops/w-${run}/samples/b${run}.webp` }
     const { id } = await create({ coverPath: cover, samples: [a, b] })
-    await edit(id, { coverPath: `courses/2026-10/new${run}.webp`, samples: [b] })
-    expect(removed).toEqual(expect.arrayContaining([{ path: cover, zone: "public" }, { path: a.path, zone: "public" }]))
+    await edit(id, { coverPath: `workshops/w-${run}/cover-new${run}.webp`, samples: [b] })
+    expect(removed).toEqual(expect.arrayContaining([cover, a.path]))
     const rows = await db.select().from(media).where(eq(media.courseId, id))
     expect(rows).toMatchObject([{ path: b.path, sort: 0 }])
   })
@@ -678,12 +679,11 @@ describe("go / no-go", () => {
 describe("gallery", () => {
   const photo = (name: string) => ({
     kind: "image" as const,
-    path: `gallery/2026-10/${name}${run}.webp`,
-    originalPath: `originals/2026-10/${name}${run}.webp`,
+    path: `workshops/w-${run}/gallery/${name}${run}.webp`,
     width: 2400,
     height: 1600,
   })
-  const video = (name: string) => ({ kind: "video" as const, path: `gallery/2026-10/${name}${run}.mp4` })
+  const video = (name: string) => ({ kind: "video" as const, path: `workshops/w-${run}/videos/${name}${run}.mp4` })
 
   it("is only for closed workshops", async () => {
     const { id } = await create()
@@ -708,26 +708,33 @@ describe("gallery", () => {
   it("adds, re-orders and removes photos and videos, and deletes removed files", async () => {
     const { id } = await create()
     await db.update(courses).set({ status: "closed", closedAt: new Date() }).where(eq(courses.id, id))
-    const [p1, p2, v1] = [photo("p1"), photo("p2"), video("v1")]
+    // p2 was stored before the named folders (gallery/<yyyy-mm>/…): still accepted.
+    const [p1, p2, v1] = [photo("p1"), { ...photo("p2"), path: `gallery/2026-10/p2${run}.webp` }, video("v1")]
 
     expect(await saveGallery({ id, items: [p1, v1, p2] })).toEqual({ ok: true, data: { id, count: 3 } })
-    expect((await listGallery(id)).map((i) => [i.kind, i.path, i.originalPath ?? null])).toEqual([
-      ["image", p1.path, p1.originalPath],
-      ["video", v1.path, null],
-      ["image", p2.path, p2.originalPath],
+    expect((await listGallery(id)).map((i) => [i.kind, i.path])).toEqual([
+      ["image", p1.path],
+      ["video", v1.path],
+      ["image", p2.path],
     ])
 
     await saveGallery({ id, items: [p2, p1] })
     expect((await listGallery(id)).map((i) => i.path)).toEqual([p2.path, p1.path])
-    expect(removed).toEqual([{ path: v1.path, zone: "public" }])
+    expect(removed).toEqual([v1.path])
     expect(await lastAudit(id)).toMatchObject({ action: "workshop.gallery", data: { added: 0, removed: 1, reordered: 2 } })
 
     removed.length = 0
     await saveGallery({ id, items: [p1] })
-    expect(removed).toEqual([
-      { path: p2.path, zone: "public" },
-      { path: p2.originalPath, zone: "private" },
-    ])
+    expect(removed).toEqual([p2.path])
+    expect(await lastAudit(id)).toMatchObject({ action: "workshop.gallery", data: { added: 0, removed: 1, reordered: 1 } })
+  })
+
+  it("keeps no unwatermarked originals: migration 0007 dropped media.original_path", async () => {
+    const { rows } = await db.execute<{ column_name: string }>(
+      sql`select column_name from information_schema.columns where table_schema = current_schema() and table_name = 'media'`,
+    )
+    expect(rows.map((r) => r.column_name)).toContain("path")
+    expect(rows.map((r) => r.column_name)).not.toContain("original_path")
   })
 
   it("refuses files that belong to another workshop", async () => {
@@ -736,8 +743,6 @@ describe("gallery", () => {
     const shared = photo("shared")
     await saveGallery({ id: a, items: [shared] })
     expect(await saveGallery({ id: b, items: [shared] })).toMatchObject({ ok: false, error: expect.stringContaining("already used") })
-    // A new item that reuses another photo's original is refused too.
-    expect(await saveGallery({ id: b, items: [{ ...photo("x"), originalPath: shared.originalPath }] })).toMatchObject({ ok: false })
   })
 })
 

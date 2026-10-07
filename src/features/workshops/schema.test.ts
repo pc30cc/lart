@@ -113,12 +113,30 @@ describe("workshop schema", () => {
     expect(feeValues(none)).toEqual({ feeType: "per_participant", feeAmount: 50_000, advanceAmount: 0 })
   })
 
-  it("refuses storage paths outside the expected folder", () => {
-    for (const coverPath of ["../etc/passwd", "gallery/2026-10/abc.webp", "/courses/2026-10/abc.webp", "courses/x/../../a.webp"]) {
+  it("takes only paths of the expected kind: the workshop folder's, or older ones", () => {
+    for (const coverPath of [
+      "../etc/passwd",
+      "gallery/2026-10/abc.webp",
+      "/courses/2026-10/abc.webp",
+      "courses/x/../../a.webp",
+      "workshops/mum/samples/abc.webp",
+      "workshops/mum/gallery/abc.webp",
+      "workshops/mum/cover-abc.png",
+      "workshops/mum/abc.webp",
+      "workshops/../cover-abc.webp",
+      "brand/watermark-logo-abc.png",
+    ]) {
       expect(workshopSchema.safeParse(input({ coverPath })).success, coverPath).toBe(false)
     }
-    expect(workshopSchema.safeParse(input({ coverPath: "courses/2026-10/abcDEF_123-x.webp" })).success).toBe(true)
-    expect(workshopSchema.safeParse(input({ samples: [{ path: "originals/2026-10/a.webp" }] })).success).toBe(false)
+    for (const coverPath of ["courses/2026-10/abcDEF_123-x.webp", "workshops/mum-yapimi/cover-abcDEF_123-x.webp"]) {
+      expect(workshopSchema.safeParse(input({ coverPath })).success, coverPath).toBe(true)
+    }
+    for (const path of ["originals/2026-10/a.webp", "workshops/mum/cover-a.webp", "workshops/mum/gallery/a.webp", "partners/x/photo-a.webp"]) {
+      expect(workshopSchema.safeParse(input({ samples: [{ path }] })).success, path).toBe(false)
+    }
+    for (const path of ["courses/2026-10/a.webp", "workshops/mum/samples/a.webp"]) {
+      expect(workshopSchema.safeParse(input({ samples: [{ path }] })).success, path).toBe(true)
+    }
   })
 
   it("stores 'nothing needed' and empty texts as null", () => {
@@ -134,20 +152,25 @@ describe("workshop schema", () => {
 
   it("checks gallery items", () => {
     const id = crypto.randomUUID()
-    expect(
-      gallerySchema.safeParse({
-        id,
-        items: [
-          { kind: "image", path: "gallery/2026-10/a.webp", originalPath: "originals/2026-10/a.webp", width: 10, height: 10 },
-          { kind: "video", path: "gallery/2026-10/b.mp4" },
-        ],
-      }).success,
-    ).toBe(true)
-    expect(gallerySchema.safeParse({ id, items: [{ kind: "image", path: "courses/2026-10/a.webp" }] }).success).toBe(false)
-    expect(
-      gallerySchema.safeParse({ id, items: [{ kind: "image", path: "gallery/2026-10/a.webp", originalPath: "gallery/x/a.webp" }] })
-        .success,
-    ).toBe(false)
+    const items = [
+      { kind: "image", path: "workshops/mum/gallery/a.webp", width: 10, height: 10 },
+      { kind: "video", path: "workshops/mum/videos/b.mp4" },
+      // Stored before the named folders.
+      { kind: "image", path: "gallery/2026-10/c.webp" },
+      { kind: "video", path: "gallery/2026-10/d.mov" },
+    ]
+    expect(gallerySchema.safeParse({ id, items }).success).toBe(true)
+    // A client still sending the former originalPath is not refused; it is dropped.
+    expect(gallerySchema.parse({ id, items: [{ ...items[0], originalPath: "originals/2026-10/a.webp" }] }).items).toEqual([items[0]])
+    for (const item of [
+      { kind: "image", path: "courses/2026-10/a.webp" },
+      { kind: "image", path: "workshops/mum/videos/a.webp" },
+      { kind: "image", path: "workshops/mum/cover-a.webp" },
+      { kind: "video", path: "workshops/mum/gallery/a.mp4" },
+      { kind: "video", path: "workshops/mum/videos/a.webp" },
+    ]) {
+      expect(gallerySchema.safeParse({ id, items: [item] }).success, item.path).toBe(false)
+    }
   })
 })
 

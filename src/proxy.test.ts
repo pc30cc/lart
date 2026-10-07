@@ -178,7 +178,7 @@ describe("proxy", () => {
     const matcher = new RegExp(`^${config.matcher[0]}$`) // the pattern is a plain regex here
     expect(matcher.test("/fa/admin")).toBe(true)
     expect(matcher.test("/")).toBe(true)
-    expect(matcher.test("/api/admin/media/private/x")).toBe(true)
+    expect(matcher.test("/api/admin/media/watermark-preview")).toBe(true)
     expect(matcher.test("/_next/static/chunk.js")).toBe(false)
     expect(matcher.test("/media/courses/a.webp")).toBe(false)
     expect(matcher.test("/api/admin/uploads")).toBe(false)

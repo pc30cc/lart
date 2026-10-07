@@ -49,23 +49,26 @@ test.describe.serial("gallery", () => {
     await expect(page.getByText("All changes saved")).toBeVisible({ timeout: 30_000 })
     await expect(page.getByText("Please add a watermark logo in Settings first.", { exact: false })).toHaveCount(0)
 
-    const rows = await sql<{ kind: string; path: string; original_path: string | null; width: number; height: number; sort: number }>(
-      "select kind, path, original_path, width, height, sort from media where course_id = $1 and kind <> 'sample' order by sort",
+    const rows = await sql<{ kind: string; path: string; width: number; height: number; sort: number }>(
+      "select kind, path, width, height, sort from media where course_id = $1 and kind <> 'sample' order by sort",
       [id],
     )
     expect(rows.filter((r) => r.kind === "gallery_photo")).toHaveLength(2)
     expect(rows.filter((r) => r.kind === "gallery_video")).toHaveLength(video ? 1 : 0)
+    // In the workshop's own folder, named after its slug.
     for (const r of rows.filter((r) => r.kind === "gallery_photo")) {
-      expect(r.path).toMatch(/^gallery\/\d{4}-\d{2}\/[\w-]+\.webp$/)
-      expect(r.original_path).toBeTruthy()
+      expect(r.path).toMatch(new RegExp(`^workshops/${WORKSHOPS.held.slug}/gallery/[\\w-]{22}\\.webp$`))
       expect(Math.max(r.width, r.height)).toBeLessThanOrEqual(2400)
+    }
+    for (const r of rows.filter((r) => r.kind === "gallery_video")) {
+      expect(r.path).toMatch(new RegExp(`^workshops/${WORKSHOPS.held.slug}/videos/[\\w-]{22}\\.(mp4|webm)$`))
     }
   })
 
-  test("the public URL serves the watermarked photo; the original stays private", async ({ page, browser }) => {
+  test("the public URL serves the watermarked photo (no original is kept)", async ({ browser }) => {
     const id = await workshopId(WORKSHOPS.held.slug)
-    const photo = await one<{ path: string; original_path: string; width: number; height: number }>(
-      "select path, original_path, width, height from media where course_id = $1 and kind = 'gallery_photo' order by sort limit 1",
+    const photo = await one<{ path: string; width: number; height: number }>(
+      "select path, width, height from media where course_id = $1 and kind = 'gallery_photo' order by sort limit 1",
       [id],
     )
     const anon = await browser.newContext({ storageState: { cookies: [], origins: [] } })
@@ -78,18 +81,14 @@ test.describe.serial("gallery", () => {
       expect(meta.width).toBe(photo.width)
       expect(meta.exif).toBeUndefined()
 
-      // The original: not public, not for strangers, but there for the admin.
-      expect((await anon.request.get(`/media/${photo.original_path}`)).status()).toBe(404)
-      expect((await anon.request.get(`/api/admin/media/private/${photo.original_path}`)).status()).toBe(401)
-      const orig = await page.request.get(`/api/admin/media/private/${photo.original_path}`)
-      expect(orig.status()).toBe(200)
-
       // The watermark is where the settings put it (bottom left, 30 % wide): the published
-      // photo differs from the original there, and hardly anywhere else.
+      // photo differs from the uploaded one (the first test's first photo, made again) there,
+      // and hardly anywhere else.
+      const uploaded = await makePhoto("gallery1.jpg", 3200, 2400, 50)
       const w = photo.width
       const h = photo.height
       const a = await sharp(published).resize(w, h).removeAlpha().raw().toBuffer()
-      const b = await sharp(await orig.body()).rotate().resize(w, h).removeAlpha().raw().toBuffer()
+      const b = await sharp(uploaded).rotate().resize(w, h).removeAlpha().raw().toBuffer()
       const corner = diffIn(a, b, w, h, { x0: 0.02, y0: 0.7, x1: 0.35, y1: 0.98 })
       const elsewhere = diffIn(a, b, w, h, { x0: 0.6, y0: 0.05, x1: 0.95, y1: 0.35 })
       test.info().annotations.push({ type: "watermark-diff", description: `bottom-left ${corner.toFixed(2)} vs top-right ${elsewhere.toFixed(2)}` })

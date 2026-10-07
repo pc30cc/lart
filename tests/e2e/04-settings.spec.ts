@@ -97,11 +97,12 @@ test.describe.serial("settings", () => {
     )
     expect(saved.value).toMatchObject({ position: "bottom-left", sizePct: 30 })
     expect(saved.value).not.toHaveProperty("enabled")
-    expect(saved.value.logoPath).toMatch(/^brand\/\d{4}-\d{2}\/[\w-]+\.png$/)
+    expect(saved.value.logoPath).toMatch(/^brand\/watermark-logo-[\w-]{22}\.png$/)
 
-    // The logo is private: not under /media.
-    const publicTry = await page.request.get(`/media/${saved.value.logoPath}`)
-    expect(publicTry.status()).toBe(404)
+    // The logo is stored like every other file (one storage, an unguessable name).
+    const stored = await page.request.get(`/media/${saved.value.logoPath}`)
+    expect(stored.status()).toBe(200)
+    expect(stored.headers()["content-type"]).toBe("image/png")
 
     // After a reload the saved logo is shown again.
     await page.reload()

@@ -2,6 +2,7 @@
  * Upload purposes, limits and path rules. Shared by the server (upload API,
  * storage drivers) and the upload components, so no server code here.
  */
+import { slugify } from "@/lib/format"
 
 export const imagePurposes = [
   "instructor_photo",
@@ -18,13 +19,6 @@ export type UploadPurpose = (typeof uploadPurposes)[number]
 
 export const isImagePurpose = (purpose: UploadPurpose): purpose is ImagePurpose =>
   purpose !== "gallery_video"
-
-/**
- * Images kept in private storage and shown only inside the admin panel
- * (`privateUrl`): the watermark logo and the partners' profile photos.
- */
-export const isPrivatePurpose = (purpose: UploadPurpose): boolean =>
-  purpose === "watermark_logo" || purpose === "admin_photo"
 
 const MB = 1024 * 1024
 export const MAX_IMAGE_BYTES = 15 * MB
@@ -43,16 +37,40 @@ export const VIDEO_PART_BYTES = 8 * MB
 export const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,.heic,.heif"
 export const VIDEO_ACCEPT = "video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
 
+/**
+ * Whose folder an upload goes to (POST /api/admin/uploads decides, see
+ * `folderOf` there): the saved workshop or instructor, or for one not saved
+ * yet a name for its folder (its slug, the English name), which the server
+ * only ever uses through `folderName`.
+ */
+export type UploadTarget = { courseId?: string; instructorId?: string; folder?: string }
+
+/** Longest folder name made from a name (a path segment may have 64 characters). */
+const FOLDER_MAX = 60
+
+/**
+ * A folder name from a workshop's slug or a person's name: lower-case a-z,
+ * 0-9 and single hyphens, Turkish letters written without their marks
+ * (ç → c, ı → i), at most 60 characters. The first candidate that gives one
+ * wins (a name in Persian letters gives none), otherwise `fallback`. Whatever
+ * the input, it is one plain path segment: "../etc" becomes "etc".
+ */
+export function folderName(candidates: (string | null | undefined)[], fallback = "unnamed"): string {
+  for (const candidate of candidates) {
+    const name = slugify(candidate ?? "", FOLDER_MAX)
+    if (name) return name
+  }
+  return fallback
+}
+
 /** JSON answer of POST /api/admin/uploads. */
 export type UploadResult = {
   /** Storage path to save in the database. */
   path: string
-  /** Where the file can be seen: the CDN for public files, the admin-only route for private ones. */
+  /** Where the file can be seen: the CDN. */
   url: string
   width?: number
   height?: number
-  /** gallery_photo only: the unwatermarked original in private storage. */
-  originalPath?: string
 }
 
 /** Answer for a video part that is not the last one (HTTP 202), or after an offset mismatch (409). */
@@ -89,9 +107,10 @@ const SEGMENT = /^[A-Za-z0-9_-]{1,64}$/
 const FILE = /^[A-Za-z0-9_-]{1,64}\.[a-z0-9]{2,5}$/
 
 /**
- * Storage paths look like `gallery/2026-10/<random>.webp`: 2 to 6 segments of
- * [A-Za-z0-9_-], a dot only before the extension. No "..", no leading slash,
- * no backslash, no encoded characters, so a path can never leave its zone.
+ * Storage paths look like `workshops/<slug>/gallery/<random>.webp`: 2 to 6
+ * segments of [A-Za-z0-9_-], a dot only before the extension. No "..", no
+ * leading slash, no backslash, no encoded characters, so a path can never
+ * leave the storage.
  */
 export function isSafePath(path: unknown): path is string {
   if (typeof path !== "string" || path.length > 255) return false
@@ -99,9 +118,6 @@ export function isSafePath(path: unknown): path is string {
   if (parts.length < 2 || parts.length > 6) return false
   return parts.every((part, i) => (i === parts.length - 1 ? FILE : SEGMENT).test(part))
 }
-
-/** URL of a private file (admins only), e.g. an original photo, the watermark logo or a partner's photo. */
-export const privateUrl = (path: string) => `/api/admin/media/private/${path}`
 
 const contentTypes: Record<string, string> = {
   webp: "image/webp",

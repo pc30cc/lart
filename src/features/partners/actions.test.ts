@@ -45,12 +45,12 @@ vi.mock("next/headers", () => ({
 }))
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn(), refresh: vi.fn() }))
 vi.mock("@/lib/email", () => ({ sendEmail: vi.fn(async () => ({ ok: true })) }))
-/** Private storage: the files these tests "uploaded"; removing one takes it away. */
+/** Storage: the files these tests "uploaded"; removing one takes it away. */
 const stored = vi.hoisted(() => new Set<string>())
 vi.mock("@/lib/storage", async (original) => ({
   ...(await original<typeof import("@/lib/storage")>()),
   remove: vi.fn(async (path: string) => void stored.delete(path)),
-  readPrivate: vi.fn(async (path: string) =>
+  read: vi.fn(async (path: string) =>
     stored.has(path) ? { body: new ReadableStream<Uint8Array>(), size: 0, contentType: "image/webp" } : null,
   ),
 }))
@@ -356,8 +356,8 @@ describe("updateMyProfile", () => {
     expect(await db.select().from(adminInvites).where(eq(adminInvites.id, lapsed.id))).toEqual([])
   })
 
-  const photo = () => `admins/2026-10/${randomUUID().replace(/-/g, "").slice(0, 22)}.webp`
-  /** An upload: the file in private storage and the route's record of who uploaded it, for what. */
+  const photo = () => `partners/mina-partner/photo-${randomUUID().replace(/-/g, "").slice(0, 22)}.webp`
+  /** An upload: the file in storage and the route's record of who uploaded it, for what. */
   async function uploaded(path: string, adminId: string, purpose = "admin_photo") {
     stored.add(path)
     await db
@@ -365,7 +365,7 @@ describe("updateMyProfile", () => {
       .values({ adminId, action: "media.upload", entity: "media", entityId: path, data: { purpose, width: 512, height: 512 } })
   }
 
-  it("only takes a photo this partner uploaded as their photo, and removes the old file from private storage", async () => {
+  it("only takes a photo this partner uploaded as their photo, and removes the old file from storage", async () => {
     const me = session.admin.id
     const [someone] = await db
       .insert(admins)
@@ -377,7 +377,15 @@ describe("updateMyProfile", () => {
     await uploaded(someoneElses, someone.id)
     const notAPhoto = photo()
     await uploaded(notAPhoto, me, "course_cover")
-    for (const path of [someoneElses, notAPhoto, photo(), "instructors/2026-10/abcdefghijklmnopqrstuv.webp", "admins/../x.webp"]) {
+    for (const path of [
+      someoneElses,
+      notAPhoto,
+      photo(),
+      "instructors/2026-10/abcdefghijklmnopqrstuv.webp",
+      "admins/../x.webp",
+      "partners/../brand/x.webp",
+      "partners/mina/photo-x.png",
+    ]) {
       expect(await updateMyProfile({ ...profile(), photoPath: path }), path).toMatchObject({
         ok: false,
         fieldErrors: { photoPath: "This photo couldn’t be saved. Please upload it again." },
@@ -391,16 +399,26 @@ describe("updateMyProfile", () => {
     expect(await updateMyProfile({ ...profile(), photoPath: first })).toMatchObject({ ok: true })
     expect(remove).not.toHaveBeenCalled()
     expect(await updateMyProfile({ ...profile(), photoPath: second })).toMatchObject({ ok: true })
-    expect(remove).toHaveBeenCalledExactlyOnceWith(first, "private")
+    expect(remove).toHaveBeenCalledExactlyOnceWith(first)
     expect((await adminRow(me)).photoPath).toBe(second)
     // Saving again with the same photo needs no new upload.
     expect(await updateMyProfile({ ...profile(), photoPath: second })).toMatchObject({ ok: true })
 
     expect(await updateMyProfile({ ...profile(), photoPath: null })).toMatchObject({ ok: true })
-    expect(remove).toHaveBeenLastCalledWith(second, "private")
+    expect(remove).toHaveBeenLastCalledWith(second)
     expect((await adminRow(me)).photoPath).toBeNull()
     const entries = await auditOf(me, "admin.profile_update")
     expect(entries.map((e) => (e.data as { fields: string[] }).fields)).toEqual([["photo"], ["photo"], ["photo"]])
+  })
+
+  it("keeps a photo saved before the named folders (admins/…) when the profile is saved again", async () => {
+    const me = session.admin.id
+    const old = `admins/2026-10/${randomUUID().replace(/-/g, "").slice(0, 22)}.webp`
+    await db.update(admins).set({ photoPath: old }).where(eq(admins.id, me))
+    expect(await updateMyProfile({ ...profile(), name: "Mina Earlier", photoPath: old })).toMatchObject({ ok: true })
+    expect(await adminRow(me)).toMatchObject({ name: "Mina Earlier", photoPath: old })
+    expect(remove).not.toHaveBeenCalled()
+    await db.update(admins).set({ photoPath: null }).where(eq(admins.id, me))
   })
 
   it("does not take back a photo a save on another device already removed (that would remove the current one)", async () => {
@@ -412,7 +430,7 @@ describe("updateMyProfile", () => {
     // Device 1 opens the profile with the first photo; device 2 then saves the second one.
     expect(await updateMyProfile({ ...profile(), photoPath: first })).toMatchObject({ ok: true })
     expect(await updateMyProfile({ ...profile(), photoPath: second })).toMatchObject({ ok: true })
-    expect(remove).toHaveBeenCalledExactlyOnceWith(first, "private")
+    expect(remove).toHaveBeenCalledExactlyOnceWith(first)
 
     // Device 1 changes only the name; its form still holds the first photo.
     expect(await updateMyProfile({ ...profile(), name: "Mina Elsewhere", photoPath: first })).toMatchObject({

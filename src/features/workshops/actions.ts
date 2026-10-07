@@ -17,7 +17,7 @@ import { localized } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { getSetting } from "@/lib/settings"
 import { sendEmail } from "@/lib/email"
-import { removeFiles, syncMedia, type MediaFile } from "./media"
+import { removeFiles, syncMedia } from "./media"
 import {
   changedContractFields,
   contractLocked,
@@ -251,7 +251,7 @@ export const updateWorkshop = adminAction(workshopUpdateSchema, async ({ id, ...
         ...courseDiff,
         ...feeDiff,
         ...(samples.added || samples.removed.length || samples.reordered
-          ? { samples: { added: samples.added, removed: samples.removed.filter((f) => f.zone === "public").length } }
+          ? { samples: { added: samples.added, removed: samples.removed.length } }
           : {}),
         ...(reissued ? { contract: { voidedVersion: reissued.voided, newVersion: reissued.version } } : {}),
         ...(contractChanged && before.status !== "awaiting_signature" ? { status: { from: before.status, to: "awaiting_signature" } } : {}),
@@ -261,8 +261,8 @@ export const updateWorkshop = adminAction(workshopUpdateSchema, async ({ id, ...
         await ctx.audit({ action: "workshop.update", entity: "workshop", entityId: id, data }, tx)
       }
 
-      const removed: MediaFile[] = [...samples.removed]
-      if ("coverPath" in courseDiff && before.coverPath) removed.push({ path: before.coverPath, zone: "public" })
+      const removed = [...samples.removed]
+      if ("coverPath" in courseDiff && before.coverPath) removed.push(before.coverPath)
       return { reissued, removed }
     })
     .catch(friendly)
@@ -472,14 +472,13 @@ export const saveGallery = adminAction(gallerySchema, async ({ id, items }, ctx)
           : { path: item.path, kind: "gallery_video" as const },
       ),
     )
-    const removedItems = result.removed.filter((f) => f.zone === "public").length
-    if (result.added || removedItems || result.reordered) {
+    if (result.added || result.removed.length || result.reordered) {
       await ctx.audit(
         {
           action: "workshop.gallery",
           entity: "workshop",
           entityId: id,
-          data: { added: result.added, removed: removedItems, reordered: result.reordered, total: items.length },
+          data: { added: result.added, removed: result.removed.length, reordered: result.reordered, total: items.length },
         },
         tx,
       )

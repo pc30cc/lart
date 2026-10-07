@@ -47,7 +47,7 @@ export const admins = pgTable("admins", {
   active: boolean("active").notNull().default(true),
   failedLogins: smallint("failed_logins").notNull().default(0),
   lockedUntil: timestamp("locked_until", { withTimezone: true }),
-  /** Profile photo (`admins/…webp`, private storage: only shown inside the panel). */
+  /** Profile photo (`partners/<name>/photo-<random>.webp`; older ones `admins/…`): stored like every other file, shown only inside the panel. */
   photoPath: text("photo_path"),
   createdAt: createdAt(),
 }, (t) => [
@@ -351,8 +351,6 @@ export const media = pgTable("media", {
   courseId: uuid("course_id").notNull().references(() => courses.id),
   kind: mediaKind("kind").notNull(),
   path: text("path").notNull(),
-  /** Unwatermarked original, private storage, admins only. */
-  originalPath: text("original_path"),
   width: integer("width"),
   height: integer("height"),
   sort: integer("sort").notNull().default(0),

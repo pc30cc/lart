@@ -68,7 +68,7 @@
     "description": "Diğer ortakların gördüğü fotoğrafınız, adınız ve e-postanız.",
     "photo": {
       "title": "Fotoğraf",
-      "description": "Yalnızca ortaklar, burada panelde görür.",
+      "description": "Burada, panelde adınızın yanında görünür.",
       "label": "Fotoğrafınız",
       "hint": "Yüzünüzün kare bir fotoğrafı en iyi sonucu verir."
     },

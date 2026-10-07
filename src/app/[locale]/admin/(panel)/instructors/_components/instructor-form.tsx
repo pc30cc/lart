@@ -2,6 +2,7 @@
 
 import { LockIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
+import { useWatch } from "react-hook-form"
 import { toast } from "sonner"
 
 import { Form, FormActions, FormField, FormSection, SubmitButton, TextField } from "@/components/admin/form/form"
@@ -22,6 +23,7 @@ import {
 } from "@/features/instructors/schema"
 import { Link, useRouter } from "@/i18n/navigation"
 import type { ActionResult } from "@/lib/errors"
+import { folderName } from "@/lib/storage/shared"
 
 /** What the edit page passes in. The ID number is never sent to the browser, only its mask. */
 export type EditableInstructor = {
@@ -75,6 +77,10 @@ export function InstructorForm({ instructor }: { instructor?: EditableInstructor
       router.push(`/admin/instructors/${saved.id}`)
     },
   })
+
+  // The photo's folder: the saved instructor's, or named after the English (else Turkish) name typed so far.
+  const [nameEn, nameTr] = useWatch({ control: form.control, name: ["displayName.en", "displayName.tr"] })
+  const uploadTarget = instructor ? { instructorId: instructor.id } : { folder: folderName([nameEn, nameTr], "") }
 
   // The mask is wrapped in an LTR isolate (LRI…PDI) so an RTL sentence cannot
   // reorder its bullets and digits away from how the input shows it.
@@ -169,6 +175,7 @@ export function InstructorForm({ instructor }: { instructor?: EditableInstructor
               value={value as string | null}
               onChange={(path) => onChange(path)}
               previewUrl={instructor?.photoUrl}
+              target={uploadTarget}
             />
           )}
         </FormField>

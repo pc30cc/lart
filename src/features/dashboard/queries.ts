@@ -13,9 +13,9 @@ import {
   templates,
 } from "@/db/schema"
 import { partnerCapitals, walletBalance } from "@/features/money/ledger"
-import { adminPhotoUrl } from "@/features/partners/schema"
 import { requireAdmin } from "@/lib/auth/admin"
 import { zonedParts, zonedToIso } from "@/lib/format"
+import { publicUrls } from "@/lib/storage"
 import { addMonths, change, fillMonths, fillRate, lastMonths, paymentNote, workshopAlert } from "./metrics"
 
 /**
@@ -227,7 +227,7 @@ function profitByInstructor(exec: Exec, windowStart: Date) {
 
 /** Partners: active admins, and former ones who still have capital. Oldest first, so colours never move. */
 async function partners(exec: Exec) {
-  const [people, capitals] = await gather(exec, [
+  const [people, capitals, url] = await gather(exec, [
     () =>
       exec
         .select({
@@ -240,6 +240,7 @@ async function partners(exec: Exec) {
         .from(admins)
         .orderBy(asc(admins.createdAt), asc(admins.id)),
     () => partnerCapitals(exec),
+    () => publicUrls(),
   ])
   return people
     .filter((p) => p.active || capitals.has(p.id))
@@ -247,7 +248,7 @@ async function partners(exec: Exec) {
       ...p,
       shareBp: p.active ? p.shareBp : 0,
       capital: capitals.get(p.id)?.capital ?? 0,
-      photoUrl: adminPhotoUrl(photoPath),
+      photoUrl: url(photoPath),
     }))
 }
 

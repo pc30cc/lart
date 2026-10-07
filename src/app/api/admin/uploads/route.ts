@@ -1,20 +1,24 @@
+import { eq } from "drizzle-orm"
 import { z } from "zod"
 
+import { db } from "@/db"
+import { courses, instructors } from "@/db/schema"
 import { audit } from "@/lib/audit"
-import { requireAdminApi } from "@/lib/auth/admin"
+import { requireAdminApi, type AdminSession } from "@/lib/auth/admin"
 import { errorForLog } from "@/lib/errors"
 import { getSetting } from "@/lib/settings"
 import { getStorage, StorageError } from "@/lib/storage"
 import { MultipartReader, multipartBoundary } from "@/lib/storage/multipart"
 import {
+  folderName,
   isImagePurpose,
-  isPrivatePurpose,
   MAX_VIDEO_BYTES,
   maxUploadBytes,
   UploadError,
   uploadErrorStatus,
   uploadPurposes,
   type UploadErrorCode,
+  type UploadPurpose,
   type UploadResult,
 } from "@/lib/storage/shared"
 import { PartMismatch, storeImage, storeVideoPart } from "@/lib/storage/upload"
@@ -24,17 +28,59 @@ const FRAMING_BYTES = 16 * 1024
 const bytes = z.string().regex(/^\d{1,10}$/).transform(Number)
 const fieldsSchema = z.strictObject({
   purpose: z.enum(uploadPurposes),
+  // Whose folder the file goes to (see folderOf).
+  courseId: z.uuid().optional(),
+  instructorId: z.uuid().optional(),
+  folder: z.string().max(64).optional(),
   // Videos only, sent in parts (see storeVideoPart).
   total: bytes.optional(),
   upload: z.string().min(1).max(64).optional(),
   offset: bytes.optional(),
 })
+type Fields = z.output<typeof fieldsSchema>
+const MAX_FIELDS = Object.keys(fieldsSchema.shape).length
 
 const fail = (code: UploadErrorCode) => Response.json({ error: code }, { status: uploadErrorStatus[code] })
 
 /**
- * Upload a file: multipart/form-data with short text fields first ("purpose",
- * and for video parts "total", "upload", "offset"), then "file".
+ * The folder name of an upload (`uploadPath` in lib/storage/upload.ts). The
+ * server takes it from the database whenever the record exists: the workshop's
+ * slug (`courseId`: covers, sample and gallery photos, videos), the
+ * instructor's English or Turkish name (`instructorId`), the signed-in
+ * partner's name if it has Latin letters, else their email (their photo). For a workshop or instructor not
+ * saved yet, the form's `folder` hint (its slug or name), only ever used as a
+ * sanitized name, else "new". Null: an unknown id, or a field the purpose
+ * does not take.
+ */
+async function folderOf(purpose: UploadPurpose, fields: Fields, admin: AdminSession["admin"]): Promise<string | null> {
+  const { courseId, instructorId, folder } = fields
+  if (purpose === "admin_photo" || purpose === "watermark_logo") {
+    if (courseId || instructorId || folder !== undefined) return null
+    // The name only when it has Latin letters ("مینا 2" would give "2"), else the email's local part.
+    const fromName = folderName([admin.name], "")
+    return folderName([/[a-z]/.test(fromName) ? fromName : null, admin.email.split("@")[0]]) // the logo's folder is always brand/
+  }
+  if (purpose === "instructor_photo") {
+    if (courseId) return null
+    if (!instructorId) return folderName([folder], "new")
+    const [row] = await db
+      .select({ displayName: instructors.displayName })
+      .from(instructors)
+      .where(eq(instructors.id, instructorId))
+      .limit(1)
+    return row ? folderName([row.displayName.en, row.displayName.tr]) : null
+  }
+  if (instructorId) return null
+  if (!courseId) return folderName([folder], "new")
+  const [course] = await db.select({ slug: courses.slug }).from(courses).where(eq(courses.id, courseId)).limit(1)
+  return course ? folderName([course.slug]) : null
+}
+
+/**
+ * Upload a file: multipart/form-data with short text fields first ("purpose";
+ * "courseId", "instructorId" or "folder" for its folder, see folderOf; for
+ * video parts "total", "upload", "offset", each part with the same folder
+ * fields), then "file".
  * Answers UploadResult (201), a video part receipt { upload, received } (202,
  * or 409 when the offset is behind), or { error: UploadErrorCode }.
  */
@@ -51,7 +97,7 @@ export async function POST(request: Request) {
   try {
     const raw = new Map<string, string>()
     let part = await form.next()
-    while (part && part.filename === null && raw.size < 4 && !raw.has(part.name)) {
+    while (part && part.filename === null && raw.size < MAX_FIELDS && !raw.has(part.name)) {
       raw.set(part.name, (await form.text(64)).trim())
       part = await form.next()
     }
@@ -62,11 +108,13 @@ export async function POST(request: Request) {
       if (total !== undefined || upload !== undefined || offset !== undefined) return fail("bad_request")
       if (declared > maxUploadBytes(purpose) + FRAMING_BYTES) return fail("too_large")
     }
+    const folder = await folderOf(purpose, fields.data, session.admin)
+    if (folder === null) return fail("bad_request")
 
     const [storage, watermark] = await Promise.all([getStorage(), getSetting("watermark")])
     let result: UploadResult
     if (isImagePurpose(purpose)) {
-      result = await storeImage({ storage, purpose, file: form.file(maxUploadBytes(purpose)), watermark })
+      result = await storeImage({ storage, purpose, file: form.file(maxUploadBytes(purpose)), watermark, folder })
     } else {
       const limit = (total ?? MAX_VIDEO_BYTES) - (offset ?? 0)
       const stored = await storeVideoPart({
@@ -76,26 +124,24 @@ export async function POST(request: Request) {
         upload,
         offset,
         total,
+        folder,
       })
       if (!("path" in stored)) return Response.json(stored, { status: 202 })
       result = stored
     }
 
-    const { path, originalPath, width, height } = result
+    const { path, width, height } = result
     try {
       await audit({
         adminId: session.admin.id,
         action: "media.upload",
         entity: "media",
         entityId: path,
-        data: { purpose, originalPath, width, height },
+        data: { purpose, width, height },
       })
     } catch (error) {
       // No unaudited files: undo the upload.
-      await Promise.allSettled([
-        storage.remove(path, isPrivatePurpose(purpose) ? "private" : "public"),
-        originalPath && storage.remove(originalPath, "private"),
-      ])
+      await storage.remove(path).catch(() => {})
       throw error
     }
     return Response.json(result, { status: 201 })

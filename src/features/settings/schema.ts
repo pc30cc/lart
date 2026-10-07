@@ -34,7 +34,7 @@ export type CdnProvider = (typeof cdnProviders)[number]
 /** Key fields per provider. They are stored encrypted (`<field>Enc`) and never sent back to the browser. */
 export const cdnSecretFields = {
   local: [],
-  bunny: ["publicZoneKey", "privateZoneKey"],
+  bunny: ["publicZoneKey"],
   cloudflare: ["accessKeyId", "secretAccessKey"],
 } as const satisfies Record<CdnProvider, readonly string[]>
 
@@ -49,31 +49,42 @@ const bucket = text().max(63).regex(BUCKET, { error: "settings.storage.errors.bu
 /** Empty means "keep the saved key". */
 const secret = z.string().trim().max(256).regex(/^\S*$/, { error: "settings.storage.errors.key" })
 
+/**
+ * Bunny Storage API endpoints by the storage zone's main region (bunny.net docs,
+ * "Storage endpoints"). The zone's region is fixed when it is created.
+ */
+export const bunnyRegions = [
+  { region: "de", host: "storage.bunnycdn.com" },
+  { region: "uk", host: "uk.storage.bunnycdn.com" },
+  { region: "se", host: "se.storage.bunnycdn.com" },
+  { region: "ny", host: "ny.storage.bunnycdn.com" },
+  { region: "la", host: "la.storage.bunnycdn.com" },
+  { region: "sg", host: "sg.storage.bunnycdn.com" },
+  { region: "syd", host: "syd.storage.bunnycdn.com" },
+  { region: "br", host: "br.storage.bunnycdn.com" },
+  { region: "jh", host: "jh.storage.bunnycdn.com" },
+] as const
+const bunnyHosts = bunnyRegions.map((r) => r.host) as [string, ...string[]]
+
+/** One storage zone (Bunny) or bucket (R2) for every file; the names match the stored setting's. */
 export const cdnSettingsSchema = z.discriminatedUnion("provider", [
   z.object({ provider: z.literal("local") }),
-  z
-    .object({
-      provider: z.literal("bunny"),
-      // Only Bunny's own storage endpoints (e.g. storage.bunnycdn.com, uk.storage.bunnycdn.com).
-      storageHost: text().regex(/^(?:[a-z0-9-]+\.)?storage\.bunnycdn\.com$/, { error: "settings.storage.errors.bunnyHost" }),
-      publicZone: bucket,
-      publicZoneKey: secret,
-      publicHost: host,
-      privateZone: bucket,
-      privateZoneKey: secret,
-    })
-    .refine((v) => v.publicZone !== v.privateZone, { path: ["privateZone"], error: "settings.storage.errors.sameZone" }),
-  z
-    .object({
-      provider: z.literal("cloudflare"),
-      accountId: text().regex(/^[a-f0-9]{32}$/, { error: "settings.storage.errors.accountId" }),
-      accessKeyId: secret,
-      secretAccessKey: secret,
-      publicBucket: bucket,
-      publicHost: host,
-      privateBucket: bucket,
-    })
-    .refine((v) => v.publicBucket !== v.privateBucket, { path: ["privateBucket"], error: "settings.storage.errors.sameZone" }),
+  z.object({
+    provider: z.literal("bunny"),
+    // Only Bunny's own storage endpoints, chosen by region.
+    storageHost: text().pipe(z.enum(bunnyHosts, { error: "settings.storage.errors.bunnyHost" })),
+    publicZone: bucket,
+    publicZoneKey: secret,
+    publicHost: host,
+  }),
+  z.object({
+    provider: z.literal("cloudflare"),
+    accountId: text().regex(/^[a-f0-9]{32}$/, { error: "settings.storage.errors.accountId" }),
+    accessKeyId: secret,
+    secretAccessKey: secret,
+    publicBucket: bucket,
+    publicHost: host,
+  }),
 ])
 
 export type CdnSettingsInput = z.input<typeof cdnSettingsSchema>
@@ -98,7 +109,10 @@ export const watermarkRange = {
   marginPct: { min: 0, max: 20, step: 0.5 },
 } as const
 
-/** The watermark logo is uploaded with purpose "watermark_logo": a PNG under brand/ in private storage. */
+/**
+ * The watermark logo is uploaded with purpose "watermark_logo": a PNG under
+ * brand/ (`brand/watermark-logo-<random>.png`; older ones `brand/<yyyy-mm>/…`).
+ */
 export const isLogoPath = (path: string) => isSafePath(path) && path.startsWith("brand/") && path.endsWith(".png")
 
 const range = (r: { min: number; max: number }) => z.number().min(r.min).max(r.max)

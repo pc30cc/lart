@@ -54,7 +54,7 @@ src/
       instructor/(panel)/       the instructor panel: home, contracts, workshops, earnings, profile
       admin/login/              super-admin sign in, forgot/ and reset/ password (no panel chrome)
       admin/(panel)/<module>/   super-admin pages, one folder per module
-    api/admin/…, api/instructor/uploads   route handlers (uploads, private media, CSV exports)
+    api/admin/…, api/instructor/uploads   route handlers (uploads, watermark preview, CSV exports)
   components/
     ui/                         shadcn/ui primitives (do not edit casually)
     admin/                      shared admin building blocks (shell, page header, forms, uploads)
@@ -137,35 +137,70 @@ panel is premium and calm: clean cards, clear tables, beautiful charts.
 
 ## Uploads and media
 
-Files live on the CDN chosen in the `cdn` setting (`local` in development:
-`./.data/public`, served by `/media/...`, and `./.data/private`). The
-database stores only the storage path, e.g. `courses/2026-10/<random>.webp`.
+Files live in one storage space on the CDN chosen in the `cdn` setting
+(`local` in development: `./.data/public`, served by `/media/...`; Bunny: one
+storage zone behind a pull zone; Cloudflare: one R2 bucket with a custom
+domain). Every file is served by the CDN under an unguessable name; there is
+no private storage. The database stores only the storage path, e.g.
+`workshops/<slug>/cover-<random>.webp`.
 
 - **Upload from a form** with the components in `components/admin/upload`:
-  `<ImageUpload purpose="course_cover" {...field} previewUrl={url} />`,
-  `<VideoUpload {...field} />` and `<MediaGrid value onChange />` (many
-  photos and videos, reorder, remove). The value is the storage path.
-- **Purposes** (`lib/storage/shared.ts`): `instructor_photo` (square 800),
-  `course_cover` (2000 wide), `course_sample` (1600), `gallery_photo` (2400,
-  watermarked, private unwatermarked original; refused with 409
-  `watermark_missing` until a watermark logo is set), `watermark_logo` (PNG,
-  private), `admin_photo` (a partner's photo: square 512, private, under
-  `admins/`), `gallery_video` (MP4 / MOV / WebM as they are, sent in 8 MB
-  parts). `isPrivatePurpose(purpose)` says which purposes go to private storage.
+  `<ImageUpload purpose="course_cover" {...field} previewUrl={url} target={…} />`,
+  `<VideoUpload {...field} />` and `<MediaGrid value onChange target={…} />`
+  (many photos and videos, reorder, remove). The value is the storage path.
+- **Purposes** (`lib/storage/shared.ts`) and where they are stored
+  (`uploadPath` in `lib/storage/upload.ts`; `<random>` is 128 random bits):
+
+  | Purpose | Processing | Path |
+  | --- | --- | --- |
+  | `course_cover` | 2000 wide | `workshops/<slug>/cover-<random>.webp` |
+  | `course_sample` | 1600 | `workshops/<slug>/samples/<random>.webp` |
+  | `gallery_photo` | 2400, watermarked; only that copy is stored; 409 `watermark_missing` until a logo is set | `workshops/<slug>/gallery/<random>.webp` |
+  | `gallery_video` | MP4 / MOV / WebM as they are, sent in 8 MB parts | `workshops/<slug>/videos/<random>.<ext>` |
+  | `instructor_photo` | square 800 | `instructors/<name>/photo-<random>.webp` |
+  | `admin_photo` | a partner's photo, square 512 | `partners/<name>/photo-<random>.webp` |
+  | `watermark_logo` | PNG | `brand/watermark-logo-<random>.png` |
+
   Images are checked from their bytes, auto-rotated, stripped of all metadata
   (GPS) and re-encoded as WebP.
-- **Validate a submitted path** with `isSafePath` (and the expected prefix)
-  before saving it; never trust a path from the browser.
-- **Show a file**: `(await getStorage()).publicUrl(path)` on the server.
-  Private files (originals, logo, partners' photos) only through
-  `privateUrl(path)`, which is the admin-only route
-  `/api/admin/media/private/<path>`.
-- **Replace or delete**: after saving the record, call `remove(oldPath)`
-  (`remove(path, "private")` for originals) from `lib/storage`.
-- **Settings page**: `testStorage(cdnConfig)` for "Test connection" (messages
-  in `media.storageTest.<step>`), and
+- **Folder names**: `folderName(candidates, fallback)` (`lib/storage/shared.ts`,
+  client-safe) is `slugify` of the first name that has Latin letters or
+  digits, at most 60 characters (`ç` → `c`, `ı` → `i`), else `unnamed`; never
+  more than one plain path segment. The upload route decides the folder
+  (`folderOf` in `app/api/admin/uploads/route.ts`): from the database when
+  the record exists (`target={{ courseId }}`: the workshop's slug;
+  `{ instructorId }`: the instructor's English, else Turkish, display name),
+  from the session for a partner's photo (the name if it has Latin letters,
+  not just digits, else the email's local part) and on the instructor route
+  (the instructor's name), and for a workshop or instructor not saved yet
+  from the form's `target={{ folder }}` hint (the slug field, the English
+  name), sanitized again, else `new`. An unknown id is refused (400).
+  Renaming a record never moves its files (the paths are stored). Paths
+  from before the named folders (`courses/<yyyy-mm>/…`, `gallery/<yyyy-mm>/…`,
+  `admins/…`, `brand/<yyyy-mm>/…`) stay valid.
+- **Validate a submitted path** with `isSafePath` and the layout of its kind
+  (e.g. the cover, sample and gallery checks in `features/workshops/schema.ts`,
+  which also take the older paths) before saving it; never trust a path from
+  the browser.
+- **Show a file**: `(await getStorage()).publicUrl(path)` on the server, or
+  `const url = await publicUrls()` then `url(path)`, which gives null instead
+  of failing when the `cdn` setting cannot be used (the panel layout, the
+  partners' photos, the watermark logo).
+- **Read a file on the server** (the watermark logo, for watermarking and
+  the preview): `read(path)` from `lib/storage`, through the storage API with
+  the key, never through the CDN.
+- **Replace or delete**: after saving the record, call `remove(oldPath)` from
+  `lib/storage`.
+- **Settings page**: `testStorage(cdnConfig)` for "Test connection" (writes,
+  reads, opens through the CDN and deletes one probe file; messages in
+  `settings.storage.test.<step>`), and
   `/api/admin/media/watermark-preview?position=&sizePct=&opacity=&marginPct=&logo=`
-  as the live preview image.
+  as the live preview image. The `cdn` setting's field names (`publicZone`,
+  `publicZoneKeyEnc`, `publicBucket`, `publicHost`) date from when there was
+  a second, private zone; they stay, so the saved setting still parses (the
+  old private fields are dropped). Never rename them or make the schema
+  strict: a stored value that does not parse falls back to local storage
+  without any error.
 - The proxy must not run on `/api/admin/uploads` or `/api/instructor/uploads`:
   Next.js would buffer the body there and cut it at 10 MB (see the matcher in
   `src/proxy.ts`).
@@ -549,14 +584,15 @@ rules; `actions.ts`; `queries.ts`; `schema.ts`: the form schemas, client-safe).
   sessions (this one stays), drops reset links sent to the old address and
   deletes an expired invitation of the new one (it could never be sent
   again; `pnpm admin:create` does the same). The photo (`admin_photo`
-  upload) must be one this partner uploaded (the upload route's
-  `media.upload` audit entry) and still be in private storage (a form left
-  open on another device may hold a photo a later save there removed); the
-  old file is removed from private storage. Audited as `admin.profile_update` with the changed field
-  names (and the name's change), never the password. `AdminSession.admin`
-  carries an optional `photoPath` (read it as `photoPath ?? null`);
-  `adminPhotoUrl(path)` (`features/partners/schema`) gives the image URL,
-  and the partners and dashboard queries return `photoUrl`.
+  upload, `partners/<name>/photo-<random>.webp`) must be one this partner
+  uploaded (the upload route's `media.upload` audit entry) and still be
+  stored (a form left open on another device may hold a photo a later save
+  there removed); the old file is removed from storage. Audited as
+  `admin.profile_update` with the changed field names (and the name's
+  change), never the password. `AdminSession.admin` carries an optional
+  `photoPath` (read it as `photoPath ?? null`); its URL is the normal public
+  one (`publicUrls()`), and the partners and dashboard queries return
+  `photoUrl`.
 - **Pages and components**: Money → Partners has "Invite a partner"
   (`money/partners/_components/invite-dialog.tsx`; disabled with a note when
   every place is taken, which asks to cancel an invitation only while a

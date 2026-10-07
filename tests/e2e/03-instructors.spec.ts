@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test"
 import sharp from "sharp"
 
+import { slugify } from "../../src/lib/format"
 import { expect, field, fillLocalized, mailMark, serverLog, serverLogSize, test, toast, waitForEmail } from "./helpers/app"
 import { INSTRUCTORS } from "./helpers/data"
 import { one, sql } from "./helpers/db"
@@ -64,7 +65,8 @@ test.describe.serial("instructors", () => {
     expect(row.website).toBe(`https://www.instagram.com/${INSTRUCTORS.elif.website.slice(1)}`)
     expect(row.teaching_languages).toEqual(["fa", "tr", "en"])
     expect(row.id_number_enc).not.toContain(INSTRUCTORS.elif.idNumber)
-    expect(row.photo_path).toMatch(/^instructors\/\d{4}-\d{2}\/[\w-]+\.webp$/)
+    // Uploaded before the instructor existed: in a folder named after the English name typed in the form.
+    expect(row.photo_path).toMatch(new RegExp(`^instructors/${slugify(INSTRUCTORS.elif.displayName.en)}/photo-[\\w-]{22}\\.webp$`))
     expect(row.display_name.en).toBe(INSTRUCTORS.elif.displayName.en)
 
     // The photo is a square WebP of at most 800 px, without metadata.

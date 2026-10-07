@@ -4,7 +4,7 @@ import { FilmIcon, RefreshCwIcon, Trash2Icon, VideoIcon } from "lucide-react"
 import { useId, useRef, useState, type Ref } from "react"
 
 import { Button } from "@/components/ui/button"
-import { MAX_VIDEO_BYTES, VIDEO_ACCEPT, type UploadResult } from "@/lib/storage/shared"
+import { MAX_VIDEO_BYTES, VIDEO_ACCEPT, type UploadResult, type UploadTarget } from "@/lib/storage/shared"
 import { cn } from "@/lib/utils"
 import { Dropzone, OverlayButton, UploadMessage, UploadOverlay } from "./parts"
 import { useFileDrop, useMediaText, useSingleUpload } from "./upload-client"
@@ -15,6 +15,8 @@ export type VideoUploadProps = {
   onChange: (path: string | null, result?: UploadResult) => void
   /** URL of the current value (from publicUrl() on the server). */
   previewUrl?: string | null
+  /** Whose folder the video goes to: the workshop (`{ courseId }`). */
+  target?: UploadTarget
   onBlur?: () => void
   disabled?: boolean
   id?: string
@@ -27,16 +29,21 @@ export type VideoUploadProps = {
 }
 
 /** One video (MP4, MOV or WebM, stored as a plain CDN file): drag and drop or click, progress, replace and remove. */
-export function VideoUpload({ value, onChange, previewUrl, onBlur, disabled, id, name, ref, className, ...aria }: VideoUploadProps) {
+export function VideoUpload({ value, onChange, previewUrl, target, onBlur, disabled, id, name, ref, className, ...aria }: VideoUploadProps) {
   const { t, size, error } = useMediaText()
   const inputRef = useRef<HTMLInputElement>(null)
   const messageId = useId()
   const [uploaded, setUploaded] = useState<UploadResult | null>(null)
-  const { phase, start, cancel, dismiss } = useSingleUpload("gallery_video", (result) => {
-    setUploaded(result)
-    onChange(result.path, result)
-    onBlur?.()
-  })
+  const { phase, start, cancel, dismiss } = useSingleUpload(
+    "gallery_video",
+    (result) => {
+      setUploaded(result)
+      onChange(result.path, result)
+      onBlur?.()
+    },
+    undefined,
+    target,
+  )
   const { dragging, dropProps } = useFileDrop((files) => start(files[0]), disabled)
 
   const url = value ? (uploaded?.path === value ? uploaded.url : previewUrl) || null : null

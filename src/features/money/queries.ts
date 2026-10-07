@@ -5,9 +5,9 @@ import { alias } from "drizzle-orm/pg-core"
 import { likePattern, type TableParams } from "@/components/admin/data-table/params"
 import { db } from "@/db"
 import { admins, contracts, courses, instructors, ledgerLines, ledgerTransactions, type LocalizedText } from "@/db/schema"
-import { adminPhotoUrl } from "@/features/partners/schema"
 import { requireAdmin } from "@/lib/auth/admin"
 import { splitByShares } from "@/lib/money"
+import { publicUrls } from "@/lib/storage"
 import { activePartners, prepareClosing, projectedFees, totalOf, workshopsToClose } from "./closing"
 import { accountBalances, booksClosed, openResult, partnerCapitals, registrationKinds, type Account, type TransactionKind } from "./ledger"
 import type { transactionTable } from "./schema"
@@ -167,7 +167,7 @@ export async function listActivePartners() {
  */
 export async function listPartnerAccounts() {
   await requireAdmin()
-  const [people, capitals, open] = await Promise.all([
+  const [people, capitals, open, url] = await Promise.all([
     db
       .select({
         id: admins.id,
@@ -181,6 +181,7 @@ export async function listPartnerAccounts() {
       .orderBy(desc(admins.active), desc(admins.shareBp), asc(admins.createdAt)),
     partnerCapitals(db),
     notSharedOut(),
+    publicUrls(),
   ])
   const partners = people.filter((p) => p.active || capitals.has(p.id))
   const sharing = partners.filter((p) => p.active && p.shareBp > 0)
@@ -194,7 +195,7 @@ export async function listPartnerAccounts() {
     const openShare = sharesOk ? (openOf.get(p.id) ?? 0) : 0
     return {
       ...p,
-      photoUrl: adminPhotoUrl(photoPath),
+      photoUrl: url(photoPath),
       contributions: c?.contributions ?? 0,
       withdrawals: c?.withdrawals ?? 0,
       paidForBusiness: c?.paidForBusiness ?? 0,

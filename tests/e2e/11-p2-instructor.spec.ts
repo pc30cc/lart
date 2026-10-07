@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test"
 import sharp from "sharp"
 
+import { folderName } from "../../src/lib/storage/shared"
 import { emailsSince, expect, mailMark, RUN, test, toast, type SentEmail } from "./helpers/app"
 import { one, sql } from "./helpers/db"
 import { makePhoto } from "./helpers/files"
@@ -213,7 +214,8 @@ test.describe.serial("phase 2 · instructor panel", () => {
     await page.getByRole("button", { name: t("instructorPanel.profile.save") }).click()
     await expect(toast(page, t("instructorPanel.profile.saved"))).toBeVisible()
     const row = await one<{ photo_path: string | null; bio: Record<string, string> | null }>("select photo_path, bio from instructors where email = $1", [P2.nur.email])
-    expect(row.photo_path).toMatch(/^instructors\/\d{4}-\d{2}\/[\w-]+\.webp$/)
+    // In a folder named after the instructor's English name.
+    expect(row.photo_path).toMatch(new RegExp(`^instructors/${folderName([P2.nur.displayName.en, P2.nur.displayName.tr])}/photo-[\\w-]{22}\\.webp$`))
     expect(row.bio?.tr).toContain("Seramik boyama öğretiyorum.")
     // The photo is a square WebP without metadata.
     const res = await page.request.get(`/media/${row.photo_path}`)

@@ -5,8 +5,8 @@ import { db } from "@/db"
 import { adminInvites, admins } from "@/db/schema"
 import type { AppLocale } from "@/i18n/routing"
 import { requireAdmin } from "@/lib/auth/admin"
+import { publicUrls } from "@/lib/storage"
 import { partnerSlots } from "./invites"
-import { adminPhotoUrl } from "./schema"
 
 /**
  * The partners page: invitations not accepted yet (oldest first, expired ones
@@ -42,12 +42,15 @@ export type PartnerInviteRow = Awaited<ReturnType<typeof listPartnerInvites>>["i
 /** My profile: name, email, photo and profit share (read-only here; Money → Partners changes shares). */
 export async function getMyProfile() {
   const { admin } = await requireAdmin()
-  const [row] = await db
-    .select({ id: admins.id, name: admins.name, email: admins.email, shareBp: admins.shareBp, photoPath: admins.photoPath })
-    .from(admins)
-    .where(eq(admins.id, admin.id))
-    .limit(1)
-  return { ...row, photoUrl: adminPhotoUrl(row.photoPath) }
+  const [[row], url] = await Promise.all([
+    db
+      .select({ id: admins.id, name: admins.name, email: admins.email, shareBp: admins.shareBp, photoPath: admins.photoPath })
+      .from(admins)
+      .where(eq(admins.id, admin.id))
+      .limit(1),
+    publicUrls(),
+  ])
+  return { ...row, photoUrl: url(row.photoPath) }
 }
 
 export type MyProfile = Awaited<ReturnType<typeof getMyProfile>>

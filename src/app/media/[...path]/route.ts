@@ -10,8 +10,8 @@ import { localDriver } from "@/lib/storage/local"
 const notFound = () => new Response(null, { status: 404 })
 
 /**
- * Public files of the local (development) storage, ./.data/public. With Bunny
- * or Cloudflare the CDN serves them and this route answers 404.
+ * Files of the local (development) storage, ./.data/public. With Bunny or
+ * Cloudflare the CDN serves them and this route answers 404.
  */
 export async function GET(request: Request, ctx: RouteContext<"/media/[...path]">) {
   if ((await getSetting("cdn")).provider !== "local") return notFound()
@@ -19,7 +19,7 @@ export async function GET(request: Request, ctx: RouteContext<"/media/[...path]"
   const path = (await ctx.params).path.join("/")
   const contentType = mediaContentType(path)
   if (!isSafePath(path) || !contentType) return notFound()
-  const file = localDriver().file("public", path)
+  const file = localDriver().file(path)
   const info = await stat(file).catch(() => null)
   if (!info?.isFile() || info.size === 0) return notFound()
 

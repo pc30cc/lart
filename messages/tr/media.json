@@ -43,14 +43,6 @@
     "server": "Bizim tarafımızda bir sorun oluştu. Lütfen tekrar deneyin.",
     "network": "Bağlantı kesildi. Lütfen internet bağlantınızı kontrol edip tekrar deneyin."
   },
-  "storageTest": {
-    "ok": "Bağlantı başarılı. Dosyalar kaydedilebiliyor, okunabiliyor ve silinebiliyor.",
-    "config": "Kayıtlı anahtarlar okunamadı. Lütfen anahtarları yeniden girin.",
-    "write": "{zone, select, private {Özel depolamaya} other {Genel depolamaya}} test dosyası kaydedilemedi. Lütfen alan ya da bucket adını ve anahtarını kontrol edin.",
-    "read": "Test dosyası {zone, select, private {özel depolamaya} other {genel depolamaya}} kaydedildi ancak geri okunamadı. Lütfen anahtarın izinlerini kontrol edin.",
-    "url": "Dosyalar kaydediliyor ancak genel adresten açılmıyor. Lütfen CDN alan adını kontrol edin.",
-    "delete": "Test dosyası {zone, select, private {özel depolamadan} other {genel depolamadan}} silinemedi. Lütfen anahtarın dosya silme izni olduğunu kontrol edin."
-  },
   "preview": {
     "alt": "Örnek bir fotoğraf üzerinde filigran önizlemesi"
   }

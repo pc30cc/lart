@@ -13,9 +13,18 @@ import { isSafePath } from "@/lib/storage/shared"
 
 const count = (min: number, max: number) => z.number().int().min(min).max(max)
 
-/** A storage path under one of our prefixes (never trust a path from the browser). */
-const storagePath = (prefix: string) =>
-  z.string().refine((p) => isSafePath(p) && p.startsWith(`${prefix}/`), { error: "common.validation.invalid" })
+/**
+ * A storage path of one kind of workshop file (never trust a path from the
+ * browser): `workshops/<slug>/…` as the upload stores it (lib/storage/upload.ts),
+ * or a path from before the named folders (`courses/…`, `gallery/…`), which
+ * saved workshops still send back.
+ */
+const storagePath = (layout: RegExp) =>
+  z.string().refine((p) => isSafePath(p) && layout.test(p), { error: "common.validation.invalid" })
+const coverPath = storagePath(/^(courses\/|workshops\/[^/]+\/cover-[^/]+\.webp$)/)
+const samplePath = storagePath(/^(courses\/|workshops\/[^/]+\/samples\/[^/]+\.webp$)/)
+const galleryPhotoPath = storagePath(/^(gallery\/|workshops\/[^/]+\/gallery\/[^/]+\.webp$)/)
+const galleryVideoPath = storagePath(/^(gallery\/|workshops\/[^/]+\/videos\/[^/]+\.(mp4|mov|webm)$)/)
 
 /**
  * The workshop's online payment link (iyzico iyziLink / PayTR "Link ile Ödeme"
@@ -37,7 +46,7 @@ const paymentUrl = z
   .optional()
 
 const sample = z.object({
-  path: storagePath("courses"),
+  path: samplePath,
   width: z.number().int().positive().max(20_000).optional(),
   height: z.number().int().positive().max(20_000).optional(),
 })
@@ -72,7 +81,7 @@ const fields = z.object({
   experienceRequired: z.boolean(),
   experienceNote: localizedText({ max: 300 }),
   notes: localizedText({ max: 2000 }),
-  coverPath: storagePath("courses").nullable(),
+  coverPath: coverPath.nullable(),
   samples: z.array(sample).max(12),
   paymentUrl,
   // Contract
@@ -242,12 +251,11 @@ export function contractLocked(
 const galleryItem = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("image"),
-    path: storagePath("gallery"),
-    originalPath: storagePath("originals").optional(),
+    path: galleryPhotoPath,
     width: z.number().int().positive().max(20_000).optional(),
     height: z.number().int().positive().max(20_000).optional(),
   }),
-  z.object({ kind: z.literal("video"), path: storagePath("gallery") }),
+  z.object({ kind: z.literal("video"), path: galleryVideoPath }),
 ])
 
 export const gallerySchema = z.object({ id: uuid(), items: z.array(galleryItem).max(200) })

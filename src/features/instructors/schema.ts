@@ -24,7 +24,10 @@ export type InviteLocale = (typeof inviteLocales)[number]
 /** How long an invitation link stays valid. */
 export const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
-/** Storage prefix of profile photos (the `instructor_photo` upload purpose). */
+/**
+ * Storage prefix of profile photos (the `instructor_photo` upload purpose):
+ * `instructors/<name>/photo-<random>.webp`, older ones `instructors/<yyyy-mm>/…`.
+ */
 export const PHOTO_PREFIX = "instructors/"
 
 /** "+90 532 123 45 67", "0090 532…", Persian digits → "+905321234567". */

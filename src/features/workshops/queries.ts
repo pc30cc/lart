@@ -302,7 +302,6 @@ export async function listGallery(courseId: string) {
       .select({
         path: media.path,
         kind: media.kind,
-        originalPath: media.originalPath,
         width: media.width,
         height: media.height,
       })
@@ -315,7 +314,6 @@ export async function listGallery(courseId: string) {
     path: r.path,
     url: urlOf(files, r.path) ?? "",
     kind: r.kind === "gallery_video" ? ("video" as const) : ("image" as const),
-    originalPath: r.originalPath ?? undefined,
     width: r.width ?? undefined,
     height: r.height ?? undefined,
   }))

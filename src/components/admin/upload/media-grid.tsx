@@ -15,12 +15,12 @@ import { useCallback, useEffect, useRef, useState, type DragEvent } from "react"
 import { useFormatter } from "next-intl"
 
 import { Button } from "@/components/ui/button"
-import { IMAGE_ACCEPT, MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, VIDEO_ACCEPT, type UploadResult } from "@/lib/storage/shared"
+import { IMAGE_ACCEPT, MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, VIDEO_ACCEPT, type UploadResult, type UploadTarget } from "@/lib/storage/shared"
 import { cn } from "@/lib/utils"
 import { Dropzone, OverlayButton, UploadMessage, UploadOverlay } from "./parts"
 import { checkFile, failureCode, isVideoFile, uploadFile, useFileDrop, useMediaText, type ClientUploadError } from "./upload-client"
 
-export type MediaItem = Pick<UploadResult, "path" | "url" | "width" | "height" | "originalPath"> & {
+export type MediaItem = Pick<UploadResult, "path" | "url" | "width" | "height"> & {
   kind: "image" | "video"
 }
 
@@ -43,6 +43,8 @@ export type MediaGridProps = {
   imagePurpose?: "gallery_photo" | "course_sample"
   /** Accept videos as well. Default: true for the gallery. */
   allowVideos?: boolean
+  /** Whose folder the files go to: the saved workshop, or the slug of a new one. */
+  target?: UploadTarget
   max?: number
   disabled?: boolean
   className?: string
@@ -63,6 +65,7 @@ export function MediaGrid({
   onChange,
   imagePurpose = "gallery_photo",
   allowVideos = imagePurpose === "gallery_photo",
+  target,
   max = 200,
   disabled,
   className,
@@ -79,10 +82,12 @@ export function MediaGrid({
   const pendingRef = useRef<Pending[]>([])
   const valueRef = useRef(value)
   const onChangeRef = useRef(onChange)
+  const targetRef = useRef(target)
   const running = useRef(false)
   useEffect(() => {
     valueRef.current = value
     onChangeRef.current = onChange
+    targetRef.current = target
   })
   useEffect(() => {
     const list = pendingRef
@@ -122,11 +127,12 @@ export function MediaGrid({
         if (!item) break
         patch(item.id, { status: "uploading", progress: 0 })
         try {
-          const { path, url, width, height, originalPath } = await uploadFile(item.file, purposeOf(item.kind), {
+          const { path, url, width, height } = await uploadFile(item.file, purposeOf(item.kind), {
             signal: item.controller.signal,
+            target: targetRef.current,
             onProgress: (progress) => patch(item.id, { progress }),
           })
-          const items = [...valueRef.current, { path, url, width, height, originalPath, kind: item.kind }]
+          const items = [...valueRef.current, { path, url, width, height, kind: item.kind }]
           valueRef.current = items
           onChangeRef.current(items)
           drop(item.id)

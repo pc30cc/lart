@@ -181,6 +181,8 @@ export function WorkshopForm({
   const live = workshop?.contract && workshop.contract.status !== "void" ? workshop.contract : null
   const locked = Boolean(workshop?.contractLocked)
   const reissue = Boolean(workshop && !locked && reissues(workshop.values, watched))
+  // Uploads go to the workshop's folder: the saved one's, or named after the slug typed so far.
+  const uploadTarget = workshop ? { courseId: workshop.id } : { folder: watched.slug }
 
   async function onSubmit(event?: React.BaseSyntheticEvent) {
     event?.preventDefault()
@@ -342,6 +344,7 @@ export function WorkshopForm({
               value={field.value as string | null}
               onChange={(path) => field.onChange(path)}
               previewUrl={workshop?.coverUrl}
+              target={uploadTarget}
             />
           )}
         </FormField>
@@ -352,6 +355,7 @@ export function WorkshopForm({
               onChange={field.onChange}
               imagePurpose="course_sample"
               allowVideos={false}
+              target={uploadTarget}
               max={12}
             />
           )}

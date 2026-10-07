@@ -28,7 +28,7 @@ import { Link, usePathname } from "@/i18n/navigation"
 import { isRtl } from "@/i18n/routing"
 import { cn } from "@/lib/utils"
 
-/** The signed-in partner in the header: `photoUrl` from `adminPhotoUrl()`, null for initials. */
+/** The signed-in partner in the header: `photoUrl` is the photo's CDN URL (`publicUrls()`), null for initials. */
 export type ShellAdmin = { name: string; email: string; photoUrl: string | null }
 
 // In RTL the sidebar sits on the right, so the inset's margins mirror.

@@ -101,7 +101,7 @@
   },
   "storage": {
     "providerTitle": "Where files are stored",
-    "providerDescription": "Photos and videos are stored as files on a CDN, which delivers them quickly. Originals and the watermark logo go to a separate private space that nobody can open from outside.",
+    "providerDescription": "Photos, videos and the watermark logo are stored as files on a CDN, which delivers them quickly. Each file gets a name nobody can guess.",
     "provider": "Storage",
     "providers": {
       "local": {
@@ -120,33 +120,26 @@
     "switchWarning": "Files that are already uploaded stay where they are now; they aren’t moved. Change this before uploading, or move the files yourself.",
     "localNote": "Files are kept in the .data folder on this server. That’s fine for development, but for the live website choose Bunny or Cloudflare, so files are fast and survive a new deployment.",
     "bunnyTitle": "Bunny Storage",
-    "bunnyDescription": "You’ll find these in the Bunny dashboard, under Storage. Use one storage zone for public files and another one, with no pull zone, for private files.",
+    "bunnyDescription": "You’ll find these in the Bunny dashboard, under Storage: one storage zone, with a pull zone connected to it.",
     "cloudflareTitle": "Cloudflare R2",
-    "cloudflareDescription": "You’ll find these in the Cloudflare dashboard, under R2. Use one bucket for public files and another one, without public access, for private files.",
-    "publicGroup": "Public files",
-    "publicGroupHint": "Photos, videos and covers shown on the website.",
-    "privateGroup": "Private files",
-    "privateGroupHint": "Original gallery photos and the watermark logo. Only admins can see them.",
+    "cloudflareDescription": "You’ll find these in the Cloudflare dashboard, under R2: one bucket, with a custom domain connected to it.",
     "fields": {
-      "storageHost": "Storage endpoint",
-      "publicZone": "Storage zone name",
+      "storageHost": "Storage endpoint (the zone’s main region)",
+      "publicZone": "Storage zone",
       "publicZoneKey": "Storage zone password",
       "publicHost": "CDN hostname",
-      "privateZone": "Storage zone name",
-      "privateZoneKey": "Storage zone password",
       "accountId": "Account ID",
       "accessKeyId": "Access key ID",
       "secretAccessKey": "Secret access key",
-      "publicBucket": "Bucket name",
-      "privateBucket": "Bucket name"
+      "publicBucket": "Bucket"
     },
     "hints": {
-      "storageHost": "Depends on the zone’s main region, for example storage.bunnycdn.com or uk.storage.bunnycdn.com.",
+      "storageHost": "Choose the main region you picked when you created the storage zone. You’ll find it in Bunny, on the storage zone’s FTP & API Access page.",
       "bunnyKey": "Storage zone → FTP & API Access → Password.",
       "bunnyHost": "The hostname of the pull zone connected to this storage zone, for example cdn.example.com.",
       "accountId": "The 32-character ID on the R2 overview page.",
-      "r2Keys": "Create an R2 API token with read and write access to both buckets.",
-      "r2Host": "The custom domain connected to the public bucket, for example cdn.example.com."
+      "r2Keys": "Create an R2 API token with read and write access to this bucket.",
+      "r2Host": "The custom domain connected to the bucket, for example cdn.example.com."
     },
     "keySaved": "Saved securely",
     "replaceKey": "Replace",
@@ -155,26 +148,36 @@
     "test": {
       "action": "Test connection",
       "running": "Testing…",
-      "ok": "Connected. Files can be saved, read and deleted in both places.",
+      "ok": "Connected. Files can be saved, read and deleted.",
       "config": "The saved keys couldn’t be read. Please enter them again.",
-      "write": "A test file couldn’t be saved in {zone, select, private {private storage} other {public storage}}. Please check its name and key.",
-      "read": "A test file was saved in {zone, select, private {private storage} other {public storage}} but couldn’t be read back. Please check the key’s permissions.",
+      "write": "A test file couldn’t be saved. Please check the name and the key.",
+      "read": "A test file was saved but couldn’t be read back. Please check the key’s permissions.",
       "url": "Files are saved, but they don’t open from the CDN hostname. Please check the hostname.",
-      "delete": "A test file couldn’t be deleted from {zone, select, private {private storage} other {public storage}}. Please check that the key is allowed to delete files."
+      "delete": "A test file couldn’t be deleted. Please check that the key is allowed to delete files."
     },
     "errors": {
       "host": "Please enter a hostname, like cdn.example.com (without https://).",
-      "bunnyHost": "Please enter a Bunny storage endpoint, like storage.bunnycdn.com.",
+      "bunnyHost": "Please choose the region of your storage zone.",
       "bucket": "Use lowercase letters, numbers and hyphens only.",
-      "sameZone": "Private files need their own zone or bucket, different from the public one.",
       "accountId": "The account ID is 32 characters long, using the digits 0–9 and the letters a–f.",
       "key": "A key can’t contain spaces.",
       "keyRequired": "Please paste the key. It’s stored encrypted and never shown again."
+    },
+    "regions": {
+      "de": "Frankfurt, Germany",
+      "uk": "London, UK",
+      "se": "Stockholm, Sweden",
+      "ny": "New York, US",
+      "la": "Los Angeles, US",
+      "sg": "Singapore",
+      "syd": "Sydney, Australia",
+      "br": "São Paulo, Brazil",
+      "jh": "Johannesburg, South Africa"
     }
   },
   "watermark": {
     "logoTitle": "Watermark",
-    "logoDescription": "Your logo is added to every gallery photo when it’s uploaded. The original, without the logo, stays private for admins. A PNG with a transparent background looks best.",
+    "logoDescription": "Your logo is added to every gallery photo when it’s uploaded. A PNG with a transparent background looks best.",
     "logo": "Watermark logo",
     "noLogo": "Add a logo: gallery photos can’t be uploaded until there is one.",
     "placementTitle": "Position and size",

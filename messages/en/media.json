@@ -43,14 +43,6 @@
     "server": "Something went wrong on our side. Please try again.",
     "network": "The connection was interrupted. Please check your internet connection and try again."
   },
-  "storageTest": {
-    "ok": "Connected. Files can be saved, read and deleted.",
-    "config": "The saved keys couldn't be read. Please enter them again.",
-    "write": "A test file couldn't be saved to {zone, select, private {private storage} other {public storage}}. Please check the zone or bucket name and its key.",
-    "read": "A test file was saved to {zone, select, private {private storage} other {public storage}} but couldn't be read back. Please check the key's permissions.",
-    "url": "Files are saved, but they don't open from the public address. Please check the CDN hostname.",
-    "delete": "The test file couldn't be deleted from {zone, select, private {private storage} other {public storage}}. Please check that the key is allowed to delete files."
-  },
   "preview": {
     "alt": "Watermark preview on a sample photo"
   }

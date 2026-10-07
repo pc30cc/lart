@@ -1,10 +1,11 @@
 import type { NextRequest } from "next/server"
 import { z } from "zod"
 
+import { isLogoPath } from "@/features/settings/schema"
 import { requireAdminApi } from "@/lib/auth/admin"
 import { renderWatermarkPreview } from "@/lib/images"
 import { getSetting, settingSchemas } from "@/lib/settings"
-import { isSafePath, readPrivate } from "@/lib/storage"
+import { read } from "@/lib/storage"
 
 const shape = settingSchemas.watermark.shape
 const querySchema = z.object({
@@ -12,8 +13,12 @@ const querySchema = z.object({
   sizePct: z.coerce.number().pipe(shape.sizePct).optional(),
   opacity: z.coerce.number().pipe(shape.opacity).optional(),
   marginPct: z.coerce.number().pipe(shape.marginPct).optional(),
-  /** Storage path of a logo not saved yet (just uploaded with purpose watermark_logo). */
-  logo: z.string().refine(isSafePath).optional(),
+  /**
+   * Storage path of a logo not saved yet (just uploaded with purpose
+   * watermark_logo). Only a logo path: read() loads the whole file, and the
+   * one storage also holds the gallery's videos.
+   */
+  logo: z.string().refine(isLogoPath).optional(),
 })
 
 /**
@@ -31,7 +36,7 @@ export async function GET(request: NextRequest) {
   const settings = { ...saved }
   for (const [key, value] of Object.entries(overrides)) if (value !== undefined) Object.assign(settings, { [key]: value })
 
-  const file = logoPath ? await readPrivate(logoPath).catch(() => null) : null
+  const file = logoPath ? await read(logoPath).catch(() => null) : null
   const logo = file ? Buffer.from(await new Response(file.body).arrayBuffer()) : null
   const image = await renderWatermarkPreview(settings, logo).catch(() => renderWatermarkPreview(settings, null))
   return new Response(new Uint8Array(image), {

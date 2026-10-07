@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest"
 
 import { newObjectPath } from "./index"
-import { isSafePath, maxUploadBytes, mediaContentType } from "./shared"
+import { folderName, isSafePath, maxUploadBytes, mediaContentType } from "./shared"
 
 describe("isSafePath", () => {
   it.each([
     "gallery/2026-10/AbC_-123.webp",
-    "originals/2026-10/x.webp",
     "brand/2026-10/logo.png",
-    "_probe/2026-10/abc.txt",
+    `workshops/${"a".repeat(60)}/gallery/AbC_-123AbC_-123AbC_-1.webp`,
+    `workshops/x/cover-${"a".repeat(22)}.webp`,
+    `brand/watermark-logo-${"a".repeat(22)}.png`,
+    "_probe/abc.txt",
   ])("accepts %s", (path) => expect(isSafePath(path)).toBe(true))
 
   it.each([
@@ -40,15 +42,43 @@ describe("isSafePath", () => {
 
 describe("newObjectPath", () => {
   it("is random, safe and keeps no original name", () => {
-    const a = newObjectPath("gallery", "webp")
-    const b = newObjectPath("gallery", "webp")
+    const a = newObjectPath("workshops/mum/gallery", "webp")
+    const b = newObjectPath("workshops/mum/gallery", "webp")
     expect(a).not.toBe(b)
     expect(isSafePath(a)).toBe(true)
-    expect(a).toMatch(/^gallery\/\d{4}-\d{2}\/[A-Za-z0-9_-]{22}\.webp$/)
+    expect(a).toMatch(/^workshops\/mum\/gallery\/[A-Za-z0-9_-]{22}\.webp$/)
+    expect(newObjectPath("workshops/mum", "webp", "cover-")).toMatch(/^workshops\/mum\/cover-[A-Za-z0-9_-]{22}\.webp$/)
   })
-  it("refuses unsafe prefixes and extensions", () => {
+  it("refuses unsafe folders, names and extensions", () => {
     expect(() => newObjectPath("../x", "webp")).toThrow()
     expect(() => newObjectPath("gallery", "php.webp")).toThrow()
+    expect(() => newObjectPath("gallery", "webp", "../")).toThrow()
+  })
+})
+
+describe("folderName", () => {
+  it.each([
+    ["Mum Yapımı Atölyesi", "mum-yapimi-atolyesi"],
+    ["Çiğdem Işık Öztürk-Şahin", "cigdem-isik-ozturk-sahin"],
+    ["İPEK ÜNLÜ", "ipek-unlu"],
+    ["  Seramik -- 101!  ", "seramik-101"],
+    ["../../etc/passwd", "etc-passwd"],
+    ["a/b\\c%2e%2e", "a-b-c-2e-2e"],
+  ])("makes %j the folder %j", (name, folder) => {
+    expect(folderName([name])).toBe(folder)
+    expect(isSafePath(`workshops/${folderName([name])}/a.webp`)).toBe(true)
+  })
+
+  it("is at most 60 characters, without a hyphen at the end", () => {
+    const folder = folderName([`${"ab ".repeat(40)}`])
+    expect(folder.length).toBeLessThanOrEqual(60)
+    expect(folder).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+  })
+
+  it("takes the first name that has Latin letters or digits, else the fallback", () => {
+    expect(folderName(["مریم رضایی", "maryam.rezaei"])).toBe("maryam-rezaei")
+    expect(folderName(["مریم رضایی"])).toBe("unnamed")
+    expect(folderName([undefined, null, "", "..."], "new")).toBe("new")
   })
 })
 

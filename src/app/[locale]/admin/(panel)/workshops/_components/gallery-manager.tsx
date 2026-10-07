@@ -44,7 +44,7 @@ export function GalleryManager({
         items: next.map((item) =>
           item.kind === "video"
             ? { kind: "video" as const, path: item.path }
-            : { kind: "image" as const, path: item.path, originalPath: item.originalPath, width: item.width, height: item.height },
+            : { kind: "image" as const, path: item.path, width: item.width, height: item.height },
         ),
       })
       if (run !== latest.current || !result) return
@@ -94,7 +94,14 @@ export function GalleryManager({
           )}
         </div>
       </div>
-      <MediaGrid value={items} onChange={(next) => void save(next)} imagePurpose="gallery_photo" allowVideos max={200} />
+      <MediaGrid
+        value={items}
+        onChange={(next) => void save(next)}
+        imagePurpose="gallery_photo"
+        allowVideos
+        target={{ courseId: id }}
+        max={200}
+      />
     </>
   )
 }

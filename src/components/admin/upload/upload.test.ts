@@ -122,6 +122,22 @@ describe("uploadFile", () => {
     expect(sent.urls).toEqual(["/api/admin/uploads"])
   })
 
+  it("sends whose folder it is before the file: ids as they are, a name as a short folder name", async () => {
+    const sent = fakeXhr(() => ({ status: 201, body: { path: "workshops/x/cover-x.webp", url: "/x.webp" } }))
+    const photo = new File(["x"], "a.jpg", { type: "image/jpeg" })
+    await uploadFile(photo, "course_cover", { target: { folder: `Mum Yapımı Atölyesi ../${"x".repeat(80)}` } })
+    await uploadFile(photo, "course_cover", { target: { folder: "مریم" } })
+    await uploadFile(photo, "gallery_photo", { target: { courseId: "6a3e2c1b-0000-4000-8000-000000000001" } })
+    await uploadFile(photo, "instructor_photo", { target: { instructorId: "6a3e2c1b-0000-4000-8000-000000000002", folder: "" } })
+    expect(sent.map((form) => [...form.entries()].filter(([key]) => key !== "file"))).toEqual([
+      [["purpose", "course_cover"], ["folder", `mum-yapimi-atolyesi-${"x".repeat(40)}`]],
+      [["purpose", "course_cover"]],
+      [["purpose", "gallery_photo"], ["courseId", "6a3e2c1b-0000-4000-8000-000000000001"]],
+      [["purpose", "instructor_photo"], ["instructorId", "6a3e2c1b-0000-4000-8000-000000000002"]],
+    ])
+    expect(sent.every((form) => [...form.keys()].at(-1) === "file")).toBe(true)
+  })
+
   it("sends to the instructor panel's route when asked, and passes its own error codes on", async () => {
     const sent = fakeXhr((_form, call) =>
       call === 1 ? { status: 201, body: { path: "instructors/x.webp", url: "/media/instructors/x.webp" } } : { status: 429, body: { error: "rate_limited" } },
@@ -157,6 +173,7 @@ describe("uploadFile", () => {
     })
     const done = uploadFile(new File([new Uint8Array(size)], "clip.mp4", { type: "video/mp4" }), "gallery_video", {
       onProgress: (p) => progress.push(p),
+      target: { courseId: "6a3e2c1b-0000-4000-8000-000000000001" },
     })
     await vi.runAllTimersAsync()
     expect((await done).path).toBe("gallery/v.mp4")
@@ -170,6 +187,8 @@ describe("uploadFile", () => {
       ["U".repeat(22), String(2 * VIDEO_PART_BYTES), 5],
     ])
     expect(sent.every((form) => form.get("total") === String(size) && [...form.keys()].at(-1) === "file")).toBe(true)
+    // The folder is decided when the last part arrives, so every part names the workshop.
+    expect(sent.every((form) => form.get("courseId") === "6a3e2c1b-0000-4000-8000-000000000001")).toBe(true)
     expect(progress.at(-1)).toBe(1)
   })
 })
