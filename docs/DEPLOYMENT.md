@@ -109,7 +109,27 @@ Moved on 2026-10-07 from `analyticsme.site` to the Coolify on **vps-50cc1602**
 - Environment variables, the `/app/.data` volume and the `pnpm jobs` task
   (every 15 minutes) are set in Coolify. `ENCRYPTION_KEY` is the one from the
   first install (checked equal by hash after the move): never change it.
-- Emails: choose the provider in Settings → Email (Resend or SMTP).
+- Emails: choose the provider in Settings → Email (Resend or SMTP). Both are
+  saved there, so switching loses nothing; Resend is the active one.
+- Own mail server (added 2026-10-07): Coolify service **LimerMail** in the
+  Limer project, Postfix relay `boky/postfix:5.1.0` (pinned by digest) with
+  DKIM signing (selector `mail`, key in volume `limer-mail-dkim`, queue in
+  `limer-mail-spool`; its first log prints the DNS record). No port is
+  published: only containers on the `coolify` network reach it, only with
+  the SASL user `limer@limer.tr`, and only for `@limer.tr` senders. In
+  Settings → Email (SMTP): host `postfix-ofdvg1kjdqrlvn4y1dmopxok`, port 587,
+  security "none" (the traffic stays on the server), user `limer@limer.tr`.
+  New password: change `SMTPD_SASL_USERS` (`limer@limer.tr:<password>`,
+  letters and digits only) in the service, restart it, then enter the same
+  password in Settings → Email.
+- DNS for the own server (Cloudflare, "DNS only"): `limer.tr` TXT
+  `v=spf1 ip4:192.99.68.134 ~all`, `mail._domainkey` TXT (the key above),
+  `_dmarc` TXT `v=DMARC1; p=none`. Resend keeps its own records
+  (`resend._domainkey`, `send`). Reverse DNS of `192.99.68.134` is OVH's
+  `vps-50cc1602.vps.ovh.ca`, also the relay's HELO name (`MAIL_HOSTNAME` in
+  the service). On 2026-10-07 the IP was on Barracuda's list (free removal
+  at barracudacentral.org) and OVH's whole range on UCEPROTECT level 3, so
+  check a message with mail-tester.com before making SMTP the active provider.
 - The database was moved with `pg_dump -Fc` / `pg_restore --no-owner`. On the
   old server LimerLanding is stopped (auto-deploy and its task off); its
   LimerPostgres still runs as a backup, with the dump in `/root/limer-move/`.
