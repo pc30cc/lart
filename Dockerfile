@@ -19,6 +19,9 @@ RUN DATABASE_URL=postgres://build:build@127.0.0.1:5432/build \
 
 FROM base AS run
 ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0
+# curl: for Coolify's health check, so a new version only goes live once it answers.
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=build --chown=node:node /app /app
 # Local uploads (until a CDN is set in the settings) live in a persistent volume here.
 RUN mkdir -p /app/.data && chown node:node /app/.data
