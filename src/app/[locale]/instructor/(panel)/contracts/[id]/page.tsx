@@ -1,4 +1,4 @@
-import { CircleCheckBigIcon, FileClockIcon, FileXIcon, PartyPopperIcon, ShieldAlertIcon } from "lucide-react"
+import { CircleCheckBigIcon, EyeIcon, FileClockIcon, FileXIcon, PartyPopperIcon, ShieldAlertIcon } from "lucide-react"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
@@ -10,6 +10,7 @@ import type { Locale } from "@/db/schema"
 import { getMyContract } from "@/features/instructor-panel/queries"
 import { panelStatus } from "@/features/instructor-panel/schema"
 import { Link } from "@/i18n/navigation"
+import { getInstructor } from "@/lib/auth/instructor"
 import { formatDate, formatDateTime, formatNumber, formatTimeRange, localized } from "@/lib/format"
 import { getBrand } from "@/lib/settings"
 import { cn } from "@/lib/utils"
@@ -32,18 +33,23 @@ export async function generateMetadata(): Promise<Metadata> {
 /**
  * One of my contracts: the full text in my language (the exact signed text
  * once signed), and, while it waits for me, the sign form under it. Another
- * instructor's contract (or a wrong id) is "not found".
+ * instructor's contract (or a wrong id) is "not found". A super admin viewing
+ * as the instructor sees why they can't sign instead of the "please read and
+ * sign" notice, and no form (`signContractAction` refuses them too): the
+ * signature is the instructor's own.
  */
 export default async function MyContractPage({ params, searchParams }: PageProps<"/[locale]/instructor/contracts/[id]">) {
   const [{ locale, id }, query] = await Promise.all([params, searchParams])
   const contract = await getMyContract(id, locale as Locale)
   if (!contract) notFound()
-  const [t, tList, tc, brand] = await Promise.all([
+  const [t, tList, tc, brand, session] = await Promise.all([
     getTranslations("instructorPanel.contract"),
     getTranslations("instructorPanel.contracts"),
     getTranslations("common"),
     getBrand(locale),
+    getInstructor(),
   ])
+  const viewing = Boolean(session?.impersonatedBy)
   const { course, doc } = contract
   const title = localized(course.title, locale)
   const workshopStatus = panelStatus(course)
@@ -94,11 +100,17 @@ export default async function MyContractPage({ params, searchParams }: PageProps
         </p>
       </header>
 
-      {contract.state === "toSign" && (
-        <Notice icon={FileClockIcon} tone="info" title={t("toSign.title")}>
-          {t("toSign.text")}
-        </Notice>
-      )}
+      {contract.state === "toSign" &&
+        (viewing ? (
+          // A super admin viewing as the instructor: no "sign at the end of the page".
+          <Notice icon={EyeIcon} tone="info" title={t("impersonating.title")}>
+            {t("impersonating.text")}
+          </Notice>
+        ) : (
+          <Notice icon={FileClockIcon} tone="info" title={t("toSign.title")}>
+            {t("toSign.text")}
+          </Notice>
+        ))}
       {contract.state === "signed" && contract.signedAt && !justSigned && (
         <Notice icon={CircleCheckBigIcon} tone="success" title={t("signedNotice.title")} action={doc?.text ? <PrintButton /> : null}>
           {t("signedNotice.text", { date: formatDateTime(contract.signedAt, locale, "long") })}
@@ -154,7 +166,7 @@ export default async function MyContractPage({ params, searchParams }: PageProps
         </ContractDocument>
       )}
 
-      {contract.sign && doc && (
+      {contract.sign && doc && !viewing && (
         <SignForm
           contractId={contract.id}
           locale={doc.locale}

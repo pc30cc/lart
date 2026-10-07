@@ -26,12 +26,15 @@ const fail = (code: UploadErrorCode) => Response.json({ error: code }, { status:
  * the bytes, size and pixel limits, re-encoded square WebP, no metadata),
  * stored under instructors/<the instructor's English or Turkish name>/.
  * Answers UploadResult (201) or { error }. Each upload is audited with the
- * instructor's id, which is how saving the profile knows the photo is theirs.
+ * instructor's id, which is how saving the profile knows the photo is theirs
+ * (`by: "instructor"`; while a super admin views as them, that admin is the
+ * entry's admin, with `impersonatedBy`).
  */
 export async function POST(request: Request) {
   const session = await requireInstructorApi(request)
   if (!session) return fail("unauthorized")
   const instructorId = session.instructor.id
+  const viewer = session.impersonatedBy ?? null
   if (!uploads.consume(instructorId).ok) return Response.json({ error: "rate_limited" }, { status: 429 })
 
   const boundary = multipartBoundary(request.headers.get("content-type"))
@@ -59,11 +62,18 @@ export async function POST(request: Request) {
     const { path, width, height } = result
     try {
       await audit({
-        adminId: null,
+        adminId: viewer?.id ?? null,
         action: "media.upload",
         entity: "media",
         entityId: path,
-        data: { purpose: "instructor_photo", width, height, by: "instructor", instructorId },
+        data: {
+          purpose: "instructor_photo",
+          width,
+          height,
+          by: "instructor",
+          instructorId,
+          ...(viewer ? { impersonatedBy: viewer.id } : {}),
+        },
       })
     } catch (error) {
       // No unaudited files: undo the upload.

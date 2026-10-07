@@ -9,7 +9,7 @@ import { randomToken, sha256 } from "@/lib/crypto"
 import { sendEmail } from "@/lib/email"
 import { normalizeEmail } from "./login"
 import { hashPassword, verifyPassword } from "./password"
-import { deleteSessionsOf } from "./session"
+import { deleteImpersonationsBy, deleteSessionsOf } from "./session"
 
 /**
  * Super-admin password change and reset. The actions in `./actions` add the
@@ -27,11 +27,16 @@ const unusedResetTokens = (adminId: string) =>
     isNull(emailTokens.usedAt),
   )
 
-/** Store a new password: clears the lockout, drops open reset links and signs the admin out everywhere. */
+/**
+ * Store a new password: clears the lockout, drops open reset links and signs
+ * the admin out everywhere, including the sessions they opened as an
+ * instructor or member ("Enter their panel").
+ */
 async function setPassword(tx: Tx, adminId: string, passwordHash: string) {
   await tx.update(admins).set({ passwordHash, failedLogins: 0, lockedUntil: null }).where(eq(admins.id, adminId))
   await tx.delete(emailTokens).where(unusedResetTokens(adminId))
   await deleteSessionsOf("admin", adminId, tx)
+  await deleteImpersonationsBy(adminId, tx)
 }
 
 /**

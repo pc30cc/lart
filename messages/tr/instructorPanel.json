@@ -140,6 +140,10 @@
     "check": {
       "title": "Bu kopyayı doğrulayamıyoruz",
       "text": "Bu metin, sözleşme imzalandığında kaydedilenle eşleşmiyor. Lütfen {brand} ekibine haber verin."
+    },
+    "impersonating": {
+      "title": "Yalnızca eğitmen imzalayabilir",
+      "text": "Bu eğitmenin panelini görüntülüyorsunuz. E-imza kişinin kendisine ait olmalı; bu yüzden görüntülerken imza formu gösterilmez."
     }
   },
   "sign": {

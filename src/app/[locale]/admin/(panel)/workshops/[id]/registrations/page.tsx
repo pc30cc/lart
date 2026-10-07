@@ -16,6 +16,7 @@ import { paymentMethods, registrationTable, registrationViews, type PaymentMetho
 import { getWorkshop } from "@/features/workshops/queries"
 import { isCancelled } from "@/features/workshops/schema"
 import { localeHref } from "@/i18n/links"
+import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
 import { formatDate, formatNumber, localized } from "@/lib/format"
 import { getSetting } from "@/lib/settings"
@@ -91,7 +92,9 @@ export default async function WorkshopRegistrationsPage({
       hideBelow: "md",
       cell: (r) => (
         <span className="block min-w-0">
-          <span className="block text-sm">{r.member.name}</span>
+          <Link href={`/admin/students/${r.member.id}`} className="hover:text-primary block text-sm transition-colors">
+            {r.member.name}
+          </Link>
           <a href={`mailto:${r.member.email}`} className="text-muted-foreground hover:text-primary block truncate text-xs">
             <bdi>{r.member.email}</bdi>
           </a>

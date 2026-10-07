@@ -85,6 +85,7 @@ const samples: { [T in EmailTemplate]: EmailProps<T> } = {
   },
   workshop_cancelled: { name: "Ayşe", workshopTitle: "Mum Yapımı", refundAmount: "₺1.500" },
   password_reset: { name: "Ayşe", resetUrl: `${site}/account/reset?token=r1` },
+  password_changed_by_team: { name: "Ayşe", loginUrl: `${site}/account/login` },
   member_exists: { name: "Ayşe", loginUrl: "/account/login", resetUrl: "/account/forgot" },
   registration_received: {
     name: "Ayşe",

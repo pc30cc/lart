@@ -76,6 +76,7 @@ describe("members", () => {
     expect(await getMember()).toEqual({
       sessionId: session.id,
       member: { id: m.id, email: m.email, name: "Ayşe", phone: "+905321234567", locale: "en", emailVerified: true },
+      impersonatedBy: null,
     })
   })
 

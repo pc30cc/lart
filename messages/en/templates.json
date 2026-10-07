@@ -232,6 +232,10 @@
         "title": "Password reset",
         "to": "Everyone"
       },
+      "password_changed_by_team": {
+        "title": "Password changed by the team",
+        "to": "Participants and instructors"
+      },
       "member_exists": {
         "title": "Account already exists",
         "to": "Participants"

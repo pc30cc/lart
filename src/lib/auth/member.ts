@@ -30,6 +30,12 @@ export type MemberSession = {
     /** Registering and paying needs a verified email (README §4). */
     emailVerified: boolean
   }
+  /**
+   * The super admin viewing as this member ("Enter their account"), or null.
+   * Optional (added later; tests build sessions without it). Server code only:
+   * pass the name to the bar, never the id.
+   */
+  impersonatedBy?: { id: string; name: string } | null
 }
 
 /** The signed-in member, or null. Never throws for a missing session. Cached per request. */
@@ -66,6 +72,7 @@ const loadMember = cache(async (): Promise<MemberSession | null> => {
       locale: hasLocale(locales, row.locale) ? row.locale : "tr",
       emailVerified: row.emailVerifiedAt !== null,
     },
+    impersonatedBy: session.impersonatedBy,
   }
 })
 

@@ -17,9 +17,10 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
+import { isolate } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { cancelRegistrationAction } from "../actions"
-import { isolate, type CancelPreview } from "../schema"
+import type { CancelPreview } from "../schema"
 
 /**
  * "Cancel my registration" with a clear "are you sure" first: a free workshop

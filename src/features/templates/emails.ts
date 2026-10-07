@@ -128,6 +128,7 @@ export async function sampleEmailProps<T extends EmailTemplate>(template: T, loc
     },
     workshop_cancelled: { name: person, workshopTitle, refundAmount: amount, workshopsUrl: workshopUrl },
     password_reset: { name: person, resetUrl: href("/") },
+    password_changed_by_team: { name: person, loginUrl: href("/account/login") },
     ...account,
   }
   return samples[template]

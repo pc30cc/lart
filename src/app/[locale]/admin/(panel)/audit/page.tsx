@@ -30,7 +30,13 @@ function recordHref(entity: string, id: string | null): string | null {
   if (entity === "setting") return id === "cdn" ? "/admin/settings/storage" : id === "watermark" ? "/admin/settings/watermark" : "/admin/settings"
   if (entity === "email") return (emailTemplateNames as readonly string[]).includes(id) ? `/admin/templates/emails/${id}` : null
   if (entity === "admin_invite") return "/admin/money/partners"
-  const base = { category: "categories", workshop: "workshops", instructor: "instructors", template: "templates" }[entity]
+  const base = {
+    category: "categories",
+    workshop: "workshops",
+    instructor: "instructors",
+    member: "students",
+    template: "templates",
+  }[entity]
   return base && isUuid(id) ? `/admin/${base}/${id}` : null
 }
 
@@ -75,7 +81,10 @@ export default async function AuditPage({ searchParams }: PageProps<"/[locale]/a
       header: t("table.who"),
       cell: (row) =>
         row.adminName ? (
-          <span className="font-medium whitespace-nowrap">{row.adminName}</span>
+          <span className="block">
+            <span className="block font-medium whitespace-nowrap">{row.adminName}</span>
+            {row.viewing && <span className="text-muted-foreground block text-xs whitespace-nowrap">{t("viewingAs")}</span>}
+          </span>
         ) : (
           <span className="text-muted-foreground">{t("system")}</span>
         ),

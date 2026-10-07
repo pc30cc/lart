@@ -13,6 +13,7 @@ import {
 import { useLocale, useTranslations } from "next-intl"
 import { useTransition } from "react"
 
+import { ImpersonationBar } from "@/components/impersonation-bar"
 import { LocaleChoices } from "@/components/site/locale-menu"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
@@ -49,6 +50,8 @@ const isActive = (pathname: string, href: string) =>
  * The instructor panel's frame: the brand, the menu (in the header on larger
  * screens, a bar at the bottom on phones), language, theme and the account
  * menu, plus the "waiting for approval" and "Please confirm your email" banners. Nothing of it is printed.
+ * While a super admin views as the instructor, the "viewing as" bar tops the
+ * sticky header on every page ("Log out" in the account menu then ends the viewing too).
  */
 export function PanelShell({
   brand,
@@ -57,6 +60,7 @@ export function PanelShell({
   emailVerified,
   approved,
   toSign,
+  viewing,
   children,
 }: {
   brand: string
@@ -67,6 +71,8 @@ export function PanelShell({
   approved: boolean
   /** Contracts waiting for a signature: a badge on "Contracts". */
   toSign: number
+  /** Set while a super admin views the panel as this instructor: the "viewing as" bar. */
+  viewing?: { personId: string; adminName: string } | null
   children: React.ReactNode
 }) {
   const t = useTranslations("instructorPanel")
@@ -82,6 +88,15 @@ export function PanelShell({
         {t("shell.skipToContent")}
       </a>
       <header className="bg-background/85 supports-backdrop-filter:bg-background/70 sticky top-0 z-40 border-b backdrop-blur-md print:hidden">
+        {viewing && (
+          <ImpersonationBar
+            kind="instructor"
+            personId={viewing.personId}
+            personName={name}
+            adminName={viewing.adminName}
+            width="max-w-4xl"
+          />
+        )}
         <div className="mx-auto flex h-16 max-w-4xl items-center gap-2 px-4">
           <Link
             href="/instructor"

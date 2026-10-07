@@ -24,9 +24,9 @@ import { PaymentBadge } from "@/features/registrations/components/payment-badge"
 import { PaymentInstructions } from "@/features/registrations/components/payment-instructions"
 import { TermsText } from "@/features/registrations/components/terms-text"
 import { getMyRegistration } from "@/features/registrations/member"
-import { cancelPreview, canCancel, isolate, paymentState } from "@/features/registrations/schema"
+import { cancelPreview, canCancel, paymentState } from "@/features/registrations/schema"
 import { Link } from "@/i18n/navigation"
-import { formatDate, formatDateTime, formatTimeRange } from "@/lib/format"
+import { formatDate, formatDateTime, formatTimeRange, isolate } from "@/lib/format"
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("registration.detail")

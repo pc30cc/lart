@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { z } from "zod"
 
 import { instructorAction, memberAction, publicAction, UserError } from "./action"
+import { audit } from "./audit"
 import { requireInstructor } from "./auth/instructor"
 import { requireMember } from "./auth/member"
 
@@ -33,12 +34,18 @@ const instructor = {
 }
 vi.mock("./auth/member", () => ({ requireMember: vi.fn(async () => member) }))
 vi.mock("./auth/instructor", () => ({ requireInstructor: vi.fn(async () => instructor) }))
+vi.mock("./audit", () => ({ audit: vi.fn(async () => {}) }))
+
+/** A super admin viewing as the person ("Enter their panel"). */
+const viewer = { id: "a1", name: "Mina" }
+const BLOCKED = "This can’t be done while you’re viewing as this person. Only they can do it themselves."
 
 const schema = z.object({ note: z.string().trim().min(1).max(20) })
 
 beforeEach(() => {
   vi.mocked(requireMember).mockClear()
   vi.mocked(requireInstructor).mockClear()
+  vi.mocked(audit).mockClear()
 })
 
 describe("memberAction", () => {
@@ -83,6 +90,58 @@ describe("instructorAction", () => {
     })
     expect(await action({ note: "x" })).toEqual({ ok: false, error: "This link no longer works. Please ask for a new one." })
     expect(requireInstructor).toHaveBeenCalledOnce()
+  })
+})
+
+describe("while a super admin views as the person", () => {
+  it("{ notImpersonated: true } refuses a viewing admin before anything else, and lets the person through", async () => {
+    const handler = vi.fn(async () => "signed")
+    const action = memberAction(schema, handler, { notImpersonated: true, verified: true })
+    // Checked before `verified`: the unconfirmed email is not what the admin is told.
+    vi.mocked(requireMember).mockResolvedValueOnce({ ...member, impersonatedBy: viewer })
+    expect(await action({ note: "x" })).toEqual({ ok: false, error: BLOCKED })
+    expect(handler).not.toHaveBeenCalled()
+
+    vi.mocked(requireMember).mockResolvedValueOnce({
+      ...member,
+      member: { ...member.member, emailVerified: true },
+      impersonatedBy: null,
+    })
+    expect(await action({ note: "x" })).toEqual({ ok: true, data: "signed" })
+
+    const sign = vi.fn(async () => "signed")
+    vi.mocked(requireInstructor).mockResolvedValueOnce({ ...instructor, impersonatedBy: viewer })
+    expect(await instructorAction(schema, sign, { notImpersonated: true })({ note: "x" })).toEqual({ ok: false, error: BLOCKED })
+    expect(sign).not.toHaveBeenCalled()
+    expect(await instructorAction(schema, sign, { notImpersonated: true })({ note: "x" })).toEqual({ ok: true, data: "signed" })
+  })
+
+  it("other actions run as usual for a viewing admin", async () => {
+    vi.mocked(requireInstructor).mockResolvedValueOnce({ ...instructor, impersonatedBy: viewer })
+    const action = instructorAction(schema, async ({ note }, ctx) => `${note}:${ctx.impersonatedBy?.name}`)
+    expect(await action({ note: "x" })).toEqual({ ok: true, data: "x:Mina" })
+  })
+
+  it("ctx.audit names the viewing admin (adminId, data.impersonatedBy), or no admin for the person", async () => {
+    const entry = { action: "member.profile_update", entity: "member", entityId: "m1", data: { fields: ["name"] } }
+    vi.mocked(requireMember).mockResolvedValueOnce({ ...member, impersonatedBy: viewer })
+    await memberAction(schema, async (_input, ctx) => ctx.audit(entry))({ note: "x" })
+    expect(audit).toHaveBeenLastCalledWith(
+      { ...entry, adminId: "a1", data: { by: "member", fields: ["name"], impersonatedBy: "a1" } },
+      undefined,
+    )
+
+    await memberAction(schema, async (_input, ctx) => ctx.audit(entry))({ note: "x" })
+    expect(audit).toHaveBeenLastCalledWith({ ...entry, adminId: null, data: { by: "member", fields: ["name"] } }, undefined)
+
+    vi.mocked(requireInstructor).mockResolvedValueOnce({ ...instructor, impersonatedBy: viewer })
+    await instructorAction(schema, async (_input, ctx) => ctx.audit({ action: "instructor.profile_update", entity: "instructor" }))({
+      note: "x",
+    })
+    expect(audit).toHaveBeenLastCalledWith(
+      { action: "instructor.profile_update", entity: "instructor", adminId: "a1", data: { by: "instructor", impersonatedBy: "a1" } },
+      undefined,
+    )
   })
 })
 

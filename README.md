@@ -149,6 +149,9 @@ example when a new design reference is given:
 - The workshop page shows "You are registered" for workshops they joined;
   the account menu ("My workshops") lists them with their payment status and
   lets them cancel. Nothing more.
+- When a student is stuck, the team can help from **Students** in the
+  super-admin panel: set a new password, or look at the site through the
+  student's account ([security](#11-security)).
 
 ### Sign-up and email verification
 
@@ -235,6 +238,9 @@ each participant, so the gallery team knows whose face may be published.
 - Profile in three languages.
 - My workshops, participant lists and schedule.
 - My contracts: read and sign; my earnings per workshop.
+- When an instructor is stuck, the team can help from their profile in the
+  super-admin panel: set a new password, or look at the panel through the
+  instructor's account (never sign for them; [security](#11-security)).
 
 ### Profile fields
 
@@ -290,7 +296,8 @@ a dark / light theme:
 | Section | What it does |
 | --- | --- |
 | **Workshops** | create and manage workshops ([lifecycle](#7-workshop-lifecycle)), categories |
-| **Instructors** | profiles and contracts |
+| **Instructors** | profiles and contracts; set a new password, enter their panel |
+| **Students** | everyone with an account: details, registrations; set a new password, enter their account |
 | **Registrations** | view, filter, change status, refunds, export; photo / video consent per participant |
 | **Money** | course finances, shared wallet, accounting reports ([money](#8-money-course-finances-wallet-and-accounting)) |
 | **Content** | hero, pages, menus, home sections, FAQ, past-workshop galleries |
@@ -465,6 +472,7 @@ enough), not to individuals.
 | Workshop reminder | student | the day before; while unpaid, also what is still to pay and how |
 | Workshop cancelled | student | the workshop is cancelled: a full refund for those who paid, "please don't come" for the others |
 | Password reset | everyone | "Forgot your password?" |
+| Password changed by the team | student, instructor | a super admin set a new password for them (the email never contains it) |
 
 ## 10. Media, CDN and watermark
 
@@ -529,6 +537,18 @@ before each release.
   browser; only admins record payments and refunds, each audited.
 - **Contracts and money**: signed contracts and ledger entries are never
   edited, only reversed; a full audit log of admin actions.
+- **Helping a student or instructor**: a super admin can set a new password
+  for them (typed, or generated and shown only once; never stored in plain
+  text or logged). The person is emailed, signed out everywhere, and their
+  open reset links stop working. "Enter their panel / account" opens the
+  person's panel or account in that browser for at most one hour, with a
+  bar on every page and an **End** button back to the admin page. While
+  viewing, nothing that must be the person's own is possible: signing a
+  contract, registering for a workshop (terms and consents), changing
+  their password. Starting, ending and everything done there is in the
+  audit log under the admin's name. Such a session also ends when the
+  admin signs out or is deactivated, and it can never reach the
+  super-admin panel or be opened for an admin account.
 - **Secrets** only in environment variables (Coolify), never in the code.
 - **Data**: daily encrypted database backups; least-privilege database
   user.
@@ -578,7 +598,7 @@ Kept minimal; the whole schema is `src/db/schema.ts`.
 | `admin_invites` | open invitations to become a partner (only the link token's SHA-256 is stored) |
 | `members` | students; language of their emails |
 | `instructors` | public profile (three languages) and private fields: official name, ID number (encrypted), mobile, email |
-| `sessions` | login sessions of admins, instructors and members, kept on the server |
+| `sessions` | login sessions of admins, instructors and members, kept on the server (`impersonated_by`: a super admin viewing as an instructor or member, one hour) |
 | `email_tokens` | one-time email links: verify email, reset password, instructor invite |
 | `categories` | workshop categories |
 | `templates` | editable terms and contract templates, one default of each |

@@ -1,8 +1,15 @@
 {
-  "meta": { "title": "Yönetim" },
+  "meta": {
+    "title": "Yönetim"
+  },
   "brandSubtitle": "Yönetim paneli",
   "nav": {
-    "groups": { "overview": "Genel bakış", "workshops": "Eğitim", "money": "Finans", "system": "Sistem" },
+    "groups": {
+      "overview": "Genel bakış",
+      "workshops": "Eğitim",
+      "money": "Finans",
+      "system": "Sistem"
+    },
     "dashboard": "Pano",
     "workshops": "Atölyeler",
     "registrations": "Kayıtlar",
@@ -15,7 +22,8 @@
     "reports": "Raporlar",
     "templates": "Şablonlar",
     "settings": "Ayarlar",
-    "audit": "İşlem geçmişi"
+    "audit": "İşlem geçmişi",
+    "students": "Öğrenciler"
   },
   "shell": {
     "toggleSidebar": "Menüyü göster veya gizle",
@@ -26,5 +34,56 @@
   "home": {
     "greeting": "Merhaba {name}",
     "intro": "Bugün nereden başlamak istersiniz?"
+  },
+  "access": {
+    "title": "Hesap erişimi",
+    "inactive": "Bu eğitmen pasif. Şifresini değiştirmek ya da paneline girmek için önce aktifleştirin.",
+    "password": {
+      "title": "Şifre",
+      "description": "Giriş yapamıyorsa yeni bir şifre belirleyin. Tüm cihazlarda oturumu kapanır ve bununla ilgili bir e-posta alır.",
+      "trigger": "Şifreyi değiştir",
+      "dialogTitle": "{name} için yeni şifre",
+      "dialogDescription": "Yeni bir şifre yazın ya da güçlü bir şifre oluşturalım. Tüm cihazlarda oturumu kapanır ve şifresini ekibin değiştirdiğini bildiren bir e-posta alır.",
+      "field": "Yeni şifre",
+      "hint": "En az {min, number} karakter.",
+      "save": "Şifreyi kaydet",
+      "or": "ya da",
+      "generate": "Güçlü bir şifre oluştur",
+      "saved": "{name} için yeni şifre kaydedildi. Kendisine e-postayla bildirdik.",
+      "savedNotEmailed": "{name} için yeni şifre kaydedildi ama e-posta gönderilemedi. Lütfen kendiniz haber verin.",
+      "result": {
+        "title": "{name} için yeni şifre",
+        "label": "Yeni şifre (yalnızca şimdi gösterilir)",
+        "once": "Bu şifreyi yalnızca bu kez görüyorsunuz; yeniden gösterilemez.",
+        "share": "Şifreyi yalnızca {name} ile, örneğin özel bir mesajla paylaşın; asla bir grupta paylaşmayın.",
+        "emailed": "{name} adlı kişiye, şifresinin ekip tarafından değiştirildiğini e-postayla bildirdik. Şifrenin kendisi e-postada yok.",
+        "notEmailed": "E-posta {name} adlı kişiye gönderilemedi; lütfen kendisine siz haber verin.",
+        "copy": "Kopyala",
+        "copiedShort": "Kopyalandı",
+        "copied": "Şifre kopyalandı.",
+        "copyFailed": "Kopyalanamadı. Lütfen şifreyi seçip elle kopyalayın."
+      },
+      "errors": {
+        "rateLimited": "Kısa sürede çok sayıda şifre değiştirdiniz. Lütfen birkaç dakika bekleyip yeniden deneyin."
+      }
+    },
+    "enter": {
+      "instructor": {
+        "title": "Eğitmen paneli",
+        "description": "Paneli {name} nasıl görüyorsa öyle görün, en fazla bir saat. Görüntülerken sözleşme imzalanamaz.",
+        "trigger": "Paneline gir",
+        "confirmTitle": "{name} olarak panele girilsin mi?",
+        "confirmDescription": "Paneli en fazla bir saat onun gördüğü gibi görürsünüz; üstteki bir şerit bunu gösterir. Buraya dönmek için şeritteki “Bitir” düğmesine basın. Orada yaptığınız değişiklikler sizin adınıza kaydedilir.",
+        "confirm": "Paneline gir"
+      },
+      "member": {
+        "title": "Öğrenci hesabı",
+        "description": "Siteyi ve hesabı {name} nasıl görüyorsa öyle görün, en fazla bir saat. Görüntülerken atölyeye kayıt yapılamaz.",
+        "trigger": "Hesabına gir",
+        "confirmTitle": "{name} olarak hesaba girilsin mi?",
+        "confirmDescription": "Siteyi en fazla bir saat onun gördüğü gibi görürsünüz; üstteki bir şerit bunu gösterir. Buraya dönmek için şeritteki “Bitir” düğmesine basın. Orada yaptığınız değişiklikler sizin adınıza kaydedilir.",
+        "confirm": "Hesabına gir"
+      }
+    }
   }
 }

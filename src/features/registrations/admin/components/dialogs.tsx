@@ -29,10 +29,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { formatPercent } from "@/lib/format"
+import { formatPercent, isolate } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { cn } from "@/lib/utils"
-import { cancelPreview, isolate } from "../../schema"
+import { cancelPreview } from "../../schema"
 import { cancelRegistrationAction, markRefundedAction, recordPaymentAction, setRefundAction } from "../actions"
 import {
   cancelRegistrationSchema,

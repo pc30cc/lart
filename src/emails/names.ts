@@ -18,6 +18,7 @@ export const emailTemplateNames = [
   "workshop_reminder",
   "workshop_cancelled",
   "password_reset",
+  "password_changed_by_team",
   "member_exists",
   "registration_received",
   "payment_received",

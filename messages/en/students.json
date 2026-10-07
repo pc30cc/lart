@@ -1,0 +1,41 @@
+{
+  "title": "Students",
+  "description": "Everyone with an account on the site: their details, registrations and account access.",
+  "table": {
+    "name": "Name",
+    "phone": "Phone",
+    "registrations": "Registrations",
+    "joined": "Joined",
+    "search": "Search by name, email or phone"
+  },
+  "emailNotConfirmed": "Email not confirmed",
+  "empty": {
+    "title": "No students yet",
+    "description": "People appear here once they create an account on the site."
+  },
+  "backToList": "All students",
+  "detail": {
+    "detailsTitle": "Details",
+    "email": "Email",
+    "phone": "Phone",
+    "noPhone": "Not given",
+    "language": "Language of emails",
+    "accountTitle": "Account",
+    "emailConfirmed": "Email confirmed",
+    "emailNotConfirmed": "Email not confirmed yet",
+    "locked": "Locked after too many wrong passwords until {time}",
+    "joined": "Account created",
+    "registrations": {
+      "title": "Registrations",
+      "count": "{count, plural, =0 {None yet} one {# registration} other {# registrations}}",
+      "empty": "No registrations yet.",
+      "workshop": "Workshop",
+      "date": "Date",
+      "participant": "Participant",
+      "payment": "Payment"
+    }
+  },
+  "errors": {
+    "notFound": "This student no longer exists."
+  }
+}

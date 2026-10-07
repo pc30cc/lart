@@ -1,4 +1,13 @@
-import { CalendarDaysIcon, ChevronLeftIcon, ClockIcon, HourglassIcon, MailIcon, MapPinIcon, UserRoundPlusIcon } from "lucide-react"
+import {
+  CalendarDaysIcon,
+  ChevronLeftIcon,
+  ClockIcon,
+  EyeIcon,
+  HourglassIcon,
+  MailIcon,
+  MapPinIcon,
+  UserRoundPlusIcon,
+} from "lucide-react"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
@@ -8,11 +17,11 @@ import { Button } from "@/components/ui/button"
 import { RegisterForm } from "@/features/registrations/components/register-form"
 import { ResendVerify } from "@/features/registrations/components/resend-verify"
 import { getPublicWorkshop, myActiveRegistrations, workshopTerms } from "@/features/registrations/public"
-import { isolate, paymentWayNames, sameParticipant } from "@/features/registrations/schema"
+import { paymentWayNames, sameParticipant } from "@/features/registrations/schema"
 import { localeHref } from "@/i18n/links"
 import { Link } from "@/i18n/navigation"
 import { getMember } from "@/lib/auth/member"
-import { formatDate, formatTimeRange } from "@/lib/format"
+import { formatDate, formatTimeRange, isolate } from "@/lib/format"
 import { getBrand, getSetting } from "@/lib/settings"
 import { Price } from "../../_components/labels"
 
@@ -66,6 +75,22 @@ export default async function RegisterPage({ params }: PageProps<"/[locale]/work
         footer={<BackToWorkshop slug={w.slug} title={w.title} />}
       >
         <ResendVerify />
+      </AuthCard>
+    )
+  }
+
+  // Registering accepts the terms and consents: only the member can do that (registerAction refuses too).
+  if (session.impersonatedBy) {
+    return (
+      <AuthCard
+        icon={<EyeIcon />}
+        title={t("impersonating.title")}
+        subtitle={t("impersonating.text")}
+        footer={<BackToWorkshop slug={w.slug} title={w.title} />}
+      >
+        <Button asChild className="h-12 w-full rounded-xl text-base">
+          <Link href="/account">{t("impersonating.account")}</Link>
+        </Button>
       </AuthCard>
     )
   }

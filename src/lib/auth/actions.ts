@@ -13,6 +13,7 @@ import { audit } from "@/lib/audit"
 import { errorForLog } from "@/lib/errors"
 import { changeAdminPassword, resetAdminPassword, sendAdminResetLink } from "./account"
 import { getAdmin } from "./admin"
+import { endImpersonationsBy } from "./impersonation"
 import { LOCKOUT, normalizeEmail, verifyCredentials } from "./login"
 import { createRateLimiter, loginRateLimiter, rateLimitClient } from "./rate-limit"
 import { clientIp } from "./request"
@@ -68,9 +69,14 @@ export async function adminLoginAction(_prev: LoginState, form: FormData): Promi
   redirect(safeNext(parsed.data.next, "admin", await localeHref(await getLocale(), "/admin"), await mainLocale()))
 }
 
-/** Sign out: deletes the session row and cookie, then goes to the login page. */
+/**
+ * Sign out: deletes the session row and cookie, then goes to the login page.
+ * Every session the admin opened as an instructor or member ("Enter their
+ * panel") ends too, in every browser.
+ */
 export async function adminLogoutAction(): Promise<void> {
   const session = await getAdmin()
+  if (session) await endImpersonationsBy(session.admin.id)
   await endSession("admin")
   if (session) {
     await audit({ adminId: session.admin.id, action: "auth.logout", entity: "admin", entityId: session.admin.id })

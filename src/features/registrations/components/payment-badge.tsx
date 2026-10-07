@@ -1,9 +1,10 @@
 import { useLocale, useTranslations } from "next-intl"
 
 import { StatusBadge, type StatusTone } from "@/components/admin/status-badge"
+import { isolate } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { cn } from "@/lib/utils"
-import { isolate, paymentState, refundState, type RegistrationStatus } from "../schema"
+import { paymentState, refundState, type RegistrationStatus } from "../schema"
 
 const tones = { unpaid: "warning", paid: "success", free: "success", cancelled: "neutral" } as const satisfies Record<
   string,

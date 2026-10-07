@@ -96,6 +96,8 @@ export async function listAudit(params: TableParams<Sort, Filter>, range: DateRa
         ip: auditLog.ip,
         adminId: auditLog.adminId,
         adminName: admins.name,
+        /** Done by the admin while viewing as an instructor or member (person actions name that admin). */
+        viewing: sql<boolean>`((${auditLog.data} ->> 'impersonatedBy') is not null)`,
       })
       .from(auditLog)
       .leftJoin(admins, eq(admins.id, auditLog.adminId))

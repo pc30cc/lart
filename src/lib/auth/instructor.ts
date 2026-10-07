@@ -29,6 +29,12 @@ export type InstructorSession = {
     /** False while a self-registered instructor waits for an admin's approval. */
     approved: boolean
   }
+  /**
+   * The super admin viewing as this instructor ("Enter their panel"), or null.
+   * Optional (added later; tests build sessions without it). Server code only:
+   * pass the name to the bar, never the id.
+   */
+  impersonatedBy?: { id: string; name: string } | null
 }
 
 /** The signed-in, active instructor, or null. Never throws for a missing session. Cached per request. */
@@ -66,6 +72,7 @@ const loadInstructor = cache(async (): Promise<InstructorSession | null> => {
       emailVerified: row.emailVerifiedAt !== null,
       approved: row.approvedAt !== null,
     },
+    impersonatedBy: session.impersonatedBy,
   }
 })
 

@@ -60,6 +60,7 @@ src/
     site/                       the public site frame and the member / instructor sign-in forms
     contract-document.tsx       a contract text as a printable document (admin and instructor panel)
     language-picker.tsx         teaching languages field (admin instructor form and instructor profile)
+    impersonation-bar.tsx       "viewing as {name}" bar with End (instructor panel and site, while a super admin views as someone)
   db/
     schema.ts                   the whole schema (single source of truth)
     index.ts                    db client, Tx type
@@ -263,6 +264,8 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 | `/admin/settings/payments` | admin | private | |
 | `/admin/settings/storage` | admin | private | |
 | `/admin/settings/watermark` | admin | private | |
+| `/admin/students` | admin | private | |
+| `/admin/students/[id]` | admin | private | |
 | `/admin/templates` | admin | private | |
 | `/admin/templates/new` | admin | private | |
 | `/admin/templates/[id]` | admin | private | |
@@ -442,6 +445,18 @@ export async function POST(request: Request) { // route handlers
 - Sessions live in the `sessions` table (cookie = 256-bit token, database =
   its SHA-256), one cookie per kind (`__Host-admin_session` in production),
   sliding expiry (admin: 12 h idle, 7 days at most; see `sessionPolicy`).
+  The one exception is a super admin's session as an instructor or member
+  ("Enter their panel", `sessions.impersonated_by` = the admin): it ends one
+  hour after it was created (`IMPERSONATION_MS`) and never slides; it ends
+  at once when that admin is inactive or deleted (`validateSession` joins
+  `admins`; the foreign key is `ON DELETE CASCADE`, so a deleted admin never
+  leaves an ordinary session behind), and a database CHECK refuses one of
+  kind `admin`. `startImpersonation(kind, subjectId, adminId, audit?)`
+  (replaces this browser's session of that kind and runs `audit(tx,
+  replaced)` in the same transaction, then sets the cookie, `maxAge` one
+  hour, only after the commit; never touches the admin cookie) and `deleteImpersonationsBy(adminId, tx?)` are
+  in `@/lib/auth/session`; ending one (End, logout, admin sign-out) is
+  `@/lib/auth/impersonation` ([Students and viewing as someone](#students-and-viewing-as-someone)).
 - Reusable for instructors and members (phase 2), all with a `kind` parameter:
   `startSession`, `currentSession`, `endSession`, `deleteSessionsOf`
   (`@/lib/auth/session`); `verifyCredentials(kind, email, password)` with
@@ -520,6 +535,19 @@ writes `audit_log` (with the client IP). Inside actions use `ctx.audit`. Actions
 are named `<entity>.<verb>` (`category.create`, `auth.login`). `changes(before,
 after)` gives `{ field: { from, to } }` for updates. Never put secrets or
 decrypted private data in `data`. The table is append-only.
+
+When a member or instructor action writes an audit entry, it goes through
+`ctx.audit` of `memberAction` / `instructorAction`: `adminId` null and
+`data.by` = `"member"` / `"instructor"`. A person's own action needs none
+(a member's profile save or cancel writes nothing), but an instructor's
+profile edit and uploads keep one. While a super admin views as them,
+every change to the person's data (profile, a cancelled registration,
+uploads) writes one, as that admin: `adminId` = that admin (the audit
+page's "Who", marked "while viewing as them") and `data.impersonatedBy` =
+their id, so whatever is done there is the admin's. Code that writes
+audit entries for a person outside these wrappers (the instructor upload
+route) does the same by hand from `session.impersonatedBy`. Instructor uploads are recognised by
+`data.by = "instructor"` (not by a null `adminId`).
 
 ### Emails
 
@@ -818,6 +846,7 @@ import { getInstructor, requireInstructor, requireInstructorApi } from "@/lib/au
 
 const { member } = await requireMember()         // { id, email, name, phone, locale, emailVerified }
 const { instructor } = await requireInstructor() // { id, email, displayName, locale, emailVerified }
+const { impersonatedBy } = await requireMember() // { id, name } of the super admin viewing as them, or null
 ```
 
 - `requireMember(next?)` redirects a visitor to `/account/login?next=…` (in the page's language)
@@ -828,6 +857,11 @@ const { instructor } = await requireInstructor() // { id, email, displayName, lo
 - `get…()` returns null instead of redirecting (e.g. "You are registered" on a
   public page). A deactivated instructor has no session (it is ended on the
   next request); members have no `active` flag.
+- `impersonatedBy` (optional on `MemberSession` / `InstructorSession`; read
+  it as `impersonatedBy ?? null`) is set while a super admin views as the
+  person. Server code only: pages pass the admin's name to the bar, never
+  the id. Hide what the person alone may do (the sign form, the register
+  form, "Change password") and show why instead.
 - Route handlers: `requireMemberApi(request)` / `requireInstructorApi(request)`
   return null for no session or a cross-site POST/PUT/PATCH/DELETE (answer 401).
 - **Scope every query to the signed-in person** (`ctx.member.id`,
@@ -846,9 +880,19 @@ export const contactForm = publicAction(contactSchema, handler, { rateLimit: { l
 ```
 
 - `memberAction` / `instructorAction` are `adminAction` with the member or
-  instructor as `ctx` (no audit: `audit_log` is for the super-admin panel).
+  instructor as `ctx`, plus `ctx.audit` (see [Audit](#audit): a person's
+  own action needs no entry, though an instructor's profile edit and
+  uploads keep one; a change a super admin makes while viewing as them is
+  always audited, as that admin).
   `{ verified: true }` refuses a member whose email is not confirmed yet
   (`account.errors.unverified`); registering needs it (README §4).
+  `{ notImpersonated: true }` refuses while a super admin views as the
+  person (`common.errors.impersonationBlocked`, checked first): signing a
+  contract and registering (terms and consents) use it. Any future action
+  that changes the person's own email or password, or deletes the account,
+  must use it too. Side effects that belong to the person are skipped
+  instead of refused: the language switch does not change their
+  `locale` while an admin views as them.
 - `publicAction` is for forms open to visitors: `rateLimit` counts every call
   per client network (IPv4 address or IPv6 /64) before the input is read;
   over the limit it answers `rateLimitMessage` (default
@@ -956,6 +1000,7 @@ instructor panel's private address (README §5). Do not add them there.
 | `workshop_reminder` | jobs (day before) | one per member and workshop per batch of registrations (a registration added after the reminder gets its own); with `amount` (still to pay), `participantName` and the payment ways (as `registration_received`) while something is unpaid |
 | `instructor_signup` | accounts (`instructorSignupAction`) | to every active super admin, in the default language: a new instructor waits for approval, link to their profile |
 | `instructor_approved` | instructors (`approveInstructor`) | in the instructor's language, link to the panel |
+| `password_changed_by_team` | accounts (`setPasswordAsAdmin`) | to the member or instructor in their language: a super admin set a new password (never in the email), log in again, contact us if unexpected |
 | `contract_ready` | workshops / contracts | in the instructor's language (`instructors.locale`: the invitation language the admin chose when creating the instructor or resending the invitation, then the invitation page's and the panel's language switch), sign link in that language |
 
 `paymentWays(await getSetting("payment"), course.paymentUrl, locale)`
@@ -1004,8 +1049,67 @@ site; every page is `noindex` (layout metadata and the proxy header).
 - **Profile photo**: `/api/instructor/uploads` (purpose `instructor_photo`
   only, 20 per hour, audited with the instructor's id); saving the profile
   accepts only a photo that instructor uploaded.
+- **A super admin viewing as the instructor** sees the "viewing as" bar on
+  top of every page; the contract page shows a notice instead of the sign
+  form and `signContractAction` refuses (an e-signature is the
+  instructor's own). Profile edits and uploads are audited as the admin.
 - The per-participant fee before the go decision is an estimate from everyone
   registered (paid or not yet), the number the go decision fixes.
+
+## Students and viewing as someone
+
+Students are the `members` table. **Students** (`/admin/students`, in the
+Teaching group) lists them (search by name, email or phone, the phone
+through `normalizePhone` and also by its national part, so "0532…",
+"0090 532…" and "+90 532…" find the same student; registrations
+counted in every state; joined date; "Email not confirmed"), and
+`/admin/students/[id]` shows the details, the account, every registration
+(linked to the workshop's Registrations tab, searched by the participant)
+and the account access below. Logic in `src/features/students`
+(`queries.ts`, `actions.ts`, `schema.ts`). The admin registration lists and
+refunds link a member's name to their student page.
+
+Both an instructor's and a student's admin page end with **account access**
+(`components/admin/account-access.tsx`; logic in
+`features/accounts/admin-access.ts`, actions `setInstructorPassword` /
+`impersonateInstructor` in `features/instructors/actions`,
+`setStudentPassword` / `impersonateMember` in `features/students/actions`):
+
+- **Change password** (`SetPasswordDialog`): typed (the person's own
+  rules, 10 to 256 characters) or generated on the server (16 characters
+  from 55 unambiguous ones in groups of four, about 92 bits) and shown once
+  with Copy. `setPasswordAsAdmin` hashes before its transaction, then under
+  the row lock: refuses a deactivated instructor, sets the hash, clears the
+  lockout, deletes the person's unused reset links and invitation (an
+  invited instructor's account is then complete; a confirmation link stays
+  and the email is not marked confirmed), ends every session of theirs
+  (also an admin viewing as them) and audits `<kind>.password_set`
+  (`generated`, `inviteCompleted`; never the password). Then
+  `password_changed_by_team` is emailed; the answer says whether it went
+  out. 10 per admin per 15 minutes. The password is only ever in the
+  action's answer for a generated one; never logged or stored.
+- **Enter their panel / their account**: `impersonate(kind, id, ctx)` starts
+  a one-hour session of that kind in this browser (`startImpersonation`;
+  refused for a deactivated instructor) and audits `<kind>.impersonate`
+  (and a replaced viewing's end) in the same transaction, so a failed
+  audit leaves no session and no cookie; the action redirects to `/instructor` or `/account`. The admin keeps their
+  own session. `ImpersonationBar` (`components/impersonation-bar.tsx`) is
+  the first row of the sticky header of the instructor panel
+  (`PanelShell`) and of the site (`SiteHeader`'s `top`): "You are viewing
+  as {name} — signed in as {admin}" and **End**.
+- A viewing session ends, with an `<kind>.impersonate_end` entry (`reason`)
+  as the admin, when: End is pressed (`endImpersonationAction`,
+  authenticated by the viewing session itself, so it works without the
+  admin cookie, then back to the person's admin page, or the admin login
+  with `next`); the person's "Log out" is used (it acts as End); the admin
+  signs out (`adminLogoutAction` ends every viewing session of that admin,
+  in every browser); another viewing replaces it (`replaced`). It also ends
+  without an entry after one hour, when the admin is deactivated or
+  deleted, when the admin's own password changes, or when the person's
+  password is set, the instructor deactivated or deleted.
+- Never possible for admin accounts (`ImpersonableKind`, `createSession`
+  throws, the database CHECK), and an instructor or member session never
+  opens `/admin` (another cookie and kind).
 
 ## Registrations and payments
 

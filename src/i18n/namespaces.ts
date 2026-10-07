@@ -21,4 +21,5 @@ export const namespaces = [
   "instructorPanel",
   "registration",
   "partners",
+  "students",
 ] as const

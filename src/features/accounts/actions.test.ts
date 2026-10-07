@@ -11,6 +11,7 @@ import { sessionCookieName } from "@/lib/auth/cookies"
 import { LOCKOUT } from "@/lib/auth/login"
 import { hashPassword, verifyPassword } from "@/lib/auth/password"
 import { createSession } from "@/lib/auth/session"
+import { createAdmin, runId } from "@/features/workshops/test-fixtures"
 import { issueEmailToken, TOKEN_TTL } from "@/lib/auth/tokens"
 import {
   acceptInviteAction,
@@ -20,9 +21,11 @@ import {
   memberLoginAction,
   memberLogoutAction,
   memberSignupAction,
+  requestInstructorResetAction,
   requestMemberResetAction,
   resendMemberVerifyAction,
   resetMemberPasswordAction,
+  setInstructorLocaleAction,
   setMemberLocaleAction,
   verifyMemberEmailAction,
 } from "./actions"
@@ -307,6 +310,42 @@ describe("setMemberLocaleAction", () => {
     expect(await setMemberLocaleAction({ locale: "fa" })).toEqual({ ok: true, data: undefined })
     expect((await db.select().from(members).where(eq(members.id, m.id)))[0].locale).toBe("fa")
     expect((await setMemberLocaleAction({ locale: "de" as never })).ok).toBe(false)
+  })
+
+  it("leaves the member's language alone while a super admin views as them", async () => {
+    const m = await newMember({ locale: "en" })
+    await viewAs("member", m.id)
+    expect(await setMemberLocaleAction({ locale: "fa" })).toEqual({ ok: true, data: undefined })
+    expect((await db.select().from(members).where(eq(members.id, m.id)))[0].locale).toBe("en")
+  })
+})
+
+/** A super admin views as the person in this browser ("Enter their panel"). */
+async function viewAs(kind: "member" | "instructor", id: string) {
+  const admin = await createAdmin(runId())
+  const { token } = await createSession(kind, id, new Date(), { impersonatedBy: admin.id })
+  request.cookies.set(sessionCookieName(kind), token)
+}
+
+describe("while a super admin views as the person", () => {
+  const BLOCKED = "This can’t be done while you’re viewing as this person. Only they can do it themselves."
+
+  it("asking for a reset link (changing the password) is refused, and nothing is sent", async () => {
+    const m = await newMember()
+    await viewAs("member", m.id)
+    expect(await requestMemberResetAction({ email: m.email })).toEqual({ ok: false, error: BLOCKED })
+    const i = await newInstructor()
+    request.cookies.clear()
+    await viewAs("instructor", i.id)
+    expect(await requestInstructorResetAction({ email: i.email })).toEqual({ ok: false, error: BLOCKED })
+    expect(await emails()).toEqual([])
+  })
+
+  it("the instructor panel's language switch does not change the instructor's language", async () => {
+    const i = await newInstructor({ locale: "tr" })
+    await viewAs("instructor", i.id)
+    expect(await setInstructorLocaleAction({ locale: "fa" })).toEqual({ ok: true, data: undefined })
+    expect((await db.select().from(instructors).where(eq(instructors.id, i.id)))[0].locale).toBe("tr")
   })
 })
 

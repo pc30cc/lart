@@ -133,7 +133,17 @@ export const sessions = pgTable("sessions", {
   subjectId: uuid("subject_id").notNull(),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   createdAt: createdAt(),
-}, (t) => [index("sessions_subject_idx").on(t.kind, t.subjectId)])
+  /**
+   * Set while a super admin views the panel as this person ("Enter their
+   * panel"): 1 hour from `created_at`, never extended. Deleting the admin
+   * ends these sessions (never turns them into the person's own).
+   */
+  impersonatedBy: uuid("impersonated_by").references(() => admins.id, { onDelete: "cascade" }),
+}, (t) => [
+  index("sessions_subject_idx").on(t.kind, t.subjectId),
+  index("sessions_impersonated_by_idx").on(t.impersonatedBy),
+  check("sessions_impersonation_kind", sql`${t.impersonatedBy} is null or ${t.kind} <> 'admin'`),
+])
 
 export const tokenPurpose = pgEnum("token_purpose", ["verify_email", "reset_password", "invite"])
 

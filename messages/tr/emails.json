@@ -142,6 +142,14 @@
     "cta": "Yeni şifre belirle",
     "note": "Bu isteği siz yapmadıysanız bu e-postayı görmezden gelebilirsiniz; şifreniz değişmez."
   },
+  "password_changed_by_team": {
+    "subject": "{brand} şifreniz değiştirildi",
+    "preview": "Ekibimiz hesabınız için yeni bir şifre belirledi.",
+    "heading": "Şifreniz değiştirildi",
+    "intro": "{brand} ekibinden biri hesabınız için yeni bir şifre belirledi. Tüm cihazlarda oturumunuz kapatıldı; lütfen yeni şifrenizle tekrar giriş yapın.",
+    "cta": "Giriş yap",
+    "note": "Bunu siz istemediyseniz lütfen hemen bizimle iletişime geçin."
+  },
   "member_exists": {
     "subject": "Zaten bir {brand} hesabınız var",
     "preview": "E-postanızla giriş yapın ya da yeni bir şifre belirleyin.",

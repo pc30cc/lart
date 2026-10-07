@@ -188,7 +188,9 @@
     "inviteInactive": "This instructor is inactive. Activate them first, then send the invitation.",
     "alreadySetUp": "This instructor has already set a password, so they don’t need an invitation.",
     "inviteNotSent": "We couldn’t send the invitation email. Please try again in a moment.",
-    "approveInactive": "This instructor is inactive. Activate them first, then approve."
+    "approveInactive": "This instructor is inactive. Activate them first, then approve.",
+    "passwordInactive": "This instructor is inactive. Activate them first, then change the password.",
+    "impersonateInactive": "This instructor is inactive, so you can’t enter their panel. Activate them first."
   },
   "approval": {
     "title": "Signed up on their own: waiting for your approval",

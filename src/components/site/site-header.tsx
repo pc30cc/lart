@@ -10,14 +10,24 @@ export type HeaderMember = { name: string; email: string }
 /**
  * The public site's header: the brand as a wordmark (to the home page), a
  * "Workshops" link, the language and the account button. Phase 3 replaces it
- * with the theme's own header (same data).
+ * with the theme's own header (same data). `top` is shown above it, inside the
+ * sticky header (the "viewing as" bar while a super admin views as the member).
  */
-export async function SiteHeader({ brand, member }: { brand: string; member: HeaderMember | null }) {
+export async function SiteHeader({
+  brand,
+  member,
+  top,
+}: {
+  brand: string
+  member: HeaderMember | null
+  top?: React.ReactNode
+}) {
   const t = await getTranslations("site.header")
   const signedIn = Boolean(member)
 
   return (
     <header className="bg-background/85 supports-backdrop-filter:bg-background/70 sticky top-0 z-40 border-b backdrop-blur-md">
+      {top}
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:gap-6">
         <Link
           href="/"

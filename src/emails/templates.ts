@@ -305,6 +305,12 @@ export const emailTemplates = {
     greet: "name",
     cta: "resetUrl",
   }),
+  /** A super admin set a new password for a member or instructor (no password in it): log in again. */
+  password_changed_by_team: define({
+    schema: z.object({ name: text(), loginUrl: siteUrl }),
+    greet: "name",
+    cta: "loginUrl",
+  }),
   /** Someone signed up with the email of an existing member: log in, or choose a new password (the note links to "forgot"). */
   member_exists: define({
     schema: z.object({ name: text(), loginUrl: siteUrl, resetUrl: siteUrl }),

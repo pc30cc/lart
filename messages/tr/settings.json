@@ -253,7 +253,8 @@
       "report": "Rapor",
       "setting": "Ayar",
       "template": "Şablon",
-      "workshop": "Atölye"
+      "workshop": "Atölye",
+      "member": "Öğrenci"
     },
     "actions": {
       "admin": {
@@ -292,9 +293,14 @@
         "delete": "Eğitmen silindi",
         "invite": "Davet gönderildi",
         "reveal_id": "Kimlik numarası görüntülendi",
-        "profile_update": "Eğitmen profilini düzenledi",
+        "profile_update": "Profil eğitmen panelinde düzenlendi",
         "signup": "Eğitmen kaydoldu",
-        "approve": "Eğitmen onaylandı"
+        "approve": "Eğitmen onaylandı",
+        "activate": "Eğitmen aktifleştirildi",
+        "deactivate": "Eğitmen pasife alındı",
+        "password_set": "Şifre bir yönetici tarafından belirlendi",
+        "impersonate": "Yönetici panele girdi",
+        "impersonate_end": "Yönetici panelden çıktı"
       },
       "media": {
         "upload": "Dosya yüklendi"
@@ -336,8 +342,15 @@
         "close": "Atölye kapatıldı",
         "gallery": "Galeri güncellendi",
         "raiseFinal": "Kesin katılımcı sayısı artırıldı"
+      },
+      "member": {
+        "password_set": "Şifre bir yönetici tarafından belirlendi",
+        "impersonate": "Yönetici hesaba girdi",
+        "impersonate_end": "Yönetici hesaptan çıktı",
+        "profile_update": "Bilgiler düzenlendi"
       }
-    }
+    },
+    "viewingAs": "onun hesabını görüntülerken"
   },
   "payments": {
     "intro": "Öğrencilerin nasıl ödeyebileceğini seçin. Kayıttan sonra burada açtığınız yolları görürler. Para geldiğinde atölyenin Kayıtlar sekmesinden ödemeyi kaydedin: kayıt ödendi olarak işaretlenir.",

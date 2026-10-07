@@ -4,6 +4,7 @@
  */
 import { z } from "zod"
 
+import { uuid } from "@/components/admin/form/schemas"
 import { idNumberGiven, idNumberRequired, instructorFields } from "@/features/instructors/schema"
 import { locales } from "@/i18n/routing"
 import { ACCOUNT_PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH } from "@/lib/auth/schemas"
@@ -108,6 +109,17 @@ export const accountTokenSchema = z.object({ token })
 export const accountLocaleSchema = z.object({ locale: z.enum(locales) })
 
 export type SignupValues = z.input<typeof signupSchema>
+
+/** A super admin sets a member's or instructor's password, typed (the person's own rules). */
+export const adminPasswordTypedSchema = z.object({ id: uuid(), mode: z.literal("type"), password: newPassword() })
+
+/** …or generated on the server (shown once to the admin, never stored or logged). */
+export const adminPasswordSchema = z.discriminatedUnion("mode", [
+  z.object({ id: uuid(), mode: z.literal("generate") }),
+  adminPasswordTypedSchema,
+])
+
+export type AdminPasswordTypedValues = z.input<typeof adminPasswordTypedSchema>
 
 /**
  * One-time notices an action leaves for the next page as `?notice=…`: the site
