@@ -1,1 +1,29 @@
-{}
+{
+  "header": {
+    "home": "{brand}: all workshops",
+    "nav": "Main",
+    "workshops": "Workshops",
+    "logIn": "Log in",
+    "logInOrSignUp": "Log in / Sign up",
+    "account": "Your account",
+    "myWorkshops": "My workshops",
+    "language": "Language",
+    "logOut": "Log out"
+  },
+  "verifyBanner": {
+    "label": "Confirm your email",
+    "text": "Please confirm your email: we sent a link to {email}. Open it to be able to register for workshops.",
+    "textSent": "We’ve just sent a new link to {email}. Please check your inbox, and the spam folder too.",
+    "resend": "Send it again",
+    "sent": "Sent! Please check your inbox.",
+    "alreadyVerified": "Your email is already confirmed. Thank you!"
+  },
+  "notices": {
+    "checkEmail": "Welcome! We’ve sent you an email. Please open it to confirm your address.",
+    "signedOut": "You’re logged out. See you soon!",
+    "passwordSaved": "Your new password is saved, and you’re logged in."
+  },
+  "footer": {
+    "rights": "© {year} {brand}"
+  }
+}

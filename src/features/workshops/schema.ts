@@ -2,6 +2,7 @@ import { z } from "zod"
 
 import { isoDateTime, kurus, localizedText, slug, uuid } from "@/components/admin/form/schemas"
 import type { LocalizedText } from "@/db/schema"
+import { safePaymentUrl } from "@/features/registrations/schema"
 import { isSafePath } from "@/lib/storage/shared"
 
 /**
@@ -15,6 +16,25 @@ const count = (min: number, max: number) => z.number().int().min(min).max(max)
 /** A storage path under one of our prefixes (never trust a path from the browser). */
 const storagePath = (prefix: string) =>
   z.string().refine((p) => isSafePath(p) && p.startsWith(`${prefix}/`), { error: "common.validation.invalid" })
+
+/**
+ * The workshop's online payment link (iyzico iyziLink / PayTR "Link ile Ödeme"
+ * for this price), not part of the contract: "" = none (null). Only a plain
+ * https link, the rule of `safePaymentUrl`, which the site and the emails
+ * apply too. Left out (undefined) = unchanged.
+ */
+const paymentUrl = z
+  .string()
+  .trim()
+  .max(500, { error: "workshops.registrations.paymentLink.invalid" })
+  .transform((value, ctx) => {
+    if (!value) return null
+    const url = safePaymentUrl(value)
+    if (url && url.length <= 500) return url
+    ctx.addIssue({ code: "custom", message: "workshops.registrations.paymentLink.invalid" })
+    return z.NEVER
+  })
+  .optional()
 
 const sample = z.object({
   path: storagePath("courses"),
@@ -54,6 +74,7 @@ const fields = z.object({
   notes: localizedText({ max: 2000 }),
   coverPath: storagePath("courses").nullable(),
   samples: z.array(sample).max(12),
+  paymentUrl,
   // Contract
   feeType: z.enum(feeTypes),
   feeAmount: kurus(),
@@ -169,6 +190,7 @@ export function courseValues(v: WorkshopInput) {
     experienceNote: v.experienceRequired && !empty(v.experienceNote) ? v.experienceNote : null,
     notes: empty(v.notes) ? null : v.notes,
     coverPath: v.coverPath,
+    ...(v.paymentUrl !== undefined ? { paymentUrl: v.paymentUrl } : {}),
   }
 }
 

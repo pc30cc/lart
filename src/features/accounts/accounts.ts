@@ -1,9 +1,10 @@
 import "server-only"
-import { eq, inArray, sql } from "drizzle-orm"
+import { and, eq, inArray, isNotNull, sql } from "drizzle-orm"
 
 import { db, type Tx } from "@/db"
 import { emailTokens, instructors, members } from "@/db/schema"
 import { profileText } from "@/features/instructors/schema"
+import { sha256 } from "@/lib/crypto"
 import { normalizeEmail } from "@/lib/auth/login"
 import { hashPassword } from "@/lib/auth/password"
 import { deleteSessionsOf } from "@/lib/auth/session"
@@ -191,10 +192,14 @@ export async function sendVerifyLink(kind: AccountKind, id: string): Promise<"se
   return sent.ok ? "sent" : "failed"
 }
 
-/** Use a verify link: the email is verified. Returns the person's id, or null when the link no longer works. */
+/**
+ * Use a verify link: the email is verified. Returns the person's id, or null
+ * when the link does not work. A link that was already used (opened twice, or
+ * first by a mail scanner) still answers with the id when the email is verified.
+ */
 export async function verifyEmail(kind: AccountKind, token: unknown, now = new Date()): Promise<string | null> {
   if (!isTokenShaped(token)) return null
-  return db.transaction(async (tx) => {
+  const id = await db.transaction(async (tx) => {
     const id = await consumeEmailToken(tx, token, tokenQuery(kind, "verify_email", now))
     if (!id) return null
     const at = sql`coalesce(email_verified_at, ${now.toISOString()}::timestamptz)`
@@ -202,6 +207,22 @@ export async function verifyEmail(kind: AccountKind, token: unknown, now = new D
     else await tx.update(instructors).set({ emailVerifiedAt: at }).where(eq(instructors.id, id))
     return id
   })
+  if (id) return id
+  const [used] = await db
+    .select({ subjectId: emailTokens.subjectId })
+    .from(emailTokens)
+    .where(
+      and(
+        eq(emailTokens.id, sha256(token)),
+        eq(emailTokens.kind, kind),
+        eq(emailTokens.purpose, "verify_email"),
+        isNotNull(emailTokens.usedAt),
+        activeOnly(kind),
+      ),
+    )
+    .limit(1)
+  const person = used && (await findPerson(kind, { id: used.subjectId }))
+  return person && person.verified ? person.id : null
 }
 
 // ─── Forgot / reset password ──────────────────────────────────────────────────

@@ -7,12 +7,14 @@
  */
 
 const BASE = "http://next.invalid"
-const LOCALE_PATH = /^\/(fa|tr|en)(?:\/|$)/
+/** The end of a path segment: a slash, the query, or the end. */
+const END = String.raw`(?:[/?]|$)`
+const LOCALE_PATH = new RegExp(String.raw`^/(fa|tr|en)${END}`)
 /** Member sign-in pages: going "next" to one of them would loop. */
-const ACCOUNT_AUTH = /^\/(fa|tr|en)\/account\/(?:login|signup|verify|forgot|reset)(?:\/|$)/
-const PANELS = /^\/(fa|tr|en)\/(?:admin|instructor)(?:\/|$)/
-const INSTRUCTOR = /^\/(fa|tr|en)\/instructor(?:\/|$)/
-const INSTRUCTOR_AUTH = /^\/(fa|tr|en)\/instructor\/(?:login|accept-invite|verify|forgot|reset)(?:\/|$)/
+const ACCOUNT_AUTH = new RegExp(String.raw`^/(fa|tr|en)/account/(?:login|signup|verify|forgot|reset)${END}`)
+const PANELS = new RegExp(String.raw`^/(fa|tr|en)/(?:admin|instructor)${END}`)
+const INSTRUCTOR = new RegExp(String.raw`^/(fa|tr|en)/instructor${END}`)
+const INSTRUCTOR_AUTH = new RegExp(String.raw`^/(fa|tr|en)/instructor/(?:login|accept-invite|verify|forgot|reset)${END}`)
 
 export type NextScope = "member" | "instructor"
 

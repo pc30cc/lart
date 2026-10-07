@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { getWorkshopFormOptions } from "@/features/workshops/queries"
 import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
+import { getSetting } from "@/lib/settings"
 import { WorkshopForm } from "../_components/workshop-form"
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,7 +17,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function NewWorkshopPage() {
   await requireAdmin()
-  const [t, options] = await Promise.all([getTranslations("workshops"), getWorkshopFormOptions()])
+  const [t, options, payment] = await Promise.all([
+    getTranslations("workshops"),
+    getWorkshopFormOptions(),
+    getSetting("payment"),
+  ])
 
   // A workshop needs a category, an instructor and the default contract text first.
   const steps = [
@@ -34,7 +39,7 @@ export default async function NewWorkshopPage() {
         back={{ href: "/admin/workshops", label: t("backToList") }}
       />
       {ready ? (
-        <WorkshopForm options={options} />
+        <WorkshopForm options={options} onlinePayment={payment.online.enabled} />
       ) : (
         <section className="bg-card ring-foreground/8 mx-auto max-w-xl space-y-5 rounded-2xl p-6 shadow-xs ring-1 md:p-8">
           <div className="space-y-1.5">

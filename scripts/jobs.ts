@@ -5,9 +5,12 @@
  * environment as the app). Every job is idempotent, so a missed or doubled
  * run is harmless. Exit code 1 when a job failed (Coolify shows it).
  *
- * Jobs:
+ * Jobs (each one runs even when another failed):
  * - decision_due: email the super admins when a workshop's go / no-go
  *   decision time has passed (src/features/workshops/decisions.ts).
+ * - workshop_reminder: the day-before reminder to everyone registered (paid
+ *   or not yet) for a workshop starting within 24 hours, once per member
+ *   and workshop (src/features/registrations/admin/reminders.ts).
  */
 import "dotenv/config"
 
@@ -22,19 +25,33 @@ load.cache[marker] = Object.assign(new Module(marker), { filename: marker, loade
 
 async function main() {
   const { notifyDueDecisions } = await import("../src/features/workshops/decisions")
+  const { sendDayBeforeReminders } = await import("../src/features/registrations/admin/reminders")
   const { db } = await import("../src/db")
   const { errorForLog } = await import("../src/lib/errors")
   let failed = false
-  try {
+
+  /** Run one job: log what it did; a throw or an unfinished run marks the whole run as failed. */
+  async function job(name: string, run: () => Promise<{ done: number; due: number; what: string }>) {
     const started = Date.now()
-    const result = await notifyDueDecisions()
-    console.info(
-      `[jobs] decision_due: ${result.notified} of ${result.due} workshop(s) notified (${Date.now() - started} ms)`,
-    )
-    if (result.notified < result.due) failed = true
-  } catch (err) {
-    console.error("[jobs] decision_due failed", errorForLog(err))
-    failed = true
+    try {
+      const { done, due, what } = await run()
+      console.info(`[jobs] ${name}: ${done} of ${due} ${what} (${Date.now() - started} ms)`)
+      if (done < due) failed = true
+    } catch (err) {
+      console.error(`[jobs] ${name} failed`, errorForLog(err))
+      failed = true
+    }
+  }
+
+  try {
+    await job("decision_due", async () => {
+      const r = await notifyDueDecisions()
+      return { done: r.notified, due: r.due, what: "workshop(s) notified" }
+    })
+    await job("workshop_reminder", async () => {
+      const r = await sendDayBeforeReminders()
+      return { done: r.sent, due: r.due, what: "member(s) reminded" }
+    })
   } finally {
     await db.$client.end()
   }

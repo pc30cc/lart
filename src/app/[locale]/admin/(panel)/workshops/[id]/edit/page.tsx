@@ -9,6 +9,7 @@ import { getWorkshop, getWorkshopFormOptions, type Workshop } from "@/features/w
 import { contractLocked, type WorkshopFormValues } from "@/features/workshops/schema"
 import { requireAdmin } from "@/lib/auth/admin"
 import { localized } from "@/lib/format"
+import { getSetting } from "@/lib/settings"
 import { WorkshopForm } from "../../_components/workshop-form"
 
 const text = (v: LocalizedText | null) => ({ fa: v?.fa ?? "", tr: v?.tr ?? "", en: v?.en ?? "" })
@@ -42,6 +43,7 @@ function formValues(w: Workshop): WorkshopFormValues {
     notes: text(w.notes),
     coverPath: w.coverPath,
     samples: w.samples,
+    paymentUrl: w.paymentUrl ?? "",
     feeType: w.contract?.feeType ?? "per_participant",
     feeAmount: w.contract?.feeAmount ?? 0,
     hasAdvance: advance > 0,
@@ -67,7 +69,7 @@ export default async function EditWorkshopPage({ params }: PageProps<"/[locale]/
   await requireAdmin()
   const { id } = await params
   const [workshop, t, locale] = await Promise.all([load(id), getTranslations("workshops"), getLocale()])
-  const options = await getWorkshopFormOptions(workshop.instructorId)
+  const [options, payment] = await Promise.all([getWorkshopFormOptions(workshop.instructorId), getSetting("payment")])
   const title = localized(workshop.title, locale)
 
   return (
@@ -79,6 +81,7 @@ export default async function EditWorkshopPage({ params }: PageProps<"/[locale]/
       />
       <WorkshopForm
         options={options}
+        onlinePayment={payment.online.enabled}
         workshop={{
           id: workshop.id,
           status: workshop.status,

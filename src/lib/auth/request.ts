@@ -1,4 +1,5 @@
 import "server-only"
+import { headers } from "next/headers"
 
 import { env } from "@/lib/env"
 
@@ -34,4 +35,17 @@ export function isSameOrigin(request: Request): boolean {
     }
   }
   return request.headers.get("sec-fetch-site") === "same-origin"
+}
+
+/**
+ * The path (and query) of the page being requested: `src/proxy.ts` passes it
+ * as `x-pathname`, also for server actions posted from a page. Used as the
+ * "next" of a sign-in redirect; always check it with `safeNext`.
+ */
+export async function currentPath(): Promise<string | undefined> {
+  try {
+    return (await headers()).get("x-pathname") ?? undefined
+  } catch {
+    return undefined // outside a request
+  }
 }

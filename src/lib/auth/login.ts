@@ -29,6 +29,8 @@ export const normalizeEmail = (email: string) => email.trim().toLowerCase()
 
 /**
  * Check an email + password for any principal kind, with per-account lockout.
+ * Inactive admins and instructors, and instructors who have not chosen a
+ * password yet (invitation not accepted), never get in.
  * Always runs exactly one Argon2 verification, so unknown, inactive, locked
  * and wrong-password cases take the same time. Callers must show one generic
  * message for every failure (no user enumeration).
@@ -48,8 +50,10 @@ export async function verifyCredentials(
   const table = tables[kind]
   const email = normalizeEmail(emailInput)
   const active = kind === "member" ? sql`true` : sql`active`
+  // Instructor emails are unique regardless of case (rows from before lower-casing may differ).
+  const match = kind === "instructor" ? sql`lower(email) = ${email}` : sql`email = ${email}`
   const { rows } = await db.execute<AccountRow>(
-    sql`select id, password_hash, ${active} as active from ${table} where email = ${email} limit 1`,
+    sql`select id, password_hash, ${active} as active from ${table} where ${match} limit 1`,
   )
   const account = rows[0]
   const usable = account?.password_hash && account.active ? { id: account.id, hash: account.password_hash } : null

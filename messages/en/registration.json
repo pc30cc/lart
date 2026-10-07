@@ -1,1 +1,243 @@
-{}
+{
+  "list": {
+    "metaTitle": "Workshops",
+    "metaDescription": "Upcoming art workshops at {brand}. Choose one and save your place in a minute.",
+    "title": "Workshops",
+    "subtitle": "Make something beautiful with your own hands. Choose a workshop and save your place.",
+    "emptyTitle": "New workshops are coming soon",
+    "emptyText": "Nothing is open for registration right now. Please check back in a little while!",
+    "with": "with {name}"
+  },
+  "price": {
+    "free": "Free",
+    "perPerson": "per person"
+  },
+  "seats": {
+    "full": "Full",
+    "left": "{count, plural, one {# place left} other {# places left}}"
+  },
+  "age": {
+    "adults": "For adults",
+    "children": "For children aged {min, number}–{max, number}"
+  },
+  "window": {
+    "full": "Full",
+    "closed": "Registration closed",
+    "started": "Already started",
+    "past": "Has taken place",
+    "cancelled": "Cancelled",
+    "paused": "Registration paused"
+  },
+  "workshop": {
+    "metaDescription": "{title}: a workshop on {date} at {venue}. Save your place at {brand}.",
+    "back": "All workshops",
+    "by": "with {name}",
+    "facts": {
+      "date": "Date",
+      "time": "Time",
+      "venue": "Place",
+      "age": "Who it’s for",
+      "price": "Price",
+      "seats": "Places",
+      "deadline": "Registration closes"
+    },
+    "register": "Register",
+    "registerHint": "It takes a minute. You pay after registering.",
+    "about": "About this workshop",
+    "includes": "What the price includes",
+    "bring": "What to bring",
+    "bringNothing": "Nothing at all: everything you need is ready for you.",
+    "experience": "Experience",
+    "experienceNeeded": "Some experience is needed.",
+    "noExperience": "No experience needed: beginners are very welcome.",
+    "notes": "Good to know",
+    "samples": "Made in this workshop",
+    "sampleAlt": "Work made in this workshop, photo {n, number}",
+    "instructor": "Your instructor",
+    "registered": {
+      "title": "You are registered",
+      "text": "{count, plural, one {Your place is saved.} other {Your places are saved.}}",
+      "myWorkshops": "See it in My workshops",
+      "another": "Register someone else"
+    },
+    "state": {
+      "fullTitle": "This workshop is full",
+      "fullText": "All places are taken. New workshops are added often: take a look!",
+      "closedTitle": "Registration has closed",
+      "closedText": "Registration for this workshop closed on {date}.",
+      "startedTitle": "This workshop has already started",
+      "startedText": "Registration is closed. Take a look at the upcoming workshops.",
+      "pastTitle": "This workshop has taken place",
+      "pastText": "Take a look at the upcoming workshops.",
+      "cancelledTitle": "This workshop was cancelled",
+      "cancelledText": "We’re sorry. Take a look at the other workshops.",
+      "pausedTitle": "Registration is paused for a moment",
+      "pausedText": "We’re updating a few details. Please check back soon."
+    },
+    "allWorkshops": "See all workshops"
+  },
+  "register": {
+    "metaTitle": "Register: {title}",
+    "title": "Register",
+    "for": "for “{title}”",
+    "signIn": {
+      "title": "Log in to register",
+      "text": "Registering takes a minute. Log in, or create a free account if you’re new here.",
+      "signUp": "Create an account",
+      "logIn": "I already have an account"
+    },
+    "verify": {
+      "title": "Please confirm your email first",
+      "text": "We sent a link to {email}. Open it, then come back here to register.",
+      "resend": "Send the link again",
+      "sent": "Sent! Please check your inbox, and the spam folder too.",
+      "alreadyVerified": "Your email is confirmed. You can register now!"
+    },
+    "participant": "Who will attend?",
+    "participantHint": "Their full name, so we can welcome them.",
+    "childNote": "This workshop is for children aged {min, number}–{max, number}. As their parent, please write your child’s name here.",
+    "terms": "Registration terms",
+    "termsIntro": "Please read the terms before registering.",
+    "acceptTerms": "I have read and accept the registration and cancellation terms.",
+    "consent": {
+      "title": "Photos and videos",
+      "optional": "optional",
+      "text": "Photos and videos may be taken during the workshop. These choices are only about publishing identifiable images of the participant on the {brand} website and official pages, to show what {brand} does. They are optional and don’t affect registration or attendance. They don’t cover the instructor’s personal pages.",
+      "guardian": "If the participant is a child, a parent or legal guardian makes these choices.",
+      "photo": "I agree to the publication of identifiable photos of the participant.",
+      "video": "I agree to the publication of identifiable videos of the participant."
+    },
+    "pay": {
+      "title": "Price",
+      "later": "You pay after registering. Ways to pay:",
+      "none": "You pay after registering: we’ll get in touch with you about how.",
+      "free": "This workshop is free: nothing to pay.",
+      "cash": "Cash at the workshop",
+      "transfer": "Bank transfer",
+      "online": "Online by card"
+    },
+    "submit": "Register",
+    "errors": {
+      "acceptTerms": "Please tick this box to register."
+    }
+  },
+  "errors": {
+    "notFound": "We couldn’t find this. It may have been removed.",
+    "notOpen": "Registration for this workshop isn’t open right now.",
+    "full": "Sorry, the last place has just been taken: this workshop is full.",
+    "deadline": "Sorry, registration for this workshop has closed.",
+    "started": "This workshop has already started, so registration is closed.",
+    "cancelled": "This workshop was cancelled, so registration is closed.",
+    "duplicate": "{name} is already registered for this workshop.",
+    "tooMany": "You can register up to {max, number} people for one workshop. To register more, please get in touch with us.",
+    "termsChanged": "The terms were just updated. Please reload the page, read them and register again.",
+    "alreadyCancelled": "This registration is already cancelled.",
+    "cannotCancel": "This registration can’t be cancelled any more.",
+    "startedCancel": "The workshop has already started, so this registration can’t be cancelled any more."
+  },
+  "status": {
+    "unpaid": "Not paid yet",
+    "paid": "Paid",
+    "free": "Registered",
+    "cancelled": "Cancelled",
+    "refundDue": "Refund of {amount} on its way",
+    "refundSent": "Refunded: {amount}",
+    "workshopCancelled": "Our team cancelled this workshop."
+  },
+  "payment": {
+    "title": "How to pay",
+    "intro": "{count, plural, one {Please pay {amount} this way:} other {Please pay {amount} in whichever way suits you best:}}",
+    "none": "We’ll get in touch with you soon about how to pay {amount}.",
+    "cash": {
+      "title": "Cash at the workshop",
+      "text": "Bring {amount} in cash and pay on the day of the workshop."
+    },
+    "transfer": {
+      "title": "Bank transfer",
+      "text": "Send {amount} to this account:",
+      "holder": "Account holder",
+      "bank": "Bank",
+      "iban": "IBAN",
+      "copy": "Copy",
+      "copyLabel": "Copy the IBAN",
+      "copied": "IBAN copied.",
+      "copyFailed": "We couldn’t copy it. Please select the IBAN and copy it by hand.",
+      "reference": "Please write “{name}” in the transfer description, so we know who it’s for."
+    },
+    "online": {
+      "title": "Pay online",
+      "text": "Pay {amount} by card on the secure payment page.",
+      "button": "Pay online",
+      "newTab": "opens in a new tab",
+      "after": "After you pay, our team confirms your payment. It can take a little while."
+    },
+    "confirmNote": "As soon as we receive your payment, we’ll mark it as paid here and send you an email."
+  },
+  "account": {
+    "metaTitle": "My workshops",
+    "title": "My workshops",
+    "hello": "Hello, {name}!",
+    "subtitle": "Your registrations and how to pay, all in one place.",
+    "upcoming": "Coming up",
+    "past": "Past and cancelled",
+    "emptyTitle": "You haven’t registered for a workshop yet",
+    "emptyText": "Find one you love and save your place in a minute.",
+    "browse": "See the workshops",
+    "details": "My details",
+    "detailsText": "Your name, your phone number and the language of our emails.",
+    "email": "Email",
+    "name": "Your name",
+    "phone": "Mobile number",
+    "optional": "optional",
+    "language": "Language of our emails",
+    "save": "Save",
+    "saved": "Saved. Thank you!",
+    "password": "Password",
+    "passwordText": "We’ll email you a link to choose a new password.",
+    "changePassword": "Change my password"
+  },
+  "item": {
+    "participant": "Participant",
+    "date": "Date",
+    "time": "Time",
+    "venue": "Place",
+    "amount": "Price",
+    "howToPay": "How to pay",
+    "details": "Details",
+    "workshopPage": "Workshop page"
+  },
+  "cancel": {
+    "button": "Cancel my registration",
+    "title": "Cancel this registration?",
+    "unpaid": "The place for {name} will be freed for someone else. You haven’t paid, so there’s nothing else to do.",
+    "full": "You paid {paid}. Under the terms you get it all back: we’ll send {refund} back to you within five business days.",
+    "partial": "The workshop starts in less than 72 hours, so under the terms you get {percent, number}% back: we’ll send {refund} back to you within five business days.",
+    "none": "The workshop starts in less than 24 hours, so under the terms this payment can’t be refunded.",
+    "keep": "Keep my place",
+    "confirm": "Yes, cancel it",
+    "done": "Your registration is cancelled.",
+    "doneRefund": "Your registration is cancelled. We’ll send {refund} back to you within five business days."
+  },
+  "detail": {
+    "metaTitle": "My registration",
+    "back": "My workshops",
+    "welcomeTitle": "You’re registered!",
+    "welcomeText": "We’ve saved a place for {name}. We’ve also emailed you the details.",
+    "paidTitle": "Paid. See you there!",
+    "paidText": "We’ve received your payment and your place is confirmed.",
+    "freeTitle": "See you there!",
+    "freeText": "Your place is confirmed. There’s nothing to pay.",
+    "registration": "Your registration",
+    "consent": "Photos and videos",
+    "photoYes": "Photos may be published",
+    "photoNo": "No identifiable photos",
+    "videoYes": "Videos may be published",
+    "videoNo": "No identifiable videos",
+    "termsAccepted": "Terms accepted on {date}",
+    "method": {
+      "cash": "Paid in cash",
+      "transfer": "Paid by bank transfer",
+      "online": "Paid online"
+    }
+  }
+}

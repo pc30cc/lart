@@ -1,1 +1,243 @@
-{}
+{
+  "list": {
+    "metaTitle": "Atölyeler",
+    "metaDescription": "{brand} sanat atölyeleri: yaklaşan atölyelere göz atın, yerinizi bir dakikada ayırtın.",
+    "title": "Atölyeler",
+    "subtitle": "Kendi ellerinizle güzel bir şey yapın. Bir atölye seçin ve yerinizi ayırtın.",
+    "emptyTitle": "Yeni atölyeler çok yakında",
+    "emptyText": "Şu anda kayda açık bir atölye yok. Lütfen biraz sonra yeniden bakın!",
+    "with": "Eğitmen: {name}"
+  },
+  "price": {
+    "free": "Ücretsiz",
+    "perPerson": "kişi başı"
+  },
+  "seats": {
+    "full": "Dolu",
+    "left": "{count, plural, one {# yer kaldı} other {# yer kaldı}}"
+  },
+  "age": {
+    "adults": "Yetişkinler için",
+    "children": "{min, number}–{max, number} yaş arası çocuklar için"
+  },
+  "window": {
+    "full": "Dolu",
+    "closed": "Kayıtlar kapandı",
+    "started": "Başladı",
+    "past": "Gerçekleşti",
+    "cancelled": "İptal edildi",
+    "paused": "Kayıtlara kısa ara"
+  },
+  "workshop": {
+    "metaDescription": "{title}: {date}, {venue}. {brand} atölyesinde yerinizi ayırtın.",
+    "back": "Tüm atölyeler",
+    "by": "Eğitmen: {name}",
+    "facts": {
+      "date": "Tarih",
+      "time": "Saat",
+      "venue": "Yer",
+      "age": "Kimler için",
+      "price": "Ücret",
+      "seats": "Yerler",
+      "deadline": "Son kayıt"
+    },
+    "register": "Kaydol",
+    "registerHint": "Bir dakika sürer. Ödemeyi kayıttan sonra yaparsınız.",
+    "about": "Atölye hakkında",
+    "includes": "Ücrete neler dahil",
+    "bring": "Yanınızda getirin",
+    "bringNothing": "Hiçbir şey: ihtiyacınız olan her şey sizi bekliyor.",
+    "experience": "Deneyim",
+    "experienceNeeded": "Biraz deneyim gerekiyor.",
+    "noExperience": "Deneyim gerekmez: yeni başlayanlar da çok hoş karşılanır.",
+    "notes": "Bilmeniz gerekenler",
+    "samples": "Bu atölyede yapılanlar",
+    "sampleAlt": "Bu atölyede yapılmış bir çalışma, fotoğraf {n, number}",
+    "instructor": "Eğitmeniniz",
+    "registered": {
+      "title": "Kaydınız var",
+      "text": "{count, plural, one {Yeriniz ayrıldı.} other {Yerleriniz ayrıldı.}}",
+      "myWorkshops": "Atölyelerim’de görün",
+      "another": "Başka birini kaydet"
+    },
+    "state": {
+      "fullTitle": "Bu atölye doldu",
+      "fullText": "Tüm yerler doldu. Sık sık yeni atölyeler ekliyoruz: göz atmayı unutmayın!",
+      "closedTitle": "Kayıtlar kapandı",
+      "closedText": "Bu atölyenin kayıtları {date} tarihinde kapandı.",
+      "startedTitle": "Bu atölye başladı",
+      "startedText": "Kayıtlar kapandı. Yaklaşan atölyelere göz atabilirsiniz.",
+      "pastTitle": "Bu atölye gerçekleşti",
+      "pastText": "Yaklaşan atölyelere göz atabilirsiniz.",
+      "cancelledTitle": "Bu atölye iptal edildi",
+      "cancelledText": "Üzgünüz. Diğer atölyelere göz atabilirsiniz.",
+      "pausedTitle": "Kayıtlara kısa bir ara verdik",
+      "pausedText": "Birkaç ayrıntıyı güncelliyoruz. Lütfen kısa süre sonra yeniden bakın."
+    },
+    "allWorkshops": "Tüm atölyeleri gör"
+  },
+  "register": {
+    "metaTitle": "Kayıt: {title}",
+    "title": "Kaydol",
+    "for": "“{title}” atölyesi için",
+    "signIn": {
+      "title": "Kaydolmak için giriş yapın",
+      "text": "Kayıt bir dakika sürer. Giriş yapın; ilk kez geliyorsanız ücretsiz bir hesap oluşturun.",
+      "signUp": "Hesap oluştur",
+      "logIn": "Zaten hesabım var"
+    },
+    "verify": {
+      "title": "Lütfen önce e-postanızı doğrulayın",
+      "text": "{email} adresine bir bağlantı gönderdik. Bağlantıyı açın, sonra kaydolmak için buraya dönün.",
+      "resend": "Bağlantıyı tekrar gönder",
+      "sent": "Gönderildi! Lütfen gelen kutunuza, istenmeyen klasörüne de bakın.",
+      "alreadyVerified": "E-postanız doğrulandı. Artık kaydolabilirsiniz!"
+    },
+    "participant": "Kim katılacak?",
+    "participantHint": "Adı ve soyadı; onu adıyla karşılayabilmemiz için.",
+    "childNote": "Bu atölye {min, number}–{max, number} yaş arası çocuklar için. Velisi olarak lütfen buraya çocuğunuzun adını yazın.",
+    "terms": "Kayıt koşulları",
+    "termsIntro": "Kaydolmadan önce lütfen koşulları okuyun.",
+    "acceptTerms": "Kayıt ve iptal koşullarını okudum, kabul ediyorum.",
+    "consent": {
+      "title": "Fotoğraf ve videolar",
+      "optional": "isteğe bağlı",
+      "text": "Atölye sırasında fotoğraf ve video çekilebilir. Bu seçimler yalnızca, {brand} etkinliklerini tanıtmak amacıyla katılımcının tanınabilir görüntülerinin {brand} web sitesinde ve resmî sayfalarında yayımlanmasıyla ilgilidir. İsteğe bağlıdır; kaydı ve atölyeye katılımı etkilemez. Eğitmenin kişisel sayfaları bu kapsamda değildir.",
+      "guardian": "Katılımcı çocuksa bu seçimleri ebeveyni veya yasal vasisi yapar.",
+      "photo": "Katılımcının tanınabilir fotoğraflarının yayımlanmasına izin veriyorum.",
+      "video": "Katılımcının tanınabilir videolarının yayımlanmasına izin veriyorum."
+    },
+    "pay": {
+      "title": "Ücret",
+      "later": "Ödemeyi kayıttan sonra yaparsınız. Ödeme yolları:",
+      "none": "Ödemeyi kayıttan sonra yaparsınız: nasıl ödeyeceğiniz konusunda sizinle iletişime geçeceğiz.",
+      "free": "Bu atölye ücretsiz: ödenecek bir şey yok.",
+      "cash": "Atölyede nakit",
+      "transfer": "Banka havalesi / EFT",
+      "online": "Kartla online"
+    },
+    "submit": "Kaydol",
+    "errors": {
+      "acceptTerms": "Kaydolmak için lütfen bu kutuyu işaretleyin."
+    }
+  },
+  "errors": {
+    "notFound": "Bunu bulamadık. Kaldırılmış olabilir.",
+    "notOpen": "Bu atölye şu anda kayda açık değil.",
+    "full": "Üzgünüz, son yer az önce doldu: bu atölye artık dolu.",
+    "deadline": "Üzgünüz, bu atölyenin kayıtları kapandı.",
+    "started": "Bu atölye başladı, bu yüzden kayıtlar kapandı.",
+    "cancelled": "Bu atölye iptal edildi, bu yüzden kayıtlar kapandı.",
+    "duplicate": "{name} bu atölyeye zaten kayıtlı.",
+    "tooMany": "Bir atölyeye en fazla {max, number} kişi kaydedebilirsiniz. Daha fazlası için lütfen bizimle iletişime geçin.",
+    "termsChanged": "Koşullar az önce güncellendi. Lütfen sayfayı yenileyin, koşulları okuyun ve yeniden kaydolun.",
+    "alreadyCancelled": "Bu kayıt zaten iptal edilmiş.",
+    "cannotCancel": "Bu kayıt artık iptal edilemiyor.",
+    "startedCancel": "Atölye başladı, bu yüzden bu kayıt artık iptal edilemiyor."
+  },
+  "status": {
+    "unpaid": "Henüz ödenmedi",
+    "paid": "Ödendi",
+    "free": "Kayıtlı",
+    "cancelled": "İptal edildi",
+    "refundDue": "{amount} iadeniz yolda",
+    "refundSent": "İade edildi: {amount}",
+    "workshopCancelled": "Bu atölye ekibimiz tarafından iptal edildi."
+  },
+  "payment": {
+    "title": "Nasıl ödenir",
+    "intro": "{count, plural, one {Lütfen {amount} tutarını şu yolla ödeyin:} other {Lütfen {amount} tutarını size en uygun yolla ödeyin:}}",
+    "none": "{amount} tutarını nasıl ödeyeceğiniz konusunda yakında sizinle iletişime geçeceğiz.",
+    "cash": {
+      "title": "Atölyede nakit",
+      "text": "{amount} tutarını nakit olarak getirip atölye günü ödeyin."
+    },
+    "transfer": {
+      "title": "Banka havalesi / EFT",
+      "text": "{amount} tutarını şu hesaba gönderin:",
+      "holder": "Hesap sahibi",
+      "bank": "Banka",
+      "iban": "IBAN",
+      "copy": "Kopyala",
+      "copyLabel": "IBAN’ı kopyala",
+      "copied": "IBAN kopyalandı.",
+      "copyFailed": "Kopyalayamadık. Lütfen IBAN’ı seçip kendiniz kopyalayın.",
+      "reference": "Ödemenin kime ait olduğunu bilebilmemiz için lütfen açıklamaya “{name}” yazın."
+    },
+    "online": {
+      "title": "Online ödeme",
+      "text": "{amount} tutarını güvenli ödeme sayfasında kartla ödeyin.",
+      "button": "Online öde",
+      "newTab": "yeni sekmede açılır",
+      "after": "Ödeme yaptıktan sonra ekibimiz ödemenizi onaylar. Bu biraz zaman alabilir."
+    },
+    "confirmNote": "Ödemeniz bize ulaşır ulaşmaz burada “Ödendi” olarak işaretleyip size e-posta göndereceğiz."
+  },
+  "account": {
+    "metaTitle": "Atölyelerim",
+    "title": "Atölyelerim",
+    "hello": "Merhaba {name}!",
+    "subtitle": "Kayıtlarınız ve nasıl ödeyeceğiniz, hepsi tek bir yerde.",
+    "upcoming": "Yaklaşanlar",
+    "past": "Geçmiş ve iptal edilenler",
+    "emptyTitle": "Henüz bir atölyeye kaydolmadınız",
+    "emptyText": "Sevdiğiniz bir atölye bulun ve yerinizi bir dakikada ayırtın.",
+    "browse": "Atölyeleri gör",
+    "details": "Bilgilerim",
+    "detailsText": "Adınız, telefon numaranız ve e-postalarımızın dili.",
+    "email": "E-posta",
+    "name": "Adınız",
+    "phone": "Cep telefonu",
+    "optional": "isteğe bağlı",
+    "language": "E-postalarımızın dili",
+    "save": "Kaydet",
+    "saved": "Kaydedildi. Teşekkürler!",
+    "password": "Şifre",
+    "passwordText": "Yeni bir şifre belirlemeniz için size bir bağlantı göndereceğiz.",
+    "changePassword": "Şifremi değiştir"
+  },
+  "item": {
+    "participant": "Katılımcı",
+    "date": "Tarih",
+    "time": "Saat",
+    "venue": "Yer",
+    "amount": "Ücret",
+    "howToPay": "Nasıl ödenir",
+    "details": "Ayrıntılar",
+    "workshopPage": "Atölye sayfası"
+  },
+  "cancel": {
+    "button": "Kaydımı iptal et",
+    "title": "Bu kayıt iptal edilsin mi?",
+    "unpaid": "{name} için ayrılan yer başka birine açılacak. Henüz ödeme yapmadığınız için başka bir şey yapmanıza gerek yok.",
+    "full": "{paid} ödediniz. Koşullara göre tamamı iade edilir: {refund} tutarını beş iş günü içinde size geri göndereceğiz.",
+    "partial": "Atölyenin başlamasına 72 saatten az kaldı; koşullara göre ödemenizin %{percent, number} kadarı iade edilir: {refund} tutarını beş iş günü içinde size geri göndereceğiz.",
+    "none": "Atölyenin başlamasına 24 saatten az kaldı; koşullara göre bu ödeme iade edilemiyor.",
+    "keep": "Yerimi koru",
+    "confirm": "Evet, iptal et",
+    "done": "Kaydınız iptal edildi.",
+    "doneRefund": "Kaydınız iptal edildi. {refund} tutarını beş iş günü içinde size geri göndereceğiz."
+  },
+  "detail": {
+    "metaTitle": "Kaydım",
+    "back": "Atölyelerim",
+    "welcomeTitle": "Kaydınız tamam!",
+    "welcomeText": "{name} için bir yer ayırdık. Ayrıntıları size e-postayla da gönderdik.",
+    "paidTitle": "Ödendi. Görüşmek üzere!",
+    "paidText": "Ödemenizi aldık, yeriniz kesinleşti.",
+    "freeTitle": "Görüşmek üzere!",
+    "freeText": "Yeriniz kesinleşti. Ödenecek bir şey yok.",
+    "registration": "Kaydınız",
+    "consent": "Fotoğraf ve videolar",
+    "photoYes": "Fotoğraflar yayımlanabilir",
+    "photoNo": "Tanınabilir fotoğraf yayımlanmaz",
+    "videoYes": "Videolar yayımlanabilir",
+    "videoNo": "Tanınabilir video yayımlanmaz",
+    "termsAccepted": "Koşullar {date} tarihinde kabul edildi",
+    "method": {
+      "cash": "Nakit ödendi",
+      "transfer": "Banka havalesiyle ödendi",
+      "online": "Online ödendi"
+    }
+  }
+}

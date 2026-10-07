@@ -52,7 +52,7 @@ export async function renderEmail<T extends EmailTemplate>(
   options: { texts?: EmailTexts } = {},
 ): Promise<RenderedEmail> {
   const def = emailTemplates[template] as unknown as EmailDefinition
-  const p = def.schema.parse(props) as Record<string, string | number | undefined>
+  const p = def.schema.parse(props) as Record<string, unknown>
   const brand = await getBrand(locale)
   let custom = messages[locale]
   try {
@@ -73,7 +73,7 @@ export async function renderEmail<T extends EmailTemplate>(
 async function build(
   template: EmailTemplate,
   def: EmailDefinition,
-  p: Record<string, string | number | undefined>,
+  p: Record<string, unknown>,
   locale: EmailLocale,
   brand: string,
   source: Messages,
@@ -87,16 +87,28 @@ async function build(
     },
   })
   type Key = Parameters<typeof t>[0]
-  const values = { ...p, ...def.values?.(p), brand }
+  // Only text and numbers are placeholders; objects (e.g. the bank account) go to `sections`.
+  const scalars = Object.fromEntries(
+    Object.entries(p).filter((entry): entry is [string, string | number] => ["string", "number"].includes(typeof entry[1])),
+  )
+  const values = { ...scalars, ...def.values?.(p as never), brand }
   const msg = (key: string) => t(`${template}.${key}` as Key, values)
   const optional = (key: string) => (t.has(`${template}.${key}` as Key) ? msg(key) : undefined)
+  const shared = (key: string) => t(key as Key, values)
   const home = new URL(`/${locale}`, env.APP_URL).href
 
   const details = Object.entries(def.details ?? {}).flatMap(([label, key]) => {
     const value = p[key as string]
     if (value === undefined || value === "") return []
-    return [{ label: t(`details.${label}` as Key), value: typeof value === "number" ? formatNumber(value, locale) : value }]
+    return [{ label: t(`details.${label}` as Key), value: typeof value === "number" ? formatNumber(value, locale) : String(value) }]
   })
+  const sections = (def.sections?.(p as never) ?? []).map((section) => ({
+    title: shared(section.title),
+    text: section.text.map(shared),
+    rows: (section.rows ?? []).map((row) => ({ label: shared(row.label), value: row.value, ltr: row.ltr })),
+    after: [...(section.after ?? []).map(shared), ...(section.note ? [section.note] : [])],
+    button: section.button && { label: shared(section.button.label), href: section.button.href },
+  }))
 
   const html = await render(
     <EmailLayout
@@ -108,6 +120,7 @@ async function build(
       greeting={t("layout.greeting", { name: String(p[def.greet]) })}
       paragraphs={[msg("intro"), optional("intro2")].filter((x): x is string => !!x)}
       details={details}
+      sections={sections}
       cta={{ label: msg("cta"), href: (p[def.cta] as string | undefined) ?? home }}
       note={optional("note")}
       noteHref={def.noteLink ? (p[def.noteLink] as string | undefined) : undefined}

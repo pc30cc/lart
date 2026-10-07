@@ -96,9 +96,11 @@ const notifiedAt = async (id: string) =>
 describe("notifyDueDecisions", () => {
   it("emails every active admin once the decision time has passed, then marks the workshop", async () => {
     const due = await course("published", new Date(Date.now() - HOUR))
+    // Paid and not paid yet both count; a cancelled registration does not.
     await addRegistration(due.id, memberId, termsId, { status: "confirmed" })
     await addRegistration(due.id, memberId, termsId, { status: "confirmed" })
     await addRegistration(due.id, memberId, termsId, { status: "pending" })
+    await addRegistration(due.id, memberId, termsId, { status: "cancelled" })
 
     const now = new Date()
     await notifyDueDecisions(now)
@@ -108,7 +110,7 @@ describe("notifyDueDecisions", () => {
     expect(sent.find((m) => m.to === adminEmail)).toMatchObject({
       template: "decision_due",
       idempotencyKey: `decision_due:${due.id}:${adminId}:${due.decisionAt.getTime()}`,
-      props: { adminName: "Mina", registrations: 2, minimum: 5, workshopTitle: `Karar ${run}`, workshopUrl: `/tr/admin/workshops/${due.id}` },
+      props: { adminName: "Mina", registrations: 3, minimum: 5, workshopTitle: `Karar ${run}`, workshopUrl: `/tr/admin/workshops/${due.id}` },
     })
     expect(await notifiedAt(due.id)).toEqual(now)
 

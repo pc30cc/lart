@@ -389,25 +389,57 @@ describe("updateWorkshop", () => {
   })
 })
 
+describe("online payment link", () => {
+  it("is saved with the workshop, outside the contract, and can be removed", async () => {
+    const { id } = await create({ paymentUrl: " https://iyzi.link/AB12cd " })
+    expect(await courseRow(id)).toMatchObject({ paymentUrl: "https://iyzi.link/AB12cd" })
+    expect(await lastAudit(id)).toMatchObject({ data: { paymentUrl: "https://iyzi.link/AB12cd" } })
+
+    // Left out (an older form): unchanged. Changed: no new contract version.
+    expect(await edit(id, { intro: text({ tr: "Yeni" }) })).toMatchObject({ ok: true })
+    expect(await courseRow(id)).toMatchObject({ paymentUrl: "https://iyzi.link/AB12cd" })
+    expect(await edit(id, { paymentUrl: "https://www.paytr.com/link/XyZ" })).toMatchObject({ ok: true, data: { contractVersion: null } })
+    expect(await lastAudit(id)).toMatchObject({
+      data: { paymentUrl: { from: "https://iyzi.link/AB12cd", to: "https://www.paytr.com/link/XyZ" } },
+    })
+    expect(await edit(id, { paymentUrl: "" })).toMatchObject({ ok: true })
+    expect(await courseRow(id)).toMatchObject({ paymentUrl: null })
+  })
+
+  it("must be a plain https link", async () => {
+    for (const paymentUrl of ["http://iyzi.link/AB12", "javascript:alert(1)", "iyzi.link/AB12", "https://user:pw@iyzi.link/x"]) {
+      const result = await createWorkshop(workshopInput(run, refs, { paymentUrl }))
+      expect(result).toMatchObject({
+        ok: false,
+        fieldErrors: { paymentUrl: "Please paste the whole payment link, starting with https://." },
+      })
+    }
+  })
+})
+
 describe("go / no-go", () => {
-  it("confirms a published workshop and fixes the number of participants", async () => {
+  it("confirms a published workshop and fixes the number of participants: paid and not paid yet count", async () => {
     const { id } = await create()
     expect(await confirmWorkshop({ id })).toMatchObject({ ok: false, error: expect.stringContaining("open for registration") })
     await markSigned(id)
     const member = await newMember()
     await addRegistration(id, member.id, termsId, { status: "confirmed" })
     await addRegistration(id, member.id, termsId, { status: "confirmed" })
+    // Many pay in cash at the workshop: registered and not paid yet counts too.
     await addRegistration(id, member.id, termsId, { status: "pending" })
+    await addRegistration(id, member.id, termsId, { status: "cancelled" })
 
-    expect(await confirmWorkshop({ id })).toEqual({ ok: true, data: { id, finalParticipants: 2 } })
-    expect(await courseRow(id)).toMatchObject({ status: "confirmed", finalParticipants: 2 })
-    expect(await lastAudit(id)).toMatchObject({ action: "workshop.confirm", data: { finalParticipants: 2, minimum: 4 } })
+    expect(await confirmWorkshop({ id })).toEqual({ ok: true, data: { id, finalParticipants: 3 } })
+    expect(await courseRow(id)).toMatchObject({ status: "confirmed", finalParticipants: 3 })
+    expect(await lastAudit(id)).toMatchObject({ action: "workshop.confirm", data: { finalParticipants: 3, minimum: 4 } })
+    expect(await confirmWorkshop({ id })).toMatchObject({ ok: false, error: expect.stringContaining("open for registration") })
   })
 
   it("cancels: open registrations are cancelled and refunded, payers are emailed once each", async () => {
     const { id } = await create()
     await markSigned(id)
     const [parent, payer, unpaid] = [await newMember(), await newMember(), await newMember()]
+    await db.update(members).set({ locale: "en" }).where(eq(members.id, payer.id))
     const r1 = await addRegistration(id, parent.id, termsId, { status: "confirmed", amount: 150_000 })
     const r2 = await addRegistration(id, parent.id, termsId, { status: "confirmed", amount: 120_000 })
     const r3 = await addRegistration(id, payer.id, termsId, { status: "confirmed", amount: 150_000 })
@@ -430,10 +462,17 @@ describe("go / no-go", () => {
     // The signed contract stays as the record.
     expect((await contractsOf(id))[0].status).toBe("signed")
 
-    const cancelled = sendEmail.mock.calls.map((c) => c[0] as { to: string; template: string; props: { refundAmount: string } })
+    type Sent = { to: string; template: string; locale: string; props: { refundAmount: string; workshopsUrl: string } }
+    const cancelled = sendEmail.mock.calls.map((c) => c[0] as Sent)
     expect(cancelled.every((c) => c.template === "workshop_cancelled")).toBe(true)
+    // Only those who paid: the unpaid one owes nothing and gets nothing back.
     expect(cancelled.map((c) => c.to).sort()).toEqual([parent.email, payer.email].sort())
     expect(cancelled.find((c) => c.to === parent.email)!.props.refundAmount).toBe("₺2.700")
+    // In each member's own language.
+    expect(cancelled.find((c) => c.to === payer.email)).toMatchObject({
+      locale: "en",
+      props: { refundAmount: "₺1,500", workshopsUrl: "/en/workshops" },
+    })
     expect(await lastAudit(id)).toMatchObject({ action: "workshop.cancel", data: { registrations: 4, refundTotal: 420_000 } })
 
     expect(await cancelWorkshop({ id })).toMatchObject({ ok: false, error: "This workshop is already cancelled or closed." })

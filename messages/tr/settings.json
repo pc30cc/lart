@@ -4,6 +4,7 @@
   "tabs": {
     "label": "Ayar bölümleri",
     "general": "Genel",
+    "payments": "Ödemeler",
     "storage": "Depolama",
     "watermark": "Filigran"
   },
@@ -247,6 +248,53 @@
         "close": "Atölye kapatıldı",
         "gallery": "Galeri güncellendi"
       }
+    }
+  },
+  "payments": {
+    "intro": "Öğrencilerin nasıl ödeyebileceğini seçin. Kayıttan sonra burada açtığınız yolları görürler. Para geldiğinde atölyenin Kayıtlar sekmesinden ödemeyi kaydedin: kayıt ödendi olarak işaretlenir.",
+    "on": "Açık",
+    "off": "Kapalı",
+    "lastOne": "En az bir yol açık kalmalı.",
+    "cash": {
+      "title": "Atölyede nakit",
+      "description": "Öğrenciler atölye günü nakit öder."
+    },
+    "transfer": {
+      "title": "Banka havalesi",
+      "description": "Öğrenciler parayı bu hesaba gönderir ve açıklamaya katılımcının adını yazar.",
+      "holder": "Hesap sahibi",
+      "holderHint": "Bankada kayıtlı olduğu gibi.",
+      "bank": "Banka",
+      "bankPlaceholder": "örn. Ziraat Bankası",
+      "iban": "IBAN",
+      "ibanHint": "TR ve ardından 24 rakam. Boşluk bırakabilirsiniz.",
+      "ibanValid": "Bu IBAN doğru görünüyor",
+      "note": "Öğrencilere not",
+      "noteHint": "İsteğe bağlı, her dilde.",
+      "notePlaceholder": "örn. Lütfen kayıttan sonraki iki gün içinde gönderin."
+    },
+    "online": {
+      "title": "Online ödeme linki",
+      "description": "Öğrenciler atölyenin kendi ödeme sayfasında kartla öder.",
+      "howTo": "Her atölyenin kendi ödeme linki olur: iyzico (iyziLink) ya da PayTR uygulamasında atölyenin fiyatı için oluşturup atölye formuna yapıştırın. Biri ödeme yaptığında ödemeyi “Online” olarak kaydedin.",
+      "later": "Otomatik onay (iyzico ya da PayTR ile tam entegrasyon) bir şirket hesabı gerektirir ve daha sonra eklenecek.",
+      "note": "Öğrencilere not",
+      "noteHint": "İsteğe bağlı, her dilde.",
+      "notePlaceholder": "örn. Ödeme makbuzu iyzico tarafından e-postayla gönderilir."
+    },
+    "preview": {
+      "title": "Öğrencilerin gördüğü",
+      "description": "{amount} fiyatlı bir atölyeye kayıttan sonra, sizin dilinizde. Henüz kaydedilmedi.",
+      "participant": "Deniz",
+      "onlineHint": "“Online öde” düğmesi yalnızca ödeme linki olan atölyelerde görünür."
+    },
+    "errors": {
+      "oneWay": "Lütfen en az bir ödeme yolunu açık tutun.",
+      "holderRequired": "Lütfen hesap sahibinin adını yazın.",
+      "ibanRequired": "Lütfen IBAN’ı yazın.",
+      "ibanCountry": "IBAN, TR ile başlamalı.",
+      "ibanLength": "Türk IBAN’ı TR ve ardından 24 rakamdan oluşur. Lütfen kontrol edin.",
+      "ibanChecksum": "Bu IBAN tutmuyor: bir rakam yanlış yazılmış olabilir. Lütfen kontrol edin."
     }
   }
 }

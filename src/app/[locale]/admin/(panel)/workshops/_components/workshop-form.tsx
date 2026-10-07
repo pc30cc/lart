@@ -89,6 +89,7 @@ export function emptyWorkshopValues(): DefaultValues<Values> {
     notes: text(),
     coverPath: null,
     samples: [],
+    paymentUrl: "",
     feeType: "per_participant",
     feeAmount: undefined,
     hasAdvance: false,
@@ -121,8 +122,19 @@ function reissues(before: Partial<Values>, after: Partial<Values>) {
   )
 }
 
-/** Create (no `workshop`) or edit a workshop and its contract terms, in one friendly form. */
-export function WorkshopForm({ workshop, options }: { workshop?: WorkshopEdit; options: WorkshopFormOptions }) {
+/**
+ * Create (no `workshop`) or edit a workshop and its contract terms, in one friendly form.
+ * `onlinePayment`: whether online payment is switched on in Settings → Payments (the link field warns when it is off).
+ */
+export function WorkshopForm({
+  workshop,
+  options,
+  onlinePayment,
+}: {
+  workshop?: WorkshopEdit
+  options: WorkshopFormOptions
+  onlinePayment?: boolean
+}) {
   const t = useTranslations("workshops")
   const tc = useTranslations("common")
   const locale = useLocale()
@@ -298,6 +310,7 @@ export function WorkshopForm({ workshop, options }: { workshop?: WorkshopEdit; o
             </Select>
           )}
         </FormField>
+        <PaymentLinkField onlinePayment={onlinePayment} />
       </FormSection>
 
       <FormSection title={t("form.about.title")} description={t("form.about.description")}>
@@ -598,6 +611,41 @@ function AgeGroupField() {
           <NumberField name="ageMin" label={t("ageMin")} max={18} />
           <NumberField name="ageMax" label={t("ageMax")} max={18} />
         </div>
+      )}
+    </div>
+  )
+}
+
+/** The workshop's own online payment link (not in the contract), with a warning while online payment is off. */
+function PaymentLinkField({ onlinePayment }: { onlinePayment?: boolean }) {
+  const t = useTranslations("workshops.registrations.paymentLink")
+  const { control } = useFormContext<Values>()
+  const value = useWatch({ control, name: "paymentUrl" })
+  return (
+    <div className="space-y-3">
+      <TextField<Values>
+        name="paymentUrl"
+        label={t("label")}
+        description={t("hint")}
+        type="url"
+        inputMode="url"
+        dir="ltr"
+        autoComplete="off"
+        spellCheck={false}
+        maxLength={500}
+        placeholder="https://iyzi.link/…"
+        className="[&_input]:text-sm"
+      />
+      {onlinePayment === false && (
+        <p className="text-warning flex items-start gap-2 text-sm text-pretty">
+          <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
+          <span>
+            {value?.trim() ? t("offWarning") : t("offNote")}{" "}
+            <Link href="/admin/settings/payments" className="text-foreground font-medium underline underline-offset-4">
+              {t("openSettings")}
+            </Link>
+          </span>
+        </p>
       )}
     </div>
   )

@@ -7,6 +7,7 @@ import { after } from "next/server"
 import { db, type Tx } from "@/db"
 import { contracts, courses, instructors, members, registrations, templates } from "@/db/schema"
 import { sendContractReady } from "@/features/contracts/notify"
+import { memberLocale } from "@/features/registrations/admin/notify"
 import { adminAction, UserError } from "@/lib/action"
 import { changes } from "@/lib/audit"
 import { errorForLog, PG, pgError } from "@/lib/errors"
@@ -125,6 +126,7 @@ export const createWorkshop = adminAction(workshopSchema, async (input, ctx) => 
             startsAt: values.startsAt,
             instructorId: values.instructorId,
             price: values.price,
+            ...(values.paymentUrl ? { paymentUrl: values.paymentUrl } : {}),
             contract: { id: contract.id, version: 1, ...fee },
           },
         },
@@ -235,7 +237,12 @@ export const updateWorkshop = adminAction(workshopUpdateSchema, async ({ id, ...
   return { id, contractVersion: outcome.reissued?.version ?? null, emailSent }
 })
 
-/** Go decision: the workshop takes place; the number of participants is fixed now. */
+/**
+ * Go decision: the workshop takes place; the number of participants is fixed
+ * now. Everyone registered counts, paid or not yet (many pay in cash at the
+ * workshop): the active registrations, read under the workshop's lock, so a
+ * registration at the same moment is either counted or waits.
+ */
 export const confirmWorkshop = adminAction(workshopIdSchema, async ({ id }, ctx) => {
   const finalParticipants = await db.transaction(async (tx) => {
     const [course] = await tx
@@ -246,10 +253,7 @@ export const confirmWorkshop = adminAction(workshopIdSchema, async ({ id }, ctx)
     if (!course) throw new UserError("workshops.errors.notFound")
     if (course.status !== "published") throw new UserError("workshops.errors.cannotConfirm")
     if (course.startsAt <= new Date()) throw new UserError("workshops.errors.alreadyStarted")
-    const [{ n }] = await tx
-      .select({ n: count() })
-      .from(registrations)
-      .where(and(eq(registrations.courseId, id), eq(registrations.status, "confirmed")))
+    const n = await activeRegistrations(tx, id)
     await tx
       .update(courses)
       .set({ status: "confirmed", finalParticipants: n, updatedAt: new Date() })
@@ -272,9 +276,13 @@ export const confirmWorkshop = adminAction(workshopIdSchema, async ({ id }, ctx)
 
 /**
  * No-go / cancel: the workshop and every open registration are cancelled.
- * Paid registrations get a full refund (refund_amount = amount; the refund
- * payment itself is posted with payments in phase 2) and a friendly email.
- * An unsigned contract is voided; a signed one stays as the record.
+ * Paid registrations are owed a full refund (refund_amount = amount): they
+ * appear in Money → Refunds, where an admin marks each one as paid back (that
+ * posts the refund to the ledger). Unpaid ones are cancelled with nothing
+ * owed. Everyone who paid gets a friendly email in their own language. An
+ * unsigned contract is voided; a signed one stays as the record. The workshop
+ * is locked first (FOR UPDATE), so a payment recorded at the same moment is
+ * either refunded here or refused afterwards.
  */
 export const cancelWorkshop = adminAction(workshopIdSchema, async ({ id }, ctx) => {
   const { title, refunds } = await db.transaction(async (tx) => {
@@ -332,13 +340,15 @@ export const cancelWorkshop = adminAction(workshopIdSchema, async ({ id }, ctx) 
   return { id, cancelledRegistrations: refunds.length, emailed: perMember.size }
 })
 
+/** "The workshop is cancelled, you get {refundAmount} back", in each member's own language. */
 async function emailCancellation(courseId: string, title: Record<string, string | undefined>, refunds: Map<string, number>) {
-  const locale = await getSetting("defaultLocale")
+  const fallback = await getSetting("defaultLocale")
   const people = await db
-    .select({ id: members.id, name: members.name, email: members.email })
+    .select({ id: members.id, name: members.name, email: members.email, locale: members.locale })
     .from(members)
     .where(inArray(members.id, [...refunds.keys()]))
   for (const person of people) {
+    const locale = memberLocale(person.locale, fallback)
     await sendEmail({
       to: person.email,
       template: "workshop_cancelled",
@@ -348,6 +358,7 @@ async function emailCancellation(courseId: string, title: Record<string, string 
         name: person.name,
         workshopTitle: localized(title, locale),
         refundAmount: formatLira(refunds.get(person.id) ?? 0, locale),
+        workshopsUrl: `/${locale}/workshops`,
       },
     })
   }

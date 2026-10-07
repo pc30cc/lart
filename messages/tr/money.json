@@ -369,5 +369,55 @@
       "advanceTooBig": "Eğitmende ücretinden fazla ön ödeme kaldı. Önce iade ettiği tutarı ya da atölye için harcadığını kaydedin.",
       "sharesNot100": "Ortakların paylarının toplamı %100 değil."
     }
+  },
+  "refunds": {
+    "title": "İadeler",
+    "description": "Elden geri ödenecek paralar. Geri ödedikten sonra burada işaretleyin: ortak kasaya işlenir ve kişiye bir e-posta gider.",
+    "owedTotal": "Geri ödenecek toplam",
+    "owedCount": "Bekleyen iade",
+    "search": "Ad, e-posta ya da telefonla ara",
+    "views": {
+      "label": "Göster",
+      "owed": "Geri ödenecek",
+      "refunded": "Geri ödendi"
+    },
+    "columns": {
+      "person": "Kim",
+      "contact": "İletişim",
+      "workshop": "Atölye",
+      "reason": "Neden",
+      "cancelledOn": "İptal tarihi",
+      "refundedOn": "Geri ödeme tarihi",
+      "amount": "Tutar",
+      "actions": "İşlemler"
+    },
+    "for": "{name} için",
+    "reason": {
+      "workshopCancelled": "Atölye iptal edildi",
+      "registrationCancelled": "Kayıt iptal edildi",
+      "share": "{total} iade"
+    },
+    "methods": {
+      "cash": "Nakit",
+      "transfer": "Banka havalesi"
+    },
+    "mark": {
+      "trigger": "İadeyi kaydet",
+      "title": "{amount} geri ödendi mi?",
+      "description": "{name} için, “{title}”. Ortak kasaya işlenir ve kişiye iadesinin yolda olduğunu söyleyen bir e-posta gider.",
+      "method": "Nasıl geri ödediniz?",
+      "date": "Geri ödeme tarihi",
+      "submit": "Evet, geri ödendi",
+      "done": "İade edildi olarak işaretlendi. {name} bir e-posta alacak."
+    },
+    "empty": {
+      "title": "Geri ödenecek iade yok",
+      "description": "Ödeme yapmış biri kaydını iptal ettiğinde ya da bir atölye iptal edildiğinde iade burada görünür."
+    },
+    "errors": {
+      "alreadyRefunded": "Bu iade zaten geri ödendi olarak işaretlenmiş. Yapılacak başka bir şey yok.",
+      "nothingOwed": "Bu kayıt için geri ödenecek bir tutar yok.",
+      "chooseMethod": "Lütfen nasıl geri ödediğinizi seçin."
+    }
   }
 }

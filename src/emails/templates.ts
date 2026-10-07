@@ -20,7 +20,8 @@ const count = z.number().int().min(0).max(1_000_000)
 /**
  * A link on this site: an absolute URL on APP_URL's origin, or a path such as
  * "/tr/verify?token=…" (resolved against APP_URL). Links elsewhere are refused,
- * so an email can never point people to another site.
+ * so an email can never point people to another site. The one exception is
+ * `paymentUrl` below, for that prop of `registration_received` only.
  */
 const siteUrl = z
   .string()
@@ -39,6 +40,34 @@ const siteUrl = z
     return z.NEVER
   })
 
+/**
+ * The workshop's online payment link (iyzico iyziLink or PayTR "Link ile
+ * Ödeme", `courses.payment_url`): the ONLY prop that may point to another
+ * site. An https link without a user name or password, nothing else.
+ */
+const paymentUrl = z
+  .string()
+  .trim()
+  .min(1)
+  .max(2048)
+  .transform((value, ctx) => {
+    try {
+      const url = new URL(value)
+      if (url.protocol === "https:" && !url.username && !url.password && url.hostname.includes(".")) return url.href
+    } catch {
+      // reported below
+    }
+    ctx.addIssue({ code: "custom", message: "must be an https payment link" })
+    return z.NEVER
+  })
+
+/** An IBAN as stored ("TR120006…", spaces allowed), shown in groups of four ("TR12 0006 …"); empty stays empty. */
+const iban = z
+  .string()
+  .transform((value) => value.replace(/\s+/g, "").toUpperCase())
+  .pipe(z.string().regex(/^([A-Z]{2}\d{2}[A-Z0-9]{10,30})?$/))
+  .transform((value) => value.replace(/(.{4})(?=.)/g, "$1 "))
+
 /** Labels of the details box (messages: emails.details.<label>). */
 export type DetailLabel =
   | "workshop"
@@ -54,6 +83,23 @@ export type DetailLabel =
   | "refund"
   | "price"
   | "participant"
+
+/**
+ * A small titled block under the details (e.g. one way to pay): a title, a
+ * few lines, optional label / value rows, lines after the rows, a ready note
+ * and a button. `title`, `text`, `after`, row labels and the button label are
+ * message keys in emails.json outside the editable texts (e.g.
+ * "payment.cash.title"), formatted with the email's values; `note` is ready
+ * text (e.g. the admin's note from the settings).
+ */
+export type EmailSection = {
+  title: string
+  text: string[]
+  rows?: { label: string; value: string; ltr?: boolean }[]
+  after?: string[]
+  note?: string
+  button?: { label: string; href: string }
+}
 
 type Out<S extends z.ZodObject> = z.output<S>
 type Key<S extends z.ZodObject> = Extract<keyof Out<S>, string>
@@ -71,6 +117,8 @@ export type EmailDefinition<S extends z.ZodObject = z.ZodObject> = {
   /** Extra message values computed from the props; `valueKeys` lists their names (placeholders). */
   values?(props: Out<S>): Record<string, string | number>
   valueKeys?: readonly string[]
+  /** Blocks under the details box. When one has a button, the main button becomes the quieter one. */
+  sections?(props: Out<S>): EmailSection[]
 }
 
 const define = <S extends z.ZodObject>(definition: EmailDefinition<S>) => definition
@@ -161,10 +209,18 @@ export const emailTemplates = {
     cta: "loginUrl",
     noteLink: "resetUrl",
   }),
-  /** Registered while online payment is off: the place is saved, the team sends payment instructions. */
-  registration_pending: define({
+  /**
+   * Registered, not paid yet: the place is reserved; please pay `amount` in
+   * one of the ways the super admin switched on (settings → payment), one
+   * block each. Pass only the ways that are on: `cash: true`, `transfer` (the
+   * account from the settings, the note in the email's language) and
+   * `paymentUrl` (the workshop's own payment link, when online payment is on).
+   */
+  registration_received: define({
     schema: z.object({
       name: text(),
+      /** Who attends (may be the member's child). */
+      participantName: text(),
       workshopTitle: text(),
       date: text(100),
       time: text(50),
@@ -172,26 +228,114 @@ export const emailTemplates = {
       venue: text(300),
       /** The price to pay, formatted (`formatLira`). */
       amount: text(50),
+      /** "My workshops": the member's registrations with their payment status. */
       accountUrl: siteUrl,
+      cash: z.literal(true).optional(),
+      transfer: z
+        .object({
+          accountHolder: z.string().trim().max(120),
+          bankName: z.string().trim().max(120),
+          iban,
+          note: z.string().trim().max(500).optional(),
+        })
+        .optional(),
+      paymentUrl: paymentUrl.optional(),
+      /** The admin's note about online payment (settings), in the email's language. */
+      onlineNote: z.string().trim().max(500).optional(),
     }),
     greet: "name",
     cta: "accountUrl",
-    details: { workshop: "workshopTitle", date: "date", time: "time", venue: "venue", price: "amount" },
+    details: {
+      workshop: "workshopTitle",
+      participant: "participantName",
+      date: "date",
+      time: "time",
+      venue: "venue",
+      price: "amount",
+    },
+    values: (p) => {
+      const ways = [p.cash, p.transfer, p.paymentUrl].filter(Boolean).length
+      return { ways: ways === 0 ? "none" : ways === 1 ? "one" : "many" }
+    },
+    valueKeys: ["ways"],
+    sections: (p) => {
+      const out: EmailSection[] = []
+      if (p.cash) out.push({ title: "payment.cash.title", text: ["payment.cash.text"] })
+      if (p.transfer) {
+        const { accountHolder, bankName, iban, note } = p.transfer
+        out.push({
+          title: "payment.transfer.title",
+          text: ["payment.transfer.text"],
+          rows: [
+            { label: "payment.transfer.holder", value: accountHolder },
+            { label: "payment.transfer.bank", value: bankName },
+            { label: "payment.transfer.iban", value: iban, ltr: true },
+          ].filter((row) => row.value),
+          after: ["payment.transfer.reference"],
+          note: note || undefined,
+        })
+      }
+      if (p.paymentUrl) {
+        out.push({
+          title: "payment.online.title",
+          text: ["payment.online.text"],
+          note: p.onlineNote || undefined,
+          button: { label: "payment.online.button", href: p.paymentUrl },
+        })
+      }
+      return out
+    },
   }),
-  /** The participant cancelled; `refundPercent` (100, 50 or 0) picks the text. */
+  /**
+   * An admin recorded the payment (cash, transfer or online): the
+   * registration is paid and the place confirmed. The workshop details are
+   * optional. (A registration that needs no payment, a free workshop, gets
+   * `registration_confirmed` instead.)
+   */
+  payment_received: define({
+    schema: z.object({
+      name: text(),
+      workshopTitle: text(),
+      /** The amount paid, formatted (`formatLira`). */
+      amount: text(50),
+      method: z.enum(["cash", "transfer", "online"]),
+      date: text(100).optional(),
+      time: text(50).optional(),
+      /** The venue in the email's language: `localized(course.venue, locale)`. */
+      venue: text(300).optional(),
+      accountUrl: siteUrl.optional(),
+    }),
+    greet: "name",
+    cta: "accountUrl",
+    details: { workshop: "workshopTitle", date: "date", time: "time", venue: "venue", amount: "amount" },
+  }),
+  /**
+   * The participant cancelled. `refundPercent` (100, 50 or 0, `refundPercent()`
+   * in features/registrations/refund-policy) picks the text; leave out
+   * `refundAmount` when nothing was paid (then there is no refund line).
+   */
   registration_cancelled: define({
     schema: z.object({
       name: text(),
       workshopTitle: text(),
-      refundAmount: text(50),
+      refundAmount: text(50).optional(),
       refundPercent: z.number().int().min(0).max(100),
       workshopsUrl: siteUrl.optional(),
     }),
     greet: "name",
     cta: "workshopsUrl",
     details: { workshop: "workshopTitle", refund: "refundAmount" },
-    values: (p) => ({ refund: p.refundPercent >= 100 ? "full" : p.refundPercent > 0 ? "partial" : "none" }),
+    values: (p) => ({
+      refund: !p.refundAmount ? "unpaid" : p.refundPercent >= 100 ? "full" : p.refundPercent > 0 ? "partial" : "none",
+    }),
     valueKeys: ["refund"],
+  }),
+  /** To super admins: a refund is owed and must be paid back by hand (then marked refunded). */
+  refund_due: define({
+    schema: z.object({ adminName: text(), participantName: text(), workshopTitle: text(), amount: text(50), url: siteUrl }),
+    greet: "adminName",
+    cta: "url",
+    details: { workshop: "workshopTitle", participant: "participantName", refund: "amount" },
   }),
   /** The refund was paid back. */
   refund_sent: define({
@@ -200,36 +344,30 @@ export const emailTemplates = {
     cta: "workshopsUrl",
     details: { workshop: "workshopTitle", refund: "amount" },
   }),
-  /** To super admins: a refund is owed and needs paying. */
-  refund_due: define({
-    schema: z.object({ adminName: text(), participantName: text(), workshopTitle: text(), amount: text(50), url: siteUrl }),
-    greet: "adminName",
-    cta: "url",
-    details: { workshop: "workshopTitle", participant: "participantName", refund: "amount" },
-  }),
-  /** To super admins: money was taken but the seat could not be given (refund needed). */
-  payment_problem: define({
-    schema: z.object({ adminName: text(), participantName: text(), workshopTitle: text(), amount: text(50), url: siteUrl }),
-    greet: "adminName",
-    cta: "url",
-    details: { workshop: "workshopTitle", participant: "participantName", amount: "amount" },
-  }),
 } satisfies Record<EmailTemplate, unknown>
 
 /** Props a caller passes for a template (strings arrive pre-formatted; counts are numbers). */
 export type EmailProps<T extends EmailTemplate> = z.input<(typeof emailTemplates)[T]["schema"]>
 
+/** Props that cannot be placeholders: objects (e.g. the bank account) and flags. */
+const NOT_TEXT = new Set(["object", "literal", "boolean", "array"])
+
+/** The schema type of a prop, without `.optional()`. */
+function propType(schema: z.ZodType): string | undefined {
+  let def = (schema as unknown as { def?: { type?: string; innerType?: z.ZodType } }).def
+  while (def?.type === "optional" && def.innerType) def = (def.innerType as unknown as { def?: typeof def }).def
+  return def?.type
+}
+
 /**
- * The {placeholders} an email's texts may use: its props, the computed values
- * and `brand`. `numbers` are the ones that are numbers (`{n, number}`, plurals).
+ * The {placeholders} an email's texts may use: its text and number props, the
+ * computed values and `brand`. `numbers` are the ones that are numbers
+ * (`{n, number}`, plurals).
  */
 export function emailPlaceholders(template: EmailTemplate): { names: string[]; numbers: string[] } {
   const def = emailTemplates[template] as unknown as EmailDefinition
   const shape = def.schema.shape as Record<string, z.ZodType>
-  const props = Object.keys(shape)
-  const numbers = props.filter((key) => {
-    const type = (shape[key] as { def?: { type?: string; innerType?: { def?: { type?: string } } } }).def
-    return type?.type === "number" || type?.innerType?.def?.type === "number"
-  })
+  const props = Object.keys(shape).filter((key) => !NOT_TEXT.has(propType(shape[key]) ?? ""))
+  const numbers = props.filter((key) => propType(shape[key]) === "number")
   return { names: [...props, ...(def.valueKeys ?? []), "brand"], numbers }
 }

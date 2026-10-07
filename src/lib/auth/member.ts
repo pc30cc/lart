@@ -1,6 +1,5 @@
 import "server-only"
 import { eq } from "drizzle-orm"
-import { headers } from "next/headers"
 import { redirect } from "next/navigation"
 import { hasLocale } from "next-intl"
 import { getLocale } from "next-intl/server"
@@ -9,9 +8,11 @@ import { cache } from "react"
 import { db } from "@/db"
 import { members } from "@/db/schema"
 import { locales, type AppLocale } from "@/i18n/routing"
-import { isSameOrigin } from "./request"
+import { currentPath, isSameOrigin } from "./request"
 import { safeNext } from "./safe-next"
 import { currentSession, deleteSession } from "./session"
+
+export { currentPath } from "./request"
 
 /**
  * Member (student) authentication. SIGNATURES ARE FIXED (other modules import
@@ -67,18 +68,6 @@ const loadMember = cache(async (): Promise<MemberSession | null> => {
     },
   }
 })
-
-/**
- * The page a sign-in should come back to: the current page (the proxy passes
- * its path as `x-pathname`, also for server actions posted from it).
- */
-export async function currentPath(): Promise<string | undefined> {
-  try {
-    return (await headers()).get("x-pathname") ?? undefined
-  } catch {
-    return undefined // outside a request
-  }
-}
 
 /**
  * For pages, queries and server actions: the signed-in member, or redirect to

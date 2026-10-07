@@ -1,1 +1,242 @@
-{}
+{
+  "meta": {
+    "title": "Instructor panel"
+  },
+  "nav": {
+    "label": "Instructor panel",
+    "home": "Home",
+    "workshops": "Workshops",
+    "contracts": "Contracts",
+    "earnings": "Earnings",
+    "profile": "Profile",
+    "toSign": "{count, plural, one {# contract to sign} other {# contracts to sign}}"
+  },
+  "shell": {
+    "skipToContent": "Skip to content",
+    "home": "{brand}: your panel",
+    "account": "Your account",
+    "profile": "My profile",
+    "logOut": "Log out"
+  },
+  "verifyBanner": {
+    "label": "Confirm your email",
+    "text": "Please confirm your email: we sent a link to {email}. Just open it, and you’re all set.",
+    "textSent": "We’ve just sent a new link to {email}. Please check your inbox, and the spam folder too.",
+    "resend": "Send it again",
+    "sent": "Sent! Please check your inbox.",
+    "alreadyVerified": "Your email is already confirmed. Thank you!"
+  },
+  "status": {
+    "toSign": "Waiting for your signature",
+    "open": "Open for registration",
+    "confirmed": "Confirmed: it’s happening",
+    "finished": "Finished",
+    "cancelled": "Cancelled"
+  },
+  "home": {
+    "metaTitle": "Home",
+    "hello": "Hello, {name}!",
+    "helloNoName": "Hello!",
+    "intro": "Lovely to see you. Here’s what’s next for you.",
+    "toSign": {
+      "title": "{count, plural, one {A contract is waiting for your signature} other {# contracts are waiting for your signature}}",
+      "text": "Please read it and sign it here. Your workshop opens for registration right after.",
+      "button": "Read and sign"
+    },
+    "upcoming": {
+      "title": "Your next workshops",
+      "all": "See all",
+      "emptyTitle": "No upcoming workshops yet",
+      "emptyText": "When the {brand} team plans a workshop with you, you’ll see it here."
+    }
+  },
+  "workshops": {
+    "metaTitle": "My workshops",
+    "title": "My workshops",
+    "subtitle": "Your upcoming and past workshops, with the people who are coming.",
+    "upcoming": "Coming up",
+    "past": "Past workshops",
+    "noUpcoming": "Nothing planned right now.",
+    "emptyTitle": "No workshops yet",
+    "emptyText": "When the {brand} team plans a workshop with you, you’ll see it here."
+  },
+  "workshop": {
+    "metaTitle": "Workshop",
+    "back": "All workshops",
+    "places": "{count, number} of {max, number} places taken",
+    "date": "Date",
+    "time": "Time (Istanbul)",
+    "venue": "Venue",
+    "age": "For",
+    "adults": "Adults",
+    "children": "Children, {min, number}–{max, number} years",
+    "participants": "Participants",
+    "minimum": "At least {min, number} needed for it to go ahead",
+    "decision": "Go / no-go decision",
+    "deadline": "Registration closes {date}",
+    "signContract": "Read and sign the contract",
+    "seeContract": "See the contract",
+    "people": {
+      "title": "Who’s coming ({count, number})",
+      "consentHelp": "The camera and video marks show who agreed to appear in published photos and videos. A crossed-out mark means no: please don’t publish photos or videos where that person can be recognised.",
+      "summary": "{photos} of {total} agreed to photos, {videos} to videos.",
+      "photoYes": "Agreed to photos",
+      "photoNo": "No photos",
+      "videoYes": "Agreed to videos",
+      "videoNo": "No videos",
+      "privacy": "Please use these names only for this workshop, as agreed in your contract.",
+      "none": "No one has registered yet. Names will appear here as people sign up.",
+      "cancelled": "This workshop was cancelled."
+    }
+  },
+  "contracts": {
+    "metaTitle": "My contracts",
+    "title": "My contracts",
+    "subtitle": "Every contract we have sent you. Tap one to read it.",
+    "state": {
+      "toSign": "To sign",
+      "signed": "Signed",
+      "replaced": "Replaced by a newer version",
+      "closed": "No longer needed"
+    },
+    "version": "Version {version}",
+    "sentOn": "Sent on {date}",
+    "signedOn": "Signed on {date}",
+    "workshopOn": "Workshop: {date}",
+    "emptyTitle": "No contracts yet",
+    "emptyText": "When the {brand} team plans a workshop with you, its contract will be here for you to sign."
+  },
+  "contract": {
+    "metaTitle": "Contract",
+    "back": "All contracts",
+    "print": "Print",
+    "signedLine": "Signed electronically by {name} on {date}.",
+    "toSign": {
+      "title": "Please read the whole contract",
+      "text": "You can sign it at the end of the page. To read it in another language, change the language at the top."
+    },
+    "signed": {
+      "title": "Thank you! Your contract is signed.",
+      "workshop": {
+        "open": "“{title}” is now open for registration. We’ll let you know how it fills up.",
+        "confirmed": "“{title}” is confirmed and will take place as planned."
+      },
+      "toWorkshop": "Go to the workshop"
+    },
+    "signedNotice": {
+      "title": "You have signed this contract",
+      "text": "Signed on {date}. You can print it or save it as a PDF."
+    },
+    "replaced": {
+      "title": "This version was replaced",
+      "text": "Something about the workshop changed, so we sent you a newer version of this contract.",
+      "open": "Open the newest version"
+    },
+    "closed": {
+      "title": "This contract can no longer be signed",
+      "text": "The workshop isn’t waiting for a signature any more. If you have a question, please write to the {brand} team."
+    },
+    "check": {
+      "title": "We can’t confirm this copy",
+      "text": "This text doesn’t match what was recorded when the contract was signed. Please let the {brand} team know."
+    }
+  },
+  "sign": {
+    "title": "Sign the contract",
+    "intro": "When you’ve read it all, tick the box, type your full name and press “Sign”.",
+    "agree": "I have read the contract and agree to it.",
+    "name": "Your full name",
+    "nameHint": "As it is written in the contract: {name}",
+    "nameMatches": "That’s right.",
+    "submit": "Sign",
+    "evidence": "As proof, we keep the exact text with the date and time, your network address and your browser.",
+    "errors": {
+      "agree": "Please tick the box to say you agree.",
+      "name": "Please type your full name.",
+      "nameMismatch": "This doesn’t match the name in the contract. Please type it as written there: {name}",
+      "textChanged": "The contract was updated a moment ago. Please read it again, then sign."
+    }
+  },
+  "earnings": {
+    "metaTitle": "My earnings",
+    "title": "My earnings",
+    "subtitle": "Your fee for each workshop, what you’ve received and what is still to come.",
+    "total": {
+      "owed": "Still to come",
+      "received": "Received so far"
+    },
+    "fee": "Your fee",
+    "feeFixed": "Fixed fee for the workshop",
+    "feePerParticipant": "{rate} per participant × {count}",
+    "feeCancelled": "No fee: the workshop was cancelled",
+    "advance": "Advance",
+    "advanceForCosts": "{amount} of it went to workshop costs",
+    "received": "Received so far",
+    "owed": "Still to come",
+    "toReturn": "{amount} of the advance is to be returned to {brand}, as in your contract.",
+    "notSigned": "These amounts are from the contract waiting for your signature.",
+    "estimate": "This may still change: the final number of participants is set at the go / no-go decision.",
+    "settled": "All paid. Thank you!",
+    "footnote": "The amounts come from your contract and the payments the {brand} team has recorded. Something doesn’t look right? Please write to the team.",
+    "emptyTitle": "Nothing here yet",
+    "emptyText": "Your fees will appear here once you have a workshop with a contract."
+  },
+  "profile": {
+    "metaTitle": "My profile",
+    "title": "My profile",
+    "subtitle": "This is how visitors of the site will see you.",
+    "save": "Save my profile",
+    "saved": "Your profile is saved.",
+    "public": {
+      "title": "Public profile",
+      "description": "Shown on the website with your workshops. English is also used on the Persian site when the Persian text is empty."
+    },
+    "fields": {
+      "photo": "Profile photo",
+      "photoHint": "A clear, friendly photo of you. We crop it to a square.",
+      "displayName": "Your name on the site",
+      "displayNameHint": "Turkish and English are needed.",
+      "teachingField": "What you teach",
+      "teachingFieldHint": "For example: ceramics, painting, candle making.",
+      "bio": "A few words about you",
+      "bioHint": "Optional. Two or three sentences are enough.",
+      "teachingLanguages": "Languages you teach in",
+      "teachingLanguagesHint": "Optional. Choose one or more.",
+      "website": "Instagram or website",
+      "websiteHint": "Optional. An @name works for Instagram."
+    },
+    "photo": {
+      "alt": "Your profile photo",
+      "choose": "Choose a photo",
+      "drop": "Drop the photo here",
+      "hint": "JPG, PNG, WebP or HEIC, up to {size}",
+      "uploading": "Uploading… {progress, number, percent}",
+      "processing": "Getting your photo ready…",
+      "cancel": "Cancel",
+      "replace": "Change photo",
+      "remove": "Remove",
+      "retry": "Try again",
+      "dismiss": "OK",
+      "errors": {
+        "unauthorized": "You’ve been logged out. Please log in again, then try once more.",
+        "storage": "We couldn’t save your photo just now. Please try again in a little while.",
+        "server": "Something went wrong on our side. Please try again.",
+        "rate_limited": "That’s a lot of photos in a short time. Please wait a little, then try again."
+      }
+    },
+    "language": {
+      "title": "Language",
+      "description": "The language of your panel and of the emails we send you."
+    },
+    "private": {
+      "title": "Private details",
+      "description": "Only for your contracts and the {brand} team. Never shown on the site.",
+      "officialName": "Official name",
+      "idNumber": "ID number",
+      "mobile": "Mobile",
+      "email": "Email",
+      "emailUnverified": "Not confirmed yet",
+      "change": "Need to change one of these? Please write to the {brand} team and we’ll update it for you."
+    }
+  }
+}

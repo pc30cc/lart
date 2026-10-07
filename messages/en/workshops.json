@@ -315,7 +315,7 @@
     "confirm": {
       "trigger": "Confirm workshop",
       "title": "Confirm “{title}”?",
-      "description": "{count, plural, =0 {Nobody has registered yet.} one {# person has registered.} other {# people have registered.}} This becomes the final number of participants, and the instructor’s fee is based on it.",
+      "description": "{count, plural, =0 {Nobody has registered yet.} one {# person has registered (paid or not yet).} other {# people have registered (paid or not yet).}} This becomes the final number of participants, and the instructor’s fee is based on it.",
       "belowMinimum": "This is below the minimum of {minimum}.",
       "action": "Yes, it goes ahead",
       "done": "Workshop confirmed."
@@ -379,33 +379,61 @@
   },
   "registrations": {
     "metaTitle": "Registrations · {title}",
-    "stats": {
-      "confirmed": "Paid",
-      "pending": "Paying",
-      "cancelled": "Cancelled",
-      "photos": "Photos allowed",
-      "videos": "Videos allowed"
+    "export": "Download CSV",
+    "search": "Search by name, email or phone",
+    "locked": "This workshop is cancelled or its books are closed, so its registrations can’t change any more.",
+    "actionsFor": "Actions for {name}",
+    "summary": {
+      "registered": "Registered",
+      "places": "Places: {min} to {max}",
+      "paid": "Paid",
+      "unpaid": "Not paid yet",
+      "people": "{count, plural, =0 {Nobody} one {# person} other {# people}}",
+      "refundsOwed": "Refunds to pay back",
+      "consent": "Photos / videos allowed",
+      "consentValue": "{photos} / {videos}",
+      "consentHint": "Among the people coming"
     },
     "empty": {
       "title": "No registrations yet",
       "description": "People who register for this workshop appear here.",
       "awaiting": "Registration opens once the instructor signs the contract."
     },
+    "filter": {
+      "label": "Payment",
+      "unpaid": "Not paid yet",
+      "paid": "Paid",
+      "cancelled": "Cancelled"
+    },
     "table": {
       "participant": "Participant",
       "member": "Registered by",
-      "status": "Status",
+      "payment": "Payment",
+      "amount": "Amount",
       "consent": "Photo / video",
-      "paid": "Payment",
+      "registeredAt": "Registered",
       "registeredOn": "Registered {date}",
-      "refund": "Refund",
-      "noRefund": "No refund",
-      "notPaid": "Not paid yet"
+      "actions": "Actions"
     },
-    "status": {
-      "pending": "Paying",
-      "confirmed": "Paid",
-      "cancelled": "Cancelled"
+    "state": {
+      "unpaid": "Not paid yet",
+      "paid": "Paid",
+      "free": "Free",
+      "cancelled": "Cancelled",
+      "paidVia": "{method, select, cash {Cash} transfer {Bank transfer} online {Online link} other {Paid}} · {date}",
+      "refundOwed": "Refund owed:",
+      "refundSent": "Refunded on {date}:",
+      "noRefund": "No refund"
+    },
+    "methods": {
+      "cash": "Cash",
+      "transfer": "Bank transfer",
+      "online": "Online payment link"
+    },
+    "methodHints": {
+      "cash": "Paid in cash, for example at the workshop.",
+      "transfer": "The money arrived in the bank account.",
+      "online": "Paid by card through the workshop’s iyzico or PayTR link."
     },
     "consent": {
       "photoYes": "Photos may be published",
@@ -413,7 +441,75 @@
       "videoYes": "Videos may be published",
       "videoNo": "No videos"
     },
-    "readOnly": "This list is view-only. Changing a single registration or refunding it isn’t available yet."
+    "pay": {
+      "trigger": "Record payment",
+      "title": "Has {participant} paid {amount}?",
+      "description": "It’s marked as paid and booked in the wallet, and {name} gets a thank-you email.",
+      "method": "How was it paid?",
+      "date": "Paid on",
+      "submit": "Yes, it’s paid",
+      "done": "Payment recorded. {name} gets an email."
+    },
+    "cancel": {
+      "trigger": "Cancel registration",
+      "title": "Cancel {participant}’s registration?",
+      "unpaid": "Nothing has been paid yet, so there’s nothing to refund. {name} gets a short email.",
+      "free": "This workshop is free, so there’s nothing to refund. {name} gets a short email.",
+      "paid": "{amount} was paid. How much should go back?",
+      "refund": "Refund",
+      "terms": "Under the terms: {percent} · {amount}",
+      "band": {
+        "100": "Cancelled 72 hours or more before the start.",
+        "50": "Cancelled between 72 and 24 hours before the start.",
+        "0": "Less than 24 hours before the start: no refund."
+      },
+      "full": "Full refund · {amount}",
+      "fullHint": "For example, when you cancel for a reason of your own.",
+      "after": "The refund waits in Money › Refunds until you mark it as paid back. {name} gets an email.",
+      "submit": "Yes, cancel it",
+      "done": "Registration cancelled."
+    },
+    "errors": {
+      "notFound": "We couldn’t find this registration. Please reload the page.",
+      "alreadyPaid": "This registration is already paid. There’s nothing more to do.",
+      "nothingToPay": "This registration has nothing to pay.",
+      "cancelledNoPayment": "This registration is cancelled, so a payment can’t be recorded for it.",
+      "amountChanged": "The amount doesn’t match this registration any more. Please reload the page and try again.",
+      "paidBeforeRegistration": "The payment date can’t be before the day they registered.",
+      "alreadyCancelled": "This registration is already cancelled.",
+      "chooseMethod": "Please choose how it was paid."
+    },
+    "paymentLink": {
+      "label": "Online payment link",
+      "hint": "Optional. In the iyzico or PayTR app, create a payment link for this workshop’s price and paste it here. Registered students then see a “Pay online” button.",
+      "invalid": "Please paste the whole payment link, starting with https://.",
+      "offWarning": "Online payment is switched off in the settings, so students won’t see this link yet.",
+      "offNote": "Online payment is switched off in the settings.",
+      "openSettings": "Open payment settings",
+      "overview": "Online payment link",
+      "none": "None",
+      "open": "Opens the payment page in a new tab"
+    },
+    "reminder": {
+      "bringCash": "{amount} in cash for the workshop"
+    },
+    "csv": {
+      "participant": "Participant",
+      "member": "Registered by",
+      "email": "Email",
+      "phone": "Phone",
+      "payment": "Payment",
+      "amount": "Amount (₺)",
+      "method": "Paid by",
+      "paidOn": "Paid on",
+      "refund": "Refund (₺)",
+      "refundedOn": "Refunded on",
+      "photos": "Photos allowed",
+      "videos": "Videos allowed",
+      "registeredOn": "Registered on",
+      "yes": "Yes",
+      "no": "No"
+    }
   },
   "gallery": {
     "metaTitle": "Gallery · {title}",

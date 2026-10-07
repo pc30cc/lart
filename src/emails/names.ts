@@ -16,11 +16,11 @@ export const emailTemplateNames = [
   "workshop_cancelled",
   "password_reset",
   "member_exists",
-  "registration_pending",
+  "registration_received",
+  "payment_received",
   "registration_cancelled",
-  "refund_sent",
   "refund_due",
-  "payment_problem",
+  "refund_sent",
 ] as const
 
 export type EmailTemplate = (typeof emailTemplateNames)[number]

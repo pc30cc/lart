@@ -17,7 +17,28 @@
     "registrations": "Kayıt sayısı",
     "minimum": "Gereken en az kişi",
     "decisionAt": "Son karar zamanı",
-    "refund": "İade tutarı"
+    "refund": "İade tutarı",
+    "price": "Ödenecek tutar",
+    "participant": "Katılımcı"
+  },
+  "payment": {
+    "cash": {
+      "title": "Atölyede nakit",
+      "text": "{amount} tutarını nakit olarak getirip atölye günü ödeyebilirsiniz."
+    },
+    "transfer": {
+      "title": "Banka havalesi / EFT",
+      "text": "{amount} tutarını şu hesaba gönderebilirsiniz:",
+      "holder": "Hesap sahibi",
+      "bank": "Banka",
+      "iban": "IBAN",
+      "reference": "Ödemenin kime ait olduğunu bilebilmemiz için lütfen açıklamaya “{participantName}” yazın."
+    },
+    "online": {
+      "title": "Online ödeme",
+      "text": "{amount} tutarını güvenli ödeme sayfasında kartla ödeyebilirsiniz.",
+      "button": "Online öde"
+    }
   },
   "welcome_verify": {
     "subject": "{brand} ailesine hoş geldiniz! Lütfen e-postanızı onaylayın",
@@ -91,5 +112,56 @@
     "intro": "Şifrenizi yenilemek için bir istek aldık. Yeni bir şifre belirlemek için aşağıdaki butona tıklayın.",
     "cta": "Yeni şifre belirle",
     "note": "Bu isteği siz yapmadıysanız bu e-postayı görmezden gelebilirsiniz; şifreniz değişmez."
+  },
+  "member_exists": {
+    "subject": "Zaten bir {brand} hesabınız var",
+    "preview": "E-postanızla giriş yapın ya da yeni bir şifre belirleyin.",
+    "heading": "Zaten bir hesabınız var",
+    "intro": "Az önce biri, büyük ihtimalle siz, bu e-posta adresiyle yeni bir {brand} hesabı açmaya çalıştı. Güzel haber: zaten bir hesabınız var!",
+    "intro2": "E-postanız ve şifrenizle giriş yapmanız yeterli. Bu siz değilseniz bu e-postayı görmezden gelebilirsiniz; hiçbir şey değişmedi.",
+    "cta": "Giriş yap",
+    "note": "Şifrenizi mi unuttunuz? Buradan yeni bir şifre belirleyin."
+  },
+  "registration_received": {
+    "subject": "“{workshopTitle}” için yeriniz ayrıldı",
+    "preview": "Son bir adım: kaydınızı tamamlamak için lütfen {amount} ödeyin.",
+    "heading": "Yeriniz ayrıldı!",
+    "intro": "Kaydınız için teşekkür ederiz! “{workshopTitle}” atölyesinde {participantName} için bir yer ayırdık.",
+    "intro2": "{ways, select, none {Kaydınızı tamamlamak için lütfen {amount} ödeyin. Ödemenin nasıl yapılacağı konusunda yakında sizinle iletişime geçeceğiz.} one {Kaydınızı tamamlamak için lütfen {amount} ödeyin. Şöyle ödeyebilirsiniz:} other {Kaydınızı tamamlamak için lütfen {amount} ödeyin. Size en uygun yolu seçebilirsiniz:}}",
+    "cta": "Atölyelerim",
+    "note": "Ödeme durumunuzu dilediğiniz zaman Atölyelerim sayfasında görebilirsiniz. Ödemeniz bize ulaşır ulaşmaz size e-posta göndereceğiz."
+  },
+  "payment_received": {
+    "subject": "Teşekkürler! “{workshopTitle}” ödemeniz bize ulaştı",
+    "preview": "Yeriniz kesinleşti. Görüşmek üzere!",
+    "heading": "Yeriniz kesinleşti!",
+    "intro": "“{workshopTitle}” için {method, select, cash {nakit olarak yaptığınız} transfer {banka havalesiyle yaptığınız} online {online olarak yaptığınız} other {yaptığınız}} {amount} tutarındaki ödeme bize ulaştı. Kaydınız tamamlandı; sizi görmek için sabırsızlanıyoruz!",
+    "cta": "Atölyelerim",
+    "note": "Planlarınız değişirse lütfen bize olabildiğince erken haber verin. İptal koşullarını atölye sayfasında bulabilirsiniz."
+  },
+  "registration_cancelled": {
+    "subject": "“{workshopTitle}” kaydınız iptal edildi",
+    "preview": "{refund, select, full {Ödemenizin tamamı iade edilecek.} partial {Ödemenizin bir kısmı iade edilecek.} none {Sizi aramızda göremeyeceğimiz için üzgünüz.} other {Sizi aramızda göremeyeceğimiz için üzgünüz.}}",
+    "heading": "Kaydınız iptal edildi",
+    "intro": "İsteğiniz üzerine “{workshopTitle}” kaydınızı iptal ettik.",
+    "intro2": "{refund, select, full {İptal koşullarına göre ödemenizin tamamı iade edilir: {refundAmount} tutarını beş iş günü içinde size geri göndereceğiz.} partial {İptal koşullarına göre ödemenizin %{refundPercent, number} kadarı iade edilir: {refundAmount} tutarını beş iş günü içinde size geri göndereceğiz.} none {İptal koşullarına göre, başlangıca 24 saatten az kala yapılan iptallerde iade yapılamıyor. Üzgünüz.} other {Henüz ödeme yapmadığınız için başka bir şey yapmanıza gerek yok.}}",
+    "cta": "Yaklaşan atölyeleri gör",
+    "note": "Sizi yakında başka bir atölyede görmeyi çok isteriz."
+  },
+  "refund_due": {
+    "subject": "Ödenecek iade: {participantName}, “{workshopTitle}”",
+    "preview": "{amount} geri ödenmeli.",
+    "heading": "Bir iade ödenmeli",
+    "intro": "{participantName}, “{workshopTitle}” kaydını iptal etti. Koşullara göre {amount} geri ödenmeli.",
+    "intro2": "Lütfen tutarı beş iş günü içinde geri ödeyin, ardından iadeler listesinde iade edildi olarak işaretleyin.",
+    "cta": "İadeler listesini aç"
+  },
+  "refund_sent": {
+    "subject": "“{workshopTitle}” iadeniz yola çıktı",
+    "preview": "{amount} size geri gönderildi.",
+    "heading": "İadeniz gönderildi",
+    "intro": "“{workshopTitle}” için {amount} tutarını size geri ödedik. Bankanıza bağlı olarak hesabınızda görünmesi birkaç gün sürebilir.",
+    "cta": "Yaklaşan atölyeleri gör",
+    "note": "Sorunuz olursa lütfen bizimle iletişime geçin."
   }
 }

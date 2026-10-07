@@ -1,5 +1,6 @@
 "use server"
 
+import { refresh } from "next/cache"
 import { redirect } from "next/navigation"
 import { after } from "next/server"
 import { getLocale } from "next-intl/server"
@@ -21,14 +22,25 @@ import {
   setInstructorLocale,
   setMemberLocale,
   signUpMember,
+  verifyEmail,
   type AccountKind,
 } from "./accounts"
-import { accountForgotSchema, accountLocaleSchema, accountLoginSchema, accountPasswordSchema, signupSchema } from "./schema"
+import {
+  accountForgotSchema,
+  accountLocaleSchema,
+  accountLoginSchema,
+  accountPasswordSchema,
+  accountTokenSchema,
+  signupSchema,
+  withNotice,
+} from "./schema"
 
 /**
- * Sign-up, sign-in, links and language for members (students, on the site)
- * and instructors (their panel). Every answer is friendly and the same for
- * known and unknown addresses (no user enumeration).
+ * Sign-up, sign-in, emailed links and language for members (students, on the
+ * site) and instructors (their panel). Every answer is friendly and the same
+ * for known and unknown addresses (no user enumeration). Actions that change
+ * the session cookie end with a redirect, so the page they lead to is rendered
+ * with the new session in the same round trip.
  */
 
 const MINUTE = 60_000
@@ -49,10 +61,10 @@ const panelPath = (locale: string) => `/${locale}/instructor`
 // ─── Members ──────────────────────────────────────────────────────────────────
 
 /**
- * Sign up, then straight back to the site. A new account is signed in and gets
- * the welcome + verify email. An email that already has an account gets a
- * "you already have an account" email instead, and the answer is the same
- * ("check your inbox", then continue to `next`).
+ * Sign up, then straight back to the site (`next`, or the workshops), where a
+ * "check your inbox" notice shows. A new account is signed in and gets the
+ * welcome + verify email. An email that already has an account gets a "you
+ * already have an account" email instead, and the answer is the same.
  */
 export const memberSignupAction = publicAction(
   signupSchema,
@@ -65,7 +77,7 @@ export const memberSignupAction = publicAction(
     } else if (existsEmailLimiter.consume(input.email).ok) {
       after(() => sendMemberExists(input.email, locale).catch(logFailure("member exists email")))
     }
-    return { next: safeNext(next, "member", workshopsPath(locale)) }
+    redirect(withNotice(safeNext(next, "member", workshopsPath(locale)), "checkEmail"))
   },
   perNetwork(10, 60),
 )
@@ -82,14 +94,21 @@ export const memberLoginAction = publicAction(
   perNetwork(10, 15),
 )
 
-/** Sign out, then the workshops list. */
+/** Sign out, then the workshops list with a short "you're signed out" notice. */
 export async function memberLogoutAction(): Promise<void> {
   await endSession("member")
-  redirect(workshopsPath(await getLocale()))
+  redirect(withNotice(workshopsPath(await getLocale()), "signedOut"))
 }
 
-/** The banner's "Send it again". */
+/** The banner's "Send it again". `{ verified: true }` when there is nothing to send. */
 export const resendMemberVerifyAction = memberAction(z.object({}), async (_input, ctx) => resend("member", ctx.member.id))
+
+/** The link from the welcome email (signed in or not; it never signs anyone in). */
+export const verifyMemberEmailAction = publicAction(
+  accountTokenSchema,
+  async ({ token }) => confirmEmail("member", token),
+  perNetwork(20, 15),
+)
 
 /** "Forgot your password?" for members: always the same answer, in the same time. */
 export const requestMemberResetAction = publicAction(
@@ -100,7 +119,7 @@ export const requestMemberResetAction = publicAction(
 
 /**
  * A new password from the emailed link. Every other session ends and this
- * device is signed in; the page then says so and offers the way back (`next`).
+ * device is signed in, then the workshops list says "your new password is saved".
  */
 export const resetMemberPasswordAction = publicAction(
   accountPasswordSchema,
@@ -108,19 +127,23 @@ export const resetMemberPasswordAction = publicAction(
     const id = await resetPassword("member", token, password)
     if (!id) throw new UserError("account.reset.errors.invalidLink")
     await startSession("member", id)
-    return { next: workshopsPath(await getLocale()) }
+    redirect(withNotice(workshopsPath(await getLocale()), "passwordSaved"))
   },
   perNetwork(10, 15),
 )
 
 /**
  * The site's language switch: a signed-in member's emails follow the language
- * they chose. Signed out it does nothing (never redirects).
+ * they chose (members.locale). Signed out it does nothing (never redirects).
  */
-export const setMemberLocaleAction = publicAction(accountLocaleSchema, async ({ locale }) => {
-  const session = await getMember()
-  if (session && session.member.locale !== locale) await setMemberLocale(session.member.id, locale)
-})
+export const setMemberLocaleAction = publicAction(
+  accountLocaleSchema,
+  async ({ locale }) => {
+    const session = await getMember()
+    if (session && session.member.locale !== locale) await setMemberLocale(session.member.id, locale)
+  },
+  perNetwork(30, 15),
+)
 
 // ─── Instructors ──────────────────────────────────────────────────────────────
 
@@ -138,10 +161,10 @@ export const instructorLoginAction = publicAction(
   perNetwork(10, 15),
 )
 
-/** Sign out, then the instructor sign-in page. */
+/** Sign out, then the instructor sign-in page ("you're signed out"). */
 export async function instructorLogoutAction(): Promise<void> {
   await endSession("instructor")
-  redirect(`${panelPath(await getLocale())}/login`)
+  redirect(withNotice(`${panelPath(await getLocale())}/login`, "signedOut"))
 }
 
 /** The invitation link's page: choose a password, then straight into the panel. */
@@ -180,6 +203,13 @@ export const resendInstructorVerifyAction = instructorAction(z.object({}), async
   resend("instructor", ctx.instructor.id),
 )
 
+/** The link from the instructor's verify email (`/<locale>/instructor/verify`). */
+export const verifyInstructorEmailAction = publicAction(
+  accountTokenSchema,
+  async ({ token }) => confirmEmail("instructor", token),
+  perNetwork(20, 15),
+)
+
 /** The language of the instructor's emails and panel. */
 export const setInstructorLocaleAction = instructorAction(accountLocaleSchema, async ({ locale }, ctx) => {
   if (ctx.instructor.locale !== locale) await setInstructorLocale(ctx.instructor.id, locale)
@@ -199,5 +229,12 @@ async function resend(kind: AccountKind, id: string): Promise<{ verified: boolea
   if (!resendLimiter.consume(`${kind}:${id}`).ok) throw new UserError("account.verify.errors.rateLimited")
   const result = await sendVerifyLink(kind, id)
   if (result === "failed") throw new UserError("account.verify.errors.notSent")
+  if (result === "verified") refresh()
   return { verified: result === "verified" }
+}
+
+/** Use a verify link; re-renders the page, so the "Please confirm your email" banner goes away. */
+async function confirmEmail(kind: AccountKind, token: string): Promise<void> {
+  if (!(await verifyEmail(kind, token))) throw new UserError("account.verify.errors.invalidLink")
+  refresh()
 }

@@ -1,1 +1,29 @@
-{}
+{
+  "header": {
+    "home": "{brand}: tüm atölyeler",
+    "nav": "Ana menü",
+    "workshops": "Atölyeler",
+    "logIn": "Giriş yap",
+    "logInOrSignUp": "Giriş yap / Üye ol",
+    "account": "Hesabınız",
+    "myWorkshops": "Atölyelerim",
+    "language": "Dil",
+    "logOut": "Çıkış yap"
+  },
+  "verifyBanner": {
+    "label": "E-postanızı doğrulayın",
+    "text": "Lütfen e-postanızı doğrulayın: {email} adresine bir bağlantı gönderdik. Atölyelere kaydolabilmek için bağlantıyı açın.",
+    "textSent": "{email} adresine yeni bir bağlantı gönderdik. Lütfen gelen kutunuza, istenmeyen klasörüne de bakın.",
+    "resend": "Tekrar gönder",
+    "sent": "Gönderildi! Lütfen gelen kutunuzu kontrol edin.",
+    "alreadyVerified": "E-postanız zaten doğrulanmış. Teşekkürler!"
+  },
+  "notices": {
+    "checkEmail": "Hoş geldiniz! Size bir e-posta gönderdik. Adresinizi doğrulamak için lütfen açın.",
+    "signedOut": "Çıkış yaptınız. Görüşmek üzere!",
+    "passwordSaved": "Yeni şifreniz kaydedildi ve giriş yaptınız."
+  },
+  "footer": {
+    "rights": "© {year} {brand}"
+  }
+}

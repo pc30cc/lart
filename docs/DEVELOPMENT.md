@@ -468,3 +468,131 @@ encrypted yet" notice. Every signed text is checked when it is shown
 (`checkSignedText`): against its SHA-256 and the hash in the audit log's
 `contract.sign` entry. One that doesn't match (or has no such entry) is
 flagged as possibly changed, and one that can't be decrypted is not shown.
+
+## Accounts
+
+Members (students) and instructors sign in with the same code as the super
+admins (`src/lib/auth`, one cookie per kind). Their flows live in
+`src/features/accounts` (`accounts.ts`: the logic; `actions.ts`: the server
+actions with rate limits, cookies and redirects; `schema.ts`: the form
+schemas, client-safe).
+
+### In pages, queries and actions
+
+```ts
+import { getMember, requireMember, requireMemberApi } from "@/lib/auth/member"
+import { getInstructor, requireInstructor, requireInstructorApi } from "@/lib/auth/instructor"
+
+const { member } = await requireMember()         // { id, email, name, phone, locale, emailVerified }
+const { instructor } = await requireInstructor() // { id, email, displayName, locale, emailVerified }
+```
+
+- `requireMember(next?)` redirects a visitor to `/<locale>/account/login?next=…`
+  (default `next`: the current page, from the proxy's `x-pathname`), and
+  `requireInstructor(next?)` to `/<locale>/instructor/login` (comes back only to
+  a page of the panel). Both are cached per request. Call them in **every**
+  page and query: layouts are not re-run on client navigation.
+- `get…()` returns null instead of redirecting (e.g. "You are registered" on a
+  public page). A deactivated instructor has no session (it is ended on the
+  next request); members have no `active` flag.
+- Route handlers: `requireMemberApi(request)` / `requireInstructorApi(request)`
+  return null for no session or a cross-site POST/PUT/PATCH/DELETE (answer 401).
+- **Scope every query to the signed-in person** (`ctx.member.id`,
+  `ctx.instructor.id`): never trust an id from the browser (no IDOR).
+
+```ts
+"use server"
+import { instructorAction, memberAction, publicAction } from "@/lib/action"
+
+export const cancelRegistration = memberAction(idSchema, async ({ id }, ctx) => {
+  // … where(and(eq(registrations.id, id), eq(registrations.memberId, ctx.member.id)))
+})
+export const register = memberAction(registerSchema, handler, { verified: true }) // unconfirmed email: friendly refusal
+export const saveProfile = instructorAction(profileSchema, async (input, ctx) => { /* ctx.instructor.id */ })
+export const contactForm = publicAction(contactSchema, handler, { rateLimit: { limit: 5, windowMs: 15 * 60_000 } })
+```
+
+- `memberAction` / `instructorAction` are `adminAction` with the member or
+  instructor as `ctx` (no audit: `audit_log` is for the super-admin panel).
+  `{ verified: true }` refuses a member whose email is not confirmed yet
+  (`account.errors.unverified`); registering needs it (README §4).
+- `publicAction` is for forms open to visitors: `rateLimit` counts every call
+  per client network (IPv4 address or IPv6 /64) before the input is read;
+  over the limit it answers `rateLimitMessage` (default
+  `auth.errors.rateLimited`). Add per-address limits in the handler
+  (`createRateLimiter`). `runAction` alone has no limit: do not use it for
+  public forms.
+
+### Pages and flows
+
+| Page | What happens |
+| --- | --- |
+| `/<l>/account/signup` | name, email, password (≥ 10), optional phone; language = the page's. New email: account, signed in, `welcome_verify` (24 h link). Existing email: nothing changes, the owner gets `member_exists`. Both go straight back to `next` (or `/<l>/workshops`) with the same "check your inbox" notice |
+| `/<l>/account/login` | back to `next` or the workshops; one message for every failure; lockout after 5 tries for 15 min |
+| `/<l>/account/verify?token=` | confirms the email from the page's script (a mail scanner fetching the link does not use it up); a used link of a confirmed email still says "confirmed" |
+| `/<l>/account/forgot`, `/reset?token=` | same answer for any address; 30-minute one-time link; the reset ends every other session, confirms the email and signs this device in |
+| `/<l>/instructor/accept-invite?token=` | the invitation (`features/instructors`, 7 days): password, email confirmed, link used, one transaction; signed in, into the panel |
+| `/<l>/instructor/login`, `/forgot`, `/reset`, `/verify` | as for members; inactive instructors and instructors without a password never get in |
+
+The member's language (`members.locale`, the language of their emails)
+follows the site's language switch (header and account menu) while signed in
+(`setMemberLocaleAction`). Instructors: `setInstructorLocaleAction`. The
+instructor panel's "Please confirm your email" banner sends the link again
+with `resendInstructorVerifyAction` (the link opens `/<l>/instructor/verify`),
+and its "Sign out" is `instructorLogoutAction` (`features/accounts/actions`).
+
+Actions that change the session cookie end with a server-side `redirect`, so
+the next page renders with the new session. To say something on that page,
+redirect with `withNotice(path, "checkEmail" | "signedOut" | "passwordSaved")`
+(`features/accounts/schema`): the site layout shows `site.notices.<notice>` as
+a toast and removes `?notice=` from the address. Only those values are shown.
+
+### The public site shell
+
+`src/app/[locale]/(site)/layout.tsx` frames every public page (workshops, the
+member's account pages): `SiteHeader` (brand wordmark → workshops, "Workshops",
+language, account button: "Log in / Sign up" coming back to the page, or the
+member's first name with My workshops → `/<l>/account`, language, log out),
+the "Please confirm your email" banner (with "Send it again") for a signed-in
+member whose email is not confirmed, and `SiteFooter`. Pages in the group
+render inside its `<main>`: do not add another. Small centred forms use
+`AuthCard` (`@/components/site/auth-card`). The language root `/<l>` redirects
+to `/<l>/workshops` until the phase 3 home page exists. Nothing on the public
+site links to the instructor pages.
+
+The proxy sends `X-Robots-Tag: noindex` for `/<l>/admin/**`,
+`/<l>/instructor/**`, `/<l>/account/**` and `/api/{admin,instructor,account}`,
+and redirects a signed-out GET of a private page to that area's login (except
+the sign-in pages themselves). It also passes the requested path and query to
+the page as `x-pathname` (overwriting any value the client sent).
+
+### Emails of phase 2
+
+| Email | Sent by | When |
+| --- | --- | --- |
+| `welcome_verify`, `password_reset`, `member_exists` | accounts | sign-up, "send again", forgot password |
+| `registration_received` | registrations | registered, not paid yet: "your place is reserved; please pay {amount}", one block per payment way switched on in the `payment` setting (`cash: true`, `transfer: { accountHolder, bankName, iban, note }`, `paymentUrl`: the workshop's `courses.payment_url`) |
+| `payment_received` | registrations | an admin recorded the payment (`method`: cash, transfer, online): paid, place confirmed |
+| `registration_confirmed` | registrations | a registration that needs no payment (a free workshop); kept for that and for admins' saved texts |
+| `registration_cancelled` | registrations | the participant cancelled; `refundPercent` 100 / 50 / 0; leave out `refundAmount` when nothing was paid |
+| `refund_due` | registrations | to every super admin: a refund must be paid back by hand |
+| `refund_sent` | registrations | an admin marked the refund as paid back |
+
+`paymentWays(await getSetting("payment"), course.paymentUrl, locale)`
+(`@/emails/payment`) builds the payment props of `registration_received`: only
+the ways that are on and usable (a transfer needs an IBAN, online payment the
+workshop's link), with the admin's notes in the email's language.
+
+Links in emails must be on `APP_URL`, with one exception: `paymentUrl` of
+`registration_received` may be any `https` link without user name or password
+(iyzico / PayTR payment links). The IBAN is shown in groups of four. The
+templates page previews these emails with `accountEmailSamples`
+(`src/emails/samples.ts`).
+
+### Tests
+
+`src/features/accounts/actions.test.ts` shows the mocks for actions that use
+cookies, headers and `after()`: `next/headers` (a cookie map and a fresh client
+IP per test, as the public actions are rate limited per network),
+`next/server`, `next/cache`, `next-intl/server` and `@/lib/email`. Sign a
+person in with `createSession(kind, id)` and put the token in the cookie map.

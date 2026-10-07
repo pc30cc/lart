@@ -8,10 +8,14 @@ import { sessionCookieName } from "@/lib/auth/cookies"
  * Runs before every page and API request:
  * - language routing (/fa, /tr, /en, always prefixed); "/" goes to src/app/page.tsx,
  * - a strict Content Security Policy with a fresh nonce per request,
- * - noindex for the admin panel and admin API,
- * - an optimistic redirect to the admin login when there is no admin cookie
- *   (except on the sign-in pages themselves, ADMIN_LOGIN_PATH).
- *   The real checks happen on the server (requireAdmin) for every page and action.
+ * - the requested path and query as the `x-pathname` request header (where a
+ *   sign-in should come back to: `currentPath()` in lib/auth/request),
+ * - noindex for the admin panel, the instructor panel, the member's account
+ *   pages and their APIs,
+ * - an optimistic redirect to the right sign-in page when a private page is
+ *   opened without that area's session cookie (the sign-in pages themselves,
+ *   OPEN_PATHS, stay open). The real checks happen on the server
+ *   (requireAdmin / requireInstructor / requireMember) for every page and action.
  * Static security headers (HSTS, nosniff, ...) are set in next.config.ts.
  */
 const intl = createIntlMiddleware(routing)
@@ -37,25 +41,39 @@ function contentSecurityPolicy(nonce: string): string {
   ].join("; ")
 }
 
-const ADMIN_PATH = /^\/(fa|tr|en)\/admin(?:\/|$)/
-/** The sign-in pages, open without a session: sign in, forgot password, new password from a reset link. */
-const ADMIN_LOGIN_PATH = /^\/(fa|tr|en)\/admin\/login(?:\/(?:forgot|reset))?\/?$/
+/** The three private areas: the super-admin panel, the instructor panel and the member's account pages. */
+const AREA_PATH = /^\/(fa|tr|en)\/(admin|instructor|account)(?:\/|$)/
+type Area = "admin" | "instructor" | "account"
+
+/** The pages of each area that work without a session: sign in, sign up, emailed links. */
+const OPEN_PATHS: Record<Area, RegExp> = {
+  admin: /^\/(fa|tr|en)\/admin\/login(?:\/(?:forgot|reset))?\/?$/,
+  instructor: /^\/(fa|tr|en)\/instructor\/(?:login|accept-invite|forgot|reset|verify)\/?$/,
+  account: /^\/(fa|tr|en)\/account\/(?:signup|login|verify|forgot|reset)\/?$/,
+}
+
+const cookieOf = { admin: "admin", instructor: "instructor", account: "member" } as const
+const PRIVATE_API = /^\/api\/(?:admin|instructor|account)(?:\/|$)/
 
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl
-  const isAdmin = ADMIN_PATH.test(pathname) || pathname.startsWith("/api/admin")
+  const { pathname, search } = request.nextUrl
+  const area = AREA_PATH.exec(pathname)
+  const noindex = Boolean(area) || PRIVATE_API.test(pathname)
 
   // Optimistic check only: no cookie at all means "not signed in".
-  const adminMatch = ADMIN_PATH.exec(pathname)
   if (
-    adminMatch &&
-    !ADMIN_LOGIN_PATH.test(pathname) &&
+    area &&
+    !OPEN_PATHS[area[2] as Area].test(pathname) &&
     (request.method === "GET" || request.method === "HEAD") &&
-    !request.cookies.has(sessionCookieName("admin"))
+    !request.cookies.has(sessionCookieName(cookieOf[area[2] as Area]))
   ) {
-    const login = new URL(`/${adminMatch[1]}/admin/login`, request.url)
-    if (pathname !== `/${adminMatch[1]}/admin`) login.searchParams.set("next", pathname)
-    return withHeaders(NextResponse.redirect(login), null, isAdmin)
+    const [, locale, name] = area
+    const login = new URL(`/${locale}/${name}/login`, request.url)
+    // The admin login keeps only the path; the others come back to the query too.
+    // A panel's own home is where its login goes anyway (a member's lands on the workshops).
+    const back = name === "admin" ? pathname : pathname + search
+    if (name === "account" || back !== `/${locale}/${name}`) login.searchParams.set("next", back)
+    return withHeaders(NextResponse.redirect(login), null, noindex)
   }
 
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64")
@@ -63,6 +81,7 @@ export function proxy(request: NextRequest) {
   const requestHeaders = new Headers(request.headers)
   requestHeaders.set("x-nonce", nonce)
   requestHeaders.set("content-security-policy", csp)
+  requestHeaders.set("x-pathname", (pathname + search).slice(0, 2048))
 
   const response =
     pathname === "/" || /^\/api(\/|$)/.test(pathname)
@@ -71,7 +90,7 @@ export function proxy(request: NextRequest) {
         // forwards these request headers (with the nonce) to the page.
         intl(new NextRequest(request.url, { headers: requestHeaders }))
 
-  return withHeaders(response, csp, isAdmin)
+  return withHeaders(response, csp, noindex)
 }
 
 function withHeaders(response: NextResponse, csp: string | null, noindex: boolean) {

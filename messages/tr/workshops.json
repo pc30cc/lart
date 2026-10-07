@@ -315,7 +315,7 @@
     "confirm": {
       "trigger": "Atölyeyi onayla",
       "title": "“{title}” onaylansın mı?",
-      "description": "{count, plural, =0 {Henüz kimse kayıt yaptırmadı.} one {# kişi kayıt yaptırdı.} other {# kişi kayıt yaptırdı.}} Bu sayı kesin katılımcı sayısı olur ve eğitmen ücreti buna göre hesaplanır.",
+      "description": "{count, plural, =0 {Henüz kimse kayıt yaptırmadı.} other {# kişi kayıt yaptırdı (ödeyen de henüz ödemeyen de).}} Bu sayı kesin katılımcı sayısı olur ve eğitmen ücreti buna göre hesaplanır.",
       "belowMinimum": "Bu sayı, gereken en az {minimum} kişinin altında.",
       "action": "Evet, yapılıyor",
       "done": "Atölye onaylandı."
@@ -379,33 +379,61 @@
   },
   "registrations": {
     "metaTitle": "Kayıtlar · {title}",
-    "stats": {
-      "confirmed": "Ödendi",
-      "pending": "Ödeme bekliyor",
-      "cancelled": "İptal",
-      "photos": "Fotoğraf izni",
-      "videos": "Video izni"
+    "export": "CSV indir",
+    "search": "Ad, e-posta ya da telefonla ara",
+    "locked": "Bu atölye iptal edildi ya da hesapları kapatıldı; kayıtları artık değiştirilemez.",
+    "actionsFor": "{name} için işlemler",
+    "summary": {
+      "registered": "Kayıtlı",
+      "places": "Kontenjan: {min}–{max} kişi",
+      "paid": "Ödendi",
+      "unpaid": "Henüz ödenmedi",
+      "people": "{count, plural, =0 {Kimse yok} other {# kişi}}",
+      "refundsOwed": "Ödenecek iadeler",
+      "consent": "Fotoğraf / video izni",
+      "consentValue": "{photos} / {videos}",
+      "consentHint": "Katılacaklar arasında"
     },
     "empty": {
       "title": "Henüz kayıt yok",
       "description": "Bu atölyeye kayıt yaptıranlar burada görünür.",
       "awaiting": "Kayıtlar, eğitmen sözleşmeyi imzaladığında açılır."
     },
+    "filter": {
+      "label": "Ödeme",
+      "unpaid": "Henüz ödenmedi",
+      "paid": "Ödendi",
+      "cancelled": "İptal edildi"
+    },
     "table": {
       "participant": "Katılımcı",
       "member": "Kaydı yapan",
-      "status": "Durum",
+      "payment": "Ödeme",
+      "amount": "Tutar",
       "consent": "Fotoğraf / video",
-      "paid": "Ödeme",
+      "registeredAt": "Kayıt tarihi",
       "registeredOn": "Kayıt: {date}",
-      "refund": "İade",
-      "noRefund": "İade yok",
-      "notPaid": "Henüz ödenmedi"
+      "actions": "İşlemler"
     },
-    "status": {
-      "pending": "Ödeme bekliyor",
-      "confirmed": "Ödendi",
-      "cancelled": "İptal edildi"
+    "state": {
+      "unpaid": "Henüz ödenmedi",
+      "paid": "Ödendi",
+      "free": "Ücretsiz",
+      "cancelled": "İptal edildi",
+      "paidVia": "{method, select, cash {Nakit} transfer {Banka havalesi} online {Online link} other {Ödendi}} · {date}",
+      "refundOwed": "Ödenecek iade:",
+      "refundSent": "{date} tarihinde iade edildi:",
+      "noRefund": "İade yok"
+    },
+    "methods": {
+      "cash": "Nakit",
+      "transfer": "Banka havalesi",
+      "online": "Online ödeme linki"
+    },
+    "methodHints": {
+      "cash": "Nakit ödendi, örneğin atölyede.",
+      "transfer": "Para banka hesabına geldi.",
+      "online": "Atölyenin iyzico ya da PayTR linkiyle kartla ödendi."
     },
     "consent": {
       "photoYes": "Fotoğrafları yayımlanabilir",
@@ -413,7 +441,75 @@
       "videoYes": "Videoları yayımlanabilir",
       "videoNo": "Video yok"
     },
-    "readOnly": "Bu liste yalnızca görüntüleme içindir. Tek bir kaydı değiştirmek ya da iade etmek henüz mümkün değil."
+    "pay": {
+      "trigger": "Ödemeyi kaydet",
+      "title": "{participant} için {amount} ödendi mi?",
+      "description": "Kayıt ödendi olarak işaretlenir, tutar ortak kasaya işlenir ve {name} bir teşekkür e-postası alır.",
+      "method": "Nasıl ödendi?",
+      "date": "Ödeme tarihi",
+      "submit": "Evet, ödendi",
+      "done": "Ödeme kaydedildi. {name} bir e-posta alacak."
+    },
+    "cancel": {
+      "trigger": "Kaydı iptal et",
+      "title": "{participant} kaydı iptal edilsin mi?",
+      "unpaid": "Henüz ödeme yapılmadı, bu yüzden iade edilecek bir şey yok. {name} kısa bir e-posta alacak.",
+      "free": "Bu atölye ücretsiz, bu yüzden iade edilecek bir şey yok. {name} kısa bir e-posta alacak.",
+      "paid": "{amount} ödendi. Ne kadarı iade edilsin?",
+      "refund": "İade",
+      "terms": "Koşullara göre: {percent} · {amount}",
+      "band": {
+        "100": "Başlangıçtan 72 saat ya da daha önce iptal.",
+        "50": "Başlangıçtan 72 ile 24 saat önce arasında iptal.",
+        "0": "Başlangıca 24 saatten az kaldı: iade yok."
+      },
+      "full": "Tam iade · {amount}",
+      "fullHint": "Örneğin iptal sizden kaynaklanan bir nedenle yapılıyorsa.",
+      "after": "İade, geri ödendi olarak işaretleyene kadar Finans › İadeler listesinde bekler. {name} bir e-posta alacak.",
+      "submit": "Evet, iptal et",
+      "done": "Kayıt iptal edildi."
+    },
+    "errors": {
+      "notFound": "Bu kayıt bulunamadı. Lütfen sayfayı yenileyin.",
+      "alreadyPaid": "Bu kayıt zaten ödenmiş. Yapılacak başka bir şey yok.",
+      "nothingToPay": "Bu kaydın ödenecek bir tutarı yok.",
+      "cancelledNoPayment": "Bu kayıt iptal edildi, bu yüzden ödeme kaydedilemez.",
+      "amountChanged": "Tutar bu kayıtla artık uyuşmuyor. Lütfen sayfayı yenileyip tekrar deneyin.",
+      "paidBeforeRegistration": "Ödeme tarihi, kaydın yapıldığı günden önce olamaz.",
+      "alreadyCancelled": "Bu kayıt zaten iptal edilmiş.",
+      "chooseMethod": "Lütfen nasıl ödendiğini seçin."
+    },
+    "paymentLink": {
+      "label": "Online ödeme linki",
+      "hint": "İsteğe bağlı. iyzico ya da PayTR uygulamasında bu atölyenin fiyatı için bir ödeme linki oluşturup buraya yapıştırın. Kayıt olan öğrenciler “Online öde” düğmesini görür.",
+      "invalid": "Lütfen ödeme linkinin tamamını, https:// ile başlayacak şekilde yapıştırın.",
+      "offWarning": "Online ödeme ayarlarda kapalı, bu yüzden öğrenciler bu linki şimdilik görmüyor.",
+      "offNote": "Online ödeme ayarlarda kapalı.",
+      "openSettings": "Ödeme ayarlarını aç",
+      "overview": "Online ödeme linki",
+      "none": "Yok",
+      "open": "Ödeme sayfası yeni sekmede açılır"
+    },
+    "reminder": {
+      "bringCash": "atölye ücreti için nakit {amount}"
+    },
+    "csv": {
+      "participant": "Katılımcı",
+      "member": "Kaydı yapan",
+      "email": "E-posta",
+      "phone": "Telefon",
+      "payment": "Ödeme",
+      "amount": "Tutar (₺)",
+      "method": "Ödeme şekli",
+      "paidOn": "Ödeme tarihi",
+      "refund": "İade (₺)",
+      "refundedOn": "İade tarihi",
+      "photos": "Fotoğraf izni",
+      "videos": "Video izni",
+      "registeredOn": "Kayıt tarihi",
+      "yes": "Evet",
+      "no": "Hayır"
+    }
   },
   "gallery": {
     "metaTitle": "Galeri · {title}",

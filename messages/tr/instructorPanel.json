@@ -1,1 +1,242 @@
-{}
+{
+  "meta": {
+    "title": "Eğitmen paneli"
+  },
+  "nav": {
+    "label": "Eğitmen paneli",
+    "home": "Ana sayfa",
+    "workshops": "Atölyeler",
+    "contracts": "Sözleşmeler",
+    "earnings": "Kazançlar",
+    "profile": "Profil",
+    "toSign": "{count, plural, one {İmzalanacak # sözleşme} other {İmzalanacak # sözleşme}}"
+  },
+  "shell": {
+    "skipToContent": "İçeriğe geç",
+    "home": "{brand}: paneliniz",
+    "account": "Hesabınız",
+    "profile": "Profilim",
+    "logOut": "Çıkış yap"
+  },
+  "verifyBanner": {
+    "label": "E-postanızı onaylayın",
+    "text": "Lütfen e-postanızı onaylayın: {email} adresine bir bağlantı gönderdik. Bağlantıyı açmanız yeterli.",
+    "textSent": "{email} adresine yeni bir bağlantı gönderdik. Lütfen gelen kutunuza, istenmeyen klasörüne de bakın.",
+    "resend": "Tekrar gönder",
+    "sent": "Gönderildi! Lütfen gelen kutunuza bakın.",
+    "alreadyVerified": "E-postanız zaten onaylı. Teşekkürler!"
+  },
+  "status": {
+    "toSign": "İmzanızı bekliyor",
+    "open": "Kayıtlar açık",
+    "confirmed": "Kesinleşti: yapılacak",
+    "finished": "Tamamlandı",
+    "cancelled": "İptal edildi"
+  },
+  "home": {
+    "metaTitle": "Ana sayfa",
+    "hello": "Merhaba {name}!",
+    "helloNoName": "Merhaba!",
+    "intro": "Sizi görmek çok güzel. Sırada bunlar var.",
+    "toSign": {
+      "title": "{count, plural, one {Bir sözleşme imzanızı bekliyor} other {# sözleşme imzanızı bekliyor}}",
+      "text": "Lütfen okuyup buradan imzalayın. Atölyeniz hemen ardından kayıtlara açılır.",
+      "button": "Oku ve imzala"
+    },
+    "upcoming": {
+      "title": "Sıradaki atölyeleriniz",
+      "all": "Tümünü gör",
+      "emptyTitle": "Henüz yaklaşan atölye yok",
+      "emptyText": "{brand} ekibi sizinle bir atölye planladığında burada göreceksiniz."
+    }
+  },
+  "workshops": {
+    "metaTitle": "Atölyelerim",
+    "title": "Atölyelerim",
+    "subtitle": "Yaklaşan ve geçmiş atölyeleriniz, katılacak kişilerle birlikte.",
+    "upcoming": "Yaklaşanlar",
+    "past": "Geçmiş atölyeler",
+    "noUpcoming": "Şu an planlanmış bir şey yok.",
+    "emptyTitle": "Henüz atölye yok",
+    "emptyText": "{brand} ekibi sizinle bir atölye planladığında burada göreceksiniz."
+  },
+  "workshop": {
+    "metaTitle": "Atölye",
+    "back": "Tüm atölyeler",
+    "places": "{max, number} yerden {count, number} tanesi dolu",
+    "date": "Tarih",
+    "time": "Saat (İstanbul)",
+    "venue": "Yer",
+    "age": "Kimler için",
+    "adults": "Yetişkinler",
+    "children": "Çocuklar, {min, number}–{max, number} yaş",
+    "participants": "Katılımcılar",
+    "minimum": "Yapılabilmesi için en az {min, number} kişi gerekli",
+    "decision": "Karar zamanı (yapılacak mı?)",
+    "deadline": "Kayıtlar {date} tarihinde kapanır",
+    "signContract": "Sözleşmeyi oku ve imzala",
+    "seeContract": "Sözleşmeyi gör",
+    "people": {
+      "title": "Kimler geliyor ({count, number})",
+      "consentHelp": "Fotoğraf ve video işaretleri, kimin yayınlanan fotoğraf ve videolarda yer almayı kabul ettiğini gösterir. Üstü çizili işaret “hayır” demektir: lütfen o kişinin tanınabildiği fotoğraf veya videoları yayınlamayın.",
+      "summary": "{total} kişiden {photos} kişi fotoğrafa, {videos} kişi videoya izin verdi.",
+      "photoYes": "Fotoğrafa izin verdi",
+      "photoNo": "Fotoğraf yok",
+      "videoYes": "Videoya izin verdi",
+      "videoNo": "Video yok",
+      "privacy": "Sözleşmenizde kararlaştırıldığı gibi, lütfen bu isimleri yalnızca bu atölye için kullanın.",
+      "none": "Henüz kayıt yok. Kayıt olanların isimleri burada görünecek.",
+      "cancelled": "Bu atölye iptal edildi."
+    }
+  },
+  "contracts": {
+    "metaTitle": "Sözleşmelerim",
+    "title": "Sözleşmelerim",
+    "subtitle": "Size gönderdiğimiz tüm sözleşmeler. Okumak için birine dokunun.",
+    "state": {
+      "toSign": "İmzalanacak",
+      "signed": "İmzalandı",
+      "replaced": "Yeni bir sürüm gönderildi",
+      "closed": "Artık gerekli değil"
+    },
+    "version": "Sürüm {version}",
+    "sentOn": "Gönderildi: {date}",
+    "signedOn": "İmzalandı: {date}",
+    "workshopOn": "Atölye: {date}",
+    "emptyTitle": "Henüz sözleşme yok",
+    "emptyText": "{brand} ekibi sizinle bir atölye planladığında, sözleşmesi imzanız için burada olacak."
+  },
+  "contract": {
+    "metaTitle": "Sözleşme",
+    "back": "Tüm sözleşmeler",
+    "print": "Yazdır",
+    "signedLine": "{name} tarafından {date} tarihinde elektronik olarak imzalandı.",
+    "toSign": {
+      "title": "Lütfen sözleşmenin tamamını okuyun",
+      "text": "Sayfanın sonunda imzalayabilirsiniz. Başka bir dilde okumak için yukarıdan dili değiştirin."
+    },
+    "signed": {
+      "title": "Teşekkürler! Sözleşmeniz imzalandı.",
+      "workshop": {
+        "open": "“{title}” artık kayıtlara açık. Kayıtların durumunu size bildireceğiz.",
+        "confirmed": "“{title}” kesinleşti ve planlandığı gibi yapılacak."
+      },
+      "toWorkshop": "Atölyeye git"
+    },
+    "signedNotice": {
+      "title": "Bu sözleşmeyi imzaladınız",
+      "text": "İmza tarihi: {date}. Yazdırabilir ya da PDF olarak kaydedebilirsiniz."
+    },
+    "replaced": {
+      "title": "Bu sürümün yerine yenisi geldi",
+      "text": "Atölyeyle ilgili bir şey değiştiği için size bu sözleşmenin yeni bir sürümünü gönderdik.",
+      "open": "En yeni sürümü aç"
+    },
+    "closed": {
+      "title": "Bu sözleşme artık imzalanamaz",
+      "text": "Atölye artık imza beklemiyor. Bir sorunuz varsa lütfen {brand} ekibine yazın."
+    },
+    "check": {
+      "title": "Bu kopyayı doğrulayamıyoruz",
+      "text": "Bu metin, sözleşme imzalandığında kaydedilenle eşleşmiyor. Lütfen {brand} ekibine haber verin."
+    }
+  },
+  "sign": {
+    "title": "Sözleşmeyi imzalayın",
+    "intro": "Hepsini okuduğunuzda kutucuğu işaretleyin, adınızı ve soyadınızı yazın ve “İmzala”ya basın.",
+    "agree": "Sözleşmeyi okudum ve kabul ediyorum.",
+    "name": "Adınız ve soyadınız",
+    "nameHint": "Sözleşmede yazdığı gibi: {name}",
+    "nameMatches": "Doğru.",
+    "submit": "İmzala",
+    "evidence": "Kanıt olarak metnin tam halini; tarih ve saat, ağ adresiniz ve tarayıcınızla birlikte saklarız.",
+    "errors": {
+      "agree": "Kabul ettiğinizi belirtmek için lütfen kutucuğu işaretleyin.",
+      "name": "Lütfen adınızı ve soyadınızı yazın.",
+      "nameMismatch": "Bu, sözleşmedeki isimle eşleşmiyor. Lütfen orada yazdığı gibi yazın: {name}",
+      "textChanged": "Sözleşme az önce güncellendi. Lütfen tekrar okuyun, sonra imzalayın."
+    }
+  },
+  "earnings": {
+    "metaTitle": "Kazançlarım",
+    "title": "Kazançlarım",
+    "subtitle": "Her atölye için ücretiniz, aldıklarınız ve kalan tutar.",
+    "total": {
+      "owed": "Alacağınız",
+      "received": "Şimdiye kadar aldığınız"
+    },
+    "fee": "Ücretiniz",
+    "feeFixed": "Atölye için sabit ücret",
+    "feePerParticipant": "Katılımcı başına {rate} × {count}",
+    "feeCancelled": "Ücret yok: atölye iptal edildi",
+    "advance": "Ön ödeme",
+    "advanceForCosts": "{amount} tutarı atölye masraflarına gitti",
+    "received": "Şimdiye kadar aldığınız",
+    "owed": "Alacağınız",
+    "toReturn": "Sözleşmeniz gereği ön ödemeden {amount} tutarın {brand} ekibine iade edilmesi gerekiyor.",
+    "notSigned": "Bu tutarlar imzanızı bekleyen sözleşmeden alınmıştır.",
+    "estimate": "Bu tutar değişebilir: kesin katılımcı sayısı karar zamanında belirlenir.",
+    "settled": "Hepsi ödendi. Teşekkürler!",
+    "footnote": "Tutarlar sözleşmenizden ve {brand} ekibinin kaydettiği ödemelerden gelir. Bir şey yanlış mı görünüyor? Lütfen ekibe yazın.",
+    "emptyTitle": "Henüz bir şey yok",
+    "emptyText": "Sözleşmeli bir atölyeniz olduğunda ücretleriniz burada görünecek."
+  },
+  "profile": {
+    "metaTitle": "Profilim",
+    "title": "Profilim",
+    "subtitle": "Sitenin ziyaretçileri sizi böyle görecek.",
+    "save": "Profilimi kaydet",
+    "saved": "Profiliniz kaydedildi.",
+    "public": {
+      "title": "Herkese açık profil",
+      "description": "Sitede atölyelerinizle birlikte gösterilir. Farsça metin boşsa Farsça sitede İngilizcesi kullanılır."
+    },
+    "fields": {
+      "photo": "Profil fotoğrafı",
+      "photoHint": "Net ve sıcak bir fotoğrafınız. Kare olarak kırpıyoruz.",
+      "displayName": "Sitedeki adınız",
+      "displayNameHint": "Türkçe ve İngilizce gerekli.",
+      "teachingField": "Ne öğretiyorsunuz",
+      "teachingFieldHint": "Örneğin: seramik, resim, mum yapımı.",
+      "bio": "Kendinizden birkaç söz",
+      "bioHint": "İsteğe bağlı. İki üç cümle yeterli.",
+      "teachingLanguages": "Ders verdiğiniz diller",
+      "teachingLanguagesHint": "İsteğe bağlı. Bir veya birkaç dil seçin.",
+      "website": "Instagram veya web sitesi",
+      "websiteHint": "İsteğe bağlı. Instagram için @kullanıcıadı yeterli."
+    },
+    "photo": {
+      "alt": "Profil fotoğrafınız",
+      "choose": "Fotoğraf seçin",
+      "drop": "Fotoğrafı buraya bırakın",
+      "hint": "JPG, PNG, WebP veya HEIC, en fazla {size}",
+      "uploading": "Yükleniyor… {progress, number, percent}",
+      "processing": "Fotoğrafınız hazırlanıyor…",
+      "cancel": "Vazgeç",
+      "replace": "Fotoğrafı değiştir",
+      "remove": "Kaldır",
+      "retry": "Tekrar dene",
+      "dismiss": "Tamam",
+      "errors": {
+        "unauthorized": "Oturumunuz kapandı. Lütfen tekrar giriş yapıp yeniden deneyin.",
+        "storage": "Fotoğrafınızı şu an kaydedemedik. Lütfen biraz sonra tekrar deneyin.",
+        "server": "Bizim tarafımızda bir sorun oldu. Lütfen tekrar deneyin.",
+        "rate_limited": "Kısa sürede çok fazla fotoğraf yüklendi. Lütfen biraz bekleyip tekrar deneyin."
+      }
+    },
+    "language": {
+      "title": "Dil",
+      "description": "Panelinizin ve size gönderdiğimiz e-postaların dili."
+    },
+    "private": {
+      "title": "Özel bilgiler",
+      "description": "Yalnızca sözleşmeleriniz ve {brand} ekibi için. Sitede asla gösterilmez.",
+      "officialName": "Resmi ad",
+      "idNumber": "Kimlik numarası",
+      "mobile": "Cep telefonu",
+      "email": "E-posta",
+      "emailUnverified": "Henüz onaylanmadı",
+      "change": "Bunlardan birini değiştirmeniz mi gerekiyor? Lütfen {brand} ekibine yazın, sizin için güncelleyelim."
+    }
+  }
+}

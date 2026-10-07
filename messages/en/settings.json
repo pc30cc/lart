@@ -4,6 +4,7 @@
   "tabs": {
     "label": "Settings sections",
     "general": "General",
+    "payments": "Payments",
     "storage": "Storage",
     "watermark": "Watermark"
   },
@@ -247,6 +248,53 @@
         "close": "Workshop closed",
         "gallery": "Gallery updated"
       }
+    }
+  },
+  "payments": {
+    "intro": "Choose how students can pay. After registering, they see the ways you switch on here. When the money arrives, record it in the workshop’s Registrations tab: the registration is marked as paid.",
+    "on": "On",
+    "off": "Off",
+    "lastOne": "At least one way must stay on.",
+    "cash": {
+      "title": "Cash at the workshop",
+      "description": "Students pay in cash on the day of the workshop."
+    },
+    "transfer": {
+      "title": "Bank transfer",
+      "description": "Students send the money to this account and write the participant’s name in the description.",
+      "holder": "Account holder",
+      "holderHint": "Exactly as the bank has it.",
+      "bank": "Bank",
+      "bankPlaceholder": "e.g. Ziraat Bankası",
+      "iban": "IBAN",
+      "ibanHint": "TR followed by 24 digits. Spaces are fine.",
+      "ibanValid": "This IBAN looks right",
+      "note": "Note for students",
+      "noteHint": "Optional, in each language.",
+      "notePlaceholder": "e.g. Please send it within two days of registering."
+    },
+    "online": {
+      "title": "Online payment link",
+      "description": "Students pay by card on the workshop’s own payment page.",
+      "howTo": "Each workshop gets its own payment link: create it in the iyzico (iyziLink) or PayTR app for the workshop’s price and paste it into the workshop form. After someone pays, record the payment as “Online”.",
+      "later": "Automatic confirmation (a full iyzico or PayTR integration) needs a business account and will come later.",
+      "note": "Note for students",
+      "noteHint": "Optional, in each language.",
+      "notePlaceholder": "e.g. You’ll get a receipt from iyzico by email."
+    },
+    "preview": {
+      "title": "What students see",
+      "description": "After registering for a workshop of {amount}, in your language. Not saved yet.",
+      "participant": "Deniz",
+      "onlineHint": "The “Pay online” button appears only for workshops that have a payment link."
+    },
+    "errors": {
+      "oneWay": "Please keep at least one way to pay switched on.",
+      "holderRequired": "Please write the account holder’s name.",
+      "ibanRequired": "Please write the IBAN.",
+      "ibanCountry": "The IBAN should start with TR.",
+      "ibanLength": "A Turkish IBAN is TR followed by 24 digits. Please check it.",
+      "ibanChecksum": "This IBAN doesn’t add up: a digit may be mistyped. Please check it."
     }
   }
 }

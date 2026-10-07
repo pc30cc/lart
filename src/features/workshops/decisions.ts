@@ -1,5 +1,5 @@
 import "server-only"
-import { and, count, eq, isNull, lte } from "drizzle-orm"
+import { and, count, eq, inArray, isNull, lte } from "drizzle-orm"
 
 import { db } from "@/db"
 import { admins, courses, registrations } from "@/db/schema"
@@ -37,10 +37,11 @@ export async function notifyDueDecisions(now: Date = new Date()): Promise<{ due:
         .for("update", { skipLocked: true })
       if (!course) return false // handled by a parallel run, or changed meanwhile
 
+      // Everyone registered counts, paid or not yet (many pay in cash at the workshop), as at the go decision.
       const [{ registered }] = await tx
         .select({ registered: count() })
         .from(registrations)
-        .where(and(eq(registrations.courseId, id), eq(registrations.status, "confirmed")))
+        .where(and(eq(registrations.courseId, id), inArray(registrations.status, ["pending", "confirmed"])))
 
       let allSent = true
       for (const admin of team) {

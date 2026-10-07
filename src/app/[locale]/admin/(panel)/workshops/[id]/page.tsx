@@ -21,6 +21,7 @@ import { z } from "zod"
 import { Money } from "@/components/admin/money"
 import { Button } from "@/components/ui/button"
 import type { LocalizedText } from "@/db/schema"
+import { safePaymentUrl } from "@/features/registrations/schema"
 import { getWorkshop, type Workshop } from "@/features/workshops/queries"
 import { displayStatus, isCancelled } from "@/features/workshops/schema"
 import { Link } from "@/i18n/navigation"
@@ -99,6 +100,22 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/admi
                 <Money value={w.price} />
               </Fact>
               <Fact label={t("fields.terms")}>{w.termsTemplateName ?? t("fields.termsDefault")}</Fact>
+              <Fact label={t("registrations.paymentLink.overview")}>
+                {safePaymentUrl(w.paymentUrl) ? (
+                  <a
+                    href={safePaymentUrl(w.paymentUrl)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    dir="ltr"
+                    className="hover:text-primary block truncate font-mono text-xs underline-offset-4 hover:underline"
+                    title={t("registrations.paymentLink.open")}
+                  >
+                    {w.paymentUrl}
+                  </a>
+                ) : (
+                  <span className="text-muted-foreground">{t("registrations.paymentLink.none")}</span>
+                )}
+              </Fact>
               <Fact label={t("fields.slug")}>
                 <code dir="ltr" className="bg-muted rounded-md px-1.5 py-0.5 font-mono text-xs">
                   {w.slug}
@@ -259,12 +276,13 @@ async function NextStep({ workshop: w }: { workshop: Workshop }) {
         text: t("next.published.text", {
           deadline: formatDateTime(w.registrationDeadline, locale, "long"),
           decision: formatDateTime(w.decisionAt, locale, "long"),
-          confirmed: w.registered.confirmed,
+          // Paid or not yet: everyone registered counts for the go decision.
+          confirmed: open,
           minimum: n(w.minCapacity),
         }),
         actions: (
           <>
-            <ConfirmWorkshopButton id={w.id} title={title} confirmed={w.registered.confirmed} minimum={w.minCapacity} />
+            <ConfirmWorkshopButton id={w.id} title={title} confirmed={open} minimum={w.minCapacity} />
             <CancelWorkshopButton id={w.id} title={title} registrations={open} />
           </>
         ),

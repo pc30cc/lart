@@ -1,1 +1,81 @@
-{}
+{
+  "form": {
+    "email": "E-posta",
+    "password": "Şifre",
+    "showPassword": "Şifreyi göster",
+    "hidePassword": "Şifreyi gizle",
+    "newPasswordHint": "En az {min, number} karakter. Aklınızda kalacak birkaç kelime güçlü bir şifre olur."
+  },
+  "errors": {
+    "unverified": "Lütfen önce e-postanızı doğrulayın. Size bir bağlantı gönderdik; sayfanın üstünden yenisini isteyebilirsiniz."
+  },
+  "login": {
+    "metaTitle": "Giriş yap",
+    "title": "Tekrar hoş geldiniz",
+    "subtitle": "Atölyelere kaydolmak ve kayıtlarınızı görmek için giriş yapın.",
+    "submit": "Giriş yap",
+    "forgot": "Şifrenizi mi unuttunuz?",
+    "noAccount": "Yeni misiniz?",
+    "signUp": "Hesap oluşturun",
+    "errors": {
+      "invalid": "E-posta ve şifre eşleşmiyor. Birkaç kez denediyseniz lütfen {minutes, number} dakika bekleyip tekrar deneyin."
+    }
+  },
+  "signup": {
+    "metaTitle": "Hesap oluştur",
+    "title": "Hesabınızı oluşturun",
+    "subtitle": "Sadece bir dakika sürer. Sonra dilediğiniz atölyeye kaydolabilirsiniz.",
+    "name": "Adınız",
+    "phone": "Cep telefonu",
+    "optional": "isteğe bağlı",
+    "phoneHint": "Yalnızca atölyelerinizle ilgili size ulaşabilmemiz için.",
+    "submit": "Hesabımı oluştur",
+    "hasAccount": "Zaten hesabınız var mı?",
+    "logIn": "Giriş yapın",
+    "errors": {
+      "phone": "Lütfen bir telefon numarası yazın, örneğin +90 532 123 45 67."
+    }
+  },
+  "verify": {
+    "metaTitle": "E-postanızı doğrulayın",
+    "title": "E-postanızı doğrulayın",
+    "checking": "E-postanız doğrulanıyor…",
+    "doneTitle": "Teşekkürler! E-postanız doğrulandı.",
+    "doneText": "Her şey hazır. Artık dilediğiniz atölyeye kaydolabilirsiniz.",
+    "doneTextInstructor": "Her şey hazır. Paneliniz sizi bekliyor.",
+    "continue": "Atölyeleri gör",
+    "continueInstructor": "Panelimi aç",
+    "failedTitle": "Bu bağlantı artık geçerli değil",
+    "failedText": "Doğrulama bağlantısı 24 saat geçerlidir ve yalnızca en yenisi çalışır. Hemen yeni bir bağlantı gönderebiliriz.",
+    "resend": "Yeni bağlantı gönder",
+    "sent": "Gönderildi! Lütfen gelen kutunuza, istenmeyen klasörüne de bakın.",
+    "logIn": "Giriş yap",
+    "errors": {
+      "invalidLink": "Bu bağlantı artık geçerli değil. Lütfen yeni bir bağlantı isteyin.",
+      "rateLimited": "Birkaç bağlantı zaten gönderdik. Lütfen birkaç dakika bekleyip tekrar deneyin.",
+      "notSent": "E-postayı şu anda gönderemedik. Lütfen biraz sonra tekrar deneyin."
+    }
+  },
+  "forgot": {
+    "metaTitle": "Şifremi unuttum",
+    "title": "Şifrenizi mi unuttunuz?",
+    "subtitle": "Sorun değil. E-postanızı yazın; yeni bir şifre belirlemeniz için size bir bağlantı gönderelim.",
+    "submit": "Bağlantıyı gönder",
+    "sentTitle": "E-postanızı kontrol edin",
+    "sent": "{email} adresine ait bir hesap varsa bağlantı yola çıktı. Bağlantı bir kez ve {minutes, number} dakika boyunca geçerlidir. İstenmeyen klasörüne de bakmayı unutmayın.",
+    "back": "Girişe dön"
+  },
+  "reset": {
+    "metaTitle": "Yeni şifre",
+    "title": "Yeni şifrenizi belirleyin",
+    "subtitle": "Bu cihazda oturumunuz açık kalır. Diğer cihazlardan çıkış yapılır.",
+    "password": "Yeni şifre",
+    "submit": "Yeni şifremi kaydet",
+    "invalidTitle": "Bu bağlantı artık geçerli değil",
+    "invalid": "Şifre bağlantısı bir kez ve {minutes, number} dakika boyunca geçerlidir. Lütfen yeni bir bağlantı isteyin.",
+    "requestNew": "Yeni bağlantı gönder",
+    "errors": {
+      "invalidLink": "Bu bağlantı artık geçerli değil. Lütfen yeni bir bağlantı isteyin."
+    }
+  }
+}

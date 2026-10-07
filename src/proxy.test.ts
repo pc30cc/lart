@@ -20,10 +20,21 @@ vi.mock("next-intl/middleware", async () => {
   }
 })
 
-function request(path: string, init: { method?: string; cookie?: boolean; headers?: Record<string, string> } = {}) {
+type Kind = "admin" | "instructor" | "member"
+
+function request(
+  path: string,
+  init: { method?: string; cookie?: boolean | Kind; headers?: Record<string, string> } = {},
+) {
   const headers = new Headers(init.headers)
-  if (init.cookie) headers.set("cookie", `${sessionCookieName("admin")}=token`)
+  if (init.cookie) headers.set("cookie", `${sessionCookieName(init.cookie === true ? "admin" : init.cookie)}=token`)
   return new NextRequest(new URL(path, "http://localhost:3000"), { method: init.method ?? "GET", headers })
+}
+
+const loginOf = (res: Response) => {
+  expect(res.status).toBe(307)
+  const location = new URL(res.headers.get("location")!)
+  return { path: location.pathname, next: location.searchParams.get("next") }
 }
 
 /** Request headers the proxy forwards to the page (Next's override protocol). */
@@ -78,6 +89,68 @@ describe("proxy", () => {
     const pub = proxy(request("/tr"))
     expect(pub.status).toBe(200)
     expect(pub.headers.get("x-robots-tag")).toBeNull()
+  })
+
+  it("passes the requested path and query to the page, never the client's own value", () => {
+    const res = proxy(request("/tr/workshops/candles?x=1", { headers: { "x-pathname": "//evil.example" } }))
+    expect(forwarded(res, "x-pathname")).toBe("/tr/workshops/candles?x=1")
+  })
+
+  it("sends signed-out instructor panel visits to the instructor login, with the page and query", () => {
+    expect(loginOf(proxy(request("/fa/instructor")))).toEqual({ path: "/fa/instructor/login", next: null })
+    expect(loginOf(proxy(request("/fa/instructor/contracts?c=1")))).toEqual({
+      path: "/fa/instructor/login",
+      next: "/fa/instructor/contracts?c=1",
+    })
+    // An admin or member cookie is not an instructor session.
+    expect(proxy(request("/fa/instructor/contracts", { cookie: "admin" })).status).toBe(307)
+    expect(proxy(request("/fa/instructor/contracts", { cookie: "member" })).status).toBe(307)
+    const signedIn = proxy(request("/fa/instructor/contracts", { cookie: "instructor" }))
+    expect(signedIn.status).toBe(200)
+    expect(signedIn.headers.get("x-robots-tag")).toBe("noindex, nofollow")
+  })
+
+  it.each(["login", "accept-invite", "forgot", "reset", "verify"])("lets /instructor/%s through without a session, noindex", (page) => {
+    const res = proxy(request(`/tr/instructor/${page}?token=abc`))
+    expect(res.status).toBe(200)
+    expect(res.headers.get("x-robots-tag")).toBe("noindex, nofollow")
+  })
+
+  it("sends signed-out visits of My workshops to the member login, coming back to it", () => {
+    expect(loginOf(proxy(request("/en/account")))).toEqual({ path: "/en/account/login", next: "/en/account" })
+    expect(loginOf(proxy(request("/en/account/registrations/r1?tab=2")))).toEqual({
+      path: "/en/account/login",
+      next: "/en/account/registrations/r1?tab=2",
+    })
+    expect(proxy(request("/en/account", { cookie: "instructor" })).status).toBe(307)
+    const signedIn = proxy(request("/en/account", { cookie: "member" }))
+    expect(signedIn.status).toBe(200)
+    expect(signedIn.headers.get("x-robots-tag")).toBe("noindex, nofollow")
+  })
+
+  it.each(["signup", "login", "verify", "forgot", "reset"])("lets /account/%s through without a session, noindex", (page) => {
+    const res = proxy(request(`/fa/account/${page}`))
+    expect(res.status).toBe(200)
+    expect(res.headers.get("x-robots-tag")).toBe("noindex, nofollow")
+  })
+
+  it("leaves public pages with similar names alone", () => {
+    for (const path of ["/tr/instructors", "/tr/instructors/zeynep", "/tr/accounts", "/tr/workshops", "/tr/administration"]) {
+      const res = proxy(request(path))
+      expect(res.status, path).toBe(200)
+      expect(res.headers.get("x-robots-tag"), path).toBeNull()
+    }
+  })
+
+  it("does not redirect server actions posted from private pages (they check the session themselves)", () => {
+    expect(proxy(request("/tr/instructor/profile", { method: "POST" })).status).toBe(200)
+    expect(proxy(request("/tr/account", { method: "POST" })).status).toBe(200)
+  })
+
+  it("marks the instructor and member APIs noindex", () => {
+    expect(proxy(request("/api/instructor/x")).headers.get("x-robots-tag")).toBe("noindex, nofollow")
+    expect(proxy(request("/api/account/x")).headers.get("x-robots-tag")).toBe("noindex, nofollow")
+    expect(proxy(request("/api/health")).headers.get("x-robots-tag")).toBeNull()
   })
 
   it("marks the admin API noindex without locale routing", () => {

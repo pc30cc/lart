@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { checkEmailText, type EmailLocale, renderEmail } from "@/emails"
+import { paymentWays } from "@/emails/payment"
 import { type EmailProps, type EmailTemplate, emailPlaceholders, emailTemplateNames } from "@/emails/templates"
 import { env } from "@/lib/env"
 import { getBrand } from "@/lib/settings"
@@ -67,11 +68,41 @@ const samples: { [T in EmailTemplate]: EmailProps<T> } = {
   },
   workshop_cancelled: { name: "Ayşe", workshopTitle: "Mum Yapımı", refundAmount: "₺1.500" },
   password_reset: { name: "Ayşe", resetUrl: `${site}/tr/reset?token=r1` },
+  member_exists: { name: "Ayşe", loginUrl: "/tr/account/login", resetUrl: "/tr/account/forgot" },
+  registration_received: {
+    name: "Ayşe",
+    participantName: "Deniz",
+    workshopTitle: "Mum Yapımı",
+    date: "14 Eki 2026",
+    time: "18:00–20:30",
+    venue: "Kadıköy Sanat Evi",
+    amount: "₺1.500",
+    accountUrl: "/tr/account",
+    cash: true,
+    transfer: { accountHolder: "Lart Sanat", bankName: "Ziraat Bankası", iban: "TR330006100519786457841326", note: "Teşekkürler!" },
+    paymentUrl: "https://iyzi.link/AKxyz",
+  },
+  payment_received: { name: "Ayşe", workshopTitle: "Mum Yapımı", amount: "₺1.500", method: "transfer", accountUrl: "/tr/account" },
+  registration_cancelled: {
+    name: "Ayşe",
+    workshopTitle: "Mum Yapımı",
+    refundAmount: "₺750",
+    refundPercent: 50,
+    workshopsUrl: "/tr/workshops",
+  },
+  refund_due: {
+    adminName: "Mina",
+    participantName: "Deniz",
+    workshopTitle: "Mum Yapımı",
+    amount: "₺750",
+    url: `${site}/tr/admin/workshops/w1/registrations`,
+  },
+  refund_sent: { name: "Ayşe", workshopTitle: "Mum Yapımı", amount: "₺750" },
 }
 
 /** The button link a sample should produce (optional links fall back to the home page). */
 function expectedLink(template: EmailTemplate, locale: EmailLocale): string {
-  const link = Object.entries(samples[template]).find(([k]) => /Url$/.test(k))?.[1] as string | undefined
+  const link = Object.entries(samples[template]).find(([k]) => /(?:^url|Url)$/.test(k))?.[1] as string | undefined
   return link ? new URL(link, site).href : `${site}/${locale}`
 }
 
@@ -169,6 +200,98 @@ describe("renderEmail", () => {
 
   it.each(["https://evil.example/verify", "//evil.example/x", "javascript:alert(1)"])("refuses the link %s", async (url) => {
     await expect(renderEmail("welcome_verify", { name: "Ayşe", verifyUrl: url }, "tr")).rejects.toThrow()
+  })
+})
+
+describe("payment emails", () => {
+  const received = samples.registration_received
+
+  it("shows one block per way to pay, with the IBAN in groups of four and a Pay online button", async () => {
+    const email = await renderEmail("registration_received", received, "en")
+    expect(email.text).toContain("Cash at the workshop")
+    expect(email.text).toContain("Bank transfer")
+    expect(email.text).toContain("TR33 0006 1005 1978 6457 8413 26")
+    expect(email.text).toContain("Ziraat Bankası")
+    expect(email.text).toContain("“Deniz”")
+    expect(email.text).toContain("Teşekkürler!")
+    expect(email.text).toContain("Choose whichever way suits you best")
+    expect(email.html).toContain('href="https://iyzi.link/AKxyz"')
+    expect(email.text).toContain("Pay online")
+    // The main button (My workshops) is the quieter one next to "Pay online".
+    expect(email.html).toContain(`class="e-btn-quiet"`)
+    expect(email.html).toContain(`href="${site}/tr/account"`)
+  })
+
+  it("shows only the ways that are on", async () => {
+    const base = { ...received, cash: undefined, transfer: undefined, paymentUrl: undefined }
+    const cashOnly = await renderEmail("registration_received", { ...base, cash: true }, "tr")
+    expect(cashOnly.text).toContain("Atölyede nakit")
+    expect(cashOnly.text).not.toContain("IBAN")
+    expect(cashOnly.text).toContain("Şöyle ödeyebilirsiniz")
+    expect(cashOnly.html).not.toContain(`class="e-btn-quiet"`)
+    const none = await renderEmail("registration_received", base, "fa")
+    expect(none.text).toContain("به‌زودی دربارهٔ روش پرداخت")
+  })
+
+  it("allows an external https link only as the payment link", async () => {
+    for (const paymentUrl of ["http://iyzi.link/x", "javascript:alert(1)", "https://user:pw@iyzi.link/x", "/tr/pay"]) {
+      await expect(renderEmail("registration_received", { ...received, paymentUrl }, "en"), paymentUrl).rejects.toThrow()
+    }
+    await expect(renderEmail("registration_received", { ...received, accountUrl: "https://iyzi.link/x" }, "en")).rejects.toThrow()
+    await expect(
+      renderEmail("payment_received", { ...samples.payment_received, accountUrl: "https://www.paytr.com/link/x" }, "en"),
+    ).rejects.toThrow()
+  })
+
+  it("refuses a malformed IBAN", async () => {
+    const transfer = { ...received.transfer!, iban: "TR33 not an iban" }
+    await expect(renderEmail("registration_received", { ...received, transfer }, "en")).rejects.toThrow()
+  })
+
+  it("never offers the bank account or flags as placeholders", () => {
+    const { names } = emailPlaceholders("registration_received")
+    expect(names).not.toContain("transfer")
+    expect(names).not.toContain("cash")
+    expect(names).toEqual(expect.arrayContaining(["amount", "participantName", "paymentUrl", "ways", "brand"]))
+  })
+
+  it("takes the payment ways from the setting, leaving out the ones that cannot be used", () => {
+    const payment = {
+      cash: true,
+      transfer: { enabled: true, accountHolder: "Lart", bankName: "Ziraat", iban: "TR330006100519786457841326", note: { tr: "Not", fa: "یادداشت" } },
+      online: { enabled: true, note: { tr: "Dekontu gönderin" } },
+    }
+    expect(paymentWays(payment, "https://iyzi.link/x", "fa")).toEqual({
+      cash: true,
+      transfer: { accountHolder: "Lart", bankName: "Ziraat", iban: "TR330006100519786457841326", note: "یادداشت" },
+      paymentUrl: "https://iyzi.link/x",
+      onlineNote: "Dekontu gönderin", // no Persian note: the Turkish one
+    })
+    expect(paymentWays({ ...payment, cash: false }, null, "en")).toEqual({ transfer: expect.objectContaining({ note: "Not" }) })
+    expect(paymentWays({ ...payment, transfer: { ...payment.transfer, iban: "" } }, "", "en")).toEqual({ cash: true })
+    const off = { cash: false, transfer: { ...payment.transfer, enabled: false }, online: { ...payment.online, enabled: false } }
+    expect(paymentWays(off, "https://iyzi.link/x", "tr")).toEqual({})
+  })
+
+  it("names how the payment was made", async () => {
+    const cash = await renderEmail("payment_received", { ...samples.payment_received, method: "cash" }, "en")
+    expect(cash.text).toContain("₺1.500 in cash")
+    const online = await renderEmail("payment_received", { ...samples.payment_received, method: "online" }, "tr")
+    expect(online.text).toContain("online olarak")
+    const transfer = await renderEmail("payment_received", samples.payment_received, "fa")
+    expect(transfer.text).toContain("پرداخت بانکی")
+  })
+
+  it("explains the refund of a cancellation, and leaves it out when nothing was paid", async () => {
+    const half = await renderEmail("registration_cancelled", samples.registration_cancelled, "fa")
+    expect(half.text).toContain("۵۰ درصد")
+    expect(half.text).toContain("₺750")
+    const none = await renderEmail("registration_cancelled", { ...samples.registration_cancelled, refundPercent: 0, refundAmount: "₺0" }, "en")
+    expect(none.text).toContain("can’t be refunded")
+    const unpaid = { ...samples.registration_cancelled, refundAmount: undefined, refundPercent: 100 }
+    const notPaid = await renderEmail("registration_cancelled", unpaid, "en")
+    expect(notPaid.text).toContain("You hadn’t paid yet")
+    expect(notPaid.text).not.toContain("Refund")
   })
 })
 

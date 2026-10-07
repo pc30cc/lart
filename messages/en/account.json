@@ -1,1 +1,81 @@
-{}
+{
+  "form": {
+    "email": "Email",
+    "password": "Password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "newPasswordHint": "At least {min, number} characters. A few words you’ll remember make a strong password."
+  },
+  "errors": {
+    "unverified": "Please confirm your email first. We sent you a link; you can ask for a new one at the top of the page."
+  },
+  "login": {
+    "metaTitle": "Log in",
+    "title": "Welcome back",
+    "subtitle": "Log in to register for workshops and see your registrations.",
+    "submit": "Log in",
+    "forgot": "Forgot your password?",
+    "noAccount": "New here?",
+    "signUp": "Create an account",
+    "errors": {
+      "invalid": "That email and password don’t match. If you’ve tried several times, please wait {minutes, number} minutes and try again."
+    }
+  },
+  "signup": {
+    "metaTitle": "Create an account",
+    "title": "Create your account",
+    "subtitle": "It takes just a minute. Then you can register for any workshop.",
+    "name": "Your name",
+    "phone": "Mobile number",
+    "optional": "optional",
+    "phoneHint": "Only so we can reach you about your workshops.",
+    "submit": "Create my account",
+    "hasAccount": "Already have an account?",
+    "logIn": "Log in",
+    "errors": {
+      "phone": "Please enter a phone number, like +90 532 123 45 67."
+    }
+  },
+  "verify": {
+    "metaTitle": "Confirm your email",
+    "title": "Confirm your email",
+    "checking": "Confirming your email…",
+    "doneTitle": "Thank you! Your email is confirmed.",
+    "doneText": "You’re all set. You can now register for any workshop.",
+    "doneTextInstructor": "You’re all set. Your panel is ready for you.",
+    "continue": "See the workshops",
+    "continueInstructor": "Open my panel",
+    "failedTitle": "This link no longer works",
+    "failedText": "A confirmation link works for 24 hours, and only the newest one does. We can send you a new one right away.",
+    "resend": "Send me a new link",
+    "sent": "Sent! Please check your inbox, and the spam folder too.",
+    "logIn": "Log in",
+    "errors": {
+      "invalidLink": "This link no longer works. Please ask for a new one.",
+      "rateLimited": "We’ve sent a few links already. Please wait a few minutes, then try again.",
+      "notSent": "We couldn’t send the email just now. Please try again in a moment."
+    }
+  },
+  "forgot": {
+    "metaTitle": "Forgot password",
+    "title": "Forgot your password?",
+    "subtitle": "No problem. Enter your email and we’ll send you a link to choose a new one.",
+    "submit": "Send me a link",
+    "sentTitle": "Check your inbox",
+    "sent": "If {email} has an account with us, a link is on its way. It works once, for {minutes, number} minutes. Please check the spam folder too.",
+    "back": "Back to log in"
+  },
+  "reset": {
+    "metaTitle": "New password",
+    "title": "Choose a new password",
+    "subtitle": "You’ll stay logged in here. Any other devices will be logged out.",
+    "password": "New password",
+    "submit": "Save my new password",
+    "invalidTitle": "This link no longer works",
+    "invalid": "A password link works once, for {minutes, number} minutes. Please ask for a new one.",
+    "requestNew": "Send me a new link",
+    "errors": {
+      "invalidLink": "This link no longer works. Please ask for a new one."
+    }
+  }
+}

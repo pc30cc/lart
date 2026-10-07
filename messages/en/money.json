@@ -369,5 +369,55 @@
       "advanceTooBig": "The instructor still holds more advance than their fee. Record what they returned, or what they spent on the workshop, first.",
       "sharesNot100": "The partners’ shares don’t add up to 100%."
     }
+  },
+  "refunds": {
+    "title": "Refunds",
+    "description": "Money to pay back by hand. Once you’ve paid it back, mark it here: it’s booked in the wallet and the person gets an email.",
+    "owedTotal": "Still to pay back",
+    "owedCount": "Refunds waiting",
+    "search": "Search by name, email or phone",
+    "views": {
+      "label": "Show",
+      "owed": "To pay back",
+      "refunded": "Paid back"
+    },
+    "columns": {
+      "person": "Who",
+      "contact": "Contact",
+      "workshop": "Workshop",
+      "reason": "Why",
+      "cancelledOn": "Cancelled",
+      "refundedOn": "Paid back",
+      "amount": "Amount",
+      "actions": "Actions"
+    },
+    "for": "for {name}",
+    "reason": {
+      "workshopCancelled": "Workshop cancelled",
+      "registrationCancelled": "Registration cancelled",
+      "share": "{total} back"
+    },
+    "methods": {
+      "cash": "Cash",
+      "transfer": "Bank transfer"
+    },
+    "mark": {
+      "trigger": "Mark as refunded",
+      "title": "Paid {amount} back?",
+      "description": "To {name}, for “{title}”. It’s booked in the wallet, and they get an email saying it’s on its way.",
+      "method": "How did you pay it back?",
+      "date": "Paid back on",
+      "submit": "Yes, it’s paid back",
+      "done": "Marked as refunded. {name} gets an email."
+    },
+    "empty": {
+      "title": "No refunds to pay back",
+      "description": "When someone who paid cancels, or a workshop is cancelled, the refund shows up here."
+    },
+    "errors": {
+      "alreadyRefunded": "This refund is already marked as paid back. Nothing more to do.",
+      "nothingOwed": "Nothing is owed back on this registration.",
+      "chooseMethod": "Please choose how you paid it back."
+    }
   }
 }
