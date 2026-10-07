@@ -31,7 +31,10 @@ function contentSecurityPolicy(nonce: string): string {
     `connect-src 'self'${isDev ? " ws: wss:" : ""}`,
     "object-src 'none'",
     "base-uri 'self'",
-    "form-action 'self'",
+    // iyzico's hosted payment page is a top-level redirect; PayTR's is an iframe.
+    "frame-src 'self' https://www.paytr.com",
+    // A registration may be sent on to iyzico's hosted payment page.
+    "form-action 'self' https://sandbox-cpp.iyzipay.com https://cpp.iyzipay.com",
     "frame-ancestors 'none'",
     ...(isDev ? [] : ["upgrade-insecure-requests"]),
   ].join("; ")

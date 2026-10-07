@@ -59,6 +59,8 @@ export const members = pgTable("members", {
   passwordHash: text("password_hash").notNull(),
   name: text("name").notNull(),
   phone: text("phone"),
+  /** Language of the member's emails (the language they signed up in, or chose later). */
+  locale: text("locale").notNull().default("tr"),
   emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
   failedLogins: smallint("failed_logins").notNull().default(0),
   lockedUntil: timestamp("locked_until", { withTimezone: true }),
@@ -83,6 +85,8 @@ export const instructors = pgTable("instructors", {
   teachingLanguages: text("teaching_languages").array().notNull().default(sql`'{}'::text[]`),
   website: text("website"),
   photoPath: text("photo_path"),
+  /** Language of the instructor's emails and panel. */
+  locale: text("locale").notNull().default("tr"),
   active: boolean("active").notNull().default(true),
   emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
   failedLogins: smallint("failed_logins").notNull().default(0),
@@ -288,13 +292,27 @@ export const registrations = pgTable("registrations", {
   termsAcceptedAt: timestamp("terms_accepted_at", { withTimezone: true }).notNull(),
   photoConsent: boolean("photo_consent").notNull().default(false),
   videoConsent: boolean("video_consent").notNull().default(false),
+  /** A pending registration keeps its seat until then (online payment in progress). */
+  holdUntil: timestamp("hold_until", { withTimezone: true }),
+  /**
+   * "iyzico", "paytr", "manual" (recorded by an admin: cash, bank transfer) or
+   * "test" (the simulated gateway, development and e2e only).
+   */
+  paymentProvider: text("payment_provider"),
+  /** The gateway's id of the payment, needed for refunds. */
+  paymentRef: text("payment_ref"),
   paidAt: timestamp("paid_at", { withTimezone: true }),
   cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+  /** Owed back to the payer (set at cancellation); refunded_at once paid back. */
   refundAmount: money("refund_amount"),
+  refundedAt: timestamp("refunded_at", { withTimezone: true }),
   createdAt: createdAt(),
 }, (t) => [
   index("registrations_course_idx").on(t.courseId, t.status),
   index("registrations_member_idx").on(t.memberId),
+  uniqueIndex("registrations_payment_ref").on(t.paymentProvider, t.paymentRef),
+  check("registrations_amounts", sql`${t.amount} >= 0 and coalesce(${t.refundAmount}, 0) between 0 and ${t.amount}`),
+  check("registrations_provider", sql`${t.paymentProvider} in ('iyzico', 'paytr', 'manual', 'test')`),
 ])
 
 export const mediaKind = pgEnum("media_kind", ["sample", "gallery_photo", "gallery_video"])
