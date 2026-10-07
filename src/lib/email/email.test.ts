@@ -44,6 +44,7 @@ const samples: { [T in EmailTemplate]: EmailProps<T> } = {
     instructorUrl: `${site}/tr/admin/instructors/i1`,
   },
   instructor_approved: { name: "Zeynep", panelUrl: "/tr/instructor" },
+  partner_invite: { name: "Leyla", inviterName: "Mina", acceptUrl: "/fa/admin/accept-invite?token=pi123" },
   contract_ready: {
     instructorName: "Zeynep",
     workshopTitle: "Mum Yapımı",

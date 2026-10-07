@@ -212,6 +212,10 @@
         "title": "Go / no-go decision due",
         "to": "Admins"
       },
+      "partner_invite": {
+        "title": "Partner invitation",
+        "to": "New partners"
+      },
       "registration_confirmed": {
         "title": "Registration confirmed",
         "to": "Participants"

@@ -99,6 +99,15 @@
     "intro": "{status, select, reached {Good news: “{workshopTitle}” has reached its minimum number of participants. Please confirm the workshop so everyone knows it’s going ahead.} other {“{workshopTitle}” hasn’t reached its minimum number of participants yet. Please decide whether to hold it or cancel it. If you cancel, every participant gets a friendly email and a full refund.}}",
     "cta": "Make the decision"
   },
+  "partner_invite": {
+    "subject": "{inviterName} invites you to join {brand} as a partner",
+    "preview": "Choose a password to open the {brand} admin panel.",
+    "heading": "Join us as a partner",
+    "intro": "{inviterName} has invited you to become a partner at {brand}. Partners run the workshops, instructors and money together in the admin panel.",
+    "intro2": "To accept, please choose a password for your account. This link works for one week.",
+    "cta": "Accept the invitation",
+    "note": "This link is just for you, so please don’t share it. If you weren’t expecting this email, you can ignore it."
+  },
   "registration_confirmed": {
     "subject": "You’re registered for “{workshopTitle}”",
     "preview": "See you on {date} at {time}.",

@@ -210,6 +210,8 @@ export function InstructorForm({ instructor }: { instructor?: EditableInstructor
                 onValueChange={(next) => next && onChange(next)}
                 onBlur={onBlur}
                 className="flex-wrap"
+                // A <label for> cannot name this group (a div), so it carries the label's text itself.
+                aria-label={t("fields.inviteLocale")}
                 aria-describedby={aria["aria-describedby"]}
                 aria-invalid={aria["aria-invalid"]}
               >

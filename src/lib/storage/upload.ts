@@ -9,6 +9,7 @@ import { pipeline } from "node:stream/promises"
 import { processImage, processOriginal, type WatermarkSettings } from "@/lib/images"
 import { newObjectPath, type Storage } from "./index"
 import {
+  isPrivatePurpose,
   MAX_VIDEO_BYTES,
   privateUrl,
   UploadError,
@@ -24,12 +25,14 @@ const prefixes: Record<ImagePurpose, string> = {
   course_sample: "courses",
   gallery_photo: "gallery",
   watermark_logo: "brand",
+  admin_photo: "admins",
 }
 
 /**
  * Check, process and store one uploaded image (the byte limit is enforced by
  * the stream). Images are re-encoded; gallery photos keep a private
- * unwatermarked original; the watermark logo is private.
+ * unwatermarked original; the watermark logo and partners' photos are private
+ * (`isPrivatePurpose`).
  */
 export async function storeImage({
   storage,
@@ -48,7 +51,7 @@ export async function storeImage({
   const image = await processImage(input, purpose)
   const path = newObjectPath(prefixes[purpose], image.ext)
   const size = { width: image.width, height: image.height }
-  if (purpose === "watermark_logo") {
+  if (isPrivatePurpose(purpose)) {
     await storage.putPrivate(path, image.data, image.contentType)
     return { path, url: privateUrl(path), ...size }
   }

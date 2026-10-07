@@ -13,6 +13,7 @@ import {
   templates,
 } from "@/db/schema"
 import { partnerCapitals, walletBalance } from "@/features/money/ledger"
+import { adminPhotoUrl } from "@/features/partners/schema"
 import { requireAdmin } from "@/lib/auth/admin"
 import { zonedParts, zonedToIso } from "@/lib/format"
 import { addMonths, change, fillMonths, fillRate, lastMonths, paymentNote, workshopAlert } from "./metrics"
@@ -229,14 +230,25 @@ async function partners(exec: Exec) {
   const [people, capitals] = await gather(exec, [
     () =>
       exec
-        .select({ id: admins.id, name: admins.name, shareBp: admins.shareBp, active: admins.active })
+        .select({
+          id: admins.id,
+          name: admins.name,
+          shareBp: admins.shareBp,
+          active: admins.active,
+          photoPath: admins.photoPath,
+        })
         .from(admins)
         .orderBy(asc(admins.createdAt), asc(admins.id)),
     () => partnerCapitals(exec),
   ])
   return people
     .filter((p) => p.active || capitals.has(p.id))
-    .map((p) => ({ ...p, shareBp: p.active ? p.shareBp : 0, capital: capitals.get(p.id)?.capital ?? 0 }))
+    .map(({ photoPath, ...p }) => ({
+      ...p,
+      shareBp: p.active ? p.shareBp : 0,
+      capital: capitals.get(p.id)?.capital ?? 0,
+      photoUrl: adminPhotoUrl(photoPath),
+    }))
 }
 
 /**

@@ -210,6 +210,11 @@ export const emailTemplates = {
     cta: "instructorUrl",
     details: { instructor: "instructorName", teachingField: "teachingField", email: "instructorEmail" },
   }),
+  partner_invite: define({
+    schema: z.object({ name: text(), inviterName: text(), acceptUrl: siteUrl }),
+    greet: "name",
+    cta: "acceptUrl",
+  }),
   instructor_approved: define({
     schema: z.object({ name: text(), panelUrl: siteUrl }),
     greet: "name",

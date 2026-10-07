@@ -239,6 +239,7 @@
     },
     "entities": {
       "admin": "Yönetici",
+      "admin_invite": "Ortak daveti",
       "category": "Kategori",
       "contract": "Sözleşme",
       "email": "E-posta",
@@ -253,7 +254,12 @@
     },
     "actions": {
       "admin": {
-        "create": "Yönetici eklendi"
+        "create": "Yönetici eklendi",
+        "invite": "Ortak davet edildi",
+        "invite_resend": "Ortak daveti yeniden gönderildi",
+        "invite_cancel": "Ortak daveti iptal edildi",
+        "accept_invite": "Ortak daveti kabul edildi",
+        "profile_update": "Kendi profilini düzenledi"
       },
       "auth": {
         "login": "Giriş yapıldı",

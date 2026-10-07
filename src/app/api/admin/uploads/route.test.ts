@@ -79,6 +79,36 @@ describe("POST /api/admin/uploads", () => {
     expect(covers.filter((name) => String(name).startsWith("courses/") && String(name).endsWith(".webp"))).toEqual([])
   })
 
+  it("keeps a partner's photo in private storage, shown through the admin-only route", async () => {
+    const res = await upload(await formWith("admin_photo", await jpegBlob()))
+    expect(res.status).toBe(201)
+    const body = await res.json()
+    expect(body).toMatchObject({ width: 512, height: 512 })
+    expect(body.path).toMatch(/^admins\/\d{4}-\d{2}\/[\w-]{22}\.webp$/)
+    expect(body.url).toBe(`/api/admin/media/private/${body.path}`)
+    const { stat } = await import("node:fs/promises")
+    expect((await stat(path.join(state.root, "private", body.path))).isFile()).toBe(true)
+    await expect(stat(path.join(state.root, "public", body.path))).rejects.toThrow()
+    expect(state.audit).toHaveBeenLastCalledWith(
+      expect.objectContaining({ adminId: "a", entityId: body.path, data: expect.objectContaining({ purpose: "admin_photo" }) }),
+    )
+  })
+
+  it("removes a private photo when the audit entry cannot be written", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
+    const { readdir } = await import("node:fs/promises")
+    const photos = async () =>
+      (await readdir(path.join(state.root, "private"), { recursive: true }).catch(() => []))
+        .map(String)
+        .filter((name) => name.startsWith("admins/") && name.endsWith(".webp"))
+        .sort()
+    const before = await photos()
+    state.audit.mockRejectedValueOnce(new Error("database down"))
+    const res = await upload(await formWith("admin_photo", await jpegBlob()))
+    expect([res.status, await res.json()]).toEqual([500, { error: "server" }])
+    expect(await photos()).toEqual(before)
+  })
+
   it.each([
     ["an unknown purpose", () => formWith("avatar", null)],
     ["no file", () => formWith("course_cover", null)],

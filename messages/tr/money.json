@@ -175,7 +175,7 @@
     },
     "empty": {
       "title": "Henüz ortak yok",
-      "description": "Ortaklar, süper yöneticilerdir. İlk ortak kurulum komutuyla eklenir."
+      "description": "Ortaklar, süper yöneticilerdir. Yukarıdaki “Ortak davet et” düğmesiyle birini davet edin."
     },
     "card": {
       "share": "pay",

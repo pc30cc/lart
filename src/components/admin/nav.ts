@@ -70,12 +70,15 @@ export function isNavActive(item: NavItem, pathname: string): boolean {
   return pathname === item.href || pathname.startsWith(`${item.href}/`)
 }
 
-/** The group and item for a path: the longest matching href wins. */
+/**
+ * The group and item for a path: the longest matching href wins. An `exact`
+ * item is no parent (so "/admin/profile" belongs to no item, not to Dashboard).
+ */
 export function findNav(pathname: string): { group: NavGroup; item: NavItem } | null {
   let best: { group: NavGroup; item: NavItem } | null = null
   for (const group of adminNav) {
     for (const item of group.items) {
-      const matches = pathname === item.href || pathname.startsWith(`${item.href}/`)
+      const matches = isNavActive(item, pathname)
       if (matches && (!best || item.href.length > best.item.href.length)) best = { group, item }
     }
   }

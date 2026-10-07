@@ -99,6 +99,15 @@
     "intro": "{status, select, reached {Güzel haber: “{workshopTitle}” gereken en az katılımcı sayısına ulaştı. Herkes atölyenin yapılacağını bilsin diye lütfen atölyeyi onaylayın.} other {“{workshopTitle}” henüz gereken en az katılımcı sayısına ulaşmadı. Lütfen atölyenin yapılıp yapılmayacağına karar verin. İptal ederseniz her katılımcıya nazik bir e-posta gider ve ödemesinin tamamı iade edilir.}}",
     "cta": "Karar ver"
   },
+  "partner_invite": {
+    "subject": "{inviterName} sizi {brand} ortağı olmaya davet ediyor",
+    "preview": "{brand} yönetim paneline girmek için bir şifre belirleyin.",
+    "heading": "Ortağımız olmaya davetlisiniz",
+    "intro": "{inviterName} sizi {brand} ortağı olmaya davet etti. Ortaklar atölyeleri, eğitmenleri ve finansı yönetim panelinde birlikte yürütür.",
+    "intro2": "Daveti kabul etmek için lütfen hesabınız için bir şifre belirleyin. Bu bağlantı bir hafta geçerlidir.",
+    "cta": "Daveti kabul et",
+    "note": "Bu bağlantı yalnızca size özel, lütfen kimseyle paylaşmayın. Bu e-postayı beklemiyorduysanız görmezden gelebilirsiniz."
+  },
   "registration_confirmed": {
     "subject": "“{workshopTitle}” kaydınız tamamlandı",
     "preview": "Görüşmek üzere: {date}, saat {time}.",

@@ -34,23 +34,28 @@ export function BreadcrumbTitle({ title }: { title: string }) {
 
 /**
  * Section › Page › Sub-page, derived from the nav registry and the current
- * path. The last crumb on deeper pages (new, edit, details) is the PageHeader title.
+ * path. The last crumb on deeper pages (new, edit, details) is the PageHeader
+ * title. A page outside the navigation (My profile, from the user menu) shows
+ * only its title.
  */
 export function AdminBreadcrumbs() {
   const t = useTranslations("admin")
   const pathname = usePathname()
   const pageTitle = useContext(TitleContext)?.title ?? null
   const match = findNav(pathname)
-  if (!match) return null
-
-  const deeper = pathname !== match.item.href
-  const groupLabel = t(`nav.${match.group.label}`)
-  const itemLabel = t(`nav.${match.item.label}`)
   const crumbs: { label: string; href?: string }[] = []
-  // Never "Workshops › Workshops": skip the group when it reads like its item.
-  if (groupLabel !== itemLabel) crumbs.push({ label: groupLabel })
-  crumbs.push({ label: itemLabel, href: deeper ? match.item.href : undefined })
-  if (deeper && pageTitle) crumbs.push({ label: pageTitle })
+  if (match) {
+    const deeper = pathname !== match.item.href
+    const groupLabel = t(`nav.${match.group.label}`)
+    const itemLabel = t(`nav.${match.item.label}`)
+    // Never "Workshops › Workshops": skip the group when it reads like its item.
+    if (groupLabel !== itemLabel) crumbs.push({ label: groupLabel })
+    crumbs.push({ label: itemLabel, href: deeper ? match.item.href : undefined })
+    if (deeper && pageTitle) crumbs.push({ label: pageTitle })
+  } else if (pageTitle) {
+    crumbs.push({ label: pageTitle })
+  }
+  if (!crumbs.length) return null
 
   return (
     <Breadcrumb aria-label={t("shell.breadcrumb")} className="min-w-0">

@@ -94,6 +94,7 @@ export async function sampleEmailProps<T extends EmailTemplate>(template: T, loc
       instructorUrl: `/${locale}/admin/instructors`,
     },
     instructor_approved: { name: instructorName, panelUrl: `/${locale}/instructor` },
+    partner_invite: { name: person, inviterName: adminName, acceptUrl: `/${locale}/admin` },
     contract_ready: { instructorName, workshopTitle, workshopDate: `${date}${locale === "fa" ? "،" : ","} ${time}`, signUrl: `/${locale}` },
     contract_signed: { adminName, instructorName, workshopTitle, workshopUrl: `/${locale}/admin` },
     decision_due: {

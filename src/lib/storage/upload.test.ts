@@ -57,6 +57,14 @@ describe("storeImage", () => {
     expect((await read("private", result.path)).length).toBeGreaterThan(0)
   })
 
+  it("keeps partners' photos private: a small square under admins/", async () => {
+    const result = await storeImage({ storage, purpose: "admin_photo", file: toStream(await jpeg(1200, 900)), watermark: noWatermark })
+    expect(result).toMatchObject({ width: 512, height: 512, url: `/api/admin/media/private/${result.path}` })
+    expect(result.path).toMatch(/^admins\/\d{4}-\d{2}\/[\w-]{22}\.webp$/)
+    expect((await sharp(await read("private", result.path)).metadata()).format).toBe("webp")
+    expect(await files("public").catch(() => 0)).toBe(0)
+  })
+
   it("stores a watermarked gallery photo and its private original", async () => {
     const watermark = await withLogo()
     const result = await storeImage({ storage, purpose: "gallery_photo", file: toStream(await jpeg(3000, 2000)), watermark })

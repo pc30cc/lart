@@ -47,7 +47,7 @@ type Area = "admin" | "instructor" | "account"
 
 /** The pages of each area that work without a session: sign in, sign up, emailed links. */
 const OPEN_PATHS: Record<Area, RegExp> = {
-  admin: /^\/(fa|tr|en)\/admin\/login(?:\/(?:forgot|reset))?\/?$/,
+  admin: /^\/(fa|tr|en)\/admin\/(?:login(?:\/(?:forgot|reset))?|accept-invite)\/?$/,
   instructor: /^\/(fa|tr|en)\/instructor\/(?:login|signup|accept-invite|forgot|reset|verify)\/?$/,
   account: /^\/(fa|tr|en)\/account\/(?:signup|login|verify|forgot|reset)\/?$/,
 }

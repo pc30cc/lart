@@ -1,12 +1,14 @@
-import { CircleAlertIcon, HandshakeIcon } from "lucide-react"
+import { CircleAlertIcon, HandshakeIcon, InfoIcon } from "lucide-react"
 import type { Metadata } from "next"
 import { getLocale, getTranslations } from "next-intl/server"
 
 import { EmptyState } from "@/components/admin/empty-state"
 import { Money } from "@/components/admin/money"
 import { PageHeader } from "@/components/admin/page-header"
+import { PersonAvatar } from "@/components/admin/person-avatar"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { listPartnerAccounts, type PartnerAccount } from "@/features/money/queries"
+import { listPartnerInvites } from "@/features/partners/queries"
 import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
 import { formatPercent } from "@/lib/format"
@@ -14,6 +16,8 @@ import { cn } from "@/lib/utils"
 import { CapitalDialog } from "../_components/dialogs"
 import { Panel, Row } from "../_components/parts"
 import { SharesForm } from "../_components/shares-form"
+import { InviteCard } from "./_components/invite-card"
+import { InviteDialog } from "./_components/invite-dialog"
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("money.partners")
@@ -22,9 +26,17 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function PartnersPage() {
   await requireAdmin()
-  const [t, locale, data] = await Promise.all([getTranslations("money.partners"), getLocale(), listPartnerAccounts()])
+  const [t, tp, locale, data, { invites, slots }] = await Promise.all([
+    getTranslations("money.partners"),
+    getTranslations("partners"),
+    getLocale(),
+    listPartnerAccounts(),
+    listPartnerInvites(),
+  ])
   const active = data.rows.filter((p) => p.active)
   const options = active.map((p) => ({ adminId: p.id, name: p.name }))
+  // New partners join at 0 %; when the others already make 100 % nothing else would point it out.
+  const zeroShare = data.sharesOk && active.some((p) => p.shareBp === 0)
 
   return (
     <>
@@ -32,14 +44,20 @@ export default async function PartnersPage() {
         title={t("title")}
         description={t("description")}
         actions={
-          options.length > 0 && (
-            <>
-              <CapitalDialog direction="contribution" partners={options} trigger={{ variant: "default" }} />
-              <CapitalDialog direction="withdrawal" partners={options} />
-            </>
-          )
+          <>
+            <InviteDialog disabled={!slots.canInvite} />
+            {options.length > 0 && (
+              <>
+                <CapitalDialog direction="contribution" partners={options} trigger={{ variant: "default" }} />
+                <CapitalDialog direction="withdrawal" partners={options} />
+              </>
+            )}
+          </>
         }
       />
+
+      {/* With no working invitation the team itself is full: nothing to cancel, so no such advice. */}
+      {!slots.canInvite && <Note>{tp("invite.full", { max: slots.max, invited: slots.invited })}</Note>}
 
       {!data.sharesOk && active.length > 0 && (
         <div role="alert" className="bg-warning/10 text-warning mb-6 flex items-start gap-3 rounded-xl p-4 text-sm">
@@ -50,12 +68,17 @@ export default async function PartnersPage() {
         </div>
       )}
 
-      {data.rows.length === 0 ? (
+      {zeroShare && <Note>{tp("zeroShare")}</Note>}
+
+      {data.rows.length === 0 && invites.length === 0 ? (
         <EmptyState icon={HandshakeIcon} title={t("empty.title")} description={t("empty.description")} />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {data.rows.map((p) => (
             <PartnerCard key={p.id} partner={p} locale={locale} t={t} sharesOk={data.sharesOk} />
+          ))}
+          {invites.map((invite) => (
+            <InviteCard key={invite.id} invite={invite} />
           ))}
         </div>
       )}
@@ -63,7 +86,9 @@ export default async function PartnersPage() {
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         {active.length > 0 && (
           <Panel title={t("shares.title")} description={t("shares.description")}>
-            <SharesForm partners={active.map((p) => ({ adminId: p.id, name: p.name, shareBp: p.shareBp }))} />
+            <SharesForm
+              partners={active.map((p) => ({ adminId: p.id, name: p.name, shareBp: p.shareBp, photoUrl: p.photoUrl }))}
+            />
           </Panel>
         )}
         <Panel title={t("explain.title")}>
@@ -86,6 +111,16 @@ export default async function PartnersPage() {
   )
 }
 
+/** A calm hint line (not a warning). */
+function Note({ children }: { children: React.ReactNode }) {
+  return (
+    <div role="note" className="bg-info/8 text-foreground mb-6 flex items-start gap-3 rounded-xl p-4 text-sm">
+      <InfoIcon className="text-info mt-0.5 size-4 shrink-0" />
+      <p className="text-pretty">{children}</p>
+    </div>
+  )
+}
+
 function PartnerCard({
   partner: p,
   locale,
@@ -100,9 +135,7 @@ function PartnerCard({
   return (
     <article className={cn("bg-card ring-foreground/8 flex flex-col rounded-xl shadow-xs ring-1", !p.active && "opacity-80")}>
       <header className="flex items-start gap-3 border-b p-4 md:p-5">
-        <span aria-hidden className="bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-full text-base font-semibold">
-          {p.name.trim().charAt(0).toUpperCase()}
-        </span>
+        <PersonAvatar name={p.name} url={p.photoUrl} className="size-11 text-base font-semibold" />
         <div className="min-w-0 flex-1">
           <h2 className="truncate font-semibold">{p.name}</h2>
           <p className="text-muted-foreground truncate text-xs rtl:text-right" dir="ltr">

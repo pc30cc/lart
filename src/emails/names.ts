@@ -13,6 +13,7 @@ export const emailTemplateNames = [
   "contract_ready",
   "contract_signed",
   "decision_due",
+  "partner_invite",
   "registration_confirmed",
   "workshop_reminder",
   "workshop_cancelled",

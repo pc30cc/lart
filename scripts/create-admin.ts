@@ -2,25 +2,26 @@
  * Create a super admin (a business partner). Run with: pnpm admin:create
  *
  * Interactive: asks for email, name, password (hidden) and profit share.
- * At most three super admins exist. Input can also be piped, one answer per
- * line (email, name, password, password again, share), for automation.
+ * At most MAX_PARTNERS (3) partners: active super admins plus invitations
+ * that still work (further partners are normally invited from the panel,
+ * Money → Partners). Input can also be piped, one answer per line (email,
+ * name, password, password again, share), for automation.
  *
  * Standalone on purpose: it uses its own pg pool and never imports
  * "server-only" modules, so it runs outside Next.js.
  */
 import "dotenv/config"
 
-import { count, sql } from "drizzle-orm"
+import { and, count, eq, gt, sql } from "drizzle-orm"
 import { drizzle } from "drizzle-orm/node-postgres"
 import { stdin, stdout } from "node:process"
 import { createInterface } from "node:readline/promises"
 import { Pool } from "pg"
 import { z } from "zod"
 
-import { admins, auditLog } from "../src/db/schema"
+import { adminInvites, admins, auditLog } from "../src/db/schema"
+import { MAX_PARTNERS, PARTNERS_LOCK } from "../src/features/partners/limits"
 import { hashPassword, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "../src/lib/auth/password"
-
-const MAX_ADMINS = 3
 
 // ─── Prompts ──────────────────────────────────────────────────────────────────
 
@@ -107,13 +108,29 @@ async function main() {
   const pool = new Pool({ connectionString: url, max: 1 })
   const db = drizzle({ client: pool })
 
+  /** Active partners plus invitations that still work (the panel counts the same way). */
+  const usedSlots = async (exec: Pick<typeof db, "select">) => {
+    const [[{ active }], [{ invited }]] = await Promise.all([
+      exec.select({ active: count() }).from(admins).where(eq(admins.active, true)),
+      exec.select({ invited: count() }).from(adminInvites).where(gt(adminInvites.expiresAt, new Date())),
+    ])
+    return active + invited
+  }
+
   try {
-    const existing = await db
-      .select({ email: admins.email, name: admins.name, shareBp: admins.shareBp })
-      .from(admins)
-      .orderBy(admins.createdAt)
-    if (existing.length >= MAX_ADMINS) {
-      console.log(`There are already ${MAX_ADMINS} super admins (partners). A fourth one cannot be added.`)
+    const [everyone, used, invited] = await Promise.all([
+      db
+        .select({ email: admins.email, name: admins.name, shareBp: admins.shareBp, active: admins.active })
+        .from(admins)
+        .orderBy(admins.createdAt),
+      usedSlots(db),
+      db.select({ email: adminInvites.email }).from(adminInvites).where(gt(adminInvites.expiresAt, new Date())),
+    ])
+    const existing = everyone.filter((a) => a.active)
+    if (used >= MAX_PARTNERS) {
+      console.log(
+        `There are already ${MAX_PARTNERS} partners (with open invitations). Another one cannot be added.`,
+      )
       process.exitCode = 1
       return
     }
@@ -125,11 +142,13 @@ async function main() {
       console.log("")
     }
 
-    const takenEmails = new Set(existing.map((a) => a.email))
+    const takenEmails = new Set(everyone.map((a) => a.email.toLowerCase()))
+    const invitedEmails = new Set(invited.map((i) => i.email))
     const email = await askUntil("Email: ", (s) => {
       const parsed = z.email().max(254).safeParse(s.toLowerCase())
       if (!parsed.success) return "Please enter a valid email address."
       if (takenEmails.has(parsed.data)) return "A super admin with this email already exists."
+      if (invitedEmails.has(parsed.data)) return "This email has an open invitation (Money → Partners)."
       return { value: parsed.data }
     })
 
@@ -163,10 +182,16 @@ async function main() {
 
     const passwordHash = await hashPassword(password)
     const id = await db.transaction(async (tx) => {
-      // Serialise concurrent runs so the three-partner limit always holds.
-      await tx.execute(sql`lock table ${admins} in exclusive mode`)
-      const [{ n }] = await tx.select({ n: count() }).from(admins)
-      if (n >= MAX_ADMINS) throw new Error(`There are already ${MAX_ADMINS} super admins.`)
+      // The panel's lock: concurrent runs, invitations and acceptances never pass the limit together.
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${PARTNERS_LOCK}))`)
+      if ((await usedSlots(tx)) >= MAX_PARTNERS) throw new Error(`There are already ${MAX_PARTNERS} partners.`)
+      const [invite] = await tx
+        .select({ id: adminInvites.id })
+        .from(adminInvites)
+        .where(and(eq(adminInvites.email, email), gt(adminInvites.expiresAt, new Date())))
+      if (invite) throw new Error("This email has an open invitation (Money → Partners).")
+      // An expired invitation of this address could never be sent again: it goes.
+      await tx.delete(adminInvites).where(eq(adminInvites.email, email))
       const [row] = await tx.insert(admins).values({ email, name, passwordHash, shareBp }).returning({ id: admins.id })
       await tx.insert(auditLog).values({
         adminId: null,

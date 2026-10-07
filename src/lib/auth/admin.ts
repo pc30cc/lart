@@ -11,10 +11,12 @@ import { currentSession, deleteSession } from "./session"
 
 /**
  * Super-admin authentication. SIGNATURES ARE FIXED (other modules import them).
+ * `photoPath` was added later and is optional (tests mock sessions without it):
+ * read it as `admin.photoPath ?? null`.
  */
 export type AdminSession = {
   sessionId: string
-  admin: { id: string; email: string; name: string; shareBp: number }
+  admin: { id: string; email: string; name: string; shareBp: number; photoPath?: string | null }
 }
 
 /** The signed-in super admin, or null. Never throws for a missing session. Cached per request. */
@@ -26,7 +28,14 @@ const loadAdmin = cache(async (): Promise<AdminSession | null> => {
   const session = await currentSession("admin")
   if (!session) return null
   const [admin] = await db
-    .select({ id: admins.id, email: admins.email, name: admins.name, shareBp: admins.shareBp, active: admins.active })
+    .select({
+      id: admins.id,
+      email: admins.email,
+      name: admins.name,
+      shareBp: admins.shareBp,
+      photoPath: admins.photoPath,
+      active: admins.active,
+    })
     .from(admins)
     .where(eq(admins.id, session.subjectId))
     .limit(1)
@@ -36,7 +45,7 @@ const loadAdmin = cache(async (): Promise<AdminSession | null> => {
   }
   return {
     sessionId: session.id,
-    admin: { id: admin.id, email: admin.email, name: admin.name, shareBp: admin.shareBp },
+    admin: { id: admin.id, email: admin.email, name: admin.name, shareBp: admin.shareBp, photoPath: admin.photoPath },
   }
 })
 

@@ -1,0 +1,115 @@
+{
+  "menu": {
+    "profile": "Profilim"
+  },
+  "zeroShare": "Yeni bir ortak %0 kâr payıyla başlar. Birlikte karar verdiğinizde payları aşağıdan değiştirin.",
+  "invite": {
+    "trigger": "Ortak davet et",
+    "title": "Yeni ortak davet et",
+    "description": "Katılması için bağlantı içeren bir e-posta alacak. Ortaklar, para işleri dahil her şeyi burada birlikte yönetir.",
+    "name": "Ad soyad",
+    "nameHint": "Diğer ortakların göreceği şekilde. Daha sonra kendisi değiştirebilir.",
+    "email": "E-posta",
+    "locale": "Dil",
+    "localeHint": "E-posta ve davet sayfası bu dilde olur.",
+    "submit": "Davet gönder",
+    "full": "{invited, plural, =0 {Ekipte zaten {max, number} ortak var; olabilecek en fazla sayı bu. Şu anda başka birini davet edemezsiniz.} other {Tüm yerler dolu: açık davetler dahil en fazla {max, number} ortak olabilir. Başka birini davet etmek için önce açık bir daveti iptal edin.}}",
+    "sent": {
+      "title": "{name} için davet gönderildi",
+      "titleNoEmail": "Davet bağlantısı hazır",
+      "emailed": "{name} için katılma bağlantısı içeren bir e-posta gönderdik. Aşağıdaki bağlantıyı siz de gönderebilirsiniz, örneğin WhatsApp’tan.",
+      "notEmailed": "E-posta gönderilemedi. Aşağıdaki bağlantıyı kopyalayıp kendiniz gönderin, örneğin WhatsApp’tan. Davet edilen: {name}",
+      "link": "Davet bağlantısı (yalnızca şimdi gösterilir)",
+      "copy": "Kopyala",
+      "copiedShort": "Kopyalandı",
+      "copied": "Bağlantı kopyalandı.",
+      "copyFailed": "Kopyalanamadı. Lütfen bağlantıyı seçip elle kopyalayın.",
+      "once": "Bağlantı yalnızca bir kez ve {days, number} gün boyunca çalışır. Lütfen yalnızca bu kişiyle paylaşın.",
+      "share": "{name} %0 kâr payıyla başlar. Payları daha sonra bu sayfada birlikte değiştirebilirsiniz."
+    }
+  },
+  "invites": {
+    "label": "{name} için davet",
+    "waiting": "Yanıt bekleniyor",
+    "expired": "Bağlantının süresi doldu",
+    "invitedBy": "Davet eden:",
+    "language": "Dil:",
+    "worksUntil": "Son geçerlilik:",
+    "expiredOn": "Süresi doldu:",
+    "resend": "Yeniden gönder",
+    "cancel": {
+      "action": "İptal et",
+      "title": "{name} için davet iptal edilsin mi?",
+      "description": "Bağlantı artık çalışmaz ve yer boşalır. Daha sonra yeniden davet edebilirsiniz.",
+      "confirm": "Evet, iptal et",
+      "done": "Davet iptal edildi."
+    }
+  },
+  "accept": {
+    "metaTitle": "Ortak olarak katıl",
+    "title": "Hoş geldiniz, {name}!",
+    "subtitle": "{inviter} sizi {brand} işini ortak olarak birlikte yürütmeye davet etti. Tamamlamak için bir şifre seçin.",
+    "email": "Giriş için e-postanız",
+    "password": "Bir şifre seçin",
+    "passwordHint": "En az {min, number} karakter. Birbiriyle ilgisiz birkaç kelime, hem güçlü hem de akılda kalan bir şifre olur.",
+    "submit": "Ekibe katıl",
+    "shareNote": "%0 kâr payıyla başlarsınız; payları ortaklar birlikte belirler.",
+    "invalidTitle": "Bu bağlantı artık çalışmıyor",
+    "invalid": "Davet bağlantısı yalnızca bir kez ve {days, number} gün boyunca çalışır. Zaten katıldıysanız e-postanız ve şifrenizle giriş yapmanız yeterli. Katılmadıysanız sizi davet eden ortaktan yeni bir bağlantı isteyin.",
+    "signIn": "Girişe git",
+    "errors": {
+      "invalidLink": "Bu davet bağlantısı artık çalışmıyor. Zaten katıldıysanız e-postanız ve şifrenizle giriş yapmanız yeterli. Katılmadıysanız sizi davet eden ortaktan yeni bir bağlantı isteyin.",
+      "emailTaken": "Bu e-postayla zaten bir hesap var. Lütfen giriş sayfasından giriş yapın.",
+      "limit": "Ekipte şu anda {max, number} ortak var, bu yüzden bu davet şimdilik kabul edilemiyor. Lütfen sizi davet eden ortakla konuşun."
+    }
+  },
+  "profile": {
+    "title": "Profilim",
+    "description": "Diğer ortakların gördüğü fotoğrafınız, adınız ve e-postanız.",
+    "photo": {
+      "title": "Fotoğraf",
+      "description": "Yalnızca ortaklar, burada panelde görür.",
+      "label": "Fotoğrafınız",
+      "hint": "Yüzünüzün kare bir fotoğrafı en iyi sonucu verir."
+    },
+    "details": {
+      "title": "Ad ve e-posta",
+      "description": "Bu e-postayla giriş yaparsınız; panelin e-postaları da buraya gelir.",
+      "name": "Ad soyad",
+      "nameHint": "Diğer ortaklar sizi bu adla görür.",
+      "email": "E-posta",
+      "emailHint": "Bu e-postayla giriş yaparsınız.",
+      "emailChange": "E-postanızı değiştirmek için lütfen mevcut şifrenizi girin. Diğer cihazlarınızdan çıkış yapılır; bu cihazda oturumunuz açık kalır.",
+      "currentPassword": "Mevcut şifre"
+    },
+    "saved": "Profiliniz kaydedildi.",
+    "savedEmail": "Kaydedildi. Bundan sonra yeni e-postanızla giriş yapın.",
+    "share": {
+      "title": "Kâr payı",
+      "description": "Kapanan her atölyenin sonucundaki payınız. Payları ortaklar Finans → Ortaklar sayfasında birlikte belirler.",
+      "label": "şu anki payınız",
+      "manage": "Ortaklar ve paylar"
+    },
+    "password": {
+      "title": "Şifre",
+      "description": "Bu cihazda oturumunuz açık kalır; diğer cihazlarınızdan çıkış yapılır."
+    },
+    "errors": {
+      "passwordNeeded": "E-postanızı değiştirmek için lütfen mevcut şifrenizi girin.",
+      "wrongPassword": "Mevcut şifreniz bu değil.",
+      "rateLimited": "Çok fazla deneme yapıldı. Lütfen birkaç dakika bekleyip tekrar deneyin.",
+      "photo": "Bu fotoğraf kaydedilemedi. Lütfen yeniden yükleyin.",
+      "emailInvited": "Bu e-posta için açık bir ortak daveti var. Lütfen başka bir e-posta yazın ya da önce Finans → Ortaklar sayfasından o daveti iptal edin."
+    }
+  },
+  "errors": {
+    "limit": "{invited, plural, =0 {Ekipte zaten {max, number} ortak var; olabilecek en fazla sayı bu. Şu anda başka birini davet edemezsiniz.} other {En fazla {max, number} ortak olabilir (açık davetler de sayılır). Başka birini davet etmek için önce açık bir daveti iptal edin.}}",
+    "emailTaken": "Bu e-postayla zaten bir ortak (yönetici) var.",
+    "emailInvited": "Bu e-postanın zaten açık bir daveti var. Listeden yeniden gönderebilirsiniz.",
+    "inviteNotFound": "Bu davet artık yok. Az önce kabul edilmiş ya da iptal edilmiş olabilir.",
+    "rateLimited": "Az önce çok sayıda davet gönderdiniz. Lütfen biraz bekleyip tekrar deneyin."
+  },
+  "notices": {
+    "welcome": "Ekibe hoş geldiniz! Kâr payınız şimdilik %0. Payları Finans → Ortaklar sayfasında birlikte ayarlayabilirsiniz."
+  }
+}
