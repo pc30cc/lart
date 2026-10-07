@@ -1,0 +1,29 @@
+# syntax=docker/dockerfile:1
+# Lart / Limer website. Built and run by Coolify (build pack: Dockerfile, port 3000).
+
+FROM node:24-bookworm-slim AS base
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm install -g pnpm@12.9.1 && npm cache clean --force
+WORKDIR /app
+
+FROM base AS build
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY . .
+# The build needs no secrets and never touches the database: placeholder values
+# only satisfy the environment check. Real values come from Coolify at runtime.
+RUN DATABASE_URL=postgres://build:build@127.0.0.1:5432/build \
+    APP_URL=https://build.invalid \
+    ENCRYPTION_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= \
+    pnpm build
+
+FROM base AS run
+ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0
+COPY --from=build --chown=node:node /app /app
+# Local uploads (until a CDN is set in the settings) live in a persistent volume here.
+RUN mkdir -p /app/.data && chown node:node /app/.data
+USER node
+EXPOSE 3000
+# Each start applies new migrations and the default templates (both idempotent),
+# then serves the site. Scripts (pnpm jobs, pnpm admin:create, ...) run in this image too.
+CMD ["sh", "-c", "pnpm db:migrate && pnpm db:seed && exec node_modules/.bin/next start"]
