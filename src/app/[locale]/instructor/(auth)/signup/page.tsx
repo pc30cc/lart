@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 
 import { InstructorSignupForm } from "@/components/site/auth/instructor-signup-form"
+import { localeHref } from "@/i18n/links"
 import { Link } from "@/i18n/navigation"
 import { getInstructor } from "@/lib/auth/instructor"
 import { ACCOUNT_PASSWORD_MIN_LENGTH } from "@/lib/auth/schemas"
@@ -21,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function InstructorSignupPage({ params }: PageProps<"/[locale]/instructor/signup">) {
   const { locale } = await params
-  if (await getInstructor()) redirect(`/${locale}/instructor`)
+  if (await getInstructor()) redirect(await localeHref(locale, "/instructor"))
   const [t, brand] = await Promise.all([getTranslations("auth.instructor.signup"), getBrand(locale)])
 
   return (

@@ -43,16 +43,15 @@ Next.js 16 differs from older versions: read the relevant guide in
 ```
 src/
   app/
-    page.tsx                    root: redirects to the NEXT_LOCALE cookie's or the default language (setting)
-    sitemap.ts, robots.ts       /sitemap.xml (workshops list + open workshop pages, fa/tr/en with hreflang), /robots.txt (disallows only /<l>/admin and /api)
-    [locale]/
-      page.tsx                  language root: redirects to /<locale>/workshops until the phase 3 home page exists
+    sitemap.ts, robots.ts       /sitemap.xml (home, workshops list + open workshop pages, fa/tr/en with hreflang), /robots.txt (disallows only /admin, /<l>/admin and /api)
+    [locale]/                   every page (URL rules: the main language has no prefix, the proxy rewrites it here)
       (site)/                   the public site frame (header, footer, "confirm your email" banner; phase 3 themes replace it)
+        page.tsx                the home page (/, /fa, /en): _components/home-hero, upcoming-workshops
         workshops/              list, /[slug] page, /[slug]/register
         account/                My workshops (page.tsx), registrations/[id], signup, login, verify, forgot, reset
-      instructor/(auth)/        instructor sign in, sign up, accept-invite, forgot, reset, verify (no panel chrome)
+      instructor/(auth)/        instructor sign in, sign up, invite, forgot, reset, verify (no panel chrome)
       instructor/(panel)/       the instructor panel: home, contracts, workshops, earnings, profile
-      admin/login/              super-admin sign in, forgot/ and reset/ password (no panel chrome)
+      admin/(auth)/             super-admin sign in, forgot, reset, invite (no panel chrome)
       admin/(panel)/<module>/   super-admin pages, one folder per module
     api/admin/…, api/instructor/uploads   route handlers (uploads, watermark preview, CSV exports)
   components/
@@ -66,8 +65,8 @@ src/
     index.ts                    db client, Tx type
   emails/                       transactional emails (React Email): definitions, layout, samples, payment props
   features/<module>/            server logic of a module: queries, actions, schemas, tests
-  i18n/                         routing, request config, namespaces
-  lib/                          cross-cutting helpers (env, crypto, money, auth, audit, storage, email)
+  i18n/                         languages, routing, the main language, links (paths, navigation, links), request config, namespaces
+  lib/                          cross-cutting helpers (env, crypto, money, auth, audit, storage, email, routes, seo)
 scripts/                        admin:create, db:seed, jobs (scheduled), contracts:encrypt
 messages/<locale>/<ns>.json     translations, one file per module namespace
 drizzle/                        SQL migrations (generated + custom guards)
@@ -134,6 +133,177 @@ Students and instructors are mostly non-technical. Screens are simple and
 friendly: one main action, large buttons, short sentences, few fields,
 helpful messages instead of technical errors, phone first. The super-admin
 panel is premium and calm: clean cards, clear tables, beautiful charts.
+
+## URL rules
+
+Every address of the site follows these rules. `src/lib/routes.ts` is the
+one list of routes (`ROUTES`); the [table below](#routes) mirrors it row by
+row, and the guard test `src/lib/routes.test.ts` fails when the pages on
+disk, the list and the table disagree, when a path breaks a rule, or when
+code builds a language prefix by hand.
+
+1. **The main language has no prefix.** The main language is the
+   `defaultLocale` setting (Settings → General, `tr` by default). Its pages
+   have no language in the address: `/`, `/workshops`,
+   `/workshops/<slug>`, `/account/login`, `/admin`, `/instructor/login`. The
+   other languages keep theirs: `/fa/…`, `/en/…` (their home page is `/fa`,
+   never `/fa/`). The main language's prefixed address (`/tr/workshops?x=1`)
+   is a permanent redirect (308, query kept) to the one without it. Changing
+   the setting needs no redeploy: it applies at once in the process that
+   saved it and within 30 seconds in the others (`getMainLocale()`,
+   `src/i18n/main-locale.ts`: a per-process cache that serves the last value
+   while it reads the new one, and never fails a request). `/` always shows
+   the main language: nothing is guessed from Accept-Language or a cookie.
+   The language switch is the way to another language; the address remembers
+   it (`/fa/…`), and for a signed-in member or instructor it is also the
+   language of their emails (`members.locale`, `instructors.locale`).
+2. **The home page is a page.** `/` (and `/fa`, `/en`) is the home page
+   (`src/app/[locale]/(site)/page.tsx`), never a redirect.
+3. **Paths.** Lower-case English, kebab-case; plural nouns for lists
+   (`/workshops`), a slug for a public item (`/workshops/<slug>`), an action
+   as the last segment (`/register`, `/new`, `/edit`); no trailing slash, no
+   file extension; no ids in public addresses (ids are fine inside `/admin`,
+   `/instructor` and `/account`); at most three segments for a public page
+   after the language. No public address starts with `admin` (robots.txt's
+   `Disallow: /admin` matches by prefix).
+4. **The same sign-in pages in every area.** `/account` (students),
+   `/instructor` and `/admin` each have `/login`, `/forgot`, `/reset`, and
+   where they exist `/signup`, `/verify`, `/invite`. These are the only
+   pages of an area open without its session.
+5. **One list.** Every page and localized route handler is in `ROUTES`. A
+   page without its entry fails the guard test.
+6. **Every generated link follows rule 1.** Links, redirects, canonical URLs
+   and hreflang, the sitemap and email links are built with the helpers
+   below, never by hand: no `` `/${locale}/…` ``, no `"/tr/…"` in the code.
+
+### Building an address
+
+Paths are written without a language, starting with `/` (they may carry a
+`?query` or `#hash`). The helpers add the language when it is not the main one.
+
+| Where | Use |
+| --- | --- |
+| Components (client and server) | `Link` (`href="/workshops"`, or `{ pathname, query }`), `useRouter()` (`push`, `replace`, `prefetch`; `{ locale }` switches the language), `usePathname()` (without the language), all from `@/i18n/navigation`; the main language comes from `MainLocaleProvider` in `[locale]/layout.tsx` |
+| Server code: pages, actions, emails, the jobs script | `await localeHref(locale, path)`, `await absoluteLocaleUrl(locale, path)` (on `APP_URL`: emails, links to copy), `mainLocale()` (once per render) from `@/i18n/links`; `await localeRedirect(path, locale?)` from `@/i18n/redirect` |
+| Pure code: the proxy, client helpers, tests, e2e | `localePath(locale, path, main)`, `splitLocale`, `stripLocale` from `@/i18n/paths` |
+| SEO | `alternates(path, locale)` (canonical; hreflang fa, tr, en; x-default = the main language's address), `absoluteUrl`, `ogLocale`, `jsonLdText` from `@/lib/seo` |
+| "Where to go after signing in" | `safeNext(next, "member" \| "instructor" \| "admin", fallback)` (`@/lib/auth/safe-next`): checks the path, without its language, against `ROUTES` |
+
+Language choices are not URL decisions: the language of an email to the
+admins may still come from `getSetting("defaultLocale")`, but every address
+uses `getMainLocale()` / `mainLocale()`, so the proxy and the pages agree.
+
+### Adding a page
+
+1. Create `src/app/[locale]/…/page.tsx` with a path that follows the rules.
+2. Add its entry to `ROUTES` in `src/lib/routes.ts` (area and access:
+   `public`, `open` for a sign-in page, `private`) and its row to the table
+   below, in the same place.
+3. Run `pnpm test src/lib/routes.test.ts`.
+
+The proxy lets `open` routes through its sign-in gate; a `private` route of
+an area needs that area's session cookie (the page still checks the session
+itself).
+
+### Routes
+
+Paths without a language: the main language's addresses. In the other
+languages `/fa` or `/en` comes in front (`/` is `/fa`).
+
+<!-- routes:start -->
+| Path | Area | Access | Note |
+| --- | --- | --- | --- |
+| `/` | site | public | |
+| `/workshops` | site | public | |
+| `/workshops/[slug]` | site | public | |
+| `/workshops/[slug]/register` | site | public | |
+| `/[...rest]` | site | public | not-found page |
+| `/account` | account | private | |
+| `/account/login` | account | open | |
+| `/account/signup` | account | open | |
+| `/account/verify` | account | open | |
+| `/account/forgot` | account | open | |
+| `/account/reset` | account | open | |
+| `/account/registrations/[id]` | account | private | |
+| `/instructor/login` | instructor | open | |
+| `/instructor/signup` | instructor | open | |
+| `/instructor/verify` | instructor | open | |
+| `/instructor/forgot` | instructor | open | |
+| `/instructor/reset` | instructor | open | |
+| `/instructor/invite` | instructor | open | |
+| `/instructor` | instructor | private | |
+| `/instructor/contracts` | instructor | private | |
+| `/instructor/contracts/[id]` | instructor | private | |
+| `/instructor/workshops` | instructor | private | |
+| `/instructor/workshops/[id]` | instructor | private | |
+| `/instructor/earnings` | instructor | private | |
+| `/instructor/profile` | instructor | private | |
+| `/admin/login` | admin | open | |
+| `/admin/forgot` | admin | open | |
+| `/admin/reset` | admin | open | |
+| `/admin/invite` | admin | open | |
+| `/admin` | admin | private | |
+| `/admin/audit` | admin | private | |
+| `/admin/categories` | admin | private | |
+| `/admin/categories/new` | admin | private | |
+| `/admin/categories/[id]` | admin | private | |
+| `/admin/instructors` | admin | private | |
+| `/admin/instructors/new` | admin | private | |
+| `/admin/instructors/[id]` | admin | private | |
+| `/admin/instructors/[id]/edit` | admin | private | |
+| `/admin/money` | admin | private | |
+| `/admin/money/partners` | admin | private | |
+| `/admin/money/refunds` | admin | private | |
+| `/admin/money/reports` | admin | private | |
+| `/admin/money/transactions` | admin | private | |
+| `/admin/profile` | admin | private | |
+| `/admin/registrations` | admin | private | |
+| `/admin/settings` | admin | private | |
+| `/admin/settings/email` | admin | private | |
+| `/admin/settings/payments` | admin | private | |
+| `/admin/settings/storage` | admin | private | |
+| `/admin/settings/watermark` | admin | private | |
+| `/admin/templates` | admin | private | |
+| `/admin/templates/new` | admin | private | |
+| `/admin/templates/[id]` | admin | private | |
+| `/admin/templates/emails/[name]` | admin | private | |
+| `/admin/workshops` | admin | private | |
+| `/admin/workshops/new` | admin | private | |
+| `/admin/workshops/[id]` | admin | private | |
+| `/admin/workshops/[id]/edit` | admin | private | |
+| `/admin/workshops/[id]/contract` | admin | private | |
+| `/admin/workshops/[id]/finances` | admin | private | |
+| `/admin/workshops/[id]/gallery` | admin | private | |
+| `/admin/workshops/[id]/registrations` | admin | private | |
+| `/admin/workshops/[id]/registrations/export` | admin | private | route handler (CSV) |
+<!-- routes:end -->
+
+Never localized (`UNLOCALIZED_HANDLERS`): `/api/admin/media/watermark-preview`,
+`/api/admin/money/export/[report]`, `/api/admin/uploads`,
+`/api/instructor/uploads`, `/media/[...path]`, and the metadata routes
+`/sitemap.xml` and `/robots.txt`.
+
+### Redirects
+
+`src/proxy.ts` answers an old address of a GET or HEAD request with one
+permanent redirect (`canonicalPath` in `src/lib/routes.ts`), before the
+sign-in gate (so an emailed link keeps its token): `308`, the query kept,
+`Cache-Control: no-store` (the main language can change, so the answer must
+not be cached).
+
+| Request | Goes to (main language tr) |
+| --- | --- |
+| `/tr`, `/tr/<path>` | `/`, `/<path>` (`/tr/workshops?x=1` → `/workshops?x=1`) |
+| `[/<l>]/admin/login/forgot` | `[/<l>]/admin/forgot` |
+| `[/<l>]/admin/login/reset` | `[/<l>]/admin/reset` |
+| `[/<l>]/admin/accept-invite` | `[/<l>]/admin/invite` (`/tr/admin/accept-invite?token=x` → `/admin/invite?token=x`) |
+| `[/<l>]/instructor/accept-invite` | `[/<l>]/instructor/invite` |
+| `/TR/…`, `/Fa/…` | the same with the language in lower case (none for the main language) |
+
+Other methods are never redirected: a server action posted to the main
+language's prefixed address (a page opened before the setting changed) is
+served as it is. A signed-out GET of a private page gets the gate's `307` to
+its area's login, in the same language, with `next`.
 
 ## Uploads and media
 
@@ -228,12 +398,14 @@ messages/<locale>/<module>.json    fa, tr, en
 
 - `src/app/layout.tsx` renders `<html lang dir>` (rtl for fa), the fonts and the
   theme. `src/app/[locale]/layout.tsx` validates the locale and adds next-intl,
-  Radix direction, tooltips and toasts. `/` redirects to the `NEXT_LOCALE`
-  cookie's language or the `defaultLocale` setting.
-- `src/proxy.ts`: locale routing (`/fa`, `/tr`, `/en`, always prefixed), a
-  strict CSP with a per-request nonce, `X-Robots-Tag: noindex` on
-  `/<locale>/admin` and `/api/admin`, and an optimistic redirect to the login
-  when there is no admin cookie. It skips `_next`, `/media/`,
+  Radix direction, tooltips, toasts and the main language for client links.
+  `/` is the home page in the main language ([URL rules](#url-rules)).
+- `src/proxy.ts`: the [URL rules](#url-rules) (the 308s of old addresses,
+  then next-intl: an address without a prefix is the main language, `/fa`
+  and `/en` theirs; nothing guessed from the browser), a strict CSP with a
+  per-request nonce, `X-Robots-Tag: noindex` on the admin, instructor and
+  account areas (with or without a prefix) and their APIs, and an optimistic
+  redirect to the area's login when there is no session cookie. It skips `_next`, `/media/`,
   `/api/admin/uploads`, `/api/instructor/uploads` and paths with a file
   extension (so `/sitemap.xml` and `/robots.txt` too). Static headers (HSTS in
   production, `X-Frame-Options`, nosniff, Referrer-Policy, Permissions-Policy)
@@ -282,14 +454,16 @@ export async function POST(request: Request) { // route handlers
 - Admin passwords (`@/lib/auth/actions`, logic in `@/lib/auth/account`):
   `changeAdminPasswordAction` (user menu → "Change password": needs the
   current password, signs out other devices); "Forgot your password?"
-  (`/admin/login/forgot`, `requestAdminPasswordResetAction`: same answer and
+  (`/admin/forgot`, `requestAdminPasswordResetAction`: same answer and
   timing for any address, the `password_reset` email is sent after the
-  response) and the link's page `/admin/login/reset?token=…`
+  response) and the link's page `/admin/reset?token=…`
   (`resetAdminPasswordAction`: one-time `email_tokens` row, 30 minutes, only
   its SHA-256 stored; ends every session). Audited as `auth.password_change`,
   `auth.password_reset_request`, `auth.password_reset`. The proxy lets the
-  `/admin/login`, `/forgot` and `/reset` pages and `/admin/accept-invite`
-  through without a session.
+  `/admin/login`, `/admin/forgot`, `/admin/reset` and `/admin/invite` pages
+  through without a session (the `open` routes); the old
+  `/admin/login/forgot`, `/admin/login/reset` and `/admin/accept-invite`
+  addresses redirect to them.
 
 ### Server actions: `adminAction`
 
@@ -500,6 +674,10 @@ mock `next-intl/server` (a `createTranslator` over the real messages),
 `@/lib/auth/admin` (a fixed `AdminSession` with a real admin row, needed by
 `audit_log`) and `next/cache`: see `src/features/categories/actions.test.ts`.
 `audit_log` is append-only, so test admins referenced by it stay in the test database.
+The main language is mocked as `tr` for every test (`src/test/setup.ts`), so
+links come out without a prefix in Turkish and with `/fa`, `/en` otherwise;
+`main-locale.test.ts` and `settings.test.ts` use the real cache
+(`vi.unmock("@/i18n/main-locale")`).
 
 ## Operations
 
@@ -559,7 +737,7 @@ rules; `actions.ts`; `queries.ts`; `schema.ts`: the form schemas, client-safe).
   list (expired ones too) and the places left (`slots.canInvite`). Audited as
   `admin.invite`, `admin.invite_resend`, `admin.invite_cancel` (entity
   `admin_invite`, never the token).
-- **Accepting**: `/<l>/admin/accept-invite?token=…` (open in the proxy,
+- **Accepting**: `/admin/invite?token=…` (open in the proxy,
   `noindex`); `partnerInviteDetails(token)` for the page (names, email, no
   use of the link), `acceptPartnerInviteAction({ token, password })` (admin
   password rules, 10 per network per 15 minutes). In one transaction: the
@@ -567,7 +745,7 @@ rules; `actions.ts`; `queries.ts`; `schema.ts`: the form schemas, client-safe).
   invitation's place is its own) and so is the email; the admin is created
   (active, `share_bp` 0), the invitation deleted and `admin.accept_invite`
   audited as the new admin. Then any admin session of that browser ends, the
-  new partner is signed in and lands on `/<l>/admin?notice=welcome`
+  new partner is signed in and lands on `/admin?notice=welcome`
   (`adminNotices`, messages `partners.notices.<notice>`).
 - **Admin rows are created only on acceptance**, so every query that lists
   admins (money, dashboard, audit, emails to every admin) stays as it is. The
@@ -577,7 +755,7 @@ rules; `actions.ts`; `queries.ts`; `schema.ts`: the form schemas, client-safe).
   'admins:partners'))` first (`lockPartners`), never a lock on the `admins`
   table (it deadlocked with audit entries and ledger lines, see
   `updateShares`).
-- **My profile** (`/<l>/admin/profile`, `updateMyProfile`, `getMyProfile`):
+- **My profile** (`/admin/profile`, `updateMyProfile`, `getMyProfile`):
   name (2 to 80 characters), photo and email. A new email needs the current
   password (5 tries per 15 minutes), must be free among admins (letter case
   aside) and open invitations, is stored lower-case, ends the partner's other
@@ -602,7 +780,7 @@ rules; `actions.ts`; `queries.ts`; `schema.ts`: the form schemas, client-safe).
   next to the partners' cards (`invite-card.tsx`: "Send again", "Cancel";
   not an `<article>`, those are the partners). A calm note says when a
   partner is at 0 % while the others already make 100 %. The invitation page
-  is `app/[locale]/admin/accept-invite` (outside `(panel)`, `AuthShell`, its
+  is `app/[locale]/admin/(auth)/invite` (outside `(panel)`, `AuthShell`, its
   own `noindex`; a working link never sends a signed-in visitor away, a dead
   one takes them to the panel). "My profile" is in
   the user menu (`app/[locale]/admin/(panel)/profile`). `PersonAvatar`
@@ -635,9 +813,9 @@ const { member } = await requireMember()         // { id, email, name, phone, lo
 const { instructor } = await requireInstructor() // { id, email, displayName, locale, emailVerified }
 ```
 
-- `requireMember(next?)` redirects a visitor to `/<locale>/account/login?next=…`
+- `requireMember(next?)` redirects a visitor to `/account/login?next=…` (in the page's language)
   (default `next`: the current page, from the proxy's `x-pathname`), and
-  `requireInstructor(next?)` to `/<locale>/instructor/login` (comes back only to
+  `requireInstructor(next?)` to `/instructor/login` (comes back only to
   a page of the panel). Both are cached per request. Call them in **every**
   page and query: layouts are not re-run on client navigation.
 - `get…()` returns null instead of redirecting (e.g. "You are registered" on a
@@ -673,15 +851,17 @@ export const contactForm = publicAction(contactSchema, handler, { rateLimit: { l
 
 ### Pages and flows
 
+Paths are written without a language ([URL rules](#url-rules)).
+
 | Page | What happens |
 | --- | --- |
-| `/<l>/account/signup` | name, email, password (≥ 10), optional phone; language = the page's. New email: account, signed in, `welcome_verify` (24 h link). Existing email: nothing changes, the owner gets `member_exists`. Both go straight back to `next` (or `/<l>/workshops`) with the same "check your inbox" notice |
-| `/<l>/account/login` | back to `next` or the workshops; one message for every failure; lockout after 5 tries for 15 min |
-| `/<l>/account/verify?token=` | confirms the email from the page's script (a mail scanner fetching the link does not use it up); a used link of a confirmed email still says "confirmed" |
-| `/<l>/account/forgot`, `/reset?token=` | same answer for any address; 30-minute one-time link; the reset ends every other session, confirms the email and signs this device in |
-| `/<l>/instructor/signup` | an instructor's own sign-up (`instructorSignupAction`, 5 per network per hour): the admins' instructor fields minus the photo, plus password and "my details are correct"; the display name may not carry a link, address or number (it greets the emails). Stored with `approved_at` null (audit `instructor.signup`), signed in, into the panel; `welcome_verify` to the instructor and `instructor_signup` to every active admin. An email that already has an instructor account is refused with a pointer to log in |
-| `/<l>/instructor/accept-invite?token=` | the invitation (`features/instructors`, 7 days): password, email confirmed, link used, one transaction; signed in, into the panel |
-| `/<l>/instructor/login`, `/forgot`, `/reset`, `/verify` | as for members; inactive instructors and instructors without a password never get in |
+| `/account/signup` | name, email, password (≥ 10), optional phone; language = the page's. New email: account, signed in, `welcome_verify` (24 h link). Existing email: nothing changes, the owner gets `member_exists`. Both go straight back to `next` (or `/workshops`) with the same "check your inbox" notice |
+| `/account/login` | back to `next` or the workshops; one message for every failure; lockout after 5 tries for 15 min |
+| `/account/verify?token=` | confirms the email from the page's script (a mail scanner fetching the link does not use it up); a used link of a confirmed email still says "confirmed" |
+| `/account/forgot`, `/reset?token=` | same answer for any address; 30-minute one-time link; the reset ends every other session, confirms the email and signs this device in |
+| `/instructor/signup` | an instructor's own sign-up (`instructorSignupAction`, 5 per network per hour): the admins' instructor fields minus the photo, plus password and "my details are correct"; the display name may not carry a link, address or number (it greets the emails). Stored with `approved_at` null (audit `instructor.signup`), signed in, into the panel; `welcome_verify` to the instructor and `instructor_signup` to every active admin. An email that already has an instructor account is refused with a pointer to log in |
+| `/instructor/invite?token=` | the invitation (`features/instructors`, 7 days): password, email confirmed, link used, one transaction; signed in, into the panel |
+| `/instructor/login`, `/forgot`, `/reset`, `/verify` | as for members; inactive instructors and instructors without a password never get in |
 
 **Approval.** `instructors.approved_at` is null while a self-registered
 instructor waits: they can use the panel (banner "waiting for approval",
@@ -697,7 +877,7 @@ The member's language (`members.locale`, the language of their emails)
 follows the site's language switch (header and account menu) while signed in
 (`setMemberLocaleAction`). Instructors: `setInstructorLocaleAction`. The
 instructor panel's "Please confirm your email" banner sends the link again
-with `resendInstructorVerifyAction` (the link opens `/<l>/instructor/verify`),
+with `resendInstructorVerifyAction` (the link opens `/instructor/verify`),
 and its "Sign out" is `instructorLogoutAction` (`features/accounts/actions`).
 
 Member names (sign-up and "My details") use `personName()`
@@ -721,20 +901,28 @@ a toast and removes `?notice=` from the address. Only those values are shown.
 
 ### The public site shell
 
-`src/app/[locale]/(site)/layout.tsx` frames every public page (workshops, the
-member's account pages): `SiteHeader` (brand wordmark → workshops, "Workshops"
-from `sm` up (on phones the brand is that link),
-language, account button: "Log in / Sign up" coming back to the page, or the
-member's first name with My workshops → `/<l>/account`, language, log out),
-the "Please confirm your email" banner (with "Send it again") for a signed-in
-member whose email is not confirmed, and `SiteFooter`. Pages in the group
-render inside its `<main>`: do not add another. Small centred forms use
-`AuthCard` (`@/components/site/auth-card`). The language root `/<l>` redirects
-to `/<l>/workshops` until the phase 3 home page exists. Nothing on the public
-site links to the instructor pages.
+`src/app/[locale]/(site)/layout.tsx` frames every public page (the home
+page, workshops, the member's account pages): `SiteHeader` (brand wordmark →
+the home page, "Workshops", language, account button: "Log in / Sign up"
+coming back to the page, or the member's first name with My workshops →
+`/account`, language, log out), the "Please confirm your email" banner (with
+"Send it again") for a signed-in member whose email is not confirmed, and
+`SiteFooter`. Pages in the group render inside its `<main>`: do not add
+another. Small centred forms use `AuthCard` (`@/components/site/auth-card`).
+Nothing on the public site links to the instructor pages.
 
-The proxy sends `X-Robots-Tag: noindex` for `/<l>/admin/**`,
-`/<l>/instructor/**`, `/<l>/account/**` and `/api/{admin,instructor,account}`,
+The home page (`(site)/page.tsx`: `/`, `/fa`, `/en`) is two sections a theme
+can replace with its own (same props): `HomeHero` (the brand, the SEO
+description setting in the page's language or `site.home.tagline`, "See all
+workshops") and `UpcomingWorkshops` (the next six open workshops,
+`listOpenWorkshops(locale, { limit })`, as `WorkshopCard`s with `h3` titles,
+"All workshops", or the "coming soon" empty state). Its title and
+description come from the SEO setting in the page's own language (never
+another language's text), else the brand and `site.home.metaDescription`.
+
+The proxy sends `X-Robots-Tag: noindex` for `/admin/**`, `/instructor/**`,
+`/account/**` (with or without a language prefix) and
+`/api/{admin,instructor,account}`,
 and redirects a signed-out GET of a private page to that area's login (except
 the sign-in pages themselves). It also passes the requested path and query to
 the page as `x-pathname` (overwriting any value the client sent).
@@ -788,11 +976,11 @@ site; every page is `noindex` (layout metadata and the proxy header).
 
 | Page | What it shows |
 | --- | --- |
-| `/<l>/instructor` | contracts waiting for a signature, next workshops |
-| `/<l>/instructor/contracts`, `/contracts/[id]` | every contract version; one contract's text (`ContractDocument`, print view) and the sign form |
-| `/<l>/instructor/workshops`, `/workshops/[id]` | my workshops with seats taken (everyone registered, paid or not yet); participants by name and photo / video consent only (contract 8.1: no contact details, no payment status) |
-| `/<l>/instructor/earnings` | per workshop: fee, received (advance, payments), owed or to return (`workshopEarnings`); only money booked since this instructor's first contract for the workshop (a workshop taken over from another instructor does not show theirs) |
-| `/<l>/instructor/profile` | public profile in three languages, teaching languages (`LanguagePicker`), photo (`PhotoField` → `/api/instructor/uploads`) |
+| `/instructor` | contracts waiting for a signature, next workshops |
+| `/instructor/contracts`, `/contracts/[id]` | every contract version; one contract's text (`ContractDocument`, print view) and the sign form |
+| `/instructor/workshops`, `/workshops/[id]` | my workshops with seats taken (everyone registered, paid or not yet); participants by name and photo / video consent only (contract 8.1: no contact details, no payment status) |
+| `/instructor/earnings` | per workshop: fee, received (advance, payments), owed or to return (`workshopEarnings`); only money booked since this instructor's first contract for the workshop (a workshop taken over from another instructor does not show theirs) |
+| `/instructor/profile` | public profile in three languages, teaching languages (`LanguagePicker`), photo (`PhotoField` → `/api/instructor/uploads`) |
 
 - Every query starts with `requireInstructor()` and reads only the signed-in
   instructor's rows; someone else's id is "not found".
@@ -820,13 +1008,13 @@ holds a seat, not paid yet; `confirmed` = paid (or a free workshop);
 
 | Where | What |
 | --- | --- |
-| `/<l>/workshops`, `/<l>/workshops/[slug]` | open workshops (published or confirmed, not started), seats left, "You are registered" (`features/registrations/public.ts`) |
-| `/<l>/workshops/[slug]/register` | participant name, terms (SHA-256 of the text shown), photo / video consent; confirmed email needed (`registerAction`) |
-| `/<l>/account`, `/<l>/account/registrations/[id]` | My workshops: payment status, how to pay (`PaymentInstructions`), cancel with the refund preview (`features/registrations/member.ts`, `actions.ts`) |
-| `/<l>/admin/workshops/[id]/registrations` | record a payment, cancel, change refund, CSV export (`features/registrations/admin`) |
-| `/<l>/admin/registrations` | every workshop's registrations: tabs not paid yet (default) / paid / cancelled / all, search by participant / member / email / phone, record a payment, cancel, change refund |
-| `/<l>/admin/money/refunds` | refunds owed / paid back; "Change refund", "Mark as refunded" |
-| `/<l>/admin/settings/payments` | which ways are on (cash, transfer with holder / bank / IBAN / note, online with a note) |
+| `/workshops`, `/workshops/[slug]` | open workshops (published or confirmed, not started), seats left, "You are registered" (`features/registrations/public.ts`) |
+| `/workshops/[slug]/register` | participant name, terms (SHA-256 of the text shown), photo / video consent; confirmed email needed (`registerAction`) |
+| `/account`, `/account/registrations/[id]` | My workshops: payment status, how to pay (`PaymentInstructions`), cancel with the refund preview (`features/registrations/member.ts`, `actions.ts`) |
+| `/admin/workshops/[id]/registrations` | record a payment, cancel, change refund, CSV export (`features/registrations/admin`) |
+| `/admin/registrations` | every workshop's registrations: tabs not paid yet (default) / paid / cancelled / all, search by participant / member / email / phone, record a payment, cancel, change refund |
+| `/admin/money/refunds` | refunds owed / paid back; "Change refund", "Mark as refunded" |
+| `/admin/settings/payments` | which ways are on (cash, transfer with holder / bank / IBAN / note, online with a note) |
 
 - **Counting.** "Registered" is everyone with an active registration, paid or
   not yet (`activeStatuses`): `seatsTaken(courseId)` / `seatsLeft(limit, taken)`

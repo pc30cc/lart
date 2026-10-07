@@ -4,7 +4,7 @@ import path from "node:path"
 import type { Locator, Page } from "@playwright/test"
 
 import { formatLira } from "../../src/lib/money"
-import { expect, field, mailMark, MAIL_LOG, RUN, test, toast } from "./helpers/app"
+import { at, expect, field, mailMark, MAIL_LOG, RUN, test, toast } from "./helpers/app"
 import { E2E_DATABASE_URL, one, sql } from "./helpers/db"
 import { courseId, lead, linksOf, mailTo, P2, personContext, tr, waitMail } from "./helpers/p2"
 
@@ -124,9 +124,9 @@ test.describe.serial("phase 2 · admin: registrations, payments, refunds", () =>
     const t = tr("tr")
     const context = await personContext(browser, "ayla")
     const member = await context.newPage()
-    await member.goto("/tr/account")
+    await member.goto("/account")
     await expect(member.locator("article").filter({ hasText: P2.wA.title.tr })).toContainText(t("registration.status.paid"))
-    await member.goto(`/tr/account/registrations/${id}`)
+    await member.goto(`/account/registrations/${id}`)
     await expect(member.locator("main").getByText(t("registration.detail.paidTitle"))).toBeVisible()
     await expect(member.locator("main")).toContainText(t("registration.detail.method.cash"))
     // No payment instructions any more.
@@ -240,7 +240,7 @@ test.describe.serial("phase 2 · admin: registrations, payments, refunds", () =>
     const mark = mailMark()
     const context = await personContext(browser, "ayla")
     const member = await context.newPage()
-    await member.goto("/tr/account")
+    await member.goto("/account")
     const card = member.locator("article").filter({ hasText: P2.wB.title.tr }).filter({ hasText: P2.ayla.name })
     await expect(card).toContainText(t("registration.status.paid"))
     await card.getByRole("button", { name: t("registration.cancel.button") }).click()
@@ -313,9 +313,9 @@ test.describe.serial("phase 2 · admin: registrations, payments, refunds", () =>
     // The public page says cancelled; the list no longer shows it.
     const anon = await page.context().browser()!.newContext({ storageState: { cookies: [], origins: [] } })
     const p = await anon.newPage()
-    await p.goto(`/tr/workshops/${P2.wC.slug}`)
+    await p.goto(`/workshops/${P2.wC.slug}`)
     await expect(p.locator("main").getByText(tr("tr")("registration.workshop.state.cancelledTitle"))).toBeVisible()
-    await p.goto("/tr/workshops")
+    await p.goto("/workshops")
     await expect(p.locator("main").getByText(P2.wC.title.tr)).toHaveCount(0)
     await anon.close()
   })
@@ -329,7 +329,7 @@ test.describe.serial("phase 2 · admin: registrations, payments, refunds", () =>
       const t = tr(locale)
       const context = await personContext(browser, who)
       const p = await context.newPage()
-      await p.goto(`/${locale}/workshops/${P2.wD.slug}/register`)
+      await p.goto(at(locale, `/workshops/${P2.wD.slug}/register`))
       await p.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).click()
       await p.getByRole("button", { name: t("registration.register.submit"), exact: true }).click()
       await expect(p).toHaveURL(/\/account\/registrations\/[0-9a-f-]{36}\?welcome=1$/)

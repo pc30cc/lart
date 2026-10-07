@@ -1,12 +1,11 @@
 import "server-only"
 import { eq } from "drizzle-orm"
-import { redirect } from "next/navigation"
 import { hasLocale } from "next-intl"
-import { getLocale } from "next-intl/server"
 import { cache } from "react"
 
 import { db } from "@/db"
 import { members } from "@/db/schema"
+import { localeRedirect } from "@/i18n/redirect"
 import { locales, type AppLocale } from "@/i18n/routing"
 import { currentPath, isSameOrigin } from "./request"
 import { safeNext } from "./safe-next"
@@ -77,7 +76,7 @@ export async function requireMember(next?: string): Promise<MemberSession> {
   const session = await getMember()
   if (session) return session
   const back = safeNext(next ?? (await currentPath()), "member", "")
-  redirect(`/${await getLocale()}/account/login${back ? `?next=${encodeURIComponent(back)}` : ""}`)
+  return localeRedirect(`/account/login${back ? `?next=${encodeURIComponent(back)}` : ""}`)
 }
 
 /** For route handlers: the signed-in member, or null (caller answers 401). Also checks same-origin for unsafe methods. */

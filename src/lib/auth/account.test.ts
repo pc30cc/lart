@@ -131,7 +131,7 @@ describe("sendAdminResetLink", () => {
     }
     expect(input).toMatchObject({ to: a.email, template: "password_reset", locale: "fa", props: { name: a.name } })
     const url = new URL(input.props.resetUrl, "http://localhost")
-    expect(url.pathname).toBe("/fa/admin/login/reset")
+    expect(url.pathname).toBe("/fa/admin/reset")
     expect(await isAdminResetTokenValid(url.searchParams.get("token")!)).toBe(true)
     expect(await lastAudit(a.id)).toMatchObject({ action: "auth.password_reset_request", adminId: null })
   })

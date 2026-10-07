@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
  * The link from the invitation email: choose a password, then straight into
  * the panel. The link is checked here and used by the action (one time only).
  */
-export default async function AcceptInvitePage({ params, searchParams }: PageProps<"/[locale]/instructor/accept-invite">) {
+export default async function AcceptInvitePage({ params, searchParams }: PageProps<"/[locale]/instructor/invite">) {
   const { locale } = await params
   const query = await searchParams
   const token = typeof query.token === "string" ? query.token : ""

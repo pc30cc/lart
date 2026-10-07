@@ -56,7 +56,7 @@ export async function notifyDueDecisions(now: Date = new Date()): Promise<{ due:
             registrations: registered,
             minimum: course.minCapacity,
             decisionAt: formatDateTime(course.decisionAt, locale, "long"),
-            workshopUrl: workshopAdminPath(locale, id),
+            workshopUrl: await workshopAdminPath(locale, id),
           },
         })
         if (!result.ok) allSent = false

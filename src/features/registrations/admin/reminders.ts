@@ -5,6 +5,7 @@ import { and, eq, gt, inArray, isNull, lte, ne } from "drizzle-orm"
 import { db } from "@/db"
 import { courses, members, registrations } from "@/db/schema"
 import { paymentWays } from "@/emails/payment"
+import { localeHref } from "@/i18n/links"
 import { sendEmail } from "@/lib/email"
 import { formatDate, formatTimeRange, localized } from "@/lib/format"
 import { formatLira } from "@/lib/money"
@@ -125,7 +126,7 @@ export async function sendDayBeforeReminders(now: Date = new Date()): Promise<{ 
           time: formatTimeRange(course.startsAt, course.endsAt, locale),
           venue: localized(course.venue, locale),
           ...(bring ? { bring: bring.slice(0, 500) } : {}),
-          workshopUrl: `/${locale}/workshops/${course.slug}`,
+          workshopUrl: await localeHref(locale, `/workshops/${course.slug}`),
           ...(toPay > 0
             ? {
                 amount: formatLira(toPay, locale),

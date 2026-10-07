@@ -96,7 +96,7 @@ describe("sendMemberExists", () => {
       to: m.email,
       template: "member_exists",
       locale: "tr",
-      props: { name: "Ayşe Demir", loginUrl: "/tr/account/login", resetUrl: "/tr/account/forgot" },
+      props: { name: "Ayşe Demir", loginUrl: "/account/login", resetUrl: "/account/forgot" },
     })
   })
 
@@ -123,7 +123,7 @@ describe("verify links", () => {
   it("sends an instructor to the panel's verify page, and nothing to a deactivated one", async () => {
     const i = await newInstructor()
     expect(await sendVerifyLink("instructor", i.id)).toBe("sent")
-    expect(lastEmail().props.verifyUrl).toMatch(/^\/tr\/instructor\/verify\?token=/)
+    expect(lastEmail().props.verifyUrl).toMatch(/^\/instructor\/verify\?token=/)
     expect(lastEmail().props.name).toBe("Zeynep Hoca")
     const off = await newInstructor({ active: false })
     expect(await sendVerifyLink("instructor", off.id)).toBe("failed")

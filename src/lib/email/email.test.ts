@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { checkEmailText, type EmailLocale, renderEmail } from "@/emails"
 import { paymentWays } from "@/emails/payment"
 import { type EmailProps, type EmailTemplate, emailPlaceholders, emailTemplateNames } from "@/emails/templates"
+import { localePath } from "@/i18n/paths"
 import { env } from "@/lib/env"
 import { encrypt } from "@/lib/crypto"
 import { getBrand, settingDefaults, type SettingValue } from "@/lib/settings"
@@ -34,28 +35,28 @@ const site = new URL(env.APP_URL).origin
 const locales: EmailLocale[] = ["fa", "tr", "en"]
 
 const samples: { [T in EmailTemplate]: EmailProps<T> } = {
-  welcome_verify: { name: "Ayşe", verifyUrl: `${site}/tr/verify?token=abc&next=1` },
-  instructor_invite: { name: "Zeynep", acceptUrl: "/tr/instructor/invite?token=inv123" },
+  welcome_verify: { name: "Ayşe", verifyUrl: `${site}/account/verify?token=abc&next=1` },
+  instructor_invite: { name: "Zeynep", acceptUrl: "/instructor/invite?token=inv123" },
   instructor_signup: {
     adminName: "Mina",
     instructorName: "Zeynep",
     teachingField: "Seramik",
     instructorEmail: "zeynep@example.com",
-    instructorUrl: `${site}/tr/admin/instructors/i1`,
+    instructorUrl: `${site}/admin/instructors/i1`,
   },
-  instructor_approved: { name: "Zeynep", panelUrl: "/tr/instructor" },
-  partner_invite: { name: "Leyla", inviterName: "Mina", acceptUrl: "/fa/admin/accept-invite?token=pi123" },
+  instructor_approved: { name: "Zeynep", panelUrl: "/instructor" },
+  partner_invite: { name: "Leyla", inviterName: "Mina", acceptUrl: "/fa/admin/invite?token=pi123" },
   contract_ready: {
     instructorName: "Zeynep",
     workshopTitle: "Mum Yapımı",
     workshopDate: "14 Eki 2026",
-    signUrl: `${site}/tr/instructor/contracts/c1`,
+    signUrl: `${site}/instructor/contracts/c1`,
   },
   contract_signed: {
     adminName: "Mina",
     instructorName: "Zeynep",
     workshopTitle: "Mum Yapımı",
-    workshopUrl: `${site}/tr/admin/workshops/w1`,
+    workshopUrl: `${site}/admin/workshops/w1`,
   },
   decision_due: {
     adminName: "Mina",
@@ -63,7 +64,7 @@ const samples: { [T in EmailTemplate]: EmailProps<T> } = {
     registrations: 4,
     minimum: 6,
     decisionAt: "12 Eki 2026 18:00",
-    workshopUrl: `${site}/tr/admin/workshops/w1`,
+    workshopUrl: `${site}/admin/workshops/w1`,
   },
   registration_confirmed: {
     name: "Ayşe",
@@ -72,7 +73,7 @@ const samples: { [T in EmailTemplate]: EmailProps<T> } = {
     time: "18:00–20:30",
     venue: "Kadıköy Sanat Evi",
     amount: "₺1.500",
-    workshopUrl: `${site}/tr/workshops/mum-yapimi`,
+    workshopUrl: `${site}/workshops/mum-yapimi`,
   },
   workshop_reminder: {
     name: "Ayşe",
@@ -83,8 +84,8 @@ const samples: { [T in EmailTemplate]: EmailProps<T> } = {
     bring: "Bir önlük",
   },
   workshop_cancelled: { name: "Ayşe", workshopTitle: "Mum Yapımı", refundAmount: "₺1.500" },
-  password_reset: { name: "Ayşe", resetUrl: `${site}/tr/reset?token=r1` },
-  member_exists: { name: "Ayşe", loginUrl: "/tr/account/login", resetUrl: "/tr/account/forgot" },
+  password_reset: { name: "Ayşe", resetUrl: `${site}/account/reset?token=r1` },
+  member_exists: { name: "Ayşe", loginUrl: "/account/login", resetUrl: "/account/forgot" },
   registration_received: {
     name: "Ayşe",
     participantName: "Deniz",
@@ -93,33 +94,33 @@ const samples: { [T in EmailTemplate]: EmailProps<T> } = {
     time: "18:00–20:30",
     venue: "Kadıköy Sanat Evi",
     amount: "₺1.500",
-    accountUrl: "/tr/account",
+    accountUrl: "/account",
     cash: true,
     transfer: { accountHolder: "Lart Sanat", bankName: "Ziraat Bankası", iban: "TR330006100519786457841326", note: "Teşekkürler!" },
     paymentUrl: "https://iyzi.link/AKxyz",
   },
-  payment_received: { name: "Ayşe", workshopTitle: "Mum Yapımı", amount: "₺1.500", method: "transfer", accountUrl: "/tr/account" },
+  payment_received: { name: "Ayşe", workshopTitle: "Mum Yapımı", amount: "₺1.500", method: "transfer", accountUrl: "/account" },
   registration_cancelled: {
     name: "Ayşe",
     workshopTitle: "Mum Yapımı",
     refundAmount: "₺750",
     refundPercent: 50,
-    workshopsUrl: "/tr/workshops",
+    workshopsUrl: "/workshops",
   },
   refund_due: {
     adminName: "Mina",
     participantName: "Deniz",
     workshopTitle: "Mum Yapımı",
     amount: "₺750",
-    url: `${site}/tr/admin/workshops/w1/registrations`,
+    url: `${site}/admin/workshops/w1/registrations`,
   },
   refund_sent: { name: "Ayşe", workshopTitle: "Mum Yapımı", amount: "₺750" },
 }
 
-/** The button link a sample should produce (optional links fall back to the home page). */
+/** The button link a sample should produce (optional links fall back to the home page; the main language is tr). */
 function expectedLink(template: EmailTemplate, locale: EmailLocale): string {
   const link = Object.entries(samples[template]).find(([k]) => /(?:^url|Url)$/.test(k))?.[1] as string | undefined
-  return link ? new URL(link, site).href : `${site}/${locale}`
+  return new URL(link ?? localePath(locale, "/", "tr"), site).href
 }
 
 const withoutStyle = (html: string) => html.replace(/<style[\s\S]*?<\/style>/g, "")
@@ -250,7 +251,7 @@ describe("payment emails", () => {
     expect(email.text).toContain("Pay online")
     // The main button (My workshops) is the quieter one next to "Pay online".
     expect(email.html).toContain(`class="e-btn-quiet"`)
-    expect(email.html).toContain(`href="${site}/tr/account"`)
+    expect(email.html).toContain(`href="${site}/account"`)
   })
 
   it("shows only the ways that are on", async () => {
@@ -265,7 +266,7 @@ describe("payment emails", () => {
   })
 
   it("allows an external https link only as the payment link", async () => {
-    for (const paymentUrl of ["http://iyzi.link/x", "javascript:alert(1)", "https://user:pw@iyzi.link/x", "/tr/pay"]) {
+    for (const paymentUrl of ["http://iyzi.link/x", "javascript:alert(1)", "https://user:pw@iyzi.link/x", "/pay"]) {
       await expect(renderEmail("registration_received", { ...received, paymentUrl }, "en"), paymentUrl).rejects.toThrow()
     }
     await expect(renderEmail("registration_received", { ...received, accountUrl: "https://iyzi.link/x" }, "en")).rejects.toThrow()
@@ -441,7 +442,7 @@ describe("sendEmail", () => {
     const output = log.mock.calls.flat().join("\n")
     expect(output).toContain("To: ayse@example.com")
     expect(output).toContain("Subject: Welcome to")
-    expect(output).toContain(`${site}/tr/verify?token=abc&next=1`)
+    expect(output).toContain(`${site}/account/verify?token=abc&next=1`)
     expect(output).toContain("Confirm my email")
   })
 

@@ -1,7 +1,10 @@
 import fs from "node:fs"
 import path from "node:path"
 
-import { test as base, expect, type Locator, type Page } from "@playwright/test"
+import { test as base, expect, type APIRequestContext, type Locator, type Page } from "@playwright/test"
+
+import { localePath } from "../../../src/i18n/paths"
+import { sql } from "./db"
 
 /** Suffix that makes this run's names, emails and slugs unique (set in playwright.config.ts). */
 export const RUN = process.env.E2E_RUN ?? "local"
@@ -9,6 +12,26 @@ export const RUN = process.env.E2E_RUN ?? "local"
 export const RUN_NAME = RUN.replace(/\d/g, (d) => "abcdefghij"[Number(d)])
 
 export const ADMIN = { email: "owner@lart.test", password: "Correct-Horse-Battery-9", name: "Owner One" }
+
+/**
+ * The site's main language during the suite (docs/DEVELOPMENT.md, "URL
+ * rules"): its addresses have no prefix, the others are under /fa, /en. Spec
+ * 04 switches it to English for a while and back.
+ */
+export const MAIN = "tr"
+/** The address of `path` (without a language) in `locale`, as the site writes it. */
+export const at = (locale: string, path: string) => localePath(locale, path, MAIN)
+
+/**
+ * Make tr the main language again (a run that stopped inside spec 04 may have
+ * left another one) and wait until the server's cache (30 s) agrees.
+ */
+export async function resetMainLocale(request: APIRequestContext) {
+  await sql("delete from settings where key = 'defaultLocale'")
+  await expect
+    .poll(async () => /<html[^>]*\blang="([a-z]+)"/.exec(await (await request.get("/")).text())?.[1], { timeout: 45_000, intervals: [1_000] })
+    .toBe(MAIN)
+}
 
 export const E2E_DIR = path.resolve(__dirname, "../../../.e2e")
 export const SCREENS = path.join(E2E_DIR, "screens")

@@ -7,13 +7,13 @@ import { getLocale } from "next-intl/server"
 
 import { db, type Tx } from "@/db"
 import { adminInvites, admins, auditLog, emailTokens, sessions } from "@/db/schema"
+import { absoluteLocaleUrl, localeHref } from "@/i18n/links"
 import { adminAction, publicAction, UserError } from "@/lib/action"
 import { verifyPassword } from "@/lib/auth/password"
 import { createRateLimiter } from "@/lib/auth/rate-limit"
 import { endSession, startSession } from "@/lib/auth/session"
 import { unusedTokensOf } from "@/lib/auth/tokens"
 import { sendEmail } from "@/lib/email"
-import { env } from "@/lib/env"
 import { errorForLog, PG, pgError } from "@/lib/errors"
 import { read, remove } from "@/lib/storage"
 import type { AppLocale } from "@/i18n/routing"
@@ -52,10 +52,7 @@ async function sendPartnerInvite(
   inviterName: string,
   token: string,
 ): Promise<{ inviteUrl: string; emailed: boolean }> {
-  const inviteUrl = new URL(
-    `/${invite.locale}/admin/accept-invite?token=${encodeURIComponent(token)}`,
-    env.APP_URL,
-  ).href
+  const inviteUrl = await absoluteLocaleUrl(invite.locale, `/admin/invite?token=${encodeURIComponent(token)}`)
   const result = await sendEmail({
     to: invite.email,
     template: "partner_invite",
@@ -105,7 +102,7 @@ export const acceptPartnerInviteAction = publicAction(
     const { adminId } = await acceptPartnerInvite(token, password)
     await endSession("admin")
     await startSession("admin", adminId)
-    redirect(withAdminNotice(`/${await getLocale()}/admin`, "welcome"))
+    redirect(withAdminNotice(await localeHref(await getLocale(), "/admin"), "welcome"))
   },
   { rateLimit: { limit: 10, windowMs: 15 * MINUTE } },
 )

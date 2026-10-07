@@ -1,11 +1,10 @@
 import "server-only"
 import { eq } from "drizzle-orm"
-import { redirect } from "next/navigation"
-import { getLocale } from "next-intl/server"
 import { cache } from "react"
 
 import { db } from "@/db"
 import { admins } from "@/db/schema"
+import { localeRedirect } from "@/i18n/redirect"
 import { isSameOrigin } from "./request"
 import { currentSession, deleteSession } from "./session"
 
@@ -53,7 +52,7 @@ const loadAdmin = cache(async (): Promise<AdminSession | null> => {
 export async function requireAdmin(): Promise<AdminSession> {
   const session = await getAdmin()
   if (session) return session
-  redirect(`/${await getLocale()}/admin/login`)
+  return localeRedirect("/admin/login")
 }
 
 /** For route handlers: the signed-in admin, or null (caller answers 401). Also checks same-origin for unsafe methods. */

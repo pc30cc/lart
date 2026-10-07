@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server"
 
 import { AuthCard } from "@/components/site/auth-card"
 import { LoginForm } from "@/components/site/auth/login-form"
+import { localeHref } from "@/i18n/links"
 import { Link } from "@/i18n/navigation"
 import { getMember } from "@/lib/auth/member"
 import { safeNext } from "@/lib/auth/safe-next"
@@ -19,7 +20,7 @@ export default async function MemberLoginPage({ params, searchParams }: PageProp
   const { locale } = await params
   const query = await searchParams
   const next = safeNext(query.next, "member", "")
-  if (await getMember()) redirect(next || `/${locale}/workshops`)
+  if (await getMember()) redirect(next || (await localeHref(locale, "/workshops")))
   const t = await getTranslations("account.login")
   const signup = next ? `/account/signup?next=${encodeURIComponent(next)}` : "/account/signup"
 

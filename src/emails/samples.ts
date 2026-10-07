@@ -18,6 +18,8 @@ export type AccountSampleInput = {
   amount: string
   /** A smaller formatted amount for the partial refund (half of `amount`). */
   halfAmount: string
+  /** A path without a language in the sample's language (`localePath`: the main language has no prefix). */
+  href: (path: string) => string
 }
 
 type AccountEmail =
@@ -29,9 +31,8 @@ type AccountEmail =
   | "refund_sent"
 
 export function accountEmailSamples(s: AccountSampleInput): { [K in AccountEmail]: EmailProps<K> } {
-  const home = `/${s.locale}`
   return {
-    member_exists: { name: s.person, loginUrl: `${home}/account/login`, resetUrl: `${home}/account/forgot` },
+    member_exists: { name: s.person, loginUrl: s.href("/account/login"), resetUrl: s.href("/account/forgot") },
     registration_received: {
       name: s.person,
       participantName: s.person,
@@ -40,7 +41,7 @@ export function accountEmailSamples(s: AccountSampleInput): { [K in AccountEmail
       time: s.time,
       venue: s.venue,
       amount: s.amount,
-      accountUrl: `${home}/account`,
+      accountUrl: s.href("/account"),
       cash: true,
       transfer: { accountHolder: s.person, bankName: "Ziraat Bankası", iban: "TR330006100519786457841326" },
       paymentUrl: "https://iyzi.link/example",
@@ -53,22 +54,22 @@ export function accountEmailSamples(s: AccountSampleInput): { [K in AccountEmail
       date: s.date,
       time: s.time,
       venue: s.venue,
-      accountUrl: `${home}/account`,
+      accountUrl: s.href("/account"),
     },
     registration_cancelled: {
       name: s.person,
       workshopTitle: s.workshopTitle,
       refundAmount: s.halfAmount,
       refundPercent: 50,
-      workshopsUrl: `${home}/workshops`,
+      workshopsUrl: s.href("/workshops"),
     },
     refund_due: {
       adminName: s.adminName,
       participantName: s.person,
       workshopTitle: s.workshopTitle,
       amount: s.halfAmount,
-      url: `${home}/admin`,
+      url: s.href("/admin"),
     },
-    refund_sent: { name: s.person, workshopTitle: s.workshopTitle, amount: s.halfAmount, workshopsUrl: `${home}/workshops` },
+    refund_sent: { name: s.person, workshopTitle: s.workshopTitle, amount: s.halfAmount, workshopsUrl: s.href("/workshops") },
   }
 }

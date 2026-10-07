@@ -75,10 +75,13 @@ const urlOf = (s: Storage | null, path: string | null) => {
 
 /**
  * Upcoming workshops on the site: published or confirmed, not started yet,
- * soonest first. Those past their registration deadline stay listed as
- * "registration closed".
+ * soonest first, at most `limit` (the home page shows a few). Those past their
+ * registration deadline stay listed as "registration closed".
  */
-export async function listOpenWorkshops(locale: string, now: Date = new Date()) {
+export async function listOpenWorkshops(
+  locale: string,
+  { now = new Date(), limit = 120 }: { now?: Date; limit?: number } = {},
+) {
   const rows = await db
     .select({
       id: courses.id,
@@ -103,7 +106,7 @@ export async function listOpenWorkshops(locale: string, now: Date = new Date()) 
     .innerJoin(instructors, eq(instructors.id, courses.instructorId))
     .where(and(inArray(courses.status, [...listedStatuses]), gt(courses.startsAt, now)))
     .orderBy(asc(courses.startsAt), asc(courses.id))
-    .limit(120)
+    .limit(limit)
   const [taken, files] = await Promise.all([seatsTakenOf(rows.map((r) => r.id)), storage()])
 
   return rows.map((r) => {

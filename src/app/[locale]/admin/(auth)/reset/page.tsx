@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /** The link from the reset email: choose a new password (the token is checked, not used, here). */
-export default async function ResetPasswordPage({ params, searchParams }: PageProps<"/[locale]/admin/login/reset">) {
+export default async function ResetPasswordPage({ params, searchParams }: PageProps<"/[locale]/admin/reset">) {
   const { locale } = await params
   const query = await searchParams
   const token = typeof query.token === "string" ? query.token : ""
@@ -34,7 +34,7 @@ export default async function ResetPasswordPage({ params, searchParams }: PagePr
         subtitle={t("invalid", { minutes: RESET_TOKEN_MS / 60_000 })}
       >
         <Button asChild size="lg" className="h-10 w-full px-4">
-          <Link href="/admin/login/forgot">
+          <Link href="/admin/forgot">
             <RotateCcwIcon />
             {t("requestNew")}
           </Link>

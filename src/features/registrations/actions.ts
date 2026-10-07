@@ -7,6 +7,7 @@ import { after } from "next/server"
 
 import { db } from "@/db"
 import { members } from "@/db/schema"
+import { localeHref } from "@/i18n/links"
 import { memberAction } from "@/lib/action"
 import { errorForLog } from "@/lib/errors"
 import { sendRegistrationCancelled, sendRegistrationReceived } from "./notify"
@@ -30,7 +31,7 @@ export const registerAction = memberAction(
   async (input, ctx) => {
     const { id } = await registerForWorkshop(ctx.member.id, input)
     after(() => sendRegistrationReceived(id).catch(logFailure("registration email")))
-    redirect(`/${input.locale}/account/registrations/${id}?welcome=1`)
+    redirect(await localeHref(input.locale, `/account/registrations/${id}?welcome=1`))
   },
   { verified: true },
 )

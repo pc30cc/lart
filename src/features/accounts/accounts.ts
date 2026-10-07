@@ -4,6 +4,7 @@ import { and, eq, inArray, isNotNull, sql } from "drizzle-orm"
 import { db, type Tx } from "@/db"
 import { emailTokens, instructors, members, type LocalizedText } from "@/db/schema"
 import { profileText } from "@/features/instructors/schema"
+import { localeHref } from "@/i18n/links"
 import { locales } from "@/i18n/routing"
 import { audit } from "@/lib/audit"
 import { encrypt, sha256 } from "@/lib/crypto"
@@ -32,11 +33,11 @@ type Person = { id: string; email: string; name: string; locale: string; verifie
 
 /** Where each kind's emailed links open. */
 const pages = {
-  member: { verify: "account/verify", reset: "account/reset" },
-  instructor: { verify: "instructor/verify", reset: "instructor/reset" },
+  member: { verify: "/account/verify", reset: "/account/reset" },
+  instructor: { verify: "/instructor/verify", reset: "/instructor/reset" },
 } as const
 
-const link = (locale: string, page: string, token: string) => `/${locale}/${page}?token=${encodeURIComponent(token)}`
+const link = (locale: string, page: string, token: string) => localeHref(locale, `${page}?token=${encodeURIComponent(token)}`)
 
 /** Links of a deactivated instructor never work (deactivating also deletes them; this is a second lock). */
 const activeOnly = (kind: AccountKind) =>
@@ -220,7 +221,11 @@ export async function sendMemberExists(email: string, locale: string): Promise<b
     to: member.email,
     template: "member_exists",
     locale,
-    props: { name: member.name, loginUrl: `/${locale}/account/login`, resetUrl: `/${locale}/account/forgot` },
+    props: {
+      name: member.name,
+      loginUrl: await localeHref(locale, "/account/login"),
+      resetUrl: await localeHref(locale, "/account/forgot"),
+    },
   })
   return sent.ok
 }
@@ -250,7 +255,7 @@ export async function sendVerifyLink(kind: AccountKind, id: string): Promise<"se
     to: person.email,
     template: "welcome_verify",
     locale: person.locale,
-    props: { name: person.name, verifyUrl: link(person.locale, pages[kind].verify, token) },
+    props: { name: person.name, verifyUrl: await link(person.locale, pages[kind].verify, token) },
   })
   return sent.ok ? "sent" : "failed"
 }
@@ -304,7 +309,7 @@ export async function sendResetLink(kind: AccountKind, email: string, locale: st
     to: person.email,
     template: "password_reset",
     locale,
-    props: { name: person.name, resetUrl: link(locale, pages[kind].reset, token) },
+    props: { name: person.name, resetUrl: await link(locale, pages[kind].reset, token) },
   })
   return sent.ok
 }

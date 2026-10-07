@@ -7,11 +7,10 @@ import * as schema from "./schema"
 
 const globalForDb = globalThis as unknown as { pool?: Pool }
 
-// One small pool per process, reused across hot reloads in development.
-const pool =
-  globalForDb.pool ??
-  new Pool({ connectionString: env.DATABASE_URL, max: env.DATABASE_POOL_MAX })
-if (process.env.NODE_ENV !== "production") globalForDb.pool = pool
+// One small pool per process, kept on globalThis: reused across hot reloads in
+// development, and shared by the proxy (the main language, src/i18n/main-locale)
+// and the app, which Next bundles separately but runs in one process.
+const pool = (globalForDb.pool ??= new Pool({ connectionString: env.DATABASE_URL, max: env.DATABASE_POOL_MAX }))
 
 export const db = drizzle({ client: pool, schema })
 export type Db = typeof db

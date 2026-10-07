@@ -4,8 +4,8 @@ import { getTranslations } from "next-intl/server"
 
 import { EmptyState } from "@/components/admin/empty-state"
 import { listOpenWorkshops } from "@/features/registrations/public"
+import { alternates, ogLocale } from "@/lib/seo"
 import { getBrand } from "@/lib/settings"
-import { alternates, ogLocale } from "./_components/seo"
 import { WorkshopCard } from "./_components/workshop-card"
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/workshops">): Promise<Metadata> {

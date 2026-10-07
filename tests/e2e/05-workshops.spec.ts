@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test"
 
 import {
+  at,
   chooseSelect,
   emailsSince,
   expect,
@@ -160,7 +161,7 @@ test.describe.serial("workshops", () => {
     await expect(page.getByText(`Waiting for ${INSTRUCTORS.elif.displayName.en} to sign`)).toBeVisible()
     // The header and the details show the venue in the page's language.
     await expect(page.locator("main")).toContainText(w.venue.en)
-    await page.goto(`/tr/admin/workshops/${id}`)
+    await page.goto(at("tr", `/admin/workshops/${id}`))
     await expect(page.locator("main")).toContainText(w.venue.tr)
   })
 

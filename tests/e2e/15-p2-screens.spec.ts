@@ -3,7 +3,8 @@ import path from "node:path"
 
 import type { Page } from "@playwright/test"
 
-import { E2E_DIR, expect, mailMark, RUN, SCREENS, settle, test } from "./helpers/app"
+import { splitLocale } from "../../src/i18n/paths"
+import { at, E2E_DIR, expect, mailMark, RUN, SCREENS, settle, test } from "./helpers/app"
 import { sql } from "./helpers/db"
 import { anonContext, createWorkshop, fillInstructor, hasSession, linksOf, P2, tr, waitMail } from "./helpers/p2"
 
@@ -51,9 +52,12 @@ const readLinks = (): Links => {
     return {}
   }
 }
-/** "/en/…?token=x" → "/<locale>/…?token=x" (the token works in every language). */
-const inLocale = (link: string | undefined, locale: Locale, fallback: string) =>
-  link ? link.replace(/^https?:\/\/[^/]+/, "").replace(/^\/(fa|tr|en)\//, `/${locale}/`) : `/${locale}${fallback}`
+/** An emailed link ("http://…/en/…?token=x") in another language: the same path and token at `locale`'s address. */
+function inLocale(link: string | undefined, locale: Locale, fallback: string) {
+  if (!link) return at(locale, fallback)
+  const url = new URL(link)
+  return at(locale, splitLocale(url.pathname).rest + url.search)
+}
 
 type Ids = {
   a: string
@@ -110,48 +114,49 @@ async function ids(): Promise<Ids> {
 function pages(i: Ids, links: Links): [string, Who, (l: Locale) => string, boolean][] {
   return [
     // The public site, signed out.
-    ["site-workshops", "anon", (l) => `/${l}/workshops`, true],
-    ["site-workshop", "anon", (l) => `/${l}/workshops/${i.bSlug}`, true],
-    ["site-workshop-full", "anon", (l) => `/${l}/workshops/${i.aSlug}`, false],
-    ["site-workshop-cancelled", "anon", (l) => `/${l}/workshops/${i.cSlug}`, false],
-    ["register-signed-out", "anon", (l) => `/${l}/workshops/${i.bSlug}/register`, false],
+    ["site-home", "anon", (l) => at(l, "/"), true],
+    ["site-workshops", "anon", (l) => at(l, "/workshops"), true],
+    ["site-workshop", "anon", (l) => at(l, `/workshops/${i.bSlug}`), true],
+    ["site-workshop-full", "anon", (l) => at(l, `/workshops/${i.aSlug}`), false],
+    ["site-workshop-cancelled", "anon", (l) => at(l, `/workshops/${i.cSlug}`), false],
+    ["register-signed-out", "anon", (l) => at(l, `/workshops/${i.bSlug}/register`), false],
     // Member account pages, signed out.
-    ["account-login", "anon", (l) => `/${l}/account/login`, false],
-    ["account-signup", "anon", (l) => `/${l}/account/signup`, false],
-    ["account-forgot", "anon", (l) => `/${l}/account/forgot`, false],
+    ["account-login", "anon", (l) => at(l, "/account/login"), false],
+    ["account-signup", "anon", (l) => at(l, "/account/signup"), false],
+    ["account-forgot", "anon", (l) => at(l, "/account/forgot"), false],
     ["account-reset", "anon", (l) => inLocale(links.memberReset, l, "/account/reset?token=missing"), false],
-    ["account-reset-invalid", "anon", (l) => `/${l}/account/reset?token=not-a-real-token-${RUN}`, false],
-    ["account-verify-invalid", "anon", (l) => `/${l}/account/verify?token=not-a-real-token-${RUN}`, false],
+    ["account-reset-invalid", "anon", (l) => at(l, `/account/reset?token=not-a-real-token-${RUN}`), false],
+    ["account-verify-invalid", "anon", (l) => at(l, `/account/verify?token=not-a-real-token-${RUN}`), false],
     // A member: registering, the confirmation with the payment instructions, My workshops.
-    ["register", "bahar", (l) => `/${l}/workshops/${i.bSlug}/register`, true],
-    ["site-workshop-registered", "ayla", (l) => `/${l}/workshops/${i.bSlug}`, false],
-    ["confirmation", "ayla", (l) => `/${l}/account/registrations/${i.aylaUnpaid}?welcome=1`, true],
-    ["registration-paid", "ayla", (l) => `/${l}/account/registrations/${i.aylaPaid}`, false],
-    ["registration-refund", "ayla", (l) => `/${l}/account/registrations/${i.aylaCancelled}`, false],
-    ["my-workshops", "ayla", (l) => `/${l}/account`, true],
+    ["register", "bahar", (l) => at(l, `/workshops/${i.bSlug}/register`), true],
+    ["site-workshop-registered", "ayla", (l) => at(l, `/workshops/${i.bSlug}`), false],
+    ["confirmation", "ayla", (l) => at(l, `/account/registrations/${i.aylaUnpaid}?welcome=1`), true],
+    ["registration-paid", "ayla", (l) => at(l, `/account/registrations/${i.aylaPaid}`), false],
+    ["registration-refund", "ayla", (l) => at(l, `/account/registrations/${i.aylaCancelled}`), false],
+    ["my-workshops", "ayla", (l) => at(l, "/account"), true],
     // Instructor sign-in pages.
-    ["instructor-login", "anon", (l) => `/${l}/instructor/login`, false],
-    ["instructor-forgot", "anon", (l) => `/${l}/instructor/forgot`, false],
+    ["instructor-login", "anon", (l) => at(l, "/instructor/login"), false],
+    ["instructor-forgot", "anon", (l) => at(l, "/instructor/forgot"), false],
     ["instructor-reset", "anon", (l) => inLocale(links.instructorReset, l, "/instructor/reset?token=missing"), false],
-    ["instructor-reset-invalid", "anon", (l) => `/${l}/instructor/reset?token=not-a-real-token-${RUN}`, false],
-    ["instructor-verify-invalid", "anon", (l) => `/${l}/instructor/verify?token=not-a-real-token-${RUN}`, false],
-    ["instructor-invite", "anon", (l) => inLocale(links.invite, l, "/instructor/accept-invite?token=missing"), false],
-    ["instructor-invite-invalid", "anon", (l) => `/${l}/instructor/accept-invite?token=not-a-real-token-${RUN}`, false],
+    ["instructor-reset-invalid", "anon", (l) => at(l, `/instructor/reset?token=not-a-real-token-${RUN}`), false],
+    ["instructor-verify-invalid", "anon", (l) => at(l, `/instructor/verify?token=not-a-real-token-${RUN}`), false],
+    ["instructor-invite", "anon", (l) => inLocale(links.invite, l, "/instructor/invite?token=missing"), false],
+    ["instructor-invite-invalid", "anon", (l) => at(l, `/instructor/invite?token=not-a-real-token-${RUN}`), false],
     // The instructor panel.
-    ["instructor-home", "nur", (l) => `/${l}/instructor`, true],
-    ["instructor-contracts", "nur", (l) => `/${l}/instructor/contracts`, false],
-    ["instructor-contract-sign", "nur", (l) => `/${l}/instructor/contracts/${i.unsignedContract}`, true],
-    ["instructor-contract-signed", "nur", (l) => `/${l}/instructor/contracts/${i.signedContract}`, false],
-    ["instructor-workshops", "nur", (l) => `/${l}/instructor/workshops`, false],
-    ["instructor-workshop", "nur", (l) => `/${l}/instructor/workshops/${i.a}`, false],
-    ["instructor-earnings", "nur", (l) => `/${l}/instructor/earnings`, false],
-    ["instructor-profile", "nur", (l) => `/${l}/instructor/profile`, false],
+    ["instructor-home", "nur", (l) => at(l, "/instructor"), true],
+    ["instructor-contracts", "nur", (l) => at(l, "/instructor/contracts"), false],
+    ["instructor-contract-sign", "nur", (l) => at(l, `/instructor/contracts/${i.unsignedContract}`), true],
+    ["instructor-contract-signed", "nur", (l) => at(l, `/instructor/contracts/${i.signedContract}`), false],
+    ["instructor-workshops", "nur", (l) => at(l, "/instructor/workshops"), false],
+    ["instructor-workshop", "nur", (l) => at(l, `/instructor/workshops/${i.a}`), false],
+    ["instructor-earnings", "nur", (l) => at(l, "/instructor/earnings"), false],
+    ["instructor-profile", "nur", (l) => at(l, "/instructor/profile"), false],
     // The admin's new pages.
-    ["admin-settings-payments", "admin", (l) => `/${l}/admin/settings/payments`, true],
-    ["admin-registrations", "admin", (l) => `/${l}/admin/workshops/${i.a}/registrations`, false],
-    ["admin-registrations-b", "admin", (l) => `/${l}/admin/workshops/${i.b}/registrations?status=all`, false],
-    ["admin-refunds", "admin", (l) => `/${l}/admin/money/refunds`, false],
-    ["admin-refunds-refunded", "admin", (l) => `/${l}/admin/money/refunds?view=refunded`, false],
+    ["admin-settings-payments", "admin", (l) => at(l, "/admin/settings/payments"), true],
+    ["admin-registrations", "admin", (l) => at(l, `/admin/workshops/${i.a}/registrations`), false],
+    ["admin-registrations-b", "admin", (l) => at(l, `/admin/workshops/${i.b}/registrations?status=all`), false],
+    ["admin-refunds", "admin", (l) => at(l, "/admin/money/refunds"), false],
+    ["admin-refunds-refunded", "admin", (l) => at(l, "/admin/money/refunds?view=refunded"), false],
   ]
 }
 
@@ -215,7 +220,7 @@ test.describe.serial("phase 2 screens · set-up", () => {
       await fillInstructor(page, INVITEE)
       await page.getByRole("button", { name: "Add and send invitation" }).click()
       const email = await waitMail(INVITEE.email, mark, /./)
-      links.invite = linksOf(email).find((l) => l.includes("/instructor/accept-invite?token="))
+      links.invite = linksOf(email).find((l) => l.includes("/instructor/invite?token="))
     }
     // Reset links, requested and never used (their forms).
     const anon = await anonContext(browser)
@@ -304,7 +309,7 @@ test.describe("p2 layout details", () => {
   test("the site header on a phone: brand, Workshops, language and account fit in one row", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     for (const locale of ["fa", "tr"] as const) {
-      await page.goto(`/${locale}/workshops`)
+      await page.goto(at(locale, "/workshops"))
       await settle(page)
       const header = page.locator("header").first()
       const box = await header.boundingBox()

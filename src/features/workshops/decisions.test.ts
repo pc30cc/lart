@@ -110,7 +110,7 @@ describe("notifyDueDecisions", () => {
     expect(sent.find((m) => m.to === adminEmail)).toMatchObject({
       template: "decision_due",
       idempotencyKey: `decision_due:${due.id}:${adminId}:${due.decisionAt.getTime()}`,
-      props: { adminName: "Mina", registrations: 3, minimum: 5, workshopTitle: `Karar ${run}`, workshopUrl: `/tr/admin/workshops/${due.id}` },
+      props: { adminName: "Mina", registrations: 3, minimum: 5, workshopTitle: `Karar ${run}`, workshopUrl: `/admin/workshops/${due.id}` },
     })
     expect(await notifiedAt(due.id)).toEqual(now)
 

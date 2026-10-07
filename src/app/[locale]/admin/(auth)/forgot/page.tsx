@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /** "Forgot your password?": asks for the email and sends a reset link. Open to signed-out visitors. */
-export default async function ForgotPasswordPage({ params }: PageProps<"/[locale]/admin/login/forgot">) {
+export default async function ForgotPasswordPage({ params }: PageProps<"/[locale]/admin/forgot">) {
   const { locale } = await params
   const [t, brand] = await Promise.all([getTranslations("auth.forgot"), getBrand(locale)])
 

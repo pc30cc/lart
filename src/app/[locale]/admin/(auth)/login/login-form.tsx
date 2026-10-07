@@ -89,7 +89,7 @@ export function LoginForm({ next, notice }: { next?: string; notice?: string }) 
 
       <p className="text-center text-sm">
         <Link
-          href="/admin/login/forgot"
+          href="/admin/forgot"
           className="text-muted-foreground hover:text-primary rounded-sm underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           {t("forgot")}

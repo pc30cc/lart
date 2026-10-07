@@ -8,8 +8,9 @@ course finances, a shared partner wallet and full accounting.
 
 > **Status:** phase 1 (the super-admin panel) is built and tested; phase 2
 > (instructor panel, student accounts, registration with payments recorded by
-> admins, refunds and reminders) is built, on a minimal site frame. Next: the
-> public site on the theme system (phase 3). How to run it:
+> admins, refunds and reminders) is built, on a minimal site frame with a
+> first home page (the brand, the SEO description and the next workshops).
+> Next: the public site on the theme system (phase 3). How to run it:
 > [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## Contents
@@ -50,10 +51,21 @@ Related document: [instructor contract, fixed clauses](docs/CONTRACT_TEMPLATE.md
   - friendly messages that say what to do next, never technical errors,
   - works perfectly on a phone.
 - **Three languages everywhere.** Persian (RTL), Turkish and English: every
-  menu, page, email and panel label. The **default language** is one
-  setting in the super-admin panel.
+  menu, page, email and panel label. The **main language** is one setting
+  in the super-admin panel.
+- **Short addresses that follow fixed rules** ([URL rules](docs/DEVELOPMENT.md#url-rules)).
+  The main language lives at the root with no language in the address
+  (`limer.tr/`, `/workshops`, `/workshops/<slug>`); the other languages are
+  under `/fa` and `/en`. `/` is the home page, never a redirect. Paths are
+  lower-case English (plural lists, a slug for a public item, the action
+  last, no ids on public pages), and every area has the same sign-in pages
+  (`/account`, `/instructor`, `/admin` with `/login`, `/forgot`, `/reset`,
+  `/signup`, `/verify`, `/invite` where they exist). Old addresses (the
+  main language's `/tr/…`, renamed pages) redirect permanently. One list in
+  the code holds every address, and a test keeps pages, list and rules in
+  step.
 - **Best-possible SEO, always.** Server rendering, per-language URLs
-  (`/fa`, `/tr`, `/en`) with `hreflang`, translated metadata and Open Graph,
+  (the main language at the root, `/fa`, `/en`) with `hreflang`, translated metadata and Open Graph,
   structured data (`Course`, `Event`, `Person`, `Organization`), sitemap,
   canonical URLs, fast Core Web Vitals and optimized images.
 - **Everything is editable, nothing is hard-coded.** Content, menus, terms,
@@ -208,8 +220,8 @@ each participant, so the gallery team knows whose face may be published.
 - **No link to it anywhere on the site.** Instructors reach it only through
   a private address sent to them; the page is `noindex` and excluded from
   the sitemap.
-- Own login (`/<l>/instructor/login`). Two ways in:
-  - **Sign up on their own** at `/<l>/instructor/signup` (the team shares
+- Own login (`/instructor/login`). Two ways in:
+  - **Sign up on their own** at `/instructor/signup` (the team shares
     the address; the login page links to it): the full profile below,
     email and password, and "my details are correct". The instructor goes
     **straight into the panel**, with a "waiting for approval" banner and

@@ -224,7 +224,7 @@ describe("createInstructor", () => {
 
     const link = lastInviteLink()
     expect(link.origin).toBe(new URL(process.env.APP_URL!).origin)
-    expect(link.pathname).toBe("/fa/instructor/accept-invite")
+    expect(link.pathname).toBe("/fa/instructor/invite")
     const token = link.searchParams.get("token")!
     expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/)
 
@@ -408,7 +408,7 @@ describe("resendInvite", () => {
     // They haven't accepted yet, so their emails (e.g. contracts) follow the new invitation's language.
     expect((await row(id)).locale).toBe("en")
     const link = lastInviteLink()
-    expect(link.pathname).toBe("/en/instructor/accept-invite")
+    expect(link.pathname).toBe("/en/instructor/invite")
     const live = await tokens(id)
     expect(live).toHaveLength(1)
     expect(live[0].id).not.toBe(first.id)

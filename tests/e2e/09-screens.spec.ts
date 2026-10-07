@@ -3,7 +3,7 @@ import path from "node:path"
 
 import type { Page } from "@playwright/test"
 
-import { expect, SCREENS, settle, test } from "./helpers/app"
+import { at, expect, SCREENS, settle, test } from "./helpers/app"
 import { INSTRUCTORS, WORKSHOPS } from "./helpers/data"
 import { sql } from "./helpers/db"
 
@@ -68,8 +68,8 @@ function pages(i: Ids): [string, string][] {
     ["template-new", "/admin/templates/new"],
     ["template-email", "/admin/templates/emails/contract_ready"],
     ["audit", "/admin/audit"],
-    // Phase 1 has no public site yet: the language root should still be a proper page, not the bare framework 404.
-    ["site-root", ""],
+    // The home page of the language (the main language's is "/").
+    ["site-root", "/"],
     ["not-found-admin", "/admin/no-such-page"],
     ["not-found", "/no-such-page"],
   ]
@@ -140,7 +140,7 @@ for (const locale of ["fa", "tr"] as const) {
       test.describe("signed out", () => {
         test.use({ storageState: { cookies: [], origins: [] } })
         test(`login-${locale}-${v.theme}-${v.size}`, async ({ page, problems }) => {
-          await capture(page, "login", `/${locale}/admin/login`, `login-${locale}-${v.theme}-${v.size}`)
+          await capture(page, "login", at(locale, "/admin/login"), `login-${locale}-${v.theme}-${v.size}`)
           await expect(page.locator("html")).toHaveAttribute("dir", locale === "fa" ? "rtl" : "ltr")
           expect.soft(browserErrors(problems), "browser errors").toEqual([])
         })
@@ -151,7 +151,7 @@ for (const locale of ["fa", "tr"] as const) {
         if (!v.all && !MAIN.has(name)) continue
         test(`${name}-${locale}-${v.theme}-${v.size}`, async ({ page, problems }) => {
           const target = pages(IDS).find(([n]) => n === name)![1]
-          await capture(page, name, `/${locale}${target}`, `${name}-${locale}-${v.theme}-${v.size}`)
+          await capture(page, name, at(locale, target), `${name}-${locale}-${v.theme}-${v.size}`)
           await expect(page.locator("html")).toHaveAttribute("lang", locale)
           const expected = name.startsWith("not-found") ? [] : browserErrors(problems)
           expect.soft(expected, "browser errors").toEqual([])

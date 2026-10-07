@@ -19,7 +19,7 @@ const count = z.number().int().min(0).max(1_000_000)
 
 /**
  * A link on this site: an absolute URL on APP_URL's origin, or a path such as
- * "/tr/verify?token=…" (resolved against APP_URL). Links elsewhere are refused,
+ * "/account/verify?token=…" (resolved against APP_URL). Links elsewhere are refused,
  * so an email can never point people to another site. The one exception is
  * `paymentUrl` below, for that prop of `registration_received` only.
  */

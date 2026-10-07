@@ -2,7 +2,7 @@ import "server-only"
 import { createTranslator } from "next-intl"
 import { render, toPlainText } from "react-email"
 
-import { env } from "@/lib/env"
+import { absoluteLocaleUrl } from "@/i18n/links"
 import { errorForLog } from "@/lib/errors"
 import { formatNumber } from "@/lib/format"
 import { getBrand, getSetting, type SettingValue } from "@/lib/settings"
@@ -95,7 +95,7 @@ async function build(
   const msg = (key: string) => t(`${template}.${key}` as Key, values)
   const optional = (key: string) => (t.has(`${template}.${key}` as Key) ? msg(key) : undefined)
   const shared = (key: string) => t(key as Key, values)
-  const home = new URL(`/${locale}`, env.APP_URL).href
+  const home = await absoluteLocaleUrl(locale, "/")
 
   const details = Object.entries(def.details ?? {}).flatMap(([label, key]) => {
     const value = p[key as string]
