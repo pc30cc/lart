@@ -4,6 +4,7 @@ import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 
 import { StatusBadge } from "@/components/admin/status-badge"
+import { ContractDocument } from "@/components/contract-document"
 import { Button } from "@/components/ui/button"
 import type { Locale } from "@/db/schema"
 import { getMyContract } from "@/features/instructor-panel/queries"
@@ -13,7 +14,6 @@ import { formatDate, formatDateTime, formatNumber, formatTimeRange, localized } 
 import { getBrand } from "@/lib/settings"
 import { cn } from "@/lib/utils"
 // The same calm, printable document the admins see.
-import { ContractDocument } from "../../../../admin/(panel)/workshops/_components/contract-document"
 import { BackLink, contractTone, WorkshopStatus } from "../../_components/parts"
 import { PrintButton } from "../../_components/print-button"
 import { SignForm } from "../../_components/sign-form"

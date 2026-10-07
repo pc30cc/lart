@@ -134,7 +134,8 @@ export async function workshopResults(range: { from: string; to: string }) {
     .where(and(isNotNull(t.courseId), ne(t.kind, "course_close")))
     .groupBy(t.courseId)
     .as("totals")
-  const confirmed = sql<number>`(select count(*) from ${registrations} r where r.course_id = ${courses}.${sql.identifier("id")} and r.status = 'confirmed')`.mapWith(Number)
+  /** Everyone registered (paid or not yet): the participant number until the go decision fixes it. */
+  const registered = sql<number>`(select count(*) from ${registrations} r where r.course_id = ${courses}.${sql.identifier("id")} and r.status in ('pending', 'confirmed'))`.mapWith(Number)
 
   const query = db
     .select({
@@ -146,7 +147,7 @@ export async function workshopResults(range: { from: string; to: string }) {
       startsAt: courses.startsAt,
       finalParticipants: courses.finalParticipants,
       closedTotals: courses.closedTotals,
-      confirmed,
+      registered,
       instructorId: instructors.id,
       instructor: instructors.displayName,
       revenue: totals.revenue,
@@ -172,7 +173,7 @@ export async function workshopResults(range: { from: string; to: string }) {
       startsAt: r.startsAt,
       instructorId: r.instructorId,
       instructor: r.instructor,
-      participants: cancelled ? 0 : (r.closedTotals?.participants ?? r.finalParticipants ?? Number(r.confirmed)),
+      participants: cancelled ? 0 : (r.closedTotals?.participants ?? r.finalParticipants ?? Number(r.registered)),
       /** Not booked yet: the fee a confirmed workshop will owe when it is closed (part of `instructorFees`). */
       estimatedFee,
       ...withNet({

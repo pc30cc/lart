@@ -218,6 +218,30 @@
       "password_reset": {
         "title": "Şifre sıfırlama",
         "to": "Herkes"
+      },
+      "member_exists": {
+        "title": "Hesap zaten var",
+        "to": "Katılımcılar"
+      },
+      "registration_received": {
+        "title": "Yer ayrıldı + ödeme yolları",
+        "to": "Katılımcılar"
+      },
+      "payment_received": {
+        "title": "Ödeme alındı",
+        "to": "Katılımcılar"
+      },
+      "registration_cancelled": {
+        "title": "Kayıt iptal edildi",
+        "to": "Katılımcılar"
+      },
+      "refund_due": {
+        "title": "Yapılacak iade",
+        "to": "Yöneticiler"
+      },
+      "refund_sent": {
+        "title": "İade gönderildi",
+        "to": "Katılımcılar"
       }
     }
   }

@@ -65,7 +65,7 @@ export async function sendPaymentReceived(registrationId: string, method: Paymen
   return sent.ok
 }
 
-/** "Your registration is cancelled", with the refund when something was paid. */
+/** "Your registration is cancelled" (by us: neutral wording), with the refund when something was paid. */
 export async function sendRegistrationCancelled(cancelled: CancelledRegistration): Promise<boolean> {
   const row = await load(cancelled.registrationId)
   if (!row) return false
@@ -81,6 +81,8 @@ export async function sendRegistrationCancelled(cancelled: CancelledRegistration
       // Left out when nothing was paid: the email then has no refund line.
       ...(cancelled.paid > 0 ? { refundAmount: formatLira(cancelled.refund, locale) } : {}),
       refundPercent: cancelled.percent,
+      // An admin cancelled it: not "as you asked".
+      byUs: true,
       workshopsUrl: `/${locale}/workshops`,
     },
   })

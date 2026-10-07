@@ -17,6 +17,7 @@ const input = z.object({
   ip: z.string().trim().max(100).nullable(),
   userAgent: z.string().trim().nullable(),
   locale: z.enum(["fa", "tr", "en"]),
+  expectedSha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
 })
 
 export type SignResult = { contractId: string; courseId: string; sha256: string; adminsNotified: number }
@@ -30,7 +31,11 @@ export type SignResult = { contractId: string; courseId: string; sha256: string;
  * and the evidence (name typed, time, IP, browser). The workshop is then
  * published, or confirmed again when the go decision was already taken (a
  * contract re-issued after it keeps that decision and its final number), and
- * the super admins are told. Expected failures throw `UserError("contracts.errors.*")`.
+ * the super admins are told. `expectedSha256` is the fingerprint of the text
+ * the instructor read (the panel's sign form sends it): when given, signing is
+ * refused (`contracts.errors.textChanged`) if the text that would be signed now,
+ * rendered under the locks, is a different one. Expected failures throw
+ * `UserError("contracts.errors.*")`.
  */
 export async function signContract(
   contractId: string,
@@ -39,10 +44,12 @@ export async function signContract(
   ip: string | null,
   userAgent: string | null,
   locale: string,
+  expectedSha256?: string,
 ): Promise<SignResult> {
-  const parsed = input.safeParse({ contractId, instructorId, signedName, ip, userAgent, locale })
+  const parsed = input.safeParse({ contractId, instructorId, signedName, ip, userAgent, locale, expectedSha256 })
   if (!parsed.success) {
     const field = parsed.error.issues[0]?.path[0]
+    if (field === "expectedSha256") throw new UserError("contracts.errors.textChanged")
     throw new UserError(field === "signedName" ? "contracts.errors.nameRequired" : "contracts.errors.notFound", {
       field: field === "signedName" ? "signedName" : undefined,
     })
@@ -69,6 +76,8 @@ export async function signContract(
 
     const sealed = sealSignedText(await renderContract(v.contractId, v.locale, { tx }))
     const hash = sealed.signedTextSha256
+    // Only the text the instructor read is signed: if it changed meanwhile, they read it again.
+    if (v.expectedSha256 !== undefined && v.expectedSha256 !== hash) throw new UserError("contracts.errors.textChanged")
     const now = new Date()
     await tx
       .update(contracts)

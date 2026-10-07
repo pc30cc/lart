@@ -160,7 +160,7 @@ describe("proxy", () => {
     expect(res.headers.get("x-robots-tag")).toBe("noindex, nofollow")
   })
 
-  it("skips static files, media files and the upload endpoint", () => {
+  it("skips static files, media files and the upload endpoints", () => {
     const matcher = new RegExp(`^${config.matcher[0]}$`) // the pattern is a plain regex here
     expect(matcher.test("/fa/admin")).toBe(true)
     expect(matcher.test("/")).toBe(true)
@@ -168,6 +168,9 @@ describe("proxy", () => {
     expect(matcher.test("/_next/static/chunk.js")).toBe(false)
     expect(matcher.test("/media/courses/a.webp")).toBe(false)
     expect(matcher.test("/api/admin/uploads")).toBe(false)
+    expect(matcher.test("/api/instructor/uploads")).toBe(false)
+    expect(matcher.test("/api/instructor/other")).toBe(true)
+    expect(matcher.test("/fa/instructor/profile")).toBe(true)
     expect(matcher.test("/favicon.ico")).toBe(false)
   })
 })

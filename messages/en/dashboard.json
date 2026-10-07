@@ -107,7 +107,7 @@
     "tomorrow": "Tomorrow",
     "now": "Happening now",
     "seats": "{taken} of {max} places",
-    "pending": "{count, plural, one {# more awaiting payment} other {# more awaiting payment}}",
+    "paid": "{count, plural, =0 {Nobody has paid yet} other {# paid}}",
     "notOpen": "Registration opens after signing",
     "alerts": {
       "awaitingSignature": "Waiting for the instructor to sign the contract",

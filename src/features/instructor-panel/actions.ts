@@ -6,12 +6,10 @@ import { headers } from "next/headers"
 
 import { db, type Tx } from "@/db"
 import { auditLog, contracts, courses, instructors, type LocalizedText } from "@/db/schema"
-import { renderContract } from "@/features/contracts/render"
 import { signContract } from "@/features/contracts/sign"
 import { instructorAction, UserError } from "@/lib/action"
 import { audit, changes } from "@/lib/audit"
 import { clientIp } from "@/lib/auth/request"
-import { sha256 } from "@/lib/crypto"
 import { errorForLog } from "@/lib/errors"
 import { remove } from "@/lib/storage"
 import { normalizeName, profileSchema, sameName, signSchema } from "./schema"
@@ -21,10 +19,12 @@ const revalidatePanel = () => revalidatePath("/[locale]/instructor", "layout")
 /**
  * Sign one of my contracts. The name typed must be the official name (spacing
  * and letter case aside), and the text on the page must still be the text that
- * gets signed: if the contract changed since the page was opened, nothing is
- * signed and the instructor is asked to read it again. `signContract` checks
- * again, under lock, that the contract is theirs and still waiting, stores the
- * text with the evidence (time, IP, browser) and publishes the workshop.
+ * gets signed: the form sends the fingerprint (SHA-256) of the text the
+ * instructor read, and `signContract` compares it, under lock, with the text it
+ * signs; if the contract changed since the page was opened, nothing is signed
+ * and the instructor is asked to read it again. `signContract` also checks
+ * again that the contract is theirs and still waiting, stores the text with
+ * the evidence (time, IP, browser) and publishes the workshop.
  */
 export const signContractAction = instructorAction(signSchema, async (input, ctx) => {
   const [row] = await db
@@ -44,10 +44,6 @@ export const signContractAction = instructorAction(signSchema, async (input, ctx
       values: { name: row.officialName },
     })
   }
-  if (sha256(await renderContract(input.contractId, input.locale)) !== input.textSha256) {
-    throw new UserError("instructorPanel.sign.errors.textChanged")
-  }
-
   const request = await headers()
   const result = await signContract(
     input.contractId,
@@ -56,6 +52,7 @@ export const signContractAction = instructorAction(signSchema, async (input, ctx
     clientIp(request),
     request.get("user-agent"),
     input.locale,
+    input.textSha256,
   )
   const [course] = await db.select({ status: courses.status }).from(courses).where(eq(courses.id, result.courseId))
   revalidatePanel()

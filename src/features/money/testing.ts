@@ -119,7 +119,13 @@ export async function makeCourse(
 export async function addRegistration(
   world: World,
   courseId: string,
-  options: { status?: "pending" | "confirmed" | "cancelled"; amount?: number; refundAmount?: number | null } = {},
+  options: {
+    status?: "pending" | "confirmed" | "cancelled"
+    amount?: number
+    refundAmount?: number | null
+    /** When the refund was paid back (null: still owed). */
+    refundedAt?: Date | null
+  } = {},
 ) {
   const status = options.status ?? "confirmed"
   const [row] = await db
@@ -136,6 +142,7 @@ export async function addRegistration(
       paidAt: status === "pending" ? null : new Date(),
       cancelledAt: status === "cancelled" ? new Date() : null,
       refundAmount: options.refundAmount ?? null,
+      refundedAt: options.refundedAt ?? null,
     })
     .returning({ id: registrations.id })
   return row.id

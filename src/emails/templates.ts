@@ -101,6 +101,68 @@ export type EmailSection = {
   button?: { label: string; href: string }
 }
 
+/**
+ * The ways to pay that are switched on (settings → payment), shared by
+ * `registration_received` and the reminder of an unpaid registration. Pass
+ * only the ways that are on and usable (`paymentWays` in ./payment.ts):
+ * `cash: true`, `transfer` (the account from the settings, the note in the
+ * email's language) and `paymentUrl` (the workshop's own payment link).
+ */
+const paymentShape = {
+  cash: z.literal(true).optional(),
+  transfer: z
+    .object({
+      accountHolder: z.string().trim().max(120),
+      bankName: z.string().trim().max(120),
+      iban,
+      note: z.string().trim().max(500).optional(),
+    })
+    .optional(),
+  paymentUrl: paymentUrl.optional(),
+  /** The admin's note about online payment (settings), in the email's language. */
+  onlineNote: z.string().trim().max(500).optional(),
+}
+
+type PaymentProps = z.output<z.ZodObject<typeof paymentShape>> & { participantName?: string }
+
+/** "none", "one" or "many" ways to pay (the `ways` value of the texts). */
+function waysCount(p: PaymentProps): "none" | "one" | "many" {
+  const ways = [p.cash, p.transfer, p.paymentUrl].filter(Boolean).length
+  return ways === 0 ? "none" : ways === 1 ? "one" : "many"
+}
+
+/**
+ * One block per way to pay. Their texts use {amount}; the transfer block asks
+ * to write {participantName} in the description when the email has it.
+ */
+function paymentSections(p: PaymentProps): EmailSection[] {
+  const out: EmailSection[] = []
+  if (p.cash) out.push({ title: "payment.cash.title", text: ["payment.cash.text"] })
+  if (p.transfer) {
+    const { accountHolder, bankName, iban, note } = p.transfer
+    out.push({
+      title: "payment.transfer.title",
+      text: ["payment.transfer.text"],
+      rows: [
+        { label: "payment.transfer.holder", value: accountHolder },
+        { label: "payment.transfer.bank", value: bankName },
+        { label: "payment.transfer.iban", value: iban, ltr: true },
+      ].filter((row) => row.value),
+      after: p.participantName ? ["payment.transfer.reference"] : [],
+      note: note || undefined,
+    })
+  }
+  if (p.paymentUrl) {
+    out.push({
+      title: "payment.online.title",
+      text: ["payment.online.text"],
+      note: p.onlineNote || undefined,
+      button: { label: "payment.online.button", href: p.paymentUrl },
+    })
+  }
+  return out
+}
+
 type Out<S extends z.ZodObject> = z.output<S>
 type Key<S extends z.ZodObject> = Extract<keyof Out<S>, string>
 
@@ -184,18 +246,35 @@ export const emailTemplates = {
       time: text(50),
       /** The venue in the email's language: `localized(course.venue, locale)`. */
       venue: text(300),
+      /** The workshop's "What to bring", in the email's language. */
       bring: z.string().trim().max(500).optional(),
       workshopUrl: siteUrl.optional(),
+      /** Still to pay for the member's unpaid registrations, formatted (`formatLira`); left out when all is paid. */
+      amount: text(50).optional(),
+      /** Who the unpaid registrations are for ("Ali, Sara"): the bank transfer's description. */
+      participantName: text(300).optional(),
+      /** The ways to pay, only with `amount` (as in `registration_received`). */
+      ...paymentShape,
     }),
     greet: "name",
     cta: "workshopUrl",
-    details: { workshop: "workshopTitle", date: "date", time: "time", venue: "venue", bring: "bring" },
+    details: { workshop: "workshopTitle", date: "date", time: "time", venue: "venue", bring: "bring", price: "amount" },
+    values: (p) => ({ ways: p.amount ? waysCount(p) : "paid" }),
+    valueKeys: ["ways"],
+    sections: (p) => (p.amount ? paymentSections(p) : []),
   }),
+  /**
+   * The workshop was cancelled. Everyone registered gets it: with
+   * `refundAmount` (what they paid, refunded in full) when they had paid,
+   * without it when they had not paid yet (`paid` value: "yes" / "no").
+   */
   workshop_cancelled: define({
-    schema: z.object({ name: text(), workshopTitle: text(), refundAmount: text(50), workshopsUrl: siteUrl.optional() }),
+    schema: z.object({ name: text(), workshopTitle: text(), refundAmount: text(50).optional(), workshopsUrl: siteUrl.optional() }),
     greet: "name",
     cta: "workshopsUrl",
     details: { workshop: "workshopTitle", refund: "refundAmount" },
+    values: (p) => ({ paid: p.refundAmount ? "yes" : "no" }),
+    valueKeys: ["paid"],
   }),
   password_reset: define({
     schema: z.object({ name: text(), resetUrl: siteUrl }),
@@ -230,18 +309,7 @@ export const emailTemplates = {
       amount: text(50),
       /** "My workshops": the member's registrations with their payment status. */
       accountUrl: siteUrl,
-      cash: z.literal(true).optional(),
-      transfer: z
-        .object({
-          accountHolder: z.string().trim().max(120),
-          bankName: z.string().trim().max(120),
-          iban,
-          note: z.string().trim().max(500).optional(),
-        })
-        .optional(),
-      paymentUrl: paymentUrl.optional(),
-      /** The admin's note about online payment (settings), in the email's language. */
-      onlineNote: z.string().trim().max(500).optional(),
+      ...paymentShape,
     }),
     greet: "name",
     cta: "accountUrl",
@@ -253,38 +321,9 @@ export const emailTemplates = {
       venue: "venue",
       price: "amount",
     },
-    values: (p) => {
-      const ways = [p.cash, p.transfer, p.paymentUrl].filter(Boolean).length
-      return { ways: ways === 0 ? "none" : ways === 1 ? "one" : "many" }
-    },
+    values: (p) => ({ ways: waysCount(p) }),
     valueKeys: ["ways"],
-    sections: (p) => {
-      const out: EmailSection[] = []
-      if (p.cash) out.push({ title: "payment.cash.title", text: ["payment.cash.text"] })
-      if (p.transfer) {
-        const { accountHolder, bankName, iban, note } = p.transfer
-        out.push({
-          title: "payment.transfer.title",
-          text: ["payment.transfer.text"],
-          rows: [
-            { label: "payment.transfer.holder", value: accountHolder },
-            { label: "payment.transfer.bank", value: bankName },
-            { label: "payment.transfer.iban", value: iban, ltr: true },
-          ].filter((row) => row.value),
-          after: ["payment.transfer.reference"],
-          note: note || undefined,
-        })
-      }
-      if (p.paymentUrl) {
-        out.push({
-          title: "payment.online.title",
-          text: ["payment.online.text"],
-          note: p.onlineNote || undefined,
-          button: { label: "payment.online.button", href: p.paymentUrl },
-        })
-      }
-      return out
-    },
+    sections: paymentSections,
   }),
   /**
    * An admin recorded the payment (cash, transfer or online): the
@@ -310,8 +349,10 @@ export const emailTemplates = {
     details: { workshop: "workshopTitle", date: "date", time: "time", venue: "venue", amount: "amount" },
   }),
   /**
-   * The participant cancelled. `refundPercent` (100, 50 or 0, `refundPercent()`
-   * in features/registrations/refund-policy) picks the text; leave out
+   * A registration was cancelled: by the participant ("as you asked") or, with
+   * `byUs: true`, by an admin (neutral wording; `by` value: "you" / "us").
+   * `refundPercent` (100, 50 or 0, `refundPercent()` in
+   * features/registrations/refund-policy) picks the text; leave out
    * `refundAmount` when nothing was paid (then there is no refund line).
    */
   registration_cancelled: define({
@@ -320,6 +361,7 @@ export const emailTemplates = {
       workshopTitle: text(),
       refundAmount: text(50).optional(),
       refundPercent: z.number().int().min(0).max(100),
+      byUs: z.literal(true).optional(),
       workshopsUrl: siteUrl.optional(),
     }),
     greet: "name",
@@ -327,8 +369,9 @@ export const emailTemplates = {
     details: { workshop: "workshopTitle", refund: "refundAmount" },
     values: (p) => ({
       refund: !p.refundAmount ? "unpaid" : p.refundPercent >= 100 ? "full" : p.refundPercent > 0 ? "partial" : "none",
+      by: p.byUs ? "us" : "you",
     }),
-    valueKeys: ["refund"],
+    valueKeys: ["refund", "by"],
   }),
   /** To super admins: a refund is owed and must be paid back by hand (then marked refunded). */
   refund_due: define({

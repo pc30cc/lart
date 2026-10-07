@@ -93,15 +93,16 @@
     "preview": "A friendly reminder: {date} at {time}.",
     "heading": "Your workshop is almost here",
     "intro": "Just a friendly reminder: “{workshopTitle}” is coming up soon, and we can’t wait to see you!",
+    "intro2": "{ways, select, none {There’s still {amount} to pay for your registration. We’ll get in touch with you about how to pay.} one {There’s still {amount} to pay for your registration. Here’s how:} many {There’s still {amount} to pay for your registration. Choose whichever way suits you best:} other {}}",
     "cta": "View workshop",
     "note": "Please try to arrive a few minutes early, so we can all start together."
   },
   "workshop_cancelled": {
     "subject": "“{workshopTitle}” has been cancelled",
-    "preview": "We’re so sorry. You’ll get your money back.",
+    "preview": "{paid, select, yes {We’re so sorry. You’ll get your money back.} other {We’re so sorry. The workshop won’t take place.}}",
     "heading": "We’re sorry, this workshop is cancelled",
     "intro": "We’re really sorry to tell you that “{workshopTitle}” has been cancelled. We know you were looking forward to it.",
-    "intro2": "You don’t need to do anything. We’ll refund {refundAmount} to you within five business days.",
+    "intro2": "{paid, select, yes {You don’t need to do anything. We’ll refund {refundAmount} to you within five business days.} other {The workshop won’t take place, so please don’t come to the venue on that day. There’s nothing else you need to do.}}",
     "cta": "See upcoming workshops",
     "note": "We’d love to see you at another workshop soon."
   },
@@ -143,7 +144,7 @@
     "subject": "Your registration for “{workshopTitle}” is cancelled",
     "preview": "{refund, select, full {You’ll get a full refund.} partial {You’ll get part of your payment back.} none {We’re sorry to miss you.} other {We’re sorry to miss you.}}",
     "heading": "Your registration is cancelled",
-    "intro": "As you asked, we’ve cancelled your registration for “{workshopTitle}”.",
+    "intro": "{by, select, us {Your registration for “{workshopTitle}” has been cancelled. If you have any questions, please get in touch with us.} other {As you asked, we’ve cancelled your registration for “{workshopTitle}”.}}",
     "intro2": "{refund, select, full {Under the cancellation terms you get a full refund: we’ll send {refundAmount} back to you within five business days.} partial {Under the cancellation terms you get {refundPercent, number}% of your payment back: we’ll send {refundAmount} back to you within five business days.} none {Under the cancellation terms, a cancellation less than 24 hours before the start can’t be refunded. We’re sorry.} other {You hadn’t paid yet, so there’s nothing else to do.}}",
     "cta": "See upcoming workshops",
     "note": "We’d love to see you at another workshop soon."

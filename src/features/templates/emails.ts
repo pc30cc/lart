@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server"
 import type { Locale, LocalizedText } from "@/db/schema"
 import { defaultEmailTexts, type EmailLocale, type EmailTexts } from "@/emails"
 import { emailTemplateNames, emailTextFields, type EmailTemplate, type EmailTextField } from "@/emails/names"
+import { accountEmailSamples } from "@/emails/samples"
 import { emailPlaceholders, type EmailProps } from "@/emails/templates"
 import { requireAdmin } from "@/lib/auth/admin"
 import { formatDate, formatDateTime, formatTimeRange, zonedParts, zonedToIso } from "@/lib/format"
@@ -54,7 +55,9 @@ export async function getEmailEditor(template: EmailTemplate): Promise<EmailEdit
 
 /**
  * Example props for the preview, formatted like the real emails: a workshop
- * two weeks from now, 14:00–17:00 Istanbul time. Links stay on this site.
+ * two weeks from now, 14:00–17:00 Istanbul time. Links stay on this site,
+ * except the example payment link. The phase 2 emails come from
+ * `accountEmailSamples` (src/emails/samples.ts).
  */
 export async function sampleEmailProps<T extends EmailTemplate>(template: T, locale: EmailLocale, adminName: string): Promise<EmailProps<T>> {
   const t = await getTranslations({ locale, namespace: "templates" })
@@ -67,6 +70,19 @@ export async function sampleEmailProps<T extends EmailTemplate>(template: T, loc
   const date = formatDate(startsAt, locale, "full")
   const time = formatTimeRange(startsAt, endsAt, locale)
   const workshopUrl = `/${locale}`
+  const venue = t("preview.sample.venue")
+  const amount = formatLira(150_000, locale)
+  const account = accountEmailSamples({
+    locale,
+    person,
+    adminName,
+    workshopTitle,
+    venue,
+    date,
+    time,
+    amount,
+    halfAmount: formatLira(75_000, locale),
+  })
   const samples: { [K in EmailTemplate]: EmailProps<K> } = {
     welcome_verify: { name: person, verifyUrl: `/${locale}` },
     instructor_invite: { name: instructorName, acceptUrl: `/${locale}` },
@@ -80,10 +96,25 @@ export async function sampleEmailProps<T extends EmailTemplate>(template: T, loc
       decisionAt: formatDateTime(new Date(startsAt.getTime() - 3 * DAY), locale, "long"),
       workshopUrl: `/${locale}/admin`,
     },
-    registration_confirmed: { name: person, workshopTitle, date, time, venue: t("preview.sample.venue"), amount: formatLira(150_000, locale), workshopUrl },
-    workshop_reminder: { name: person, workshopTitle, date, time, venue: t("preview.sample.venue"), bring: t("emails.sample.bring"), workshopUrl },
-    workshop_cancelled: { name: person, workshopTitle, refundAmount: formatLira(150_000, locale), workshopsUrl: workshopUrl },
+    registration_confirmed: { name: person, workshopTitle, date, time, venue, amount, workshopUrl },
+    // Not paid yet: shows the payment part too (the bundled texts leave it out once everything is paid).
+    workshop_reminder: {
+      name: person,
+      workshopTitle,
+      date,
+      time,
+      venue,
+      bring: t("emails.sample.bring"),
+      workshopUrl,
+      amount,
+      participantName: person,
+      cash: true,
+      transfer: account.registration_received.transfer,
+      paymentUrl: account.registration_received.paymentUrl,
+    },
+    workshop_cancelled: { name: person, workshopTitle, refundAmount: amount, workshopsUrl: workshopUrl },
     password_reset: { name: person, resetUrl: `/${locale}` },
+    ...account,
   }
   return samples[template]
 }

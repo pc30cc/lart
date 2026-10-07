@@ -308,6 +308,7 @@ describe("instructors", () => {
     await expect(acceptInviteAction({ token, password: NEW })).rejects.toMatchObject(redirectTo("/en/instructor"))
     expect(instructorCookie()).toBeTruthy()
     const [row] = await db.select().from(instructors).where(eq(instructors.id, i.id))
+    expect(row.locale).toBe("en") // the invitation page's language
     expect(await verifyPassword(row.passwordHash!, NEW)).toBe(true)
     expect(row.emailVerifiedAt).toBeInstanceOf(Date)
 

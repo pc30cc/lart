@@ -3,7 +3,7 @@ import { and, desc, eq, inArray, ne, sql } from "drizzle-orm"
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { db } from "@/db"
-import { admins, auditLog, ledgerLines, ledgerTransactions } from "@/db/schema"
+import { admins, auditLog, ledgerLines, ledgerTransactions, registrations } from "@/db/schema"
 import { splitByShares } from "@/lib/money"
 import en from "../../../messages/en/money.json"
 import { closeWorkshop, payInstructor, recordAdvance, recordExpense, reverseEntry, updateShares } from "./actions"
@@ -249,7 +249,7 @@ describe("closing a workshop", () => {
       await addRegistration(world, courseId),
       await addRegistration(world, courseId),
     ]
-    const refunded = await addRegistration(world, courseId, { status: "cancelled", refundAmount: 50000 })
+    const refunded = await addRegistration(world, courseId, { status: "cancelled", refundAmount: 50000, refundedAt: new Date() })
     await db.transaction(async (tx) => {
       for (const registrationId of [...regs, refunded]) await postRegistrationPayment(tx, { registrationId, occurredOn: yesterday() })
       await postRegistrationRefund(tx, { registrationId: refunded, amount: 50000, occurredOn: yesterday() })
@@ -390,6 +390,31 @@ describe("closing a workshop", () => {
       ok: false,
       error: en.close.issues.revenueMismatch,
     })
+  })
+
+  it("asks to pay back the refunds still owed first, not about a mismatch", async () => {
+    const courseId = await makeCourse(world, p1.id, { fee: { type: "fixed", amount: 10000 } })
+    const cancelled = await addRegistration(world, courseId, { status: "cancelled", refundAmount: 25000 })
+    await db.transaction((tx) => postRegistrationPayment(tx, { registrationId: cancelled, occurredOn: yesterday() }))
+    const preview = (await prepareClosing(db, courseId))!
+    expect(preview.issues).toEqual(["refundsOwed"])
+    expect(preview.registrations.refundsOwed).toBe(25000)
+    expect(await closeWorkshop(await previewOf(courseId))).toEqual({ ok: false, error: en.close.issues.refundsOwed })
+
+    // Paid back and booked: nothing left in the way.
+    await db.transaction((tx) => postRegistrationRefund(tx, { registrationId: cancelled, amount: 25000, occurredOn: yesterday() }))
+    await db.update(registrations).set({ refundedAt: new Date() }).where(eq(registrations.id, cancelled))
+    expect((await prepareClosing(db, courseId))!.issues).toEqual([])
+  })
+
+  it("counts everyone registered, paid or not yet, until the go decision fixes the number", async () => {
+    const courseId = await makeCourse(world, p1.id, { fee: { type: "per_participant", amount: 10000 } })
+    await addRegistration(world, courseId, { status: "pending" })
+    await addRegistration(world, courseId, { status: "pending" })
+    await addRegistration(world, courseId, { status: "cancelled", refundAmount: 0 })
+    const preview = (await prepareClosing(db, courseId))!
+    expect(preview.plan.figures).toMatchObject({ participants: 2, instructorFee: 20000 })
+    expect((await projectedFees(db)).get(courseId)).toBe(20000)
   })
 })
 

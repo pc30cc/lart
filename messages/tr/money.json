@@ -221,6 +221,8 @@
     "recordedBy": "Kaydeden: {name} · {date}",
     "recordedAuto": "Otomatik kayıt · {date}",
     "openWorkshop": "Atölyenin finans sayfasını aç",
+    "registrationEntry": "Bir kaydın ödemesi veya iadesi burada geri alınmaz. Bir ödemeyi geri almak için kaydı iptal edin; ödenmesi gereken iade İadeler listesinde görünür.",
+    "openRegistrations": "Kayıtları aç",
     "showing": "{from}–{to} / {total}",
     "noResults": "Eşleşen kayıt yok",
     "noResultsHint": "Başka tarihler veya başka bir arama deneyin ya da filtreleri temizleyin.",
@@ -266,8 +268,7 @@
     "metaTitle": "Finans · {title}",
     "print": "Yazdır veya PDF",
     "registrations": "Kayıtlar",
-    "registrationsHint": "Ödemesi yapılmış yerler.",
-    "registrationsPending": "{count, plural, other {# kişi daha ödeme bekliyor}}",
+    "registrationsPaid": "{count, plural, =0 {Henüz ödeme yapan yok} other {# kişi ödedi}}{pending, plural, =0 {} other {, # kişi henüz ödemedi}}",
     "finalNumber": "Kesin karardaki katılımcı sayısı: {count}",
     "revenueHint": "Ödenmiş kayıtlar, iadeler düşüldükten sonra.",
     "revenueInBooks": "Şimdiye kadar deftere işlenen: {amount}",
@@ -335,7 +336,8 @@
     "cannotReverseReversal": "Bu kayıt zaten bir düzeltme olduğu için geri alınamaz. Gerekirse asıl kaydı yeniden girin.",
     "closingIsFinal": "Kapanış kayıtları kesindir ve geri alınamaz.",
     "alreadyReversed": "Bu kayıt zaten geri alındı.",
-    "reverseLaterFirst": "Sonraki kayıtlar buna bağlı. Lütfen önce onları geri alın."
+    "reverseLaterFirst": "Sonraki kayıtlar buna bağlı. Lütfen önce onları geri alın.",
+    "registrationEntry": "Bir kaydın ödemesi veya iadesi geri alınamaz. Bir ödemeyi geri almak için kaydı atölyenin kayıtlarından iptal edin; ödenmesi gereken iade İadeler listesinde görünür."
   },
   "validation": {
     "amountPositive": "Lütfen sıfırdan büyük bir tutar girin.",
@@ -359,12 +361,14 @@
     "confirm": "Kapat ve kilitle",
     "done": "Atölye kapatıldı. Rakamlar kilitlendi.",
     "fixShares": "Payları düzeltin",
+    "openRefunds": "İadeler listesini aç",
     "changed": "Siz incelerken rakamlar değişti. Lütfen yeni rakamlara bakıp tekrar kapatın.",
     "issues": {
       "closed": "Bu atölye zaten kapatıldı.",
       "notClosable": "Bir atölye, onaylanıp yapıldıktan sonra ya da iptal edildiğinde kapatılabilir.",
       "notEnded": "Atölye henüz bitmedi. Bittikten sonra kapatabilirsiniz.",
       "noContract": "Bu atölyenin geçerli bir sözleşmesi yok, bu yüzden eğitmen ücreti bilinmiyor.",
+      "refundsOwed": "Bu atölyenin bazı iadeleri henüz geri ödenmedi. Önce iadeleri geri ödeyip iade edildi olarak işaretleyin; sonra atölyeyi kapatabilirsiniz.",
       "revenueMismatch": "Bu atölyenin bazı ödemeleri veya iadeleri henüz deftere işlenmedi.",
       "advanceTooBig": "Eğitmende ücretinden fazla ön ödeme kaldı. Önce iade ettiği tutarı ya da atölye için harcadığını kaydedin.",
       "sharesNot100": "Ortakların paylarının toplamı %100 değil."

@@ -6,7 +6,7 @@ import { useEffect, useId, useRef, useState } from "react"
 
 import type { FieldControlProps } from "@/components/admin/form/form"
 import { Dropzone, UploadMessage } from "@/components/admin/upload/parts"
-import { checkFile, useFileDrop, useMediaText, type ClientUploadError } from "@/components/admin/upload/upload-client"
+import { checkFile, failureCode, uploadFile, useFileDrop, useMediaText, type ClientUploadError } from "@/components/admin/upload/upload-client"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { IMAGE_ACCEPT, MAX_IMAGE_BYTES, type UploadResult } from "@/lib/storage/shared"
@@ -17,33 +17,12 @@ type Phase = { kind: "idle" } | { kind: "uploading"; preview: string; progress: 
 /** Codes the media texts word for admins: the panel says them in its own words. */
 const OWN_MESSAGES = new Set<Problem>(["unauthorized", "storage", "server", "rate_limited"])
 
-/** One POST to the instructor's own upload route, with upload progress (fetch cannot report it). */
-function send(file: File, onProgress: (fraction: number) => void, signal: AbortSignal): Promise<UploadResult> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest()
-    xhr.open("POST", "/api/instructor/uploads")
-    xhr.responseType = "json"
-    xhr.upload.onprogress = (event) => event.lengthComputable && onProgress(event.loaded / event.total)
-    xhr.onload = () => {
-      const body = xhr.response as (UploadResult & { error?: Problem }) | null
-      if (xhr.status === 201 && body?.path) resolve(body)
-      else reject(body?.error ?? (xhr.status === 413 ? "too_large" : "server"))
-    }
-    xhr.onerror = () => reject("network")
-    xhr.onabort = () => reject("aborted")
-    signal.addEventListener("abort", () => xhr.abort(), { once: true })
-    // The purpose first, then the file: the server streams the file.
-    const form = new FormData()
-    form.append("purpose", "instructor_photo")
-    form.append("file", file, file.name)
-    xhr.send(form)
-  })
-}
-
 /**
  * The profile photo: a round preview, "Choose a photo" (or drop one), replace
- * and remove. Uploads to `/api/instructor/uploads`, which crops it square; the
- * field's value is the storage path, saved with the profile.
+ * and remove, in the panel's own words. Uploads with the shared upload client
+ * (`uploadFile`) to `/api/instructor/uploads`, which crops it square; the
+ * field's value is the storage path, saved with the profile. (`ImageUpload`
+ * with `endpoint="/api/instructor/uploads"` works too, with the admin look.)
  */
 export function PhotoField({
   value,
@@ -77,15 +56,20 @@ export function PhotoField({
     const preview = URL.createObjectURL(file)
     setPhase({ kind: "uploading", preview, progress: 0 })
     try {
-      const result = await send(file, (progress) => setPhase((p) => (p.kind === "uploading" ? { ...p, progress } : p)), own.signal)
+      const result = await uploadFile(file, "instructor_photo", {
+        endpoint: "/api/instructor/uploads",
+        signal: own.signal,
+        onProgress: (progress) => setPhase((p) => (p.kind === "uploading" ? { ...p, progress } : p)),
+      })
       if (controller.current !== own) return
       setUploaded(result)
       setPhase({ kind: "idle" })
       onChange(result.path)
       onBlur()
-    } catch (code) {
+    } catch (error) {
       if (controller.current !== own) return
-      setPhase(code === "aborted" ? { kind: "idle" } : { kind: "error", code: code as Problem, file })
+      const code = failureCode(error) as Problem | "aborted"
+      setPhase(code === "aborted" ? { kind: "idle" } : { kind: "error", code, file })
     } finally {
       URL.revokeObjectURL(preview)
     }

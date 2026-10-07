@@ -107,7 +107,7 @@
     "tomorrow": "فردا",
     "now": "در حال برگزاری",
     "seats": "{taken} از {max} نفر",
-    "pending": "{count, plural, other {# نفر دیگر در انتظار پرداخت}}",
+    "paid": "{count, plural, =0 {هنوز کسی پرداخت نکرده} other {# نفر پرداخت کرده‌اند}}",
     "notOpen": "ثبت‌نام بعد از امضا باز می‌شود",
     "alerts": {
       "awaitingSignature": "منتظر امضای قرارداد از طرف مدرس",

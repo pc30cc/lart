@@ -530,12 +530,12 @@ function UpcomingRow({ w, today }: { w: UpcomingWorkshop; today: string }) {
           ) : (
             <>
               <FillMeter
-                confirmed={w.registered}
+                registered={w.registered}
                 min={w.minCapacity}
                 max={w.maxCapacity}
                 label={t("seats", { taken: num(w.registered), max: num(w.maxCapacity) })}
               />
-              {w.pending > 0 && <span className="text-muted-foreground mt-1 block text-xs">{t("pending", { count: w.pending })}</span>}
+              {w.registered > 0 && <span className="text-muted-foreground mt-1 block text-xs">{t("paid", { count: w.paid })}</span>}
             </>
           )}
         </span>

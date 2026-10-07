@@ -150,14 +150,14 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/admi
           <Card title={t("overview.participants")}>
             <FillMeter
               size="lg"
-              confirmed={w.registered.confirmed}
+              registered={w.registered.pending + w.registered.confirmed}
               min={w.minCapacity}
               max={w.maxCapacity}
-              label={t("table.fillValue", { confirmed: n(w.registered.confirmed), max: n(w.maxCapacity) })}
+              label={t("table.fillValue", { confirmed: n(w.registered.pending + w.registered.confirmed), max: n(w.maxCapacity) })}
             />
             <ul className="text-muted-foreground mt-4 space-y-1.5 text-sm">
               <li>{t("overview.minimum", { count: w.minCapacity })}</li>
-              {w.registered.pending > 0 && <li>{t("overview.pending", { count: w.registered.pending })}</li>}
+              {w.registered.pending + w.registered.confirmed > 0 && <li>{t("overview.paid", { count: w.registered.confirmed })}</li>}
               {w.finalParticipants !== null && (
                 <li className="text-foreground font-medium">{t("overview.final", { count: w.finalParticipants })}</li>
               )}
@@ -308,7 +308,7 @@ async function NextStep({ workshop: w }: { workshop: Workshop }) {
               tone: "success",
               title: t("next.confirmed.title"),
               text: t("next.confirmed.text", {
-                count: w.finalParticipants ?? w.registered.confirmed,
+                count: w.finalParticipants ?? w.registered.pending + w.registered.confirmed,
                 date: formatDate(w.startsAt, locale, "full"),
               }),
               actions: cancel,

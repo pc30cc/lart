@@ -107,7 +107,7 @@
     "tomorrow": "Yarın",
     "now": "Şu anda sürüyor",
     "seats": "Dolu: {taken} / {max}",
-    "pending": "{count, plural, one {# kişi daha ödeme bekliyor} other {# kişi daha ödeme bekliyor}}",
+    "paid": "{count, plural, =0 {Henüz ödeme yapan yok} other {# kişi ödedi}}",
     "notOpen": "Kayıtlar imzadan sonra açılır",
     "alerts": {
       "awaitingSignature": "Eğitmenin sözleşmeyi imzalaması bekleniyor",

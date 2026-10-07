@@ -38,15 +38,28 @@ export function checkFile(file: File, purpose: UploadPurpose): ClientUploadError
   return null
 }
 
-type Options = { onProgress?: (fraction: number) => void; signal?: AbortSignal }
+/** Upload routes: the super-admin panel's (default) and the instructor panel's (profile photo only). */
+export type UploadEndpoint = "/api/admin/uploads" | "/api/instructor/uploads"
+
+type Options = {
+  onProgress?: (fraction: number) => void
+  signal?: AbortSignal
+  /** Where to send it; the admin route unless given. */
+  endpoint?: UploadEndpoint
+}
 type Answer = { status: number; body: unknown }
 
-/** One POST /api/admin/uploads with upload progress (fetch cannot report it). */
-function send(fields: Record<string, string>, file: Blob, name: string, { onProgress, signal }: Options): Promise<Answer> {
+/** One POST to the upload route with upload progress (fetch cannot report it). */
+function send(
+  fields: Record<string, string>,
+  file: Blob,
+  name: string,
+  { onProgress, signal, endpoint = "/api/admin/uploads" }: Options,
+): Promise<Answer> {
   return new Promise((resolve, reject) => {
     if (signal?.aborted) return reject(new UploadFailure("aborted"))
     const xhr = new XMLHttpRequest()
-    xhr.open("POST", "/api/admin/uploads")
+    xhr.open("POST", endpoint)
     xhr.responseType = "json"
     xhr.upload.onprogress = (event) => event.lengthComputable && onProgress?.(event.loaded / event.total)
     xhr.onload = () => resolve({ status: xhr.status, body: xhr.response })
@@ -77,7 +90,9 @@ const wait = (ms: number, signal?: AbortSignal) =>
 /**
  * Upload a file for a purpose. Videos go in parts of VIDEO_PART_BYTES, so no
  * request is long enough to be cut by a proxy; a dropped connection is
- * retried and the upload continues where the server says it is.
+ * retried and the upload continues where the server says it is. A failure
+ * carries the server's error code (`failureCode`), e.g. "too_large", or
+ * "rate_limited" from the instructor route.
  */
 export async function uploadFile(file: File, purpose: UploadPurpose, options: Options = {}): Promise<UploadResult> {
   if (isImagePurpose(purpose)) {
@@ -96,6 +111,7 @@ export async function uploadFile(file: File, purpose: UploadPurpose, options: Op
     try {
       answer = await send(fields, part, file.name, {
         signal: options.signal,
+        endpoint: options.endpoint,
         onProgress: (fraction) => options.onProgress?.((offset + fraction * part.size) / file.size),
       })
     } catch (error) {
@@ -147,7 +163,7 @@ export type SingleUploadPhase =
   | { kind: "error"; code: ClientUploadError; file?: File }
 
 /** One file at a time: progress, cancel, retry, and a local preview while it uploads. */
-export function useSingleUpload(purpose: UploadPurpose, onDone: (result: UploadResult) => void) {
+export function useSingleUpload(purpose: UploadPurpose, onDone: (result: UploadResult) => void, endpoint?: UploadEndpoint) {
   const [phase, setPhase] = useState<SingleUploadPhase>({ kind: "idle" })
   const controller = useRef<AbortController | null>(null)
   const preview = useRef<string | null>(null)
@@ -179,6 +195,7 @@ export function useSingleUpload(purpose: UploadPurpose, onDone: (result: UploadR
       try {
         const result = await uploadFile(file, purpose, {
           signal: own.signal,
+          endpoint,
           onProgress: (progress) => setPhase((p) => (p.kind === "uploading" && p.file === file ? { ...p, progress } : p)),
         })
         if (controller.current !== own) return
@@ -195,7 +212,7 @@ export function useSingleUpload(purpose: UploadPurpose, onDone: (result: UploadR
         }
       }
     },
-    [purpose],
+    [purpose, endpoint],
   )
 
   const cancel = useCallback(() => controller.current?.abort(), [])

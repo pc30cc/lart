@@ -172,10 +172,10 @@ describe("dashboard queries", () => {
       expect(d.kpis.netThisYear - before.kpis.netThisYear).toBe(67_000)
       if (before.kpis.revenueLastMonth === 0) expect(d.kpis.revenueChange).toBe(0.5)
 
-      // Upcoming: W7, W8, W5 open (14 of 28 seats), W6 still awaiting signature.
+      // Upcoming: W7, W8, W5 open (15 of 28 seats: registered counts paid and not paid yet), W6 still awaiting signature.
       expect(d.kpis.upcoming - before.kpis.upcoming).toBe(4)
       expect(d.kpis.upcomingSeats - before.kpis.upcomingSeats).toBe(10 + 6 + 12)
-      expect(d.kpis.upcomingTaken - before.kpis.upcomingTaken).toBe(9 + 2 + 3)
+      expect(d.kpis.upcomingTaken - before.kpis.upcomingTaken).toBe(9 + 2 + 4)
       // Held in the last 12 months: W1 (8/10), W2 (4/10), W4 (6/8); W3 is older.
       expect(d.kpis.held - before.kpis.held).toBe(3)
       expect(d.kpis.heldSeats - before.kpis.heldSeats).toBe(28)
@@ -191,10 +191,12 @@ describe("dashboard queries", () => {
       expect(upcoming.map((x) => [x.id, x.registered, x.alert?.kind ?? null])).toEqual([
         [w.w7, 9, null],
         [w.w8, 2, "decisionSoon"],
-        [w.w5, 3, "decisionDue"],
+        [w.w5, 4, "decisionDue"],
         [w.w6, 0, "awaitingSignature"],
       ])
-      expect(upcoming.find((x) => x.id === w.w5)).toMatchObject({ pending: 1, alert: { kind: "decisionDue", missing: 2 } })
+      // W5: 3 paid + 1 not paid yet registered (the cancelled one never counts), 1 short of the minimum of 5.
+      expect(upcoming.find((x) => x.id === w.w5)).toMatchObject({ paid: 3, alert: { kind: "decisionDue", missing: 1 } })
+      expect(upcoming.find((x) => x.id === w.w8)).toMatchObject({ registered: 2, paid: 2 })
       expect(upcoming.find((x) => x.id === w.w8)!.alert).toEqual({ kind: "decisionSoon", at: at("2026-10-08T12:00:00"), missing: 0 })
 
       // Seats: held ones oldest first, then the open upcoming ones (never W6, W9).
@@ -209,7 +211,7 @@ describe("dashboard queries", () => {
         [w.w4, 6, 8, false],
         [w.w7, 9, 10, true],
         [w.w8, 2, 6, true],
-        [w.w5, 3, 12, true],
+        [w.w5, 4, 12, true],
       ]
       const shown = new Set(seats.map((x) => x.id))
       expect(seats.map((x) => [x.id, x.registered, x.maxCapacity, x.upcoming])).toEqual(

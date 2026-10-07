@@ -31,9 +31,9 @@ test.describe("dashboard", () => {
     await expect(kpi(`Net profit in ${year}`)).toContainText(lira(net))
     test.info().annotations.push({ type: "net-ytd", description: lira(net) })
 
-    // The candle workshop was held and closed: 3 of its 8 places taken.
-    await expect(kpi("Average fill rate")).toContainText(/3 of 8 places taken in 1 workshop/)
-    await expect(kpi("Average fill rate")).toContainText("38%")
+    // The candle workshop was held and closed: 4 of its 8 places taken (3 paid, 1 not paid yet at the go decision).
+    await expect(kpi("Average fill rate")).toContainText(/4 of 8 places taken in 1 workshop/)
+    await expect(kpi("Average fill rate")).toContainText("50%")
 
     // Charts are drawn.
     await expect(page.locator(".recharts-surface").first()).toBeVisible()

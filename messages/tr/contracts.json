@@ -25,6 +25,7 @@
     "alreadySigned": "Bu sözleşme zaten imzalanmış. Teşekkür ederiz!",
     "replaced": "Bu sözleşmenin daha yeni bir sürümü gönderildi. Lütfen en son sürümü imzalayın.",
     "notSignable": "Bu sözleşme artık imzalanamıyor. Lütfen bizimle iletişime geçin.",
+    "textChanged": "Sözleşme az önce güncellendi. Lütfen tekrar okuyun, sonra imzalayın.",
     "nameRequired": "İmzalamak için lütfen adınızı ve soyadınızı yazın.",
     "nothingToResend": "Şu anda imza bekleyen bir sözleşme yok.",
     "emailFailed": "E-posta şu anda gönderilemedi. Lütfen biraz sonra yeniden deneyin."

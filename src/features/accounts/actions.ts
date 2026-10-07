@@ -171,10 +171,12 @@ export async function instructorLogoutAction(): Promise<void> {
 export const acceptInviteAction = publicAction(
   accountPasswordSchema,
   async ({ token, password }) => {
-    const id = await acceptInvite(token, password)
+    // The invitation page's language becomes the instructor's (emails, panel).
+    const locale = await getLocale()
+    const id = await acceptInvite(token, password, locale)
     if (!id) throw new UserError("auth.instructor.invite.errors.invalidLink")
     await startSession("instructor", id)
-    redirect(panelPath(await getLocale()))
+    redirect(panelPath(locale))
   },
   perNetwork(10, 15),
 )

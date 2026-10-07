@@ -104,10 +104,10 @@ export default async function WorkshopsPage({ searchParams }: PageProps<"/[local
       hideBelow: "sm",
       cell: (row) => (
         <FillMeter
-          confirmed={row.confirmed}
+          registered={row.registered}
           min={row.minCapacity}
           max={row.maxCapacity}
-          label={t("table.fillValue", { confirmed: formatNumber(row.confirmed, locale), max: formatNumber(row.maxCapacity, locale) })}
+          label={t("table.fillValue", { confirmed: formatNumber(row.registered, locale), max: formatNumber(row.maxCapacity, locale) })}
         />
       ),
     },

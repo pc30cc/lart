@@ -43,20 +43,32 @@ Next.js 16 differs from older versions: read the relevant guide in
 ```
 src/
   app/
-    page.tsx                    root: redirects to the default language (setting)
+    page.tsx                    root: redirects to the NEXT_LOCALE cookie's or the default language (setting)
+    sitemap.ts, robots.ts       /sitemap.xml (workshops list + open workshop pages, fa/tr/en with hreflang), /robots.txt
     [locale]/
-      page.tsx                  language root: redirects to /admin until the public site exists
+      page.tsx                  language root: redirects to /<locale>/workshops until the phase 3 home page exists
+      (site)/                   the public site frame (header, footer, "confirm your email" banner; phase 3 themes replace it)
+        workshops/              list, /[slug] page, /[slug]/register
+        account/                My workshops (page.tsx), registrations/[id], signup, login, verify, forgot, reset
+      instructor/(auth)/        instructor sign in, accept-invite, forgot, reset, verify (no panel chrome)
+      instructor/(panel)/       the instructor panel: home, contracts, workshops, earnings, profile
       admin/login/              super-admin sign in, forgot/ and reset/ password (no panel chrome)
       admin/(panel)/<module>/   super-admin pages, one folder per module
+    api/admin/…, api/instructor/uploads   route handlers (uploads, private media, CSV exports)
   components/
     ui/                         shadcn/ui primitives (do not edit casually)
-    admin/                      shared admin building blocks (shell, page header, forms)
+    admin/                      shared admin building blocks (shell, page header, forms, uploads)
+    site/                       the public site frame and the member / instructor sign-in forms
+    contract-document.tsx       a contract text as a printable document (admin and instructor panel)
+    language-picker.tsx         teaching languages field (admin instructor form and instructor profile)
   db/
     schema.ts                   the whole schema (single source of truth)
     index.ts                    db client, Tx type
+  emails/                       transactional emails (React Email): definitions, layout, samples, payment props
   features/<module>/            server logic of a module: queries, actions, schemas, tests
   i18n/                         routing, request config, namespaces
   lib/                          cross-cutting helpers (env, crypto, money, auth, audit, storage, email)
+scripts/                        admin:create, db:seed, jobs (scheduled), contracts:encrypt
 messages/<locale>/<ns>.json     translations, one file per module namespace
 drizzle/                        SQL migrations (generated + custom guards)
 ```
@@ -151,8 +163,13 @@ database stores only the storage path, e.g. `courses/2026-10/<random>.webp`.
   in `media.storageTest.<step>`), and
   `/api/admin/media/watermark-preview?position=&sizePct=&opacity=&marginPct=&logo=`
   as the live preview image.
-- The proxy must not run on `/api/admin/uploads`: Next.js would buffer the
-  body there and cut it at 10 MB.
+- The proxy must not run on `/api/admin/uploads` or `/api/instructor/uploads`:
+  Next.js would buffer the body there and cut it at 10 MB (see the matcher in
+  `src/proxy.ts`).
+- **Another upload route**: `uploadFile(file, purpose, { endpoint })` and
+  `<ImageUpload endpoint="/api/instructor/uploads" … />` send to it instead of
+  `/api/admin/uploads` (the instructor panel's profile photo; its `PhotoField`
+  uses `uploadFile` with its own round preview and wording).
 
 ## Building blocks
 
@@ -179,7 +196,8 @@ messages/<locale>/<module>.json    fa, tr, en
   strict CSP with a per-request nonce, `X-Robots-Tag: noindex` on
   `/<locale>/admin` and `/api/admin`, and an optimistic redirect to the login
   when there is no admin cookie. It skips `_next`, `/media/`,
-  `/api/admin/uploads` and paths with a file extension. Static headers (HSTS in
+  `/api/admin/uploads`, `/api/instructor/uploads` and paths with a file
+  extension (so `/sitemap.xml` and `/robots.txt` too). Static headers (HSTS in
   production, `X-Frame-Options`, nosniff, Referrer-Policy, Permissions-Policy)
   are in `next.config.ts`.
 - CSP: scripts need the nonce (Next adds it to its own scripts; for a
@@ -574,9 +592,12 @@ the page as `x-pathname` (overwriting any value the client sent).
 | `registration_received` | registrations | registered, not paid yet: "your place is reserved; please pay {amount}", one block per payment way switched on in the `payment` setting (`cash: true`, `transfer: { accountHolder, bankName, iban, note }`, `paymentUrl`: the workshop's `courses.payment_url`) |
 | `payment_received` | registrations | an admin recorded the payment (`method`: cash, transfer, online): paid, place confirmed |
 | `registration_confirmed` | registrations | a registration that needs no payment (a free workshop); kept for that and for admins' saved texts |
-| `registration_cancelled` | registrations | the participant cancelled; `refundPercent` 100 / 50 / 0; leave out `refundAmount` when nothing was paid |
+| `registration_cancelled` | registrations | a registration was cancelled; `refundPercent` 100 / 50 / 0; leave out `refundAmount` when nothing was paid; `byUs: true` when an admin cancelled it (neutral wording instead of "as you asked") |
 | `refund_due` | registrations | to every super admin: a refund must be paid back by hand |
 | `refund_sent` | registrations | an admin marked the refund as paid back |
+| `workshop_cancelled` | workshops (`cancelWorkshop`) | to everyone registered, one per member: with `refundAmount` (refunded in full) when they had paid, without it ("please don't come to the venue") when not |
+| `workshop_reminder` | jobs (day before) | one per member and workshop; with `amount` (still to pay), `participantName` and the payment ways (as `registration_received`) while something is unpaid |
+| `contract_ready` | workshops / contracts | in the instructor's language (`instructors.locale`, set from the invitation page and the panel's language switch), sign link in that language |
 
 `paymentWays(await getSetting("payment"), course.paymentUrl, locale)`
 (`@/emails/payment`) builds the payment props of `registration_received`: only
@@ -596,3 +617,102 @@ cookies, headers and `after()`: `next/headers` (a cookie map and a fresh client
 IP per test, as the public actions are rate limited per network),
 `next/server`, `next/cache`, `next-intl/server` and `@/lib/email`. Sign a
 person in with `createSession(kind, id)` and put the token in the cookie map.
+
+## Instructor panel
+
+`src/app/[locale]/instructor/(panel)`, reads in `src/features/instructor-panel`
+(`queries.ts`, `actions.ts`, `earnings.ts`, `schema.ts`). No link to it from the
+site; every page is `noindex` (layout metadata and the proxy header).
+
+| Page | What it shows |
+| --- | --- |
+| `/<l>/instructor` | contracts waiting for a signature, next workshops |
+| `/<l>/instructor/contracts`, `/contracts/[id]` | every contract version; one contract's text (`ContractDocument`, print view) and the sign form |
+| `/<l>/instructor/workshops`, `/workshops/[id]` | my workshops with seats taken (everyone registered, paid or not yet); participants by name and photo / video consent only (contract 8.1: no contact details, no payment status) |
+| `/<l>/instructor/earnings` | per workshop: fee, received (advance, payments), owed or to return (`workshopEarnings`) |
+| `/<l>/instructor/profile` | public profile in three languages, teaching languages (`LanguagePicker`), photo (`PhotoField` → `/api/instructor/uploads`) |
+
+- Every query starts with `requireInstructor()` and reads only the signed-in
+  instructor's rows; someone else's id is "not found".
+- **Signing** (`signContractAction` → `signContract` in
+  `features/contracts/sign.ts`): the typed name must be the official name
+  (spacing and case aside); the form sends the SHA-256 of the text the
+  instructor read (`textSha256`), and `signContract(…, expectedSha256)` renders
+  the text again under the workshop and contract locks and refuses
+  (`contracts.errors.textChanged`) if it differs. The exact text is stored
+  encrypted with its SHA-256 and the evidence; the workshop is published (or
+  confirmed again after a re-issued contract).
+- **Profile photo**: `/api/instructor/uploads` (purpose `instructor_photo`
+  only, 20 per hour, audited with the instructor's id); saving the profile
+  accepts only a photo that instructor uploaded.
+- The per-participant fee before the go decision is an estimate from everyone
+  registered (paid or not yet), the number the go decision fixes.
+
+## Registrations and payments
+
+No payment gateway yet: students pay cash, by bank transfer or through the
+workshop's online payment link (iyziLink / PayTR "Link ile Ödeme"), and an
+admin records every payment. `registrations.status`: `pending` = registered,
+holds a seat, not paid yet; `confirmed` = paid (or a free workshop);
+`cancelled`.
+
+| Where | What |
+| --- | --- |
+| `/<l>/workshops`, `/<l>/workshops/[slug]` | open workshops (published or confirmed, not started), seats left, "You are registered" (`features/registrations/public.ts`) |
+| `/<l>/workshops/[slug]/register` | participant name, terms (SHA-256 of the text shown), photo / video consent; confirmed email needed (`registerAction`) |
+| `/<l>/account`, `/<l>/account/registrations/[id]` | My workshops: payment status, how to pay (`PaymentInstructions`), cancel with the refund preview (`features/registrations/member.ts`, `actions.ts`) |
+| `/<l>/admin/workshops/[id]/registrations` | record a payment, cancel, CSV export (`features/registrations/admin`) |
+| `/<l>/admin/money/refunds` | refunds owed / paid back; "Mark as refunded" |
+| `/<l>/admin/settings/payments` | which ways are on (cash, transfer with holder / bank / IBAN / note, online with a note) |
+
+- **Counting.** "Registered" is everyone with an active registration, paid or
+  not yet (`activeStatuses`): `seatsTaken(courseId)` / `seatsLeft(max, taken)`
+  on the site, the fill columns and meters of the admin and the dashboard, the
+  instructor panel, the go decision (`final_participants`) and, until that is
+  fixed, the participant number of money/closing.ts and reports.ts. "Paid" is
+  shown beside it where it helps (dashboard, workshop overview, finances).
+- **How to pay.** `paymentWays(await getSetting("payment"), safePaymentUrl(course.paymentUrl), locale)`
+  (`@/emails/payment`) gives the ways that are on and usable (a transfer needs
+  an IBAN, online payment the workshop's link); `PaymentInstructions` shows
+  them on the site, and `registration_received` / `workshop_reminder` email them.
+- **Lock order: workshop, then registration.** Registering, the member's
+  cancel, `recordPayment`, `cancelRegistration`, `recordRefund`
+  (`features/registrations/admin/payments.ts`), `cancelWorkshop` and every
+  ledger posting lock the `courses` row first (`lockCourse`, FOR NO KEY
+  UPDATE, or FOR UPDATE), then the registration. A seat count read under that
+  lock cannot be raced, and a payment recorded while the workshop is being
+  cancelled is either refunded or refused.
+- **Free workshops** (price 0): the registration is `confirmed` at once,
+  nothing to pay or refund; `registration_confirmed` instead of
+  `registration_received`.
+- **`recordPayment(tx, { registrationId, method, amount, paidAt, createdBy })`
+  is the single entry point for a payment**: it checks the state under the
+  locks, sets `confirmed`, `paid_at`, `payment_method` and posts
+  `registration_payment` to the ledger in the caller's transaction. A future
+  gateway calls it with its own amount and time and `createdBy: null`.
+- **Refunds.** Cancelling (the member, an admin, or the whole workshop) stores
+  the amount owed as `refund_amount` (terms: 100 / 50 / 0 % by the time left,
+  `refund-policy.ts`; full when the workshop is cancelled or the admin
+  chooses). It is paid back by hand, then "Mark as refunded"
+  (`recordRefund`) posts `registration_refund` and sets `refunded_at`.
+  Registration payments and refunds are never reversed in the ledger
+  (`reverseTransaction` refuses them, `money.errors.registrationEntry`): a
+  payment is undone by cancelling the registration. A workshop's books cannot
+  be closed while refunds are still owed (`refundsOwed` closing issue).
+
+## Jobs
+
+`pnpm jobs` (`scripts/jobs.ts`) runs every 15 minutes as a scheduled task
+(same image and environment as the app). Each job is idempotent and runs even
+when another failed; exit code 1 when one failed or did not finish.
+
+- `decision_due` (`features/workshops/decisions.ts`): once a published
+  workshop's go / no-go time has passed, every active super admin gets
+  `decision_due` once (`decision_notified_at`).
+- `workshop_reminder` (`features/registrations/admin/reminders.ts`): the day
+  before, everyone with an active registration in a workshop starting within
+  24 hours gets one email per member and workshop, in their language, with
+  what is still to pay and how while something is unpaid. Marked per
+  registration (`reminder_sent_at`) only when the email went out; members are
+  locked one run at a time (`SKIP LOCKED`), and the Resend idempotency key
+  stops a retry from emailing twice.

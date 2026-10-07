@@ -238,13 +238,14 @@ describe("getMyEarnings", () => {
     expect(after).toMatchObject({ fee: 150_000, received: 80_000, owed: 70_000, closed: true })
   })
 
-  it("a per-participant fee before the go decision is an estimate from the paid registrations", async () => {
+  it("a per-participant fee before the go decision is an estimate from everyone registered, paid or not yet", async () => {
     const { course } = await workshop(zeynep, { fee: { type: "per_participant", amount: 20_000 } })
     await addRegistration(course.id, memberId, termsId, { status: "confirmed" })
     await addRegistration(course.id, memberId, termsId, { status: "pending" })
+    await addRegistration(course.id, memberId, termsId, { status: "cancelled" })
     as(zeynep)
     const row = (await getMyEarnings()).workshops.find((w) => w.id === course.id)
-    expect(row).toMatchObject({ fee: 20_000, participants: 1, estimate: true, owed: 20_000 })
+    expect(row).toMatchObject({ fee: 40_000, participants: 2, estimate: true, owed: 40_000 })
   })
 
   it("a cancelled workshop shows only when an advance is to be returned", async () => {

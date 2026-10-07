@@ -279,7 +279,9 @@ export const confirmWorkshop = adminAction(workshopIdSchema, async ({ id }, ctx)
  * Paid registrations are owed a full refund (refund_amount = amount): they
  * appear in Money → Refunds, where an admin marks each one as paid back (that
  * posts the refund to the ledger). Unpaid ones are cancelled with nothing
- * owed. Everyone who paid gets a friendly email in their own language. An
+ * owed. Everyone registered gets a friendly email in their own language:
+ * with the refund when they had paid, else that the workshop won't take
+ * place (so nobody comes to the venue for nothing). An
  * unsigned contract is voided; a signed one stays as the record. The workshop
  * is locked first (FOR UPDATE), so a payment recorded at the same moment is
  * either refunded here or refused afterwards.
@@ -330,9 +332,9 @@ export const cancelWorkshop = adminAction(workshopIdSchema, async ({ id }, ctx) 
     return { title: course.title, refunds: cancelled }
   })
 
-  // One email per member (a parent may have registered two children), after the response.
+  // One email per member (a parent may have registered two children), paid or not, after the response.
   const perMember = new Map<string, number>()
-  for (const r of refunds) if (r.refundAmount) perMember.set(r.memberId, (perMember.get(r.memberId) ?? 0) + r.refundAmount)
+  for (const r of refunds) perMember.set(r.memberId, (perMember.get(r.memberId) ?? 0) + (r.refundAmount ?? 0))
   if (perMember.size) after(() => emailCancellation(id, title, perMember))
 
   revalidate()
@@ -340,7 +342,7 @@ export const cancelWorkshop = adminAction(workshopIdSchema, async ({ id }, ctx) 
   return { id, cancelledRegistrations: refunds.length, emailed: perMember.size }
 })
 
-/** "The workshop is cancelled, you get {refundAmount} back", in each member's own language. */
+/** "The workshop is cancelled": "you get {refundAmount} back", or (nothing paid) "please don't come", in each member's own language. */
 async function emailCancellation(courseId: string, title: Record<string, string | undefined>, refunds: Map<string, number>) {
   const fallback = await getSetting("defaultLocale")
   const people = await db
@@ -349,6 +351,7 @@ async function emailCancellation(courseId: string, title: Record<string, string 
     .where(inArray(members.id, [...refunds.keys()]))
   for (const person of people) {
     const locale = memberLocale(person.locale, fallback)
+    const refund = refunds.get(person.id) ?? 0
     await sendEmail({
       to: person.email,
       template: "workshop_cancelled",
@@ -357,7 +360,7 @@ async function emailCancellation(courseId: string, title: Record<string, string 
       props: {
         name: person.name,
         workshopTitle: localized(title, locale),
-        refundAmount: formatLira(refunds.get(person.id) ?? 0, locale),
+        ...(refund > 0 ? { refundAmount: formatLira(refund, locale) } : {}),
         workshopsUrl: `/${locale}/workshops`,
       },
     })

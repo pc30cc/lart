@@ -212,6 +212,23 @@ describe("signContract", () => {
     expect(course.status).toBe("awaiting_signature")
   })
 
+  it("signs only the text the instructor read, when its fingerprint is given", async () => {
+    const { contract } = await pending()
+    const read = sha256(await renderContract(contract.id, "en"))
+    // The page showed an older text (the contract changed since): nothing is signed.
+    const older = sha256(`${await renderContract(contract.id, "en")}\nAn older clause.`)
+    expect(await failure(signContract(contract.id, instructorId, "Zeynep Yılmaz", null, null, "en", older))).toBe(
+      "contracts.errors.textChanged",
+    )
+    expect(await failure(signContract(contract.id, instructorId, "Zeynep Yılmaz", null, null, "en", "not a hash"))).toBe(
+      "contracts.errors.textChanged",
+    )
+    const [unsigned] = await db.select({ status: contracts.status }).from(contracts).where(eq(contracts.id, contract.id))
+    expect(unsigned.status).toBe("sent")
+
+    expect(await signContract(contract.id, instructorId, "Zeynep Yılmaz", null, null, "en", read)).toMatchObject({ sha256: read })
+  })
+
   it("asks for a name", async () => {
     const { contract } = await pending()
     expect(await failure(signContract(contract.id, instructorId, " x ", null, null, "tr"))).toBe("contracts.errors.nameRequired")

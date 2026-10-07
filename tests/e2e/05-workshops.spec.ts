@@ -355,7 +355,8 @@ test.describe.serial("workshops", () => {
     await page.goto(`/en/admin/workshops/${held}/registrations`)
     for (const name of ["Ayşe Kaya", "Zeynep Arslan", "Mina Rahimi", "Leyla Demir"]) await expect(page.getByText(name).first()).toBeVisible()
     await page.goto(`/en/admin/workshops/${held}`)
-    await expect(page.getByText("3 of 8").first()).toBeVisible()
+    // Registered: paid and not paid yet (Leyla) alike.
+    await expect(page.getByText("4 of 8").first()).toBeVisible()
   })
 
   test("go decision: confirm the candle workshop", async ({ page }) => {
@@ -363,12 +364,14 @@ test.describe.serial("workshops", () => {
     await page.goto(`/en/admin/workshops/${id}`)
     await page.getByRole("button", { name: "Confirm workshop" }).click()
     const dialog = page.getByRole("alertdialog")
-    await expect(dialog).toContainText("3 people have registered.")
+    // Phase 2: everyone registered counts, paid or not yet, and the dialog says so.
+    await expect(dialog).toContainText("4 people have registered (paid or not yet).")
     await dialog.getByRole("button", { name: "Yes, it goes ahead" }).click()
     await expect(toast(page, "Workshop confirmed.")).toBeVisible()
     await expect(page.getByText("Confirmed: it’s happening!")).toBeVisible()
     const course = await one<{ status: string; final_participants: number }>("select status, final_participants from courses where id = $1", [id])
-    expect(course).toEqual({ status: "confirmed", final_participants: 3 })
+    // Everyone registered counts, paid or not yet (many pay in cash at the workshop).
+    expect(course).toEqual({ status: "confirmed", final_participants: 4 })
   })
 
   test("no-go: cancel the pottery workshop, cancellation emails", async ({ page }) => {
@@ -389,17 +392,17 @@ test.describe.serial("workshops", () => {
     expect(regs.every((r) => r.status === "cancelled")).toBe(true)
     expect(regs.map((r) => Number(r.refund_amount))).toEqual([90_000, 0, 90_000])
 
-    // One email per paid member, sent after the response.
-    await expect.poll(() => emailsSince(mark).filter((e) => /@member\.test$/.test(String([e.to].flat()[0]))).length, { timeout: 15_000 }).toBe(2)
+    // One email per member, sent after the response: the refund for those who paid,
+    // "please don't come to the venue" for the one who had not paid yet.
+    await expect.poll(() => emailsSince(mark).filter((e) => /@member\.test$/.test(String([e.to].flat()[0]))).length, { timeout: 15_000 }).toBe(3)
     const emails = emailsSince(mark).filter((e) => /@member\.test$/.test(String([e.to].flat()[0])))
-    for (const e of emails) {
-      expect(e.text).toContain("₺900")
-      expect(e.subject).toContain(WORKSHOPS.cancelled.title.en)
-    }
+    // In each member's own language (members.locale; these members were added with the default, Turkish).
+    for (const e of emails) expect(e.subject).toContain(WORKSHOPS.cancelled.title.tr)
+    const pending = emails.filter((e) => [e.to].flat().includes(`pot3.${RUN}@member.test`))
+    expect(pending).toHaveLength(1)
+    expect(pending[0].text).not.toContain("₺900")
+    for (const e of emails.filter((e) => !pending.includes(e))) expect(e.text).toContain("₺900")
     test.info().annotations.push({ type: "cancellation-email", description: `${emails[0].subject}\n${emails[0].text}` })
-    // The member who had not paid yet is not told.
-    const pendingTold = emailsSince(mark).some((e) => [e.to].flat().includes(`pot3.${RUN}@member.test`))
-    test.info().annotations.push({ type: "pending-member-emailed", description: String(pendingTold) })
   })
 
   test("a category or instructor in use cannot be deleted", async ({ page }) => {
@@ -455,6 +458,7 @@ test.describe.serial("workshops", () => {
     payRegistrations(regs.filter((r) => r.status === "confirmed").map((r) => r.id))
     await page.goto(`/en/admin/workshops/${id}`)
     await expect(page.getByText("Registration is open")).toBeVisible()
-    await expect(page.getByText("2 of 10").first()).toBeVisible()
+    // Registered counts everyone, paid or not yet (phase 2): 2 paid + 1 not paid yet.
+    await expect(page.getByText("3 of 10").first()).toBeVisible()
   })
 })

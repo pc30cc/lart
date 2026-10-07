@@ -4,6 +4,7 @@ import { and, eq, inArray, isNotNull, sql } from "drizzle-orm"
 import { db, type Tx } from "@/db"
 import { emailTokens, instructors, members } from "@/db/schema"
 import { profileText } from "@/features/instructors/schema"
+import { locales } from "@/i18n/routing"
 import { sha256 } from "@/lib/crypto"
 import { normalizeEmail } from "@/lib/auth/login"
 import { hashPassword } from "@/lib/auth/password"
@@ -283,14 +284,19 @@ export async function inviteDetails(token: unknown, locale: string): Promise<{ n
 /**
  * Accept an invitation: in one transaction, use the link (unused, not
  * expired, active instructor), set the password, mark the email verified and
- * drop the other open links. Returns the instructor id, or null.
+ * drop the other open links. `locale` is the language of the invitation page:
+ * it becomes the instructor's language (`instructors.locale`: their emails,
+ * such as the contract to sign, and their panel). Returns the instructor id, or null.
  */
-export async function acceptInvite(token: unknown, password: string, now = new Date()): Promise<string | null> {
+export async function acceptInvite(token: unknown, password: string, locale?: string, now = new Date()): Promise<string | null> {
   if (!isTokenShaped(token)) return null
   const passwordHash = await hashPassword(password)
   return db.transaction(async (tx) => {
     const id = await consumeEmailToken(tx, token, tokenQuery("instructor", "invite", now))
     if (id) await setPassword(tx, "instructor", id, passwordHash, now)
+    if (id && locale && (locales as readonly string[]).includes(locale)) {
+      await tx.update(instructors).set({ locale }).where(eq(instructors.id, id))
+    }
     return id
   })
 }

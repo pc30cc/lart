@@ -200,6 +200,22 @@ function EntryLines({ row }: { row: LedgerRow }) {
         </p>
         {row.reversible && <ReverseEntry id={row.id} what={row.description || t(`kinds.${row.kind}`)} />}
       </div>
+      {(row.kind === "registration_payment" || row.kind === "registration_refund") && (
+        <p className="text-muted-foreground text-xs text-pretty">
+          {t("ledger.registrationEntry")}
+          {row.workshop && (
+            <>
+              {" "}
+              <Link
+                href={`/admin/workshops/${row.workshop.id}/registrations`}
+                className="hover:text-foreground underline underline-offset-3"
+              >
+                {t("ledger.openRegistrations")}
+              </Link>
+            </>
+          )}
+        </p>
+      )}
     </div>
   )
 }

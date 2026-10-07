@@ -251,28 +251,28 @@ describe("standard postings", () => {
 })
 
 describe("lock order", () => {
-  it("locks the workshop before the registration, so a refund never deadlocks with a reversal", async () => {
+  it("locks the workshop before the registration, so two refunds of one registration never deadlock", async () => {
     const courseId = await makeCourse(world, alice.id, { status: "published" })
     const registrationId = await addRegistration(world, courseId, { amount: 65000 })
-    const paid = await inTx((tx) => postRegistrationPayment(tx, { registrationId, occurredOn: day }))
+    await inTx((tx) => postRegistrationPayment(tx, { registrationId, occurredOn: day }))
 
-    // A holds the workshop, then reverses the payment (its insert needs a key-share lock on the registration).
+    // A holds the workshop, then refunds the payment in full (it locks the registration, and its insert takes a key-share lock on it).
     let holding!: () => void
     const held = new Promise<void>((resolve) => (holding = resolve))
-    const reversal = inTx(async (tx) => {
+    const first = inTx(async (tx) => {
       await lockCourse(tx, courseId)
       holding()
       await new Promise((resolve) => setTimeout(resolve, 300)) // B is waiting by now
-      return reverseTransaction(paid, alice.id, { tx })
+      return postRegistrationRefund(tx, { registrationId, amount: 65000, occurredOn: day })
     })
     await held
     // B refunds the same registration meanwhile: it waits for the workshop instead of holding the registration.
-    const refund = inTx((tx) => postRegistrationRefund(tx, { registrationId, amount: 1000, occurredOn: day }))
+    const second = inTx((tx) => postRegistrationRefund(tx, { registrationId, amount: 1000, occurredOn: day }))
 
-    const [a, b] = await Promise.allSettled([reversal, refund])
+    const [a, b] = await Promise.allSettled([first, second])
     expect(a.status).toBe("fulfilled")
     expect(b.status === "rejected" && b.reason instanceof UserError && b.reason.key).toBe("money.errors.moreThanPaid")
-    expect(await registrationMoney(db, registrationId)).toEqual({ paid: 0, refunded: 0 })
+    expect(await registrationMoney(db, registrationId)).toEqual({ paid: 65000, refunded: 65000 })
   })
 })
 
@@ -339,6 +339,14 @@ describe("reverseTransaction", () => {
       }),
     )
     expect(await userError(reverseTransaction(settlement, alice.id))).toBe("money.errors.closingIsFinal")
+
+    // A registration's payment or refund: undone by cancelling the registration, never reversed.
+    const registrationId = await addRegistration(world, courseId, { amount: 4000 })
+    const payment = await inTx((tx) => postRegistrationPayment(tx, { registrationId, occurredOn: day }))
+    const refund = await inTx((tx) => postRegistrationRefund(tx, { registrationId, amount: 1000, occurredOn: day }))
+    expect(await userError(reverseTransaction(payment, alice.id))).toBe("money.errors.registrationEntry")
+    expect(await userError(reverseTransaction(refund, alice.id))).toBe("money.errors.registrationEntry")
+    expect(await registrationMoney(db, registrationId)).toEqual({ paid: 4000, refunded: 1000 })
     expect(await userError(reverseTransaction(randomUUID(), alice.id))).toBe("money.errors.entryGone")
   })
 

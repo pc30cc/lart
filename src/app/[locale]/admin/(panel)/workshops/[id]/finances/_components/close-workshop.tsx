@@ -94,6 +94,14 @@ export function CloseWorkshop({
                     </Link>
                   </>
                 )}
+                {issue === "refundsOwed" && (
+                  <>
+                    {" "}
+                    <Link href="/admin/money/refunds" className="font-medium underline underline-offset-3">
+                      {t("close.openRefunds")}
+                    </Link>
+                  </>
+                )}
               </span>
             </li>
           ))}

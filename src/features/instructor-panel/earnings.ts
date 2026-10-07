@@ -6,8 +6,8 @@ import { instructorFee } from "@/features/money/closing"
  *
  * - `fee`: the agreed fee. Once the workshop's books are closed, the fee booked
  *   then; before, as the closing will count it (`instructorFee`): fixed, or per
- *   participant times the final number (or, before the go decision, the paid
- *   registrations so far: an estimate). A cancelled workshop pays no fee (6.2).
+ *   participant times the final number (or, before the go decision, everyone
+ *   registered so far, paid or not yet: an estimate). A cancelled workshop pays no fee (6.2).
  * - `received`: what counts towards the fee: the advance, minus the part of it
  *   booked as workshop costs (6.4), plus the payments after closing.
  * - `owed`: still to be paid to the instructor; `toReturn`: received above the

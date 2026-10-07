@@ -90,11 +90,12 @@ const remindedAt = async (id: string) =>
   (await db.select({ at: registrations.reminderSentAt }).from(registrations).where(eq(registrations.id, id)))[0].at
 
 describe("sendDayBeforeReminders", () => {
-  it("reminds each member once for a workshop starting within 24 hours, with the cash to bring when not paid", async () => {
+  it("reminds each member once for a workshop starting within 24 hours, with what is still to pay and how", async () => {
     const w = await workshop(20, { bring: "An apron" })
     const parent = await member("en")
     const paid = await addRegistration(w.id, parent.id, refs.termsId, { status: "confirmed" })
     const unpaid = await addRegistration(w.id, parent.id, refs.termsId, { status: "pending", amount: 150_000 })
+    await db.update(registrations).set({ participantName: "Sara" }).where(eq(registrations.id, unpaid.id))
     const gone = await addRegistration(w.id, parent.id, refs.termsId, { status: "cancelled" })
 
     const now = new Date()
@@ -108,7 +109,11 @@ describe("sendDayBeforeReminders", () => {
       idempotencyKey: `workshop_reminder:${w.id}:${parent.id}`,
       props: { name: "Nur", workshopTitle: "Candles", venue: "Moda studio", workshopUrl: `/en/workshops/${w.slug}` },
     })
-    expect(sent[0].props.bring).toMatch(/^An apron · ₺1,500(\.00)? in cash for the workshop$/)
+    // "What to bring" stays the workshop's own; the unpaid part has its own row and payment blocks.
+    expect(sent[0].props).toMatchObject({ bring: "An apron", participantName: "Sara", cash: true })
+    expect(sent[0].props.amount).toMatch(/^₺1,500(\.00)?$/)
+    expect(sent[0].props).not.toHaveProperty("transfer")
+    expect(sent[0].props).not.toHaveProperty("paymentUrl")
     expect(await remindedAt(paid.id)).toEqual(now)
     expect(await remindedAt(unpaid.id)).toEqual(now)
     expect(await remindedAt(gone.id)).toBeNull()
@@ -119,19 +124,24 @@ describe("sendDayBeforeReminders", () => {
     expect(sentFor(w.slug)).toHaveLength(0)
   })
 
-  it("writes in the member's language and adds no cash line when everything is paid or cash is off", async () => {
+  it("writes in the member's language, says nothing about paying when all is paid, and shows only the ways that are on", async () => {
     const w = await workshop(5)
+    await db.update(courses).set({ paymentUrl: "https://iyzi.link/abc" }).where(eq(courses.id, w.id))
     const paidOnly = await member("fa")
     await addRegistration(w.id, paidOnly.id, refs.termsId, { status: "confirmed" })
     const cashOff = await member("tr")
     await addRegistration(w.id, cashOff.id, refs.termsId, { status: "pending" })
-    payment.value = { ...settingDefaults.payment, cash: false, online: { enabled: true, note: {} } }
+    payment.value = { ...settingDefaults.payment, cash: false, online: { enabled: true, note: { tr: "Kartla" } } }
 
     await sendDayBeforeReminders()
     const sent = sentFor(w.slug)
-    expect(sent.find((m) => m.to === paidOnly.email)).toMatchObject({ locale: "fa", props: { workshopTitle: "شمع" } })
-    expect(sent.find((m) => m.to === paidOnly.email)?.props).not.toHaveProperty("bring")
-    expect(sent.find((m) => m.to === cashOff.email)?.props).not.toHaveProperty("bring")
+    const fa = sent.find((m) => m.to === paidOnly.email)
+    expect(fa).toMatchObject({ locale: "fa", props: { workshopTitle: "شمع" } })
+    for (const key of ["bring", "amount", "cash", "transfer", "paymentUrl"]) expect(fa?.props).not.toHaveProperty(key)
+    const tr = sent.find((m) => m.to === cashOff.email)
+    expect(tr?.props).toMatchObject({ paymentUrl: "https://iyzi.link/abc", onlineNote: "Kartla" })
+    expect(tr?.props.amount).toEqual(expect.stringContaining("1.500"))
+    expect(tr?.props).not.toHaveProperty("cash")
   })
 
   it("leaves workshops further away, already started or cancelled", async () => {

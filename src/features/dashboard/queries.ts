@@ -49,16 +49,20 @@ const total = (expr: unknown, cond: SQL | undefined) => sql<number>`coalesce(sum
 
 /** The outer query's course id, qualified by hand (see the Drizzle note in docs/DEVELOPMENT.md). */
 const courseId = sql`${courses}.${sql.identifier(courses.id.name)}`
-/** Confirmed (paid) or pending registrations of the course in the outer query. */
-const registered = (status: "confirmed" | "pending") =>
-  sql<number>`(select count(*) from ${registrations} r where r.course_id = ${courseId} and r.status = ${status})`.mapWith(Number)
+/**
+ * Registrations of the course in the outer query: "registered" means every
+ * active one, paid ("confirmed") or not paid yet ("pending"), as the seats
+ * left on the site and the go decision count them; "paid" only the paid ones.
+ */
+const registeredCount = sql<number>`(select count(*) from ${registrations} r where r.course_id = ${courseId} and r.status in ('pending', 'confirmed'))`.mapWith(Number)
+const paidCount = sql<number>`(select count(*) from ${registrations} r where r.course_id = ${courseId} and r.status = 'confirmed')`.mapWith(Number)
 
-/** Participants of a workshop: locked at closing, fixed at the go decision, otherwise the paid registrations. */
-function participants(confirmed: unknown) {
+/** Participants of a workshop: locked at closing, fixed at the go decision, otherwise everyone registered (paid or not yet). */
+function participants(registered: unknown) {
   return sql<number>`case
     when ${courses.status} = 'closed' then coalesce((${courses.closedTotals}->>'participants')::int, 0)
     when ${courses.status} = 'cancelled' then 0
-    else coalesce(${courses.finalParticipants}, ${confirmed}, 0) end`
+    else coalesce(${courses.finalParticipants}, ${registered}, 0) end`
 }
 const netProfit = sql<number>`coalesce((${courses.closedTotals}->>'netProfit')::bigint, 0)`
 
@@ -100,12 +104,12 @@ async function summary(exec: Exec, now: Date, windowStart: Date) {
   const regs = exec
     .select({
       courseId: registrations.courseId,
-      confirmed: sql<number>`count(*) filter (where ${registrations.status} = 'confirmed')`.as("confirmed"),
+      registered: sql<number>`count(*) filter (where ${registrations.status} in ('pending', 'confirmed'))`.as("registered"),
     })
     .from(registrations)
     .groupBy(registrations.courseId)
     .as("regs")
-  const taken = participants(regs.confirmed)
+  const taken = participants(regs.registered)
   const upcoming = and(inArray(courses.status, active), gte(courses.endsAt, now))
   const open = and(upcoming, ne(courses.status, "awaiting_signature"))
   const held = and(tookPlace(now), gte(courses.startsAt, windowStart))
@@ -145,8 +149,9 @@ function upcomingWorkshops(exec: Exec, now: Date) {
       decisionAt: courses.decisionAt,
       minCapacity: courses.minCapacity,
       maxCapacity: courses.maxCapacity,
-      registered: participants(registered("confirmed")).mapWith(Number),
-      pending: registered("pending"),
+      registered: participants(registeredCount).mapWith(Number),
+      /** Of those registered now, how many have paid. */
+      paid: paidCount,
       instructor: instructors.displayName,
     })
     .from(courses)
@@ -165,7 +170,7 @@ function heldWorkshops(exec: Exec, now: Date) {
       startsAt: courses.startsAt,
       minCapacity: courses.minCapacity,
       maxCapacity: courses.maxCapacity,
-      registered: participants(registered("confirmed")).mapWith(Number),
+      registered: participants(registeredCount).mapWith(Number),
     })
     .from(courses)
     .where(tookPlace(now))

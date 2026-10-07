@@ -70,6 +70,9 @@ describe("money queries", () => {
     expect(isReversible({ ...locked, kind: "expense" })).toBe(false)
     expect(isReversible({ ...locked, kind: "instructor_payment" })).toBe(true)
     expect(isReversible({ ...locked, kind: "expense", courseClosedAt: null })).toBe(true)
+    // A registration's payment or refund: undone by cancelling the registration, even while the books are open.
+    expect(isReversible({ ...locked, kind: "registration_payment", courseClosedAt: null })).toBe(false)
+    expect(isReversible({ ...locked, kind: "registration_refund", courseClosedAt: null })).toBe(false)
 
     const search = await listTransactions(params({ q: `KIL VE sır ${tag}` }), { from: day, to: day })
     expect(search.rows.map((r) => r.id).sort()).toEqual([ids.expense, ids.reversal].sort())

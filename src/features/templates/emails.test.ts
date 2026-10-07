@@ -31,7 +31,7 @@ const session = vi.hoisted(() => ({
 }))
 vi.mock("@/lib/auth/admin", () => ({ requireAdmin: async () => session, getAdmin: async () => session }))
 
-// No code sends this email yet (phase 2), so other test files never render it while these run.
+// The day-before reminder job's tests mock sendEmail, so no other test file renders this email while these run.
 const template = "workshop_reminder" as const
 const run = randomUUID().slice(0, 8)
 const empty = { fa: "", tr: "", en: "" }
@@ -113,6 +113,15 @@ describe("email texts", () => {
 
     const broken = await previewEmailTexts({ template, locale: "en", texts: { ...blank, cta: { fa: "", tr: "", en: "{oops}" } } })
     expect(broken).toMatchObject({ ok: false, fieldErrors: { "texts.cta.en": expect.stringContaining("{oops}") } })
+  })
+
+  it("previews every email in every language with example details", async () => {
+    for (const { template: name } of await listEmails()) {
+      for (const locale of ["fa", "tr", "en"] as const) {
+        const result = await previewEmailTexts({ template: name, locale, texts: blank })
+        expect(result, `${name} ${locale}`).toMatchObject({ ok: true, data: { subject: expect.any(String), html: expect.any(String) } })
+      }
+    }
   })
 
   it("goes back to the default texts and keeps the old ones in the activity log", async () => {

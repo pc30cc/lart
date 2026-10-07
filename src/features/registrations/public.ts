@@ -130,6 +130,15 @@ export async function listOpenWorkshops(locale: string, now: Date = new Date()) 
 
 export type WorkshopCard = Awaited<ReturnType<typeof listOpenWorkshops>>[number]
 
+/** The workshop pages the sitemap lists: the open ones (as `listOpenWorkshops`), with when they last changed. */
+export async function sitemapWorkshops(now: Date = new Date()) {
+  return db
+    .select({ slug: courses.slug, updatedAt: courses.updatedAt })
+    .from(courses)
+    .where(and(inArray(courses.status, [...listedStatuses]), gt(courses.startsAt, now)))
+    .orderBy(asc(courses.startsAt), asc(courses.id))
+}
+
 // ─── One workshop ─────────────────────────────────────────────────────────────
 
 /**

@@ -93,15 +93,16 @@
     "preview": "Küçük bir hatırlatma: {date}, saat {time}.",
     "heading": "Atölyeniz çok yakında",
     "intro": "Küçük bir hatırlatma: “{workshopTitle}” çok yakında ve sizi görmek için sabırsızlanıyoruz!",
+    "intro2": "{ways, select, none {Kaydınız için {amount} tutarında ödemeniz kaldı. Ödemenin nasıl yapılacağı konusunda sizinle iletişime geçeceğiz.} one {Kaydınız için {amount} tutarında ödemeniz kaldı. Şöyle ödeyebilirsiniz:} many {Kaydınız için {amount} tutarında ödemeniz kaldı. Size en uygun yolu seçebilirsiniz:} other {}}",
     "cta": "Atölyeyi görüntüle",
     "note": "Hep birlikte zamanında başlayabilmemiz için lütfen birkaç dakika erken gelmeye çalışın."
   },
   "workshop_cancelled": {
     "subject": "“{workshopTitle}” iptal edildi",
-    "preview": "Çok üzgünüz. Ödemeniz size iade edilecek.",
+    "preview": "{paid, select, yes {Çok üzgünüz. Ödemeniz size iade edilecek.} other {Çok üzgünüz. Bu atölye yapılmayacak.}}",
     "heading": "Üzgünüz, bu atölye iptal edildi",
     "intro": "Bunu söylemek zorunda olduğumuz için çok üzgünüz: “{workshopTitle}” iptal edildi. Bu atölyeyi heyecanla beklediğinizi biliyoruz.",
-    "intro2": "Sizin bir şey yapmanıza gerek yok. {refundAmount} tutarındaki ödemeniz beş iş günü içinde size iade edilecek.",
+    "intro2": "{paid, select, yes {Sizin bir şey yapmanıza gerek yok. {refundAmount} tutarındaki ödemeniz beş iş günü içinde size iade edilecek.} other {Atölye yapılmayacağı için lütfen o gün atölye yerine gelmeyin. Başka bir şey yapmanıza gerek yok.}}",
     "cta": "Yaklaşan atölyeleri gör",
     "note": "Sizi yakında başka bir atölyede görmeyi çok isteriz."
   },
@@ -143,7 +144,7 @@
     "subject": "“{workshopTitle}” kaydınız iptal edildi",
     "preview": "{refund, select, full {Ödemenizin tamamı iade edilecek.} partial {Ödemenizin bir kısmı iade edilecek.} none {Sizi aramızda göremeyeceğimiz için üzgünüz.} other {Sizi aramızda göremeyeceğimiz için üzgünüz.}}",
     "heading": "Kaydınız iptal edildi",
-    "intro": "İsteğiniz üzerine “{workshopTitle}” kaydınızı iptal ettik.",
+    "intro": "{by, select, us {“{workshopTitle}” kaydınız iptal edildi. Sorularınız varsa lütfen bizimle iletişime geçin.} other {İsteğiniz üzerine “{workshopTitle}” kaydınızı iptal ettik.}}",
     "intro2": "{refund, select, full {İptal koşullarına göre ödemenizin tamamı iade edilir: {refundAmount} tutarını beş iş günü içinde size geri göndereceğiz.} partial {İptal koşullarına göre ödemenizin %{refundPercent, number} kadarı iade edilir: {refundAmount} tutarını beş iş günü içinde size geri göndereceğiz.} none {İptal koşullarına göre, başlangıca 24 saatten az kala yapılan iptallerde iade yapılamıyor. Üzgünüz.} other {Henüz ödeme yapmadığınız için başka bir şey yapmanıza gerek yok.}}",
     "cta": "Yaklaşan atölyeleri gör",
     "note": "Sizi yakında başka bir atölyede görmeyi çok isteriz."

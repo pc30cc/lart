@@ -252,7 +252,7 @@
     "experienceNo": "No, beginners are welcome",
     "participants": "Registered",
     "minimum": "{count, plural, one {Needs at least # person} other {Needs at least # people}}",
-    "pending": "{count, plural, one {# more is paying} other {# more are paying}}",
+    "paid": "{count, plural, =0 {Nobody has paid yet} one {# has paid} other {# have paid}}",
     "final": "{count, plural, one {Final number: # participant} other {Final number: # participants}}",
     "seeRegistrations": "See registrations",
     "contract": "Contract",
@@ -323,7 +323,7 @@
     "cancel": {
       "trigger": "Cancel workshop",
       "title": "Cancel “{title}”?",
-      "description": "{count, plural, =0 {Nobody has registered yet.} one {# registration will be cancelled.} other {# registrations will be cancelled.}} Everyone who paid gets a full refund and a friendly email. This can’t be undone.",
+      "description": "{count, plural, =0 {Nobody has registered yet.} one {# registration will be cancelled.} other {# registrations will be cancelled.}} Everyone registered gets a friendly email, and everyone who paid gets a full refund. This can’t be undone.",
       "action": "Yes, cancel it",
       "done": "Workshop cancelled."
     },
@@ -489,9 +489,6 @@
       "overview": "Online payment link",
       "none": "None",
       "open": "Opens the payment page in a new tab"
-    },
-    "reminder": {
-      "bringCash": "{amount} in cash for the workshop"
     },
     "csv": {
       "participant": "Participant",

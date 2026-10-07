@@ -221,6 +221,8 @@
     "recordedBy": "Recorded by {name} on {date}",
     "recordedAuto": "Recorded automatically on {date}",
     "openWorkshop": "Open the workshop’s finances",
+    "registrationEntry": "A registration’s payment or refund isn’t reversed here. To undo a payment, cancel the registration: the refund it is owed then appears in Refunds.",
+    "openRegistrations": "Open the registrations",
     "showing": "{from}–{to} of {total}",
     "noResults": "Nothing matches",
     "noResultsHint": "Try other dates, a different search, or clear the filters.",
@@ -266,8 +268,7 @@
     "metaTitle": "Finances · {title}",
     "print": "Print or PDF",
     "registrations": "Registrations",
-    "registrationsHint": "Paid places.",
-    "registrationsPending": "{count, plural, one {# more waiting for payment} other {# more waiting for payment}}",
+    "registrationsPaid": "{count, plural, =0 {Nobody has paid yet} other {# paid}}{pending, plural, =0 {} other {, # not paid yet}}",
     "finalNumber": "Final number at the go decision: {count}",
     "revenueHint": "Paid registrations, minus refunds.",
     "revenueInBooks": "{amount} of it is in the books so far.",
@@ -335,7 +336,8 @@
     "cannotReverseReversal": "This entry is itself a correction, so it can’t be reversed. If needed, record the original again.",
     "closingIsFinal": "Closing entries are final and can’t be reversed.",
     "alreadyReversed": "This entry has already been reversed.",
-    "reverseLaterFirst": "Later entries depend on this one. Please reverse those first."
+    "reverseLaterFirst": "Later entries depend on this one. Please reverse those first.",
+    "registrationEntry": "A registration’s payment or refund can’t be reversed. To undo a payment, cancel the registration in the workshop’s registrations: the refund it is owed then appears in Refunds."
   },
   "validation": {
     "amountPositive": "Please enter an amount above zero.",
@@ -359,12 +361,14 @@
     "confirm": "Close and lock",
     "done": "Workshop closed. The figures are locked.",
     "fixShares": "Fix the shares",
+    "openRefunds": "Open the refunds list",
     "changed": "The figures changed while you were looking. Please check the new figures and close again.",
     "issues": {
       "closed": "This workshop is already closed.",
       "notClosable": "A workshop can be closed once it is confirmed and has taken place, or when it is cancelled.",
       "notEnded": "The workshop hasn’t finished yet. You can close it after it ends.",
       "noContract": "This workshop has no valid contract, so the instructor’s fee is unknown.",
+      "refundsOwed": "Some refunds of this workshop haven’t been paid back yet. Pay back the refunds first and mark them as refunded; then you can close it.",
       "revenueMismatch": "Some payments or refunds of this workshop aren’t in the books yet.",
       "advanceTooBig": "The instructor still holds more advance than their fee. Record what they returned, or what they spent on the workshop, first.",
       "sharesNot100": "The partners’ shares don’t add up to 100%."

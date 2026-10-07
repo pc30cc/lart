@@ -225,9 +225,10 @@ describe("instructor invitation", () => {
     const token = await issueEmailToken("instructor", "invite", i.id, INVITE_TTL)
 
     expect(await inviteDetails(token, "en")).toEqual({ name: "Zeynep", email: i.email })
-    expect(await acceptInvite(token, NEW)).toBe(i.id)
+    expect(await acceptInvite(token, NEW, "fa")).toBe(i.id)
 
     const row = await instructor(i.id)
+    expect(row.locale).toBe("fa") // the invitation page's language: their emails and panel
     expect(await verifyPassword(row.passwordHash!, NEW)).toBe(true)
     expect(row.emailVerifiedAt).toBeInstanceOf(Date)
     const [used] = await db.select().from(emailTokens).where(eq(emailTokens.id, sha256(token)))
@@ -241,7 +242,9 @@ describe("instructor invitation", () => {
     const i = await newInstructor()
     const token = await issueEmailToken("instructor", "invite", i.id, INVITE_TTL)
     expect(await acceptInvite(token, NEW)).toBe(i.id)
-    expect(await acceptInvite(token, "someone else's password")).toBeNull()
+    const { locale } = await instructor(i.id)
+    expect(await acceptInvite(token, "someone else's password", locale === "en" ? "fa" : "en")).toBeNull()
+    expect((await instructor(i.id)).locale).toBe(locale) // a refused link changes nothing
     expect(await inviteDetails(token, "en")).toBeNull()
     expect(await verifyPassword((await instructor(i.id)).passwordHash!, NEW)).toBe(true)
   })

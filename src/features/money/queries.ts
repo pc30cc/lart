@@ -8,7 +8,7 @@ import { admins, courses, instructors, ledgerLines, ledgerTransactions, type Loc
 import { requireAdmin } from "@/lib/auth/admin"
 import { splitByShares } from "@/lib/money"
 import { activePartners, prepareClosing, projectedFees, totalOf, workshopsToClose } from "./closing"
-import { accountBalances, booksClosed, openResult, partnerCapitals, type Account, type TransactionKind } from "./ledger"
+import { accountBalances, booksClosed, openResult, partnerCapitals, registrationKinds, type Account, type TransactionKind } from "./ledger"
 import type { transactionTable } from "./schema"
 
 const t = ledgerTransactions
@@ -100,11 +100,12 @@ async function loadEntries(options: { where?: SQL; orderBy?: SQL[]; limit?: numb
 
 /**
  * Can the panel offer "Reverse" for this entry? (The server checks again.)
- * Not a reversal or a closing entry, not reversed yet, and nothing that would
- * change a closed workshop's figures (paying its instructor can still be corrected).
+ * Not a reversal or a closing entry, not a registration's payment or refund
+ * (undone by cancelling the registration), not reversed yet, and nothing that
+ * would change a closed workshop's figures (paying its instructor can still be corrected).
  */
 export function isReversible(entry: Pick<Entry, "kind" | "reversedBy" | "courseStatus" | "courseClosedAt">): boolean {
-  if (entry.reversedBy || ["reversal", "course_settlement", "course_close"].includes(entry.kind)) return false
+  if (entry.reversedBy || ["reversal", "course_settlement", "course_close", ...registrationKinds].includes(entry.kind)) return false
   const closed = entry.courseStatus !== null && booksClosed({ status: entry.courseStatus, closedAt: entry.courseClosedAt })
   return !closed || entry.kind === "instructor_payment"
 }

@@ -218,6 +218,30 @@
       "password_reset": {
         "title": "Password reset",
         "to": "Everyone"
+      },
+      "member_exists": {
+        "title": "Account already exists",
+        "to": "Participants"
+      },
+      "registration_received": {
+        "title": "Place reserved + how to pay",
+        "to": "Participants"
+      },
+      "payment_received": {
+        "title": "Payment received",
+        "to": "Participants"
+      },
+      "registration_cancelled": {
+        "title": "Registration cancelled",
+        "to": "Participants"
+      },
+      "refund_due": {
+        "title": "Refund to pay back",
+        "to": "Admins"
+      },
+      "refund_sent": {
+        "title": "Refund sent",
+        "to": "Participants"
       }
     }
   }

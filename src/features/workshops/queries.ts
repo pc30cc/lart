@@ -40,10 +40,14 @@ const urlOf = (s: Storage | null, path: string | null) => {
   }
 }
 
-/** Confirmed (paid) registrations of a course; qualified by hand (see categories/queries.ts). */
+/**
+ * Everyone registered for a course: paid ("confirmed") and not paid yet
+ * ("pending"), as the seats left on the site count them. Qualified by hand
+ * (see categories/queries.ts).
+ */
 const qualified = (table: typeof courses | typeof registrations, column: { name: string }) =>
   sql`${table}.${sql.identifier(column.name)}`
-const confirmedCount = sql<number>`(select count(*)::int from ${registrations} where ${qualified(registrations, registrations.courseId)} = ${qualified(courses, courses.id)} and ${qualified(registrations, registrations.status)} = 'confirmed')`
+const registeredCount = sql<number>`(select count(*)::int from ${registrations} where ${qualified(registrations, registrations.courseId)} = ${qualified(courses, courses.id)} and ${qualified(registrations, registrations.status)} in ('pending', 'confirmed'))`
 
 const active = ["awaiting_signature", "published", "confirmed"] as const
 
@@ -84,7 +88,7 @@ export async function listWorkshops(params: TableParams<Sort, Filter>, locale: s
 
   const lang = locale === "fa" || locale === "en" ? locale : "tr"
   const title = sql`lower(coalesce(nullif(${courses.title}->>${lang}, ''), ${courses.title}->>'tr', ''))`
-  const fill = sql`${confirmedCount}::float / ${courses.maxCapacity}`
+  const fill = sql`${registeredCount}::float / ${courses.maxCapacity}`
   const column = { startsAt: courses.startsAt, title, fill, price: courses.price }[params.sort]
   const direction = params.dir === "desc" ? desc : asc
 
@@ -103,7 +107,7 @@ export async function listWorkshops(params: TableParams<Sort, Filter>, locale: s
         price: courses.price,
         category: categories.name,
         instructor: instructors.displayName,
-        confirmed: confirmedCount,
+        registered: registeredCount,
       })
       .from(courses)
       .innerJoin(categories, eq(categories.id, courses.categoryId))

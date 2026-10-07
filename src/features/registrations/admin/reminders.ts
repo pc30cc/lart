@@ -1,16 +1,14 @@
 import "server-only"
 import { and, eq, gt, inArray, isNull, lte, ne } from "drizzle-orm"
-import { createTranslator } from "next-intl"
 
 import { db } from "@/db"
 import { courses, members, registrations } from "@/db/schema"
+import { paymentWays } from "@/emails/payment"
 import { sendEmail } from "@/lib/email"
 import { formatDate, formatTimeRange, localized } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { getSetting } from "@/lib/settings"
-import en from "../../../../messages/en/workshops.json"
-import fa from "../../../../messages/fa/workshops.json"
-import tr from "../../../../messages/tr/workshops.json"
+import { safePaymentUrl } from "../schema"
 import { memberLocale } from "./notify"
 
 /**
@@ -18,8 +16,9 @@ import { memberLocale } from "./notify"
  * active registration (paid or not yet paid) in a workshop that starts within
  * the next 24 hours gets one `workshop_reminder` in their language, then
  * those registrations get `reminder_sent_at`. A parent who registered two
- * children gets one email. When something is still unpaid and cash is on,
- * "What to bring" also says "{amount} in cash".
+ * children gets one email. When something is still unpaid, the email says
+ * how much (`amount`) and shows the ways to pay that are switched on (cash,
+ * bank transfer, the workshop's payment link), as `registration_received` does.
  *
  * Safe to run often and in parallel: a member is handled by one run at a
  * time (their row is locked FOR NO KEY UPDATE SKIP LOCKED: a parallel run
@@ -29,13 +28,6 @@ import { memberLocale } from "./notify"
  */
 
 const HOUR = 3_600_000
-const texts = { fa, tr, en }
-
-/** "{amount} in cash for the workshop" in a language. */
-function cashLine(locale: keyof typeof texts, amount: string): string {
-  const t = createTranslator({ locale, messages: texts[locale], namespace: "registrations.reminder" })
-  return t("bringCash", { amount })
-}
 
 export async function sendDayBeforeReminders(now: Date = new Date()): Promise<{ due: number; sent: number }> {
   const soon = new Date(now.getTime() + 24 * HOUR)
@@ -69,7 +61,12 @@ export async function sendDayBeforeReminders(now: Date = new Date()): Promise<{ 
       if (!member) return false // handled by a parallel run right now
 
       const mine = await tx
-        .select({ id: registrations.id, status: registrations.status, amount: registrations.amount })
+        .select({
+          id: registrations.id,
+          status: registrations.status,
+          amount: registrations.amount,
+          participantName: registrations.participantName,
+        })
         .from(registrations)
         .where(
           and(
@@ -90,18 +87,17 @@ export async function sendDayBeforeReminders(now: Date = new Date()): Promise<{ 
           bring: courses.bring,
           startsAt: courses.startsAt,
           endsAt: courses.endsAt,
+          paymentUrl: courses.paymentUrl,
         })
         .from(courses)
         .where(and(eq(courses.id, courseId), ne(courses.status, "cancelled"), isNull(courses.cancelledAt), gt(courses.startsAt, now)))
       if (!course) return false
 
       const locale = memberLocale(member.locale, fallback)
-      const unpaid = mine.filter((r) => r.status === "pending").reduce((total, r) => total + r.amount, 0)
-      // "What to bring" holds at most 500 characters: the cash line always fits.
-      const cash = unpaid > 0 && payment.cash ? cashLine(locale, formatLira(unpaid, locale)) : ""
-      const own = localized(course.bring, locale)
-      const room = 500 - (cash ? cash.length + 3 : 0)
-      const bring = [own.length > room ? `${own.slice(0, room - 1)}…` : own, cash].filter(Boolean).join(" · ")
+      const unpaid = mine.filter((r) => r.status === "pending" && r.amount > 0)
+      const toPay = unpaid.reduce((total, r) => total + r.amount, 0)
+      const bring = localized(course.bring, locale)
+      const names = [...new Set(unpaid.map((r) => r.participantName))].join(", ")
 
       const result = await sendEmail({
         to: member.email,
@@ -114,8 +110,15 @@ export async function sendDayBeforeReminders(now: Date = new Date()): Promise<{ 
           date: formatDate(course.startsAt, locale, "full"),
           time: formatTimeRange(course.startsAt, course.endsAt, locale),
           venue: localized(course.venue, locale),
-          ...(bring ? { bring } : {}),
+          ...(bring ? { bring: bring.slice(0, 500) } : {}),
           workshopUrl: `/${locale}/workshops/${course.slug}`,
+          ...(toPay > 0
+            ? {
+                amount: formatLira(toPay, locale),
+                participantName: names.length > 300 ? `${names.slice(0, 299)}…` : names,
+                ...paymentWays(payment, safePaymentUrl(course.paymentUrl), locale),
+              }
+            : {}),
         },
       })
       if (!result.ok) return false

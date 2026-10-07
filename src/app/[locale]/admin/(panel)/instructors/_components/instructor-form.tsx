@@ -8,6 +8,7 @@ import { Form, FormActions, FormField, FormSection, SubmitButton, TextField } fr
 import { LocalizedInput, LocalizedTextarea } from "@/components/admin/form/localized-input"
 import { useActionForm } from "@/components/admin/form/use-action-form"
 import { ImageUpload } from "@/components/admin/upload"
+import { LanguagePicker } from "@/components/language-picker"
 import { Button } from "@/components/ui/button"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import type { LocalizedText } from "@/db/schema"
@@ -21,7 +22,6 @@ import {
 } from "@/features/instructors/schema"
 import { Link, useRouter } from "@/i18n/navigation"
 import type { ActionResult } from "@/lib/errors"
-import { LanguagePicker } from "./language-picker"
 
 /** What the edit page passes in. The ID number is never sent to the browser, only its mask. */
 export type EditableInstructor = {

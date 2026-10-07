@@ -1,15 +1,19 @@
 import "server-only"
 import { and, eq } from "drizzle-orm"
+import { hasLocale } from "next-intl"
 
 import { db } from "@/db"
 import { admins, contracts, courses, instructors } from "@/db/schema"
+import { locales } from "@/i18n/routing"
 import { sendEmail } from "@/lib/email"
 import { formatDate, formatTimeRange, localized } from "@/lib/format"
 import { getSetting } from "@/lib/settings"
 
 /**
- * Contract emails. Instructors and admins have no language of their own yet,
- * so emails use the default-language setting (Turkish unless changed).
+ * Contract emails. The instructor's go out in the instructor's own language
+ * (`instructors.locale`: the invitation page's language, or the one chosen in
+ * the panel), with the sign link in that language too. Admins have no
+ * language of their own, so theirs use the default-language setting.
  */
 
 /** Where the instructor reads and signs a contract (instructor panel, phase 2). */
@@ -23,6 +27,7 @@ export async function sendContractReady(contractId: string): Promise<boolean> {
       email: instructors.email,
       officialName: instructors.officialName,
       displayName: instructors.displayName,
+      locale: instructors.locale,
       title: courses.title,
       startsAt: courses.startsAt,
       endsAt: courses.endsAt,
@@ -33,7 +38,7 @@ export async function sendContractReady(contractId: string): Promise<boolean> {
     .where(and(eq(contracts.id, contractId), eq(contracts.status, "sent")))
     .limit(1)
   if (!row) return false
-  const locale = await getSetting("defaultLocale")
+  const locale = hasLocale(locales, row.locale) ? row.locale : await getSetting("defaultLocale")
   const result = await sendEmail({
     to: row.email,
     template: "contract_ready",

@@ -24,22 +24,23 @@ export function WorkshopStatusBadge({ status, className }: { status: WorkshopSta
 
 /** Confirmed / maximum with a slim bar: amber below the minimum, green from the minimum, clay when full. */
 export function FillMeter({
-  confirmed,
+  registered,
   min,
   max,
   label,
   size = "sm",
   className,
 }: {
-  confirmed: number
+  /** Everyone registered: paid and not paid yet. */
+  registered: number
   min: number
   max: number
   label: string
   size?: "sm" | "lg"
   className?: string
 }) {
-  const pct = Math.min(100, Math.round((confirmed / Math.max(max, 1)) * 100))
-  const tone = confirmed >= max ? "bg-primary" : confirmed >= min ? "bg-success" : "bg-warning"
+  const pct = Math.min(100, Math.round((registered / Math.max(max, 1)) * 100))
+  const tone = registered >= max ? "bg-primary" : registered >= min ? "bg-success" : "bg-warning"
   return (
     <div className={className}>
       <div className={size === "lg" ? "text-2xl font-semibold tabular-nums" : "text-sm tabular-nums"}>{label}</div>
@@ -51,7 +52,7 @@ export function FillMeter({
         role="meter"
         aria-valuemin={0}
         aria-valuemax={max}
-        aria-valuenow={confirmed}
+        aria-valuenow={registered}
         aria-label={label}
       >
         <div className={cn(tone, "absolute inset-y-0 start-0 rounded-full transition-all")} style={{ width: `${pct}%` }} />

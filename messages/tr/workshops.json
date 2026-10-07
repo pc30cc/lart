@@ -252,7 +252,7 @@
     "experienceNo": "Hayır, yeni başlayanlar da katılabilir",
     "participants": "Kayıtlı",
     "minimum": "{count, plural, one {En az # kişi gerekiyor} other {En az # kişi gerekiyor}}",
-    "pending": "{count, plural, one {# kişi daha ödeme yapıyor} other {# kişi daha ödeme yapıyor}}",
+    "paid": "{count, plural, =0 {Henüz ödeme yapan yok} other {# kişi ödedi}}",
     "final": "{count, plural, one {Kesin sayı: # katılımcı} other {Kesin sayı: # katılımcı}}",
     "seeRegistrations": "Kayıtları gör",
     "contract": "Sözleşme",
@@ -323,7 +323,7 @@
     "cancel": {
       "trigger": "Atölyeyi iptal et",
       "title": "“{title}” iptal edilsin mi?",
-      "description": "{count, plural, =0 {Henüz kayıt yok.} one {# kayıt iptal edilecek.} other {# kayıt iptal edilecek.}} Ödeme yapan herkese tutarın tamamı iade edilir ve nazik bir e-posta gönderilir. Bu işlem geri alınamaz.",
+      "description": "{count, plural, =0 {Henüz kayıt yok.} one {# kayıt iptal edilecek.} other {# kayıt iptal edilecek.}} Kayıtlı herkese nazik bir e-posta gönderilir; ödeme yapanlara tutarın tamamı iade edilir. Bu işlem geri alınamaz.",
       "action": "Evet, iptal et",
       "done": "Atölye iptal edildi."
     },
@@ -489,9 +489,6 @@
       "overview": "Online ödeme linki",
       "none": "Yok",
       "open": "Ödeme sayfası yeni sekmede açılır"
-    },
-    "reminder": {
-      "bringCash": "atölye ücreti için nakit {amount}"
     },
     "csv": {
       "participant": "Katılımcı",

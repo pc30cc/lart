@@ -291,20 +291,25 @@ describe("refunds", () => {
     expect(await ledgerOf(unpaid.id)).toHaveLength(0)
   })
 
-  it("owes every payer a full refund when the workshop is cancelled; unpaid ones owe nothing", async () => {
+  it("owes every payer a full refund when the workshop is cancelled; unpaid ones owe nothing but are told too", async () => {
     const w = await workshop(48)
     const [payer, other] = [await member("en", "Payer"), await member()]
     const paid = await register(w.id, payer.id)
     const unpaid = await register(w.id, other.id)
     await pay(paid.id, 150_000, "online")
 
-    expect(await cancelWorkshop({ id: w.id })).toMatchObject({ ok: true, data: { cancelledRegistrations: 2, emailed: 1 } })
+    expect(await cancelWorkshop({ id: w.id })).toMatchObject({ ok: true, data: { cancelledRegistrations: 2, emailed: 2 } })
     await Promise.all(background)
     expect(await registration(paid.id)).toMatchObject({ status: "cancelled", refundAmount: 150_000 })
     expect(await registration(unpaid.id)).toMatchObject({ status: "cancelled", refundAmount: 0 })
-    expect(emails("workshop_cancelled")).toEqual([
-      expect.objectContaining({ to: payer.email, locale: "en", props: expect.objectContaining({ workshopsUrl: "/en/workshops" }) }),
-    ])
+    const told = emails("workshop_cancelled")
+    expect(told).toHaveLength(2)
+    expect(told.find((m) => m.to === payer.email)).toMatchObject({
+      locale: "en",
+      props: expect.objectContaining({ refundAmount: expect.any(String), workshopsUrl: "/en/workshops" }),
+    })
+    // Not paid yet: no refund line, so the email says the workshop won't take place instead.
+    expect(told.find((m) => m.to === other.email)?.props).not.toHaveProperty("refundAmount")
 
     const owed = await listRefunds(parseTableParams({ q: payer.email }, { sort: refundTable.sort, defaultSort: "cancelledAt", filters: refundTable.filters }))
     expect(owed.rows.map((x) => x.id)).toEqual([paid.id])

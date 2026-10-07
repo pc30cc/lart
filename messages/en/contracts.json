@@ -25,6 +25,7 @@
     "alreadySigned": "This contract is already signed. Thank you!",
     "replaced": "A newer version of this contract was sent. Please sign the latest version.",
     "notSignable": "This contract can’t be signed any more. Please get in touch with us.",
+    "textChanged": "The contract was updated a moment ago. Please read it again, then sign.",
     "nameRequired": "Please type your full name to sign.",
     "nothingToResend": "There’s no contract waiting for a signature right now.",
     "emailFailed": "We couldn’t send the email just now. Please try again in a moment."

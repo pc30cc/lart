@@ -96,8 +96,8 @@ test.describe.serial("money", () => {
   test("workshop finances: advance and expenses from the wallet, a partner and the advance", async ({ page }) => {
     const id = await workshopId(WORKSHOPS.held.slug)
     await page.goto(`/en/admin/workshops/${id}/finances`)
-    await expect(stat(page, "Registrations")).toContainText("3")
-    await expect(stat(page, "Registrations")).toContainText("1 more waiting for payment")
+    await expect(stat(page, "Registrations")).toContainText("4")
+    await expect(stat(page, "Registrations")).toContainText("3 paid, 1 not paid yet")
     await expect(stat(page, "Revenue")).toContainText(lira(450_000))
     await expect(stat(page, "Instructor fee")).toContainText(lira(300_000))
     await expect(stat(page, "Instructor fee")).toContainText("Fixed fee from the contract.")
@@ -222,7 +222,7 @@ test.describe.serial("money", () => {
       [id],
     )
     expect(course.status).toBe("closed")
-    expect(course.closed_totals).toMatchObject({ revenue: 450_000, instructorFee: 300_000, expenses: 140_000, netProfit: 10_000, participants: 3 })
+    expect(course.closed_totals).toMatchObject({ revenue: 450_000, instructorFee: 300_000, expenses: 140_000, netProfit: 10_000, participants: 4 })
     expect((course.closed_totals.partners as { amount: number; name: string }[])[0]).toMatchObject({ amount: 10_000, name: ADMIN.name })
     const kinds = await sql<{ kind: string }>("select kind from ledger_transactions where course_id = $1 and kind in ('course_settlement','course_close')", [id])
     expect(kinds.map((k) => k.kind).sort()).toEqual(["course_close", "course_settlement"])
@@ -266,7 +266,8 @@ test.describe.serial("money", () => {
   test("the cancelled workshop: refunds in the books (phase-2 stand-in), then close it", async ({ page }) => {
     const id = await workshopId(WORKSHOPS.cancelled.slug)
     await page.goto(`/en/admin/workshops/${id}/finances`)
-    await expect(page.getByText("Some payments or refunds of this workshop aren’t in the books yet.")).toBeVisible()
+    // The refunds owed are paid back first.
+    await expect(page.getByText("Some refunds of this workshop haven’t been paid back yet.")).toBeVisible()
     await expect(page.getByRole("button", { name: "Close workshop…" })).toBeDisabled()
     await expect(stat(page, "Instructor fee")).toContainText("No fee: the workshop was cancelled.")
     // No advance can be paid for a cancelled workshop.

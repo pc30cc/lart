@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { IMAGE_ACCEPT, MAX_IMAGE_BYTES, type ImagePurpose, type UploadResult } from "@/lib/storage/shared"
 import { cn } from "@/lib/utils"
 import { Dropzone, OverlayButton, UploadMessage, UploadOverlay } from "./parts"
-import { useFileDrop, useMediaText, useSingleUpload } from "./upload-client"
+import { useFileDrop, useMediaText, useSingleUpload, type UploadEndpoint } from "./upload-client"
 
 const frames: Record<ImagePurpose, string> = {
   instructor_photo: "aspect-square w-full max-w-56",
@@ -33,6 +33,8 @@ export type ImageUploadProps = {
   onChange: (path: string | null, result?: UploadResult) => void
   /** URL of the current value (from publicUrl() on the server) to show it before any new upload. */
   previewUrl?: string | null
+  /** Upload route: the admin one by default; the instructor panel passes "/api/instructor/uploads". */
+  endpoint?: UploadEndpoint
   onBlur?: () => void
   disabled?: boolean
   id?: string
@@ -54,6 +56,7 @@ export function ImageUpload({
   value,
   onChange,
   previewUrl,
+  endpoint,
   onBlur,
   disabled,
   id,
@@ -67,11 +70,15 @@ export function ImageUpload({
   const messageId = useId()
   const [uploaded, setUploaded] = useState<UploadResult | null>(null)
   const [broken, setBroken] = useState<string | null>(null)
-  const { phase, start, cancel, dismiss } = useSingleUpload(purpose, (result) => {
-    setUploaded(result)
-    onChange(result.path, result)
-    onBlur?.()
-  })
+  const { phase, start, cancel, dismiss } = useSingleUpload(
+    purpose,
+    (result) => {
+      setUploaded(result)
+      onChange(result.path, result)
+      onBlur?.()
+    },
+    endpoint,
+  )
   const { dragging, dropProps } = useFileDrop((files) => start(files[0]), disabled)
 
   const url = value ? (uploaded?.path === value ? uploaded.url : previewUrl) || null : null

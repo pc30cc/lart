@@ -124,13 +124,11 @@ function LiveView({
         <Stat
           icon={UsersRoundIcon}
           label={t("finances.registrations")}
-          value={formatNumber(regs.confirmed, locale)}
+          value={formatNumber(regs.confirmed + regs.pending, locale)}
           hint={
-            regs.pending > 0
-              ? t("finances.registrationsPending", { count: regs.pending })
-              : finalNumber && projection.participants !== regs.confirmed
-                ? t("finances.finalNumber", { count: formatNumber(projection.participants, locale) })
-                : t("finances.registrationsHint")
+            finalNumber && projection.participants !== regs.confirmed + regs.pending
+              ? t("finances.finalNumber", { count: formatNumber(projection.participants, locale) })
+              : t("finances.registrationsPaid", { count: regs.confirmed, pending: regs.pending })
           }
         />
         <Stat

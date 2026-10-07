@@ -33,10 +33,12 @@ import { workshopEarnings } from "./earnings"
 const isId = (id: string) => z.uuid().safeParse(id).success
 /** `courses.id`, qualified by hand for the correlated subqueries below (see docs: Drizzle gotcha). */
 const courseId = sql`${courses}.${sql.identifier("id")}`
-/** Seats taken: registrations that are not cancelled, paid or not. */
-const seatsTaken = sql<number>`(select count(*) from ${registrations} r where r.course_id = ${courseId} and r.status <> 'cancelled')`.mapWith(Number)
-/** Paid registrations: the participant number before the go decision fixes it. */
-const paidCount = sql<number>`(select count(*) from ${registrations} r where r.course_id = ${courseId} and r.status = 'confirmed')`.mapWith(Number)
+/**
+ * Seats taken: everyone registered, paid or not yet (not cancelled). Also the
+ * participant number before the go decision fixes it (the go decision counts
+ * the same way).
+ */
+const seatsTaken = sql<number>`(select count(*) from ${registrations} r where r.course_id = ${courseId} and r.status in ('pending', 'confirmed'))`.mapWith(Number)
 
 const workshopCard = {
   id: courses.id,
@@ -277,7 +279,7 @@ export async function getMyEarnings() {
       closedAt: courses.closedAt,
       closedTotals: courses.closedTotals,
       finalParticipants: courses.finalParticipants,
-      paid: paidCount,
+      registered: seatsTaken,
       contractStatus: live.status,
       feeType: live.feeType,
       feeAmount: live.feeAmount,
@@ -294,7 +296,7 @@ export async function getMyEarnings() {
     const cancelled = r.status === "cancelled" || r.cancelledAt !== null
     if (cancelled && !money.advancePaid && !money.payments) return []
     const closed = r.closedAt !== null || r.status === "closed"
-    const participants = r.closedTotals?.participants ?? r.finalParticipants ?? r.paid
+    const participants = r.closedTotals?.participants ?? r.finalParticipants ?? r.registered
     const figures = workshopEarnings({
       cancelled,
       closedFee: closed ? (r.closedTotals?.instructorFee ?? null) : null,

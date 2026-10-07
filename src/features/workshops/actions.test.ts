@@ -174,6 +174,22 @@ describe("createWorkshop", () => {
     })
   })
 
+  it("emails the contract in the instructor's own language, with the sign link in that language", async () => {
+    const english = await createInstructor(run)
+    made.instructors.push(english.id)
+    await db.update(instructors).set({ locale: "en" }).where(eq(instructors.id, english.id))
+    const result = await createWorkshop(workshopInput(run, { ...refs, instructorId: english.id }))
+    if (!result.ok) throw new Error(result.error)
+    made.courses.push(result.data.id)
+    const [contract] = await contractsOf(result.data.id)
+    expect(sendEmail.mock.calls[0][0]).toMatchObject({
+      to: english.email,
+      template: "contract_ready",
+      locale: "en",
+      props: { workshopTitle: expect.any(String), signUrl: `/en/instructor/contracts/${contract.id}` },
+    })
+  })
+
   it("still saves when the email can't be sent, and says so", async () => {
     sendEmail.mockResolvedValueOnce({ ok: false })
     const { id, emailSent } = await create()
@@ -383,6 +399,16 @@ describe("updateWorkshop", () => {
     }
   })
 
+  it("counts everyone registered in the list's fill column, paid or not yet", async () => {
+    const { id } = await create()
+    const person = await newMember()
+    for (const status of ["confirmed", "pending", "pending", "cancelled"] as const) await addRegistration(id, person.id, termsId, { status })
+    const params = parseTableParams({ q: (await courseRow(id)).slug, view: "all" }, { ...workshopTable, defaultSort: "startsAt" })
+    const { rows } = await listWorkshops(params, "en")
+    expect(rows.map((r) => [r.id, r.registered])).toEqual([[id, 3]])
+    expect((await getWorkshop(id))!.registered).toEqual({ pending: 2, confirmed: 1, cancelled: 1 })
+  })
+
   it("says so when the workshop is gone", async () => {
     const result = await updateWorkshop({ ...workshopInput(run, refs), id: crypto.randomUUID() })
     expect(result).toEqual({ ok: false, error: "This workshop no longer exists." })
@@ -435,7 +461,7 @@ describe("go / no-go", () => {
     expect(await confirmWorkshop({ id })).toMatchObject({ ok: false, error: expect.stringContaining("open for registration") })
   })
 
-  it("cancels: open registrations are cancelled and refunded, payers are emailed once each", async () => {
+  it("cancels: open registrations are cancelled and refunded, everyone registered is emailed once", async () => {
     const { id } = await create()
     await markSigned(id)
     const [parent, payer, unpaid] = [await newMember(), await newMember(), await newMember()]
@@ -447,7 +473,7 @@ describe("go / no-go", () => {
     sendEmail.mockClear()
 
     const result = await cancelWorkshop({ id })
-    expect(result).toEqual({ ok: true, data: { id, cancelledRegistrations: 4, emailed: 2 } })
+    expect(result).toEqual({ ok: true, data: { id, cancelledRegistrations: 4, emailed: 3 } })
     await Promise.all(background)
 
     const course = await courseRow(id)
@@ -462,12 +488,14 @@ describe("go / no-go", () => {
     // The signed contract stays as the record.
     expect((await contractsOf(id))[0].status).toBe("signed")
 
-    type Sent = { to: string; template: string; locale: string; props: { refundAmount: string; workshopsUrl: string } }
+    type Sent = { to: string; template: string; locale: string; props: { refundAmount?: string; workshopsUrl: string } }
     const cancelled = sendEmail.mock.calls.map((c) => c[0] as Sent)
     expect(cancelled.every((c) => c.template === "workshop_cancelled")).toBe(true)
-    // Only those who paid: the unpaid one owes nothing and gets nothing back.
-    expect(cancelled.map((c) => c.to).sort()).toEqual([parent.email, payer.email].sort())
+    // Everyone registered, so nobody comes to the venue for nothing; one email per member.
+    expect(cancelled.map((c) => c.to).sort()).toEqual([parent.email, payer.email, unpaid.email].sort())
     expect(cancelled.find((c) => c.to === parent.email)!.props.refundAmount).toBe("₺2.700")
+    // The unpaid one owes nothing and gets nothing back: no refund line.
+    expect(cancelled.find((c) => c.to === unpaid.email)!.props).not.toHaveProperty("refundAmount")
     // In each member's own language.
     expect(cancelled.find((c) => c.to === payer.email)).toMatchObject({
       locale: "en",

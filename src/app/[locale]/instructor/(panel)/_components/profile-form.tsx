@@ -5,12 +5,12 @@ import { useTranslations } from "next-intl"
 import { Form, FormActions, FormField, FormSection, SubmitButton, TextField } from "@/components/admin/form/form"
 import { LocalizedInput, LocalizedTextarea } from "@/components/admin/form/localized-input"
 import { useActionForm } from "@/components/admin/form/use-action-form"
+import { LanguagePicker } from "@/components/language-picker"
 import type { LocalizedText } from "@/db/schema"
 import { updateProfileAction } from "@/features/instructor-panel/actions"
 import { profileSchema, type ProfileValues } from "@/features/instructor-panel/schema"
 import { useRouter } from "@/i18n/navigation"
 // The same searchable language list the admins use.
-import { LanguagePicker } from "../../../admin/(panel)/instructors/_components/language-picker"
 import { PhotoField } from "./photo-field"
 
 export type EditableProfile = {

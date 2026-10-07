@@ -10,7 +10,9 @@
  *   decision time has passed (src/features/workshops/decisions.ts).
  * - workshop_reminder: the day-before reminder to everyone registered (paid
  *   or not yet) for a workshop starting within 24 hours, once per member
- *   and workshop (src/features/registrations/admin/reminders.ts).
+ *   and workshop; an unpaid registration's email also says how much is
+ *   still to pay and shows the ways to pay that are switched on
+ *   (src/features/registrations/admin/reminders.ts).
  */
 import "dotenv/config"
 

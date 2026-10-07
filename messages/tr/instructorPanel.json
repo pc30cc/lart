@@ -153,8 +153,7 @@
     "errors": {
       "agree": "Kabul ettiğinizi belirtmek için lütfen kutucuğu işaretleyin.",
       "name": "Lütfen adınızı ve soyadınızı yazın.",
-      "nameMismatch": "Bu, sözleşmedeki isimle eşleşmiyor. Lütfen orada yazdığı gibi yazın: {name}",
-      "textChanged": "Sözleşme az önce güncellendi. Lütfen tekrar okuyun, sonra imzalayın."
+      "nameMismatch": "Bu, sözleşmedeki isimle eşleşmiyor. Lütfen orada yazdığı gibi yazın: {name}"
     }
   },
   "earnings": {

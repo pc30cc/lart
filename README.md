@@ -6,9 +6,11 @@ class. Instructors work in their own private panel, and a separate
 super-admin panel runs the business: workshops, instructors, contracts,
 course finances, a shared partner wallet and full accounting.
 
-> **Status:** phase 1 (the super-admin panel) is built and tested. Next: the
-> instructor panel and student sign-up / registration on the site. How to run
-> it: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+> **Status:** phase 1 (the super-admin panel) is built and tested; phase 2
+> (instructor panel, student accounts, registration with payments recorded by
+> admins, refunds and reminders) is built, on a minimal site frame. Next: the
+> public site on the theme system (phase 3). How to run it:
+> [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## Contents
 
@@ -279,7 +281,8 @@ a dark / light theme:
 5. **Go / no-go decision**: at the decision time the admins are notified
    with the number of registrations against the minimum. They confirm the
    workshop or cancel it; on cancellation every participant gets a
-   friendly email and a full refund automatically.
+   friendly email, and everyone who paid is owed a full refund (listed in
+   Money → Refunds until an admin pays it back).
 6. The workshop takes place. Admins record course expenses.
 7. An admin presses **Close workshop**: final figures are locked
    ([course finances](#course-finances)).
@@ -398,18 +401,28 @@ enough), not to individuals.
 - Sent with **Resend**.
 - **Beautiful branded templates** (React Email): logo, brand colours, clean
   layout, readable on phones and in dark mode.
-- **Turkish** by default; Persian and English use the same templates.
+- In each person's own language (the student's or instructor's language,
+  chosen on the site or in the panel); emails to super admins use the default
+  language. Persian, Turkish and English use the same templates.
+- Super admins can change every text, per language (**Templates → Emails**).
 
-| Email | To |
-| --- | --- |
-| Welcome + verify your email | student, instructor |
-| Contract ready to sign | instructor |
-| Contract signed | super admins |
-| Go / no-go decision due | super admins |
-| Registration confirmed | student |
-| Workshop reminder | student |
-| Workshop cancelled + refund | student |
-| Password reset | everyone |
+| Email | To | When |
+| --- | --- | --- |
+| Welcome + verify your email | student, instructor | sign-up, "send it again" |
+| Account already exists | student | someone signs up with an email that already has an account |
+| Instructor invitation | instructor | an admin adds or invites an instructor |
+| Contract ready to sign | instructor | a workshop is created, or its contract changed |
+| Contract signed | super admins | the instructor signed |
+| Go / no-go decision due | super admins | the decision time has passed |
+| Place reserved + how to pay | student | registered, not paid yet: the amount and every way to pay that is on |
+| Registration confirmed | student | registered for a free workshop |
+| Payment received | student | an admin recorded the payment: place confirmed |
+| Registration cancelled | student | the student or an admin cancelled it, with the refund if one is owed |
+| Refund to pay back | super admins | a cancellation left a refund to pay back by hand |
+| Refund sent | student | an admin marked the refund as paid back |
+| Workshop reminder | student | the day before; while unpaid, also what is still to pay and how |
+| Workshop cancelled | student | the workshop is cancelled: a full refund for those who paid, "please don't come" for the others |
+| Password reset | everyone | "Forgot your password?" |
 
 ## 10. Media, CDN and watermark
 

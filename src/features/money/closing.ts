@@ -30,6 +30,7 @@ export type ClosingIssue =
   | "notClosable"
   | "notEnded"
   | "noContract"
+  | "refundsOwed"
   | "revenueMismatch"
   | "advanceTooBig"
   | "sharesNot100"
@@ -160,6 +161,8 @@ export async function prepareClosing(exec: Exec, courseId: string, now: Date = n
       pending: sql<number>`count(*) filter (where ${registrations.status} = 'pending')`.mapWith(Number),
       // What the registrations say the workshop earned: paid amounts minus refunds.
       expectedRevenue: sql<number>`coalesce(sum(case when ${registrations.status} = 'confirmed' or ${registrations.paidAt} is not null then ${registrations.amount} else 0 end) - sum(coalesce(${registrations.refundAmount}, 0)), 0)`.mapWith(Number),
+      // Refunds owed and not paid back yet (Money → Refunds): still in the books as revenue.
+      refundsOwed: sql<number>`coalesce(sum(${registrations.refundAmount}) filter (where ${registrations.refundedAt} is null), 0)`.mapWith(Number),
     })
     .from(registrations)
     .where(eq(registrations.courseId, courseId))
@@ -167,7 +170,8 @@ export async function prepareClosing(exec: Exec, courseId: string, now: Date = n
   const partners = await activePartners(exec, lock)
 
   const cancelled = course.status === "cancelled"
-  const participants = course.finalParticipants ?? regs.confirmed
+  // Fixed at the go decision; before it, everyone registered (paid or not yet), as the go decision counts.
+  const participants = course.finalParticipants ?? regs.confirmed + regs.pending
   const plan = closingPlan({
     cancelled,
     contract: contract ? { type: contract.feeType, amount: contract.feeAmount } : null,
@@ -192,7 +196,9 @@ export async function prepareClosing(exec: Exec, courseId: string, now: Date = n
   else if (course.status !== "confirmed" && !cancelled) issues.push("notClosable")
   else if (course.status === "confirmed" && course.endsAt > now) issues.push("notEnded")
   if (course.status === "confirmed" && !contract) issues.push("noContract")
-  if (balances.revenue !== regs.expectedRevenue) issues.push("revenueMismatch")
+  // A refund owed is paid back (and booked) before the books close; anything else that differs is a mismatch.
+  if (regs.refundsOwed > 0) issues.push("refundsOwed")
+  if (balances.revenue - regs.refundsOwed !== regs.expectedRevenue) issues.push("revenueMismatch")
   issues.push(...plan.issues)
 
   return {
@@ -200,7 +206,12 @@ export async function prepareClosing(exec: Exec, courseId: string, now: Date = n
     closedAt: course.closedAt,
     closedTotals: course.closedTotals,
     contract,
-    registrations: { confirmed: regs.confirmed, pending: regs.pending, expectedRevenue: regs.expectedRevenue },
+    registrations: {
+      confirmed: regs.confirmed,
+      pending: regs.pending,
+      expectedRevenue: regs.expectedRevenue,
+      refundsOwed: regs.refundsOwed,
+    },
     balances,
     partners,
     plan,
@@ -288,8 +299,9 @@ export async function workshopsToClose(exec: Exec = db, now: Date = new Date()) 
 
 /**
  * The instructor fee each confirmed workshop will book when it is closed, by
- * workshop id: `instructorFee` on its live contract and final number, as the
- * closing preview counts it. The ledger has no fee for a workshop until then,
+ * workshop id: `instructorFee` on its live contract and final number (or, if
+ * none is fixed, everyone registered, paid or not yet), as the closing preview
+ * counts it. The ledger has no fee for a workshop until then,
  * so the reports and the result not yet shared out add these.
  */
 export async function projectedFees(exec: Exec = db): Promise<Map<string, number>> {
@@ -303,7 +315,7 @@ export async function projectedFees(exec: Exec = db): Promise<Map<string, number
   const rows = await exec
     .select({
       id: courses.id,
-      participants: sql<number>`coalesce(${courses.finalParticipants}, (select count(*) from ${registrations} r where r.course_id = ${id} and r.status = 'confirmed'))`.mapWith(Number),
+      participants: sql<number>`coalesce(${courses.finalParticipants}, (select count(*) from ${registrations} r where r.course_id = ${id} and r.status in ('pending', 'confirmed')))`.mapWith(Number),
       feeType: live.feeType,
       feeAmount: live.feeAmount,
     })

@@ -83,6 +83,7 @@ describe("uploadFile", () => {
   /** A fake XMLHttpRequest answering with the given handler. */
   function fakeXhr(answer: (form: FormData, call: number) => { status: number; body: unknown } | "network") {
     const sent: FormData[] = []
+    const urls: string[] = []
     class FakeXhr {
       status = 0
       response: unknown = null
@@ -91,7 +92,9 @@ describe("uploadFile", () => {
       onload: (() => void) | null = null
       onerror: (() => void) | null = null
       onabort: (() => void) | null = null
-      open() {}
+      open(_method: string, url: string) {
+        urls.push(url)
+      }
       abort() {
         this.onabort?.()
       }
@@ -108,7 +111,7 @@ describe("uploadFile", () => {
       }
     }
     vi.stubGlobal("XMLHttpRequest", FakeXhr)
-    return sent
+    return Object.assign(sent, { urls })
   }
 
   it("sends a photo in one request, purpose first", async () => {
@@ -116,6 +119,18 @@ describe("uploadFile", () => {
     const result = await uploadFile(new File(["x"], "a.jpg", { type: "image/jpeg" }), "course_cover")
     expect(result.path).toBe("courses/x.webp")
     expect([...sent[0].keys()]).toEqual(["purpose", "file"])
+    expect(sent.urls).toEqual(["/api/admin/uploads"])
+  })
+
+  it("sends to the instructor panel's route when asked, and passes its own error codes on", async () => {
+    const sent = fakeXhr((_form, call) =>
+      call === 1 ? { status: 201, body: { path: "instructors/x.webp", url: "/media/instructors/x.webp" } } : { status: 429, body: { error: "rate_limited" } },
+    )
+    const photo = new File(["x"], "me.jpg", { type: "image/jpeg" })
+    expect((await uploadFile(photo, "instructor_photo", { endpoint: "/api/instructor/uploads" })).path).toBe("instructors/x.webp")
+    await expect(uploadFile(photo, "instructor_photo", { endpoint: "/api/instructor/uploads" })).rejects.toMatchObject({ code: "rate_limited" })
+    expect(sent.urls).toEqual(["/api/instructor/uploads", "/api/instructor/uploads"])
+    expect(sent[0].get("purpose")).toBe("instructor_photo")
   })
 
   it("maps server errors to friendly codes", async () => {

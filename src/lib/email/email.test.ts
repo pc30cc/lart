@@ -293,6 +293,45 @@ describe("payment emails", () => {
     expect(notPaid.text).toContain("You hadn’t paid yet")
     expect(notPaid.text).not.toContain("Refund")
   })
+
+  it("says “as you asked” only when the participant cancelled", async () => {
+    const own = await renderEmail("registration_cancelled", samples.registration_cancelled, "en")
+    expect(own.text).toContain("As you asked")
+    const byUs = await renderEmail("registration_cancelled", { ...samples.registration_cancelled, byUs: true }, "tr")
+    expect(byUs.text).toContain("“Mum Yapımı” kaydınız iptal edildi")
+    expect(byUs.text).not.toContain("İsteğiniz üzerine")
+    expect(emailPlaceholders("registration_cancelled").names).toEqual(expect.arrayContaining(["refund", "by"]))
+    expect(emailPlaceholders("registration_cancelled").names).not.toContain("byUs")
+  })
+
+  it("tells people who had not paid that a cancelled workshop won’t take place, without a refund", async () => {
+    const paid = await renderEmail("workshop_cancelled", samples.workshop_cancelled, "en")
+    expect(paid.text).toContain("We’ll refund ₺1.500")
+    const unpaid = await renderEmail("workshop_cancelled", { ...samples.workshop_cancelled, refundAmount: undefined }, "en")
+    expect(unpaid.text).toContain("please don’t come to the venue")
+    expect(unpaid.text).not.toContain("Refund")
+    expect(unpaid.html).toContain("The workshop won’t take place.")
+  })
+
+  it("reminds of what is still to pay, with the ways to pay, apart from “Please bring”", async () => {
+    const reminder = samples.workshop_reminder
+    const paid = await renderEmail("workshop_reminder", reminder, "en")
+    expect(paid.text).not.toContain("To pay")
+    expect(paid.text).not.toContain("Cash at the workshop")
+    const unpaid = await renderEmail(
+      "workshop_reminder",
+      { ...reminder, amount: "₺1.500", participantName: "Deniz", cash: true, paymentUrl: "https://iyzi.link/AKxyz" },
+      "en",
+    )
+    expect(unpaid.text).toContain("Please bring")
+    expect(unpaid.text).toContain("Bir önlük")
+    expect(unpaid.text).toContain("To pay")
+    expect(unpaid.text).toContain("There’s still ₺1.500 to pay")
+    expect(unpaid.text).toContain("Cash at the workshop")
+    expect(unpaid.html).toContain('href="https://iyzi.link/AKxyz"')
+    const fa = await renderEmail("workshop_reminder", { ...reminder, amount: "₺1.500" }, "fa")
+    expect(fa.text).toContain("دربارهٔ روش پرداخت")
+  })
 })
 
 describe("edited texts (emailTexts setting)", () => {

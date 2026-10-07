@@ -112,7 +112,12 @@ async function capture(page: Page, name: string, url: string, file: string) {
 }
 
 function browserErrors(problems: { type: string; text: string }[]) {
-  return problems.filter((p) => p.type === "console" || p.type === "pageerror").map((p) => p.text.split("\n")[0])
+  return problems
+    .filter((p) => p.type === "console" || p.type === "pageerror")
+    .map((p) => p.text.split("\n")[0])
+    // The email preview is a sandboxed srcdoc frame: when Playwright reaches into it (screenshots,
+    // waiting for fonts) Chrome logs a blocked script of Playwright's own, not of the page.
+    .filter((text) => !/^Blocked script execution in 'about:srcdoc'/.test(text))
 }
 
 const variants = [

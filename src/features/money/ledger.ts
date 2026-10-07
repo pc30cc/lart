@@ -101,6 +101,13 @@ const courseAccounts: readonly Account[] = [
 const lockedWhenClosed: readonly Account[] = ["revenue", "instructor_fees", "course_expenses", "instructor_advance"]
 /** Kinds that cannot be reversed: closing entries are final, and a reversal is not undone by another. */
 const irreversible: readonly TransactionKind[] = ["course_settlement", "course_close", "reversal"]
+/**
+ * A registration's payment or refund is never reversed in the ledger: the
+ * registration's own state (paid, refund owed / paid back) would no longer
+ * match. A payment is undone by cancelling the registration (the refund it is
+ * owed then appears in Money → Refunds).
+ */
+export const registrationKinds: readonly TransactionKind[] = ["registration_payment", "registration_refund"]
 
 /** Today's date in Istanbul, "YYYY-MM-DD". */
 export const today = (now: Date = new Date()) => zonedParts(now).date
@@ -131,8 +138,9 @@ export function checkPosting(p: Posting): void {
  * Lock the workshop row against other money postings and closing (they all
  * take the same lock, so balance checks cannot race). Returns its status and
  * when its books were closed.
- * Lock order: workshop before registration; reverseTransaction (FK KEY SHARE on
- * the registration) and cancelWorkshop (UPDATE registrations) rely on it.
+ * Lock order: workshop before registration; registration payments and refunds
+ * (the registration row, and the FK KEY SHARE of their insert) and
+ * cancelWorkshop (UPDATE registrations) rely on it.
  */
 export async function lockCourse(tx: Tx, courseId: string) {
   const [course] = await tx
@@ -369,8 +377,10 @@ async function lockRegistration(tx: Tx, id: string) {
  * Cancel a transaction by posting its mirror image (kind "reversal",
  * `reversal_of` = the original). The correction is dated when it is made
  * (default: today in Istanbul), so earlier periods never change. Never twice,
- * never a reversal, never a closing entry, and nothing that touches a closed
- * workshop's figures. Runs in its own transaction unless `tx` is given.
+ * never a reversal, never a closing entry, never a registration's payment or
+ * refund (`registrationKinds`: cancel the registration instead), and nothing
+ * that touches a closed workshop's figures. Runs in its own transaction unless
+ * `tx` is given.
  */
 export async function reverseTransaction(
   id: string,
@@ -390,6 +400,7 @@ export async function reverseTransaction(
     if (!original) throw new UserError("money.errors.entryGone")
     if (original.kind === "reversal") throw new UserError("money.errors.cannotReverseReversal")
     if (irreversible.includes(original.kind)) throw new UserError("money.errors.closingIsFinal")
+    if (registrationKinds.includes(original.kind)) throw new UserError("money.errors.registrationEntry")
     if (original.courseId) await lockCourse(tx, original.courseId)
 
     const [already] = await tx
@@ -404,16 +415,12 @@ export async function reverseTransaction(
       .where(eq(ledgerLines.transactionId, id))
     const mirror = lines.map((l) => ({ ...l, amount: -l.amount }))
 
-    // Undo later entries first: an advance cannot go below zero, nor a registration's payment below its refunds.
+    // Undo later entries first: an advance cannot go below zero.
     if (original.courseId) {
       const advanceChange = mirror.filter((l) => l.account === "instructor_advance").reduce((s, l) => s + l.amount, 0)
       if (advanceChange < 0 && (await courseBalances(tx, original.courseId)).advance + advanceChange < 0) {
         throw new UserError("money.errors.reverseLaterFirst")
       }
-    }
-    if (original.registrationId && original.kind === "registration_payment") {
-      const money = await registrationMoney(tx, original.registrationId)
-      if (money.refunded > 0) throw new UserError("money.errors.reverseLaterFirst")
     }
 
     const reversalId = await postTransaction(tx, {
