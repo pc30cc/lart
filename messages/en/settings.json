@@ -239,6 +239,7 @@
     },
     "entities": {
       "admin": "Admin",
+      "admin_invite": "Partner invitation",
       "category": "Category",
       "contract": "Contract",
       "email": "Email",
@@ -253,7 +254,12 @@
     },
     "actions": {
       "admin": {
-        "create": "Admin added"
+        "create": "Admin added",
+        "invite": "Partner invited",
+        "invite_resend": "Partner invitation sent again",
+        "invite_cancel": "Partner invitation cancelled",
+        "accept_invite": "Partner invitation accepted",
+        "profile_update": "Own profile edited"
       },
       "auth": {
         "login": "Signed in",

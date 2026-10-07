@@ -1,0 +1,114 @@
+{
+  "menu": {
+    "profile": "My profile"
+  },
+  "zeroShare": "A new partner starts with a 0% profit share. When you have agreed together, change the shares below.",
+  "invite": {
+    "trigger": "Invite a partner",
+    "title": "Invite a new partner",
+    "description": "They’ll get an email with a link to join. Partners run everything here together, the money included.",
+    "name": "Name",
+    "nameHint": "As the other partners will see it. They can change it later.",
+    "email": "Email",
+    "locale": "Language",
+    "localeHint": "For the email and the invitation page.",
+    "submit": "Send invitation",
+    "full": "Every place is taken: at most {max, number} partners, counting open invitations. To invite someone else, first cancel an open invitation.",
+    "sent": {
+      "title": "Invitation sent to {name}",
+      "titleNoEmail": "The invitation link is ready",
+      "emailed": "We emailed {name} a link to join. You can also send the link below yourself, for example on WhatsApp.",
+      "notEmailed": "The email couldn’t be sent. Copy the link below and send it to {name} yourself, for example on WhatsApp.",
+      "link": "Invitation link (shown only now)",
+      "copy": "Copy",
+      "copiedShort": "Copied",
+      "copied": "Link copied.",
+      "copyFailed": "Couldn’t copy. Please select the link and copy it by hand.",
+      "once": "The link works only once, for {days, plural, one {# day} other {# days}}. Please share it only with this person.",
+      "share": "{name} starts with a 0% profit share. You can change the shares together afterwards, on this page."
+    }
+  },
+  "invites": {
+    "label": "Invitation for {name}",
+    "waiting": "Invited",
+    "expired": "Link expired",
+    "invitedBy": "Invited by",
+    "language": "Language:",
+    "worksUntil": "Link works until",
+    "expiredOn": "Link expired on",
+    "resend": "Send again",
+    "cancel": {
+      "action": "Cancel",
+      "title": "Cancel the invitation for {name}?",
+      "description": "The link will stop working and the place becomes free. You can invite them again later.",
+      "confirm": "Yes, cancel it",
+      "done": "Invitation cancelled."
+    }
+  },
+  "accept": {
+    "metaTitle": "Join as a partner",
+    "title": "Welcome, {name}!",
+    "subtitle": "{inviter} invited you to run {brand} together as a partner. Choose a password to finish.",
+    "email": "Your email for signing in",
+    "password": "Choose a password",
+    "passwordHint": "At least {min, number} characters. A few unrelated words make a strong password that’s easy to remember.",
+    "submit": "Join the team",
+    "shareNote": "You start with a 0% profit share; the partners set the shares together.",
+    "invalidTitle": "This link doesn’t work anymore",
+    "invalid": "An invitation link works only once, for {days, plural, one {# day} other {# days}}. Please ask the partner who invited you to send it again.",
+    "signIn": "Go to sign in",
+    "errors": {
+      "invalidLink": "This invitation link no longer works. Please ask the partner who invited you to send it again.",
+      "emailTaken": "There’s already an account with this email. Please sign in instead.",
+      "limit": "The team already has {max, number} partners, so this invitation can’t be accepted right now. Please talk to the partner who invited you."
+    }
+  },
+  "profile": {
+    "title": "My profile",
+    "description": "Your photo, name and email, as the other partners see them.",
+    "photo": {
+      "title": "Photo",
+      "description": "Only the partners see it, here in the panel.",
+      "label": "Your photo",
+      "hint": "A square photo of your face looks best."
+    },
+    "details": {
+      "title": "Name and email",
+      "description": "You sign in with this email, and the panel’s emails go to it.",
+      "name": "Name",
+      "nameHint": "The other partners see you by this name.",
+      "email": "Email",
+      "emailHint": "You sign in with this email.",
+      "emailChange": "To change your email, please enter your current password. Your other devices will be signed out; this one stays signed in.",
+      "currentPassword": "Current password"
+    },
+    "saved": "Your profile has been saved.",
+    "savedEmail": "Saved. From now on, sign in with your new email.",
+    "share": {
+      "title": "Profit share",
+      "description": "Your part of the result of each closed workshop. The partners set the shares together under Money → Partners.",
+      "label": "your share right now",
+      "manage": "Partners and shares"
+    },
+    "password": {
+      "title": "Password",
+      "description": "You stay signed in on this device; your other devices are signed out."
+    },
+    "errors": {
+      "passwordNeeded": "To change your email, please enter your current password.",
+      "wrongPassword": "That isn’t your current password.",
+      "rateLimited": "Too many tries. Please wait a few minutes, then try again.",
+      "photo": "This photo couldn’t be saved. Please upload it again."
+    }
+  },
+  "errors": {
+    "limit": "You can have at most {max, number} partners, counting invitations that are still open. To invite someone else, first cancel an open invitation.",
+    "emailTaken": "There’s already a partner (admin) with this email.",
+    "emailInvited": "This email already has an open invitation. You can send it again from the list.",
+    "inviteNotFound": "This invitation no longer exists. It may have just been accepted or cancelled.",
+    "rateLimited": "You’ve sent a lot of invitations just now. Please wait a while, then try again."
+  },
+  "notices": {
+    "welcome": "Welcome to the team! Your profit share starts at 0%. Together you can set the shares under Money → Partners."
+  }
+}

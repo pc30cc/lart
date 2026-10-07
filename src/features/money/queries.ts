@@ -5,6 +5,7 @@ import { alias } from "drizzle-orm/pg-core"
 import { likePattern, type TableParams } from "@/components/admin/data-table/params"
 import { db } from "@/db"
 import { admins, contracts, courses, instructors, ledgerLines, ledgerTransactions, type LocalizedText } from "@/db/schema"
+import { adminPhotoUrl } from "@/features/partners/schema"
 import { requireAdmin } from "@/lib/auth/admin"
 import { splitByShares } from "@/lib/money"
 import { activePartners, prepareClosing, projectedFees, totalOf, workshopsToClose } from "./closing"
@@ -168,7 +169,14 @@ export async function listPartnerAccounts() {
   await requireAdmin()
   const [people, capitals, open] = await Promise.all([
     db
-      .select({ id: admins.id, name: admins.name, email: admins.email, active: admins.active, shareBp: admins.shareBp })
+      .select({
+        id: admins.id,
+        name: admins.name,
+        email: admins.email,
+        active: admins.active,
+        shareBp: admins.shareBp,
+        photoPath: admins.photoPath,
+      })
       .from(admins)
       .orderBy(desc(admins.active), desc(admins.shareBp), asc(admins.createdAt)),
     partnerCapitals(db),
@@ -180,12 +188,13 @@ export async function listPartnerAccounts() {
   const openParts = sharesOk ? splitByShares(open, sharing.map((p) => p.shareBp)) : []
   const openOf = new Map(sharing.map((p, i) => [p.id, openParts[i] ?? 0]))
 
-  const rows = partners.map((p) => {
+  const rows = partners.map(({ photoPath, ...p }) => {
     const c = capitals.get(p.id)
     const capital = c?.capital ?? 0
     const openShare = sharesOk ? (openOf.get(p.id) ?? 0) : 0
     return {
       ...p,
+      photoUrl: adminPhotoUrl(photoPath),
       contributions: c?.contributions ?? 0,
       withdrawals: c?.withdrawals ?? 0,
       paidForBusiness: c?.paidForBusiness ?? 0,

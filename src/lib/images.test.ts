@@ -40,6 +40,8 @@ describe("processImage", () => {
   it.each([
     ["instructor_photo", [3000, 2000], [800, 800]],
     ["instructor_photo", [600, 900], [600, 600]],
+    ["admin_photo", [3000, 2000], [512, 512]],
+    ["admin_photo", [300, 500], [300, 300]],
     ["course_cover", [4000, 3000], [2000, 1500]],
     ["course_cover", [1000, 500], [1000, 500]],
     ["course_sample", [1000, 3200], [500, 1600]],

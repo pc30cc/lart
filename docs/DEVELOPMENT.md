@@ -149,14 +149,17 @@ database stores only the storage path, e.g. `courses/2026-10/<random>.webp`.
   `course_cover` (2000 wide), `course_sample` (1600), `gallery_photo` (2400,
   watermarked, private unwatermarked original; refused with 409
   `watermark_missing` until a watermark logo is set), `watermark_logo` (PNG,
-  private), `gallery_video` (MP4 / MOV / WebM as they are, sent in 8 MB parts).
+  private), `admin_photo` (a partner's photo: square 512, private, under
+  `admins/`), `gallery_video` (MP4 / MOV / WebM as they are, sent in 8 MB
+  parts). `isPrivatePurpose(purpose)` says which purposes go to private storage.
   Images are checked from their bytes, auto-rotated, stripped of all metadata
   (GPS) and re-encoded as WebP.
 - **Validate a submitted path** with `isSafePath` (and the expected prefix)
   before saving it; never trust a path from the browser.
 - **Show a file**: `(await getStorage()).publicUrl(path)` on the server.
-  Private files (originals, logo) only through `privateUrl(path)`, which is
-  the admin-only route `/api/admin/media/private/<path>`.
+  Private files (originals, logo, partners' photos) only through
+  `privateUrl(path)`, which is the admin-only route
+  `/api/admin/media/private/<path>`.
 - **Replace or delete**: after saving the record, call `remove(oldPath)`
   (`remove(path, "private")` for originals) from `lib/storage`.
 - **Settings page**: `testStorage(cdnConfig)` for "Test connection" (messages
@@ -239,7 +242,8 @@ export async function POST(request: Request) { // route handlers
   (`@/lib/auth/request`). Store emails lower-case (`normalizeEmail`). Show one
   generic message for every failed login.
 - Admin sign-in / sign-out: `adminLoginAction`, `adminLogoutAction`
-  (`@/lib/auth/actions`). First admin: `pnpm admin:create` (at most 3).
+  (`@/lib/auth/actions`). First admin: `pnpm admin:create`; the others are
+  invited from the panel ([Partners](#partners-super-admins)), at most 3 in all.
 - Admin passwords (`@/lib/auth/actions`, logic in `@/lib/auth/account`):
   `changeAdminPasswordAction` (user menu → "Change password": needs the
   current password, signs out other devices); "Forgot your password?"
@@ -249,7 +253,8 @@ export async function POST(request: Request) { // route handlers
   (`resetAdminPasswordAction`: one-time `email_tokens` row, 30 minutes, only
   its SHA-256 stored; ends every session). Audited as `auth.password_change`,
   `auth.password_reset_request`, `auth.password_reset`. The proxy lets the
-  `/admin/login`, `/forgot` and `/reset` pages through without a session.
+  `/admin/login`, `/forgot` and `/reset` pages and `/admin/accept-invite`
+  through without a session.
 
 ### Server actions: `adminAction`
 
@@ -497,6 +502,76 @@ encrypted yet" notice. Every signed text is checked when it is shown
 (`checkSignedText`): against its SHA-256 and the hash in the audit log's
 `contract.sign` entry. One that doesn't match (or has no such entry) is
 flagged as possibly changed, and one that can't be decrypted is not shown.
+
+## Partners (super admins)
+
+The super admins are the business partners: at most `MAX_PARTNERS` (3),
+counting active admins and invitations that still work
+(`src/features/partners/limits.ts`, import-free so `scripts/create-admin.ts`
+shares it). Logic in `src/features/partners` (`invites.ts`: the invitation
+rules; `actions.ts`; `queries.ts`; `schema.ts`: the form schemas, client-safe).
+
+- **Inviting** (Money → Partners, any partner): `invitePartner({ name, email,
+  locale })` stores an `admin_invites` row (only the SHA-256 of the link's
+  token; 7 days; one per email), emails `partner_invite` in the chosen
+  language (not the default one) and returns `{ id, inviteUrl, emailed }`:
+  the absolute link is shown once to copy (WhatsApp, or when no email could
+  be sent). `resendPartnerInvite({ id })` gives a new link (the old one stops
+  working; an expired invitation needs a free place again),
+  `cancelPartnerInvite({ id })` deletes it. `listPartnerInvites()` gives the
+  list (expired ones too) and the places left (`slots.canInvite`). Audited as
+  `admin.invite`, `admin.invite_resend`, `admin.invite_cancel` (entity
+  `admin_invite`, never the token).
+- **Accepting**: `/<l>/admin/accept-invite?token=…` (open in the proxy,
+  `noindex`); `partnerInviteDetails(token)` for the page (names, email, no
+  use of the link), `acceptPartnerInviteAction({ token, password })` (admin
+  password rules, 10 per network per 15 minutes). In one transaction: the
+  link must work, the limit is checked again (active admins only: the
+  invitation's place is its own) and so is the email; the admin is created
+  (active, `share_bp` 0), the invitation deleted and `admin.accept_invite`
+  audited as the new admin. Then any admin session of that browser ends, the
+  new partner is signed in and lands on `/<l>/admin?notice=welcome`
+  (`adminNotices`, messages `partners.notices.<notice>`).
+- **Admin rows are created only on acceptance**, so every query that lists
+  admins (money, dashboard, audit, emails to every admin) stays as it is. The
+  new partner's 0 % share is fixed on the shares form.
+- **Locking**: inviting, sending again, cancelling, accepting, changing one's
+  email and `pnpm admin:create` all take `pg_advisory_xact_lock(hashtext(
+  'admins:partners'))` first (`lockPartners`), never a lock on the `admins`
+  table (it deadlocked with audit entries and ledger lines, see
+  `updateShares`).
+- **My profile** (`/<l>/admin/profile`, `updateMyProfile`, `getMyProfile`):
+  name (2 to 80 characters), photo and email. A new email needs the current
+  password (5 tries per 15 minutes), must be free among admins (letter case
+  aside) and open invitations, is stored lower-case, ends the partner's other
+  sessions (this one stays) and drops reset links sent to the old address.
+  The photo (`admin_photo` upload) must be one this partner uploaded (the
+  upload route's `media.upload` audit entry); the old file is removed from
+  private storage. Audited as `admin.profile_update` with the changed field
+  names (and the name's change), never the password. `AdminSession.admin`
+  carries an optional `photoPath` (read it as `photoPath ?? null`);
+  `adminPhotoUrl(path)` (`features/partners/schema`) gives the image URL,
+  and the partners and dashboard queries return `photoUrl`.
+- **Pages and components**: Money → Partners has "Invite a partner"
+  (`money/partners/_components/invite-dialog.tsx`; disabled with a note when
+  every place is taken; after sending, `InviteSent` shows the link once with a
+  Copy button and the 0 % reminder) and one dashed tile per open invitation
+  next to the partners' cards (`invite-card.tsx`: "Send again", "Cancel";
+  not an `<article>`, those are the partners). A calm note says when a
+  partner is at 0 % while the others already make 100 %. The invitation page
+  is `app/[locale]/admin/accept-invite` (outside `(panel)`, `AuthShell`, its
+  own `noindex`; it never sends a signed-in visitor away). "My profile" is in
+  the user menu (`app/[locale]/admin/(panel)/profile`). `PersonAvatar`
+  (`components/admin/person-avatar.tsx`, photo or initials, decorative) is
+  used by the user menu, the partners' cards, the shares form, the dashboard
+  and the instructors. `AdminNoticeToast` (`components/admin/notice-toast.tsx`,
+  in the panel layout) shows `?notice=` values from `adminNotices` once.
+  `PasswordField` (`components/admin/form/password-field.tsx`) is a password
+  input with a "show" eye. Texts: `messages/<l>/partners.json`.
+- **Tests**: the shared test database holds many active admins, so the
+  limit is tested in `invites.test.ts` inside rolled-back repeatable-read
+  transactions with a `max` relative to that snapshot; `actions.test.ts`
+  lifts `MAX_PARTNERS` with a mock.
 
 ## Accounts
 

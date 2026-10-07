@@ -110,6 +110,20 @@ describe("proxy", () => {
     expect(signedIn.headers.get("x-robots-tag")).toBe("noindex, nofollow")
   })
 
+  it.each(["login", "login/forgot", "login/reset", "accept-invite"])("lets /admin/%s through without a session, noindex", (page) => {
+    const res = proxy(request(`/tr/admin/${page}?token=abc`))
+    expect(res.status).toBe(200)
+    expect(res.headers.get("x-robots-tag")).toBe("noindex, nofollow")
+  })
+
+  it("keeps the other admin pages, such as My profile, behind the login", () => {
+    for (const path of ["/tr/admin/profile", "/tr/admin/accept-invite/x", "/tr/admin/accept-invites"]) {
+      const res = proxy(request(path))
+      expect(res.status, path).toBe(307)
+      expect(new URL(res.headers.get("location")!).pathname, path).toBe("/tr/admin/login")
+    }
+  })
+
   it.each(["login", "signup", "accept-invite", "forgot", "reset", "verify"])("lets /instructor/%s through without a session, noindex", (page) => {
     const res = proxy(request(`/tr/instructor/${page}?token=abc`))
     expect(res.status).toBe(200)

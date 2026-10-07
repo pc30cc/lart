@@ -29,6 +29,7 @@ function recordHref(entity: string, id: string | null): string | null {
   if (!id) return null
   if (entity === "setting") return id === "cdn" ? "/admin/settings/storage" : id === "watermark" ? "/admin/settings/watermark" : "/admin/settings"
   if (entity === "email") return (emailTemplateNames as readonly string[]).includes(id) ? `/admin/templates/emails/${id}` : null
+  if (entity === "admin_invite") return "/admin/money/partners"
   const base = { category: "categories", workshop: "workshops", instructor: "instructors", template: "templates" }[entity]
   return base && isUuid(id) ? `/admin/${base}/${id}` : null
 }

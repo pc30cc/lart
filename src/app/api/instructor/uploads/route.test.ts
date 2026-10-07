@@ -94,7 +94,7 @@ describe("POST /api/instructor/uploads", () => {
     expect((await upload(formWith("instructor_photo", await jpeg()))).status).toBe(401)
   })
 
-  it.each(["course_cover", "gallery_photo", "watermark_logo", "gallery_video"])("refuses the admins' purpose %s", async (purpose) => {
+  it.each(["course_cover", "gallery_photo", "watermark_logo", "admin_photo", "gallery_video"])("refuses the admins' purpose %s", async (purpose) => {
     const res = await upload(formWith(purpose, await jpeg()))
     expect([res.status, await res.json()]).toEqual([400, { error: "bad_request" }])
   })

@@ -20,6 +20,7 @@ import {
 } from "recharts"
 
 import { Money } from "@/components/admin/money"
+import { PersonAvatar } from "@/components/admin/person-avatar"
 import { ChartContainer, ChartTooltip, type ChartConfig } from "@/components/ui/chart"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { isRtl } from "@/i18n/routing"
@@ -40,7 +41,7 @@ import { Panel } from "./panel"
 export type MonthPoint = { key: string; label: string; full: string; revenue: number; expenses: number; net: number }
 export type SeatPoint = { id: string; label: string; title: string; date: string; registered: number; min: number; max: number; upcoming: boolean }
 export type RankPoint = { id: string; name: string; detail: string; value: number }
-export type PartnerSlice = { id: string; name: string; shareBp: number; capital: number; active: boolean }
+export type PartnerSlice = { id: string; name: string; shareBp: number; capital: number; active: boolean; photoUrl?: string | null }
 
 const slot = (n: number) => `var(--chart-${Math.min(Math.max(n, 1), 5)})`
 const cursor = { fill: "var(--muted)", fillOpacity: 0.6 }
@@ -520,7 +521,15 @@ export function PartnersChart({ partners }: { partners: PartnerSlice[] }) {
       <ul className="divide-y" aria-label={t("listLabel")}>
         {partners.map((p) => (
           <li key={p.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
-            <Swatch color={colorOf.get(p.id) ?? "var(--muted-foreground)"} />
+            {/* The dot on the photo is the chart's colour for this partner (the legend). */}
+            <span className="relative shrink-0">
+              <PersonAvatar name={p.name} url={p.photoUrl} className="size-8 text-xs" />
+              <span
+                aria-hidden
+                className="ring-card absolute -end-0.5 -bottom-0.5 size-3 rounded-full ring-2"
+                style={{ backgroundColor: colorOf.get(p.id) ?? "var(--muted-foreground)" }}
+              />
+            </span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-medium">{p.name}</span>
               <span className="text-muted-foreground block text-xs">

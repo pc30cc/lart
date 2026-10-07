@@ -96,6 +96,7 @@ async function encode(image: Sharp, format: "webp" | "png", quality = WEBP_QUALI
 /**
  * Process an upload for its purpose:
  * - instructor_photo: square centre crop, 800 × 800 at most
+ * - admin_photo: square centre crop, 512 × 512 at most (a partner's avatar in the panel)
  * - course_cover: at most 2000 wide
  * - course_sample: at most 1600 on the longest side
  * - gallery_photo: at most 2400 on the longest side, watermarked when a logo is given
@@ -112,6 +113,10 @@ export async function processImage(
     switch (purpose) {
       case "instructor_photo": {
         const side = Math.min(800, width, height)
+        return encode(image.resize(side, side, { fit: "cover", position: "centre" }), "webp")
+      }
+      case "admin_photo": {
+        const side = Math.min(512, width, height)
         return encode(image.resize(side, side, { fit: "cover", position: "centre" }), "webp")
       }
       case "course_cover":

@@ -47,10 +47,31 @@ export const admins = pgTable("admins", {
   active: boolean("active").notNull().default(true),
   failedLogins: smallint("failed_logins").notNull().default(0),
   lockedUntil: timestamp("locked_until", { withTimezone: true }),
+  /** Profile photo (`admins/…webp`, private storage: only shown inside the panel). */
+  photoPath: text("photo_path"),
   createdAt: createdAt(),
 }, (t) => [
   check("admins_share_bp_range", sql`${t.shareBp} between 0 and 10000`),
 ])
+
+/**
+ * Invitations to become a partner, sent from the partners page. The admin row
+ * is created only when the invitation is accepted. Only the SHA-256 of the
+ * link's token is stored. One invitation per email (an expired one is
+ * replaced when the address is invited again).
+ */
+export const adminInvites = pgTable("admin_invites", {
+  id: id(),
+  /** Lower-case, as admin emails are stored. */
+  email: text("email").notNull().unique(),
+  name: text("name").notNull(),
+  /** fa, tr or en: the language of the email and of the accept page. */
+  locale: text("locale").notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  invitedBy: uuid("invited_by").notNull().references(() => admins.id),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: createdAt(),
+})
 
 /** Students. They have no panel; they use the public site. */
 export const members = pgTable("members", {

@@ -1,8 +1,11 @@
 import type { Metadata } from "next"
 import { cookies } from "next/headers"
 import { getTranslations } from "next-intl/server"
+import { Suspense } from "react"
 
 import { AppShell } from "@/components/admin/app-shell"
+import { AdminNoticeToast } from "@/components/admin/notice-toast"
+import { adminPhotoUrl } from "@/features/partners/schema"
 import { requireAdmin } from "@/lib/auth/admin"
 import { getBrand } from "@/lib/settings"
 
@@ -26,10 +29,13 @@ export default async function PanelLayout({ children, params }: LayoutProps<"/[l
   return (
     <AppShell
       brand={brand}
-      admin={{ name: admin.name, email: admin.email }}
+      admin={{ name: admin.name, email: admin.email, photoUrl: adminPhotoUrl(admin.photoPath) }}
       defaultOpen={store.get("sidebar_state")?.value !== "false"}
     >
       {children}
+      <Suspense>
+        <AdminNoticeToast />
+      </Suspense>
     </AppShell>
   )
 }

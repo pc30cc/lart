@@ -43,6 +43,13 @@
       "when": 1791379768153,
       "tag": "0005_instructor_signup",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791388578589,
+      "tag": "0006_partners_invites_profile",
+      "breakpoints": true
     }
   ]
 }

@@ -28,7 +28,8 @@ it. Do every step marked **required**.
 ## Once, right after the first deploy (required)
 
 - [ ] `pnpm db:seed` — default terms and contract templates.
-- [ ] `pnpm admin:create` — the first super admin (at most 3 partners).
+- [ ] `pnpm admin:create` — the first super admin (at most 3 partners). The
+      other partners are invited from the panel (Money → Partners).
 - [ ] **`pnpm contracts:encrypt`** — encrypts any signed contract text stored
       as plain text (it contains the instructor's ID number). First run
       `pnpm contracts:encrypt --dry-run`, then `pnpm contracts:encrypt`. It
@@ -56,7 +57,9 @@ it. Do every step marked **required**.
       shown); for online payment, add each workshop's iyziLink / PayTR link on
       the workshop form. Every payment is then recorded by an admin in the
       workshop's registrations.
-- [ ] Money → partners: profit shares add up to 100 %.
+- [ ] Money → partners: invite the other partners ("Invite a partner"; each
+      new partner starts at 0 %), then set the profit shares so they add up
+      to 100 %.
 
 ## Production (limer.tr)
 

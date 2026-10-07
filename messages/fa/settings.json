@@ -239,6 +239,7 @@
     },
     "entities": {
       "admin": "مدیر",
+      "admin_invite": "دعوت شریک",
       "category": "دسته‌بندی",
       "contract": "قرارداد",
       "email": "ایمیل",
@@ -253,7 +254,12 @@
     },
     "actions": {
       "admin": {
-        "create": "افزودن مدیر"
+        "create": "افزودن مدیر",
+        "invite": "دعوت از شریک",
+        "invite_resend": "ارسال دوبارهٔ دعوت شریک",
+        "invite_cancel": "لغو دعوت شریک",
+        "accept_invite": "پذیرفتن دعوت شریک",
+        "profile_update": "ویرایش پروفایل خود"
       },
       "auth": {
         "login": "ورود به پنل",

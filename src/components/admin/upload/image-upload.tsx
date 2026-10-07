@@ -15,6 +15,7 @@ const frames: Record<ImagePurpose, string> = {
   course_sample: "aspect-[4/3] w-full",
   gallery_photo: "aspect-[4/3] w-full",
   watermark_logo: "aspect-[3/1] w-full max-w-md",
+  admin_photo: "aspect-square w-full max-w-40",
 }
 
 /** Checkerboard behind transparent logos, in the current text colour (works in light and dark). */

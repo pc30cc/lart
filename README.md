@@ -251,7 +251,16 @@ A completely separate application area with its **own login**, not shared
 with students or instructors.
 
 - **Partners**: one to three super admins, who are also the business
-  partners.
+  partners. The first one is created with the setup command; any partner
+  invites the next ones from **Money → Partners** (name, email, language of
+  the invitation): an email with a one-time link (7 days) to choose a
+  password, and the same link shown once to copy (e.g. for WhatsApp). The
+  new partner starts with a 0 % profit share until the partners set the
+  shares again. Open invitations count towards the three, and can be sent
+  again or cancelled. Each partner edits their own profile (**My profile**
+  in the user menu): name, email (needs the current password) and photo.
+  The photo (only partners see it) shows in the user menu, on the partners'
+  cards and shares, and on the dashboard; without one, the initials.
 
 ### Dashboard
 
@@ -420,7 +429,8 @@ enough), not to individuals.
   layout, readable on phones and in dark mode.
 - In each person's own language (the student's or instructor's language,
   chosen on the site or in the panel); emails to super admins use the default
-  language. Persian, Turkish and English use the same templates.
+  language, except the partner invitation, which uses the language chosen
+  when inviting. Persian, Turkish and English use the same templates.
 - Super admins can change every text, per language (**Templates → Emails**).
 
 | Email | To | When |
@@ -433,6 +443,7 @@ enough), not to individuals.
 | Contract ready to sign | instructor | a workshop is created, or its contract changed |
 | Contract signed | super admins | the instructor signed |
 | Go / no-go decision due | super admins | the decision time has passed |
+| Partner invitation | new partner | a partner invites them from Money → Partners (or sends it again) |
 | Place reserved + how to pay | student | registered, not paid yet: the amount and every way to pay that is on |
 | Registration confirmed | student | registered for a free workshop |
 | Payment received | student | an admin recorded the payment: place confirmed |
@@ -540,7 +551,8 @@ Kept minimal; the whole schema is `src/db/schema.ts`.
 
 | Table | Purpose |
 | --- | --- |
-| `admins` | super admins / partners (separate login), profit share |
+| `admins` | super admins / partners (separate login), profit share, profile photo |
+| `admin_invites` | open invitations to become a partner (only the link token's SHA-256 is stored) |
 | `members` | students; language of their emails |
 | `instructors` | public profile (three languages) and private fields: official name, ID number (encrypted), mobile, email |
 | `sessions` | login sessions of admins, instructors and members, kept on the server |

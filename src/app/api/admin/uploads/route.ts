@@ -8,6 +8,7 @@ import { getStorage, StorageError } from "@/lib/storage"
 import { MultipartReader, multipartBoundary } from "@/lib/storage/multipart"
 import {
   isImagePurpose,
+  isPrivatePurpose,
   MAX_VIDEO_BYTES,
   maxUploadBytes,
   UploadError,
@@ -92,7 +93,7 @@ export async function POST(request: Request) {
     } catch (error) {
       // No unaudited files: undo the upload.
       await Promise.allSettled([
-        storage.remove(path, purpose === "watermark_logo" ? "private" : "public"),
+        storage.remove(path, isPrivatePurpose(purpose) ? "private" : "public"),
         originalPath && storage.remove(originalPath, "private"),
       ])
       throw error

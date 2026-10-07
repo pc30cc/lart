@@ -9,6 +9,7 @@ export const imagePurposes = [
   "course_sample",
   "gallery_photo",
   "watermark_logo",
+  "admin_photo",
 ] as const
 export type ImagePurpose = (typeof imagePurposes)[number]
 
@@ -17,6 +18,13 @@ export type UploadPurpose = (typeof uploadPurposes)[number]
 
 export const isImagePurpose = (purpose: UploadPurpose): purpose is ImagePurpose =>
   purpose !== "gallery_video"
+
+/**
+ * Images kept in private storage and shown only inside the admin panel
+ * (`privateUrl`): the watermark logo and the partners' profile photos.
+ */
+export const isPrivatePurpose = (purpose: UploadPurpose): boolean =>
+  purpose === "watermark_logo" || purpose === "admin_photo"
 
 const MB = 1024 * 1024
 export const MAX_IMAGE_BYTES = 15 * MB
@@ -92,7 +100,7 @@ export function isSafePath(path: unknown): path is string {
   return parts.every((part, i) => (i === parts.length - 1 ? FILE : SEGMENT).test(part))
 }
 
-/** URL of a private file (admins only), e.g. an original photo or the watermark logo. */
+/** URL of a private file (admins only), e.g. an original photo, the watermark logo or a partner's photo. */
 export const privateUrl = (path: string) => `/api/admin/media/private/${path}`
 
 const contentTypes: Record<string, string> = {

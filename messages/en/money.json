@@ -175,7 +175,7 @@
     },
     "empty": {
       "title": "No partners yet",
-      "description": "Partners are the super admins. Add the first one with the setup command."
+      "description": "Partners are the super admins. Invite one with “Invite a partner” above."
     },
     "card": {
       "share": "share",

@@ -6,13 +6,14 @@ import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import { SubmitButton } from "@/components/admin/form/form"
+import { PersonAvatar } from "@/components/admin/person-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { updateShares } from "@/features/money/actions"
 import { formatPercent, normalizeDigits } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-type Partner = { adminId: string; name: string; shareBp: number }
+type Partner = { adminId: string; name: string; shareBp: number; photoUrl?: string | null }
 
 /** "33,34" / "33.34" / "۳۳٫۳۴" → basis points (3334), or null when unreadable. */
 function toBp(text: string): number | null {
@@ -67,9 +68,7 @@ export function SharesForm({ partners }: { partners: Partner[] }) {
             <li key={p.adminId} className="space-y-2">
               <div className="flex items-center justify-between gap-3">
                 <label htmlFor={id} className="flex min-w-0 items-center gap-3">
-                  <span aria-hidden className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
-                    {p.name.trim().charAt(0).toUpperCase()}
-                  </span>
+                  <PersonAvatar name={p.name} url={p.photoUrl} className="size-9 text-sm font-semibold" />
                   <span className="truncate font-medium">{p.name}</span>
                 </label>
                 <div className="relative w-28 shrink-0" dir="ltr">
