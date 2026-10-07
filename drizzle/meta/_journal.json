@@ -29,6 +29,13 @@
       "when": 1791350323485,
       "tag": "0003_phase2_accounts_registrations",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791350799889,
+      "tag": "0004_payment_options",
+      "breakpoints": true
     }
   ]
 }

@@ -199,6 +199,8 @@ export const courses = pgTable("courses", {
   /** Null means the default terms template. */
   termsTemplateId: uuid("terms_template_id").references(() => templates.id),
   coverPath: text("cover_path"),
+  /** Online payment link for this workshop's price (iyzico / PayTR link), shown to registered students. */
+  paymentUrl: text("payment_url"),
   /** When the admins were told the go / no-go decision is due. */
   decisionNotifiedAt: timestamp("decision_notified_at", { withTimezone: true }),
   /** Fixed at the go decision; the per-participant fee is based on it. */
@@ -293,8 +295,10 @@ export const registrations = pgTable("registrations", {
   photoConsent: boolean("photo_consent").notNull().default(false),
   videoConsent: boolean("video_consent").notNull().default(false),
   /**
-   * How the payment was made: "cash" or "transfer" (recorded by an admin).
-   * Online payment comes in a later phase and will add its own values.
+   * How the payment was made, recorded by an admin: "cash", "transfer" (to the
+   * bank account in the settings) or "online" (through the workshop's payment
+   * link, e.g. iyziLink / PayTR "Link ile Ödeme"). A gateway integration with
+   * automatic confirmation comes in a later phase.
    */
   paymentMethod: text("payment_method"),
   paidAt: timestamp("paid_at", { withTimezone: true }),
@@ -309,7 +313,7 @@ export const registrations = pgTable("registrations", {
   index("registrations_course_idx").on(t.courseId, t.status),
   index("registrations_member_idx").on(t.memberId),
   check("registrations_amounts", sql`${t.amount} >= 0 and coalesce(${t.refundAmount}, 0) between 0 and ${t.amount}`),
-  check("registrations_payment_method", sql`${t.paymentMethod} in ('cash', 'transfer')`),
+  check("registrations_payment_method", sql`${t.paymentMethod} in ('cash', 'transfer', 'online')`),
 ])
 
 export const mediaKind = pgEnum("media_kind", ["sample", "gallery_photo", "gallery_video"])

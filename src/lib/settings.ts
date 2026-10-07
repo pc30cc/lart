@@ -88,6 +88,26 @@ export const settingSchemas = {
    * laid over messages/<locale>/emails.json when an email is rendered.
    */
   emailTexts: z.partialRecord(z.enum(emailTemplateNames), z.partialRecord(z.enum(emailTextFields), emailText)),
+  /**
+   * How students pay for workshops (any combination). Payments are recorded by
+   * admins in every case; automatic online confirmation comes in a later phase.
+   */
+  payment: z.object({
+    /** Pay in cash at the workshop. */
+    cash: z.boolean(),
+    /** Pay by bank transfer to this account (shown to registered students). */
+    transfer: z.object({
+      enabled: z.boolean(),
+      accountHolder: z.string().trim().max(120),
+      bankName: z.string().trim().max(120),
+      /** Turkish IBAN without spaces: TR + 24 digits (checksum verified by the form). */
+      iban: z.string().regex(/^(TR\d{24})?$/),
+      /** Extra instructions, e.g. "write the participant's name in the description". */
+      note: localized,
+    }),
+    /** Pay online with the workshop's own payment link (courses.payment_url). */
+    online: z.object({ enabled: z.boolean(), note: localized }),
+  }),
 } as const
 
 export type SettingKey = keyof typeof settingSchemas
@@ -107,6 +127,11 @@ export const settingDefaults: { [K in SettingKey]: SettingValue<K> } = {
     marginPct: 3,
   },
   emailTexts: {},
+  payment: {
+    cash: true,
+    transfer: { enabled: false, accountHolder: "", bankName: "", iban: "", note: {} },
+    online: { enabled: false, note: {} },
+  },
 }
 
 const loadAll = cache(async () => {

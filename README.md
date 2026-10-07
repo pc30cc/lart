@@ -127,8 +127,9 @@ example when a new design reference is given:
 
 - Sign up and log in right on the site (small account button in the menu).
 - Choose a workshop and register on its page. Registering reserves a place;
-  there is **no online payment for now**: students pay in cash (or by bank
-  transfer) and an admin records the payment.
+  then the student pays in one of the ways the super admin has switched on
+  (cash at the workshop, bank transfer, or the workshop's online payment
+  link) and an admin records the payment.
 - Every registration shows its payment status: **registered, not paid yet**
   or **paid**.
 - The workshop page shows "You are registered" for workshops they joined;
@@ -259,7 +260,7 @@ a dark / light theme:
 | **Money** | course finances, shared wallet, accounting reports ([money](#8-money-course-finances-wallet-and-accounting)) |
 | **Content** | hero, pages, menus, home sections, FAQ, past-workshop galleries |
 | **Templates** | registration terms, contract text, emails |
-| **Settings** | brand name, default language, SEO defaults, active theme, CDN, watermark |
+| **Settings** | brand name, default language, SEO defaults, active theme, CDN, watermark, payment methods |
 
 ## 7. Workshop lifecycle
 
@@ -311,6 +312,7 @@ text until then). Amounts are in **Turkish lira (₺)**.
 | What to bring | or "Nothing needed" |
 | Previous experience needed? | yes / no, with a short note |
 | Cover photo and sample work photos | images, on the CDN |
+| Online payment link | optional: the iyziLink / PayTR link for this price, shown to registered students when online payment is on |
 | Terms template | default or a specific one |
 | Additional notes | only for what does not fit above |
 
@@ -370,14 +372,26 @@ and posts the result to the shared wallet.
 
 ### Payments
 
-**For now, payments are manual.** Students pay in cash (or by bank
-transfer); in the workshop's registrations list an admin records each
-payment (cash or transfer), which marks the registration as paid and books
-the income in the wallet. Refunds are paid back by hand and marked as
+How students pay is a super-admin setting (**Settings → Payments**); any
+combination can be switched on:
+
+- **Cash** at the workshop.
+- **Bank transfer** to the account in the settings (account holder, bank,
+  IBAN, short instructions), shown to the student after registering.
+- **Online payment link**: each workshop can have its own payment link
+  (iyzico **iyziLink** or PayTR **Link ile Ödeme**), shown to the student
+  after registering. Payment links are what iyzico and PayTR offer to
+  individuals without a company.
+
+In every case an admin records the payment in the workshop's registrations
+list (cash, transfer or online), which marks the registration as paid and
+books the income in the wallet. Refunds are paid back by hand and marked as
 refunded in the refunds list.
 
-Online payment (the Turkish gateways **iyzico** and **PayTR**) is added in a
-later phase.
+**Later:** a full gateway integration (iyzico checkout / PayTR iFrame) with
+automatic confirmation. It needs a merchant account, which iyzico and PayTR
+give to registered businesses (a sole proprietorship, *şahıs şirketi*, is
+enough), not to individuals.
 
 ## 9. Emails
 
@@ -473,7 +487,7 @@ before each release.
 | Image processing | sharp (auto-rotate, resize, strip metadata, WebP, watermark) |
 | Media | Bunny CDN or Cloudflare R2 (plain files, no streaming service); a local folder in development |
 | Email | Resend + React Email |
-| Payments | manual for now (cash / bank transfer, recorded by admins); iyzico and PayTR in a later phase |
+| Payments | cash, bank transfer, online payment links (iyziLink / PayTR); recorded by admins. Gateway integration later |
 | Testing | Vitest (against a test database), Playwright (end to end, against a production build) |
 | Deployment | **Coolify** on the owner's server: Docker, PostgreSQL alongside with daily backups, auto-deploy on push |
 
@@ -501,9 +515,9 @@ Kept minimal; the whole schema is `src/db/schema.ts`.
 | `email_tokens` | one-time email links: verify email, reset password, instructor invite |
 | `categories` | workshop categories |
 | `templates` | editable terms and contract templates, one default of each |
-| `courses` | workshop fields, status, terms template, final participant number, closed totals |
+| `courses` | workshop fields, status, terms template, online payment link, final participant number, closed totals |
 | `contracts` | one row per contract version: fee type, amount, advance, status (sent, signed, void), signature evidence, the exact signed text (encrypted) and its SHA-256 |
-| `registrations` | member ↔ course: participant, status (registered, paid, cancelled), amount, payment method (cash, transfer), accepted terms and time, photo / video consent, refund owed and refunded date, reminder sent |
+| `registrations` | member ↔ course: participant, status (registered, paid, cancelled), amount, payment method (cash, transfer, online), accepted terms and time, photo / video consent, refund owed and refunded date, reminder sent |
 | `media` | sample work, gallery photos and videos (CDN paths; private unwatermarked originals) |
 | `ledger_transactions` | double-entry accounting: one row per movement of money (registration, refund, expense, capital, instructor advance or payment, closing, reversal) |
 | `ledger_lines` | the lines of each transaction (account, partner, amount); they always sum to zero |
@@ -534,5 +548,6 @@ Later phases add editable pages and home sections, FAQs and the shop
      variants and stock in three languages, cart, checkout with iyzico /
      PayTR, orders in the student's account menu, sales in the shared
      wallet and reports).
-   - **Online payment** for registrations with iyzico and PayTR.
+   - **Gateway integration** (iyzico / PayTR) with automatic payment
+     confirmation, once there is a registered business.
    - Two-factor login (2FA) for super admins.
