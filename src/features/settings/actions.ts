@@ -59,14 +59,14 @@ export const saveStorageSettings = adminAction(cdnSettingsSchema, async (input, 
 
 /**
  * "Test connection" with the values in the form (not saved yet): writes, reads
- * and deletes a small probe file in both zones. Saves nothing.
+ * (also through the CDN) and deletes a small probe file. Saves nothing.
  */
 export const testStorageSettings = adminAction(cdnSettingsSchema, async (input) => {
   const { config } = buildCdnConfig(input, await getSetting("cdn"))
   return testStorage(config)
 })
 
-/** Watermark options. A replaced logo is removed from private storage after saving. */
+/** Watermark options. A replaced logo is removed from storage after saving. */
 export const saveWatermarkSettings = adminAction(watermarkSettingsSchema, async (input, ctx) => {
   const before = await getSetting("watermark")
   const diff = changes(before, input)
@@ -77,7 +77,7 @@ export const saveWatermarkSettings = adminAction(watermarkSettingsSchema, async 
     await ctx.audit(settingAudit("watermark", diff), tx)
   })
   if (before.logoPath && before.logoPath !== input.logoPath) {
-    await remove(before.logoPath, "private").catch((err) => console.warn("[settings] old watermark logo not removed", errorForLog(err)))
+    await remove(before.logoPath).catch((err) => console.warn("[settings] old watermark logo not removed", errorForLog(err)))
   }
   refresh()
   return { changed: true }

@@ -1,8 +1,5 @@
 import "server-only"
 
-/** Public files are served by the CDN; private files (originals, logo) only through the admin route. */
-export type Zone = "public" | "private"
-
 /** A Blob may be file-backed (fs.openAsBlob), so large videos stream from disk. */
 export type Body = Uint8Array | Blob
 
@@ -12,12 +9,17 @@ export type StoredFile = {
   contentType: string | null
 }
 
+/**
+ * One storage space (a Bunny storage zone, an R2 bucket, a local folder)
+ * whose files the CDN serves. `get` reads a file through the storage API
+ * with the key (e.g. the watermark logo), never through the CDN.
+ */
 export interface Driver {
-  put(zone: Zone, path: string, body: Body, contentType: string): Promise<void>
+  put(path: string, body: Body, contentType: string): Promise<void>
   /** The file, or null when it does not exist. */
-  get(zone: Zone, path: string): Promise<StoredFile | null>
+  get(path: string): Promise<StoredFile | null>
   /** Deleting a missing file is not an error. */
-  remove(zone: Zone, path: string): Promise<void>
+  remove(path: string): Promise<void>
   publicUrl(path: string): string
 }
 

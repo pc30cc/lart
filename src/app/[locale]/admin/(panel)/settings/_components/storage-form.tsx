@@ -19,7 +19,6 @@ import { Form, FormActions, FormField, FormSection, SubmitButton, TextField } fr
 import { useActionForm } from "@/components/admin/form/use-action-form"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
 import { Spinner } from "@/components/ui/spinner"
 import { saveStorageSettings, testStorageSettings } from "@/features/settings/actions"
 import {
@@ -40,13 +39,10 @@ type Values = {
   publicZone: string
   publicZoneKey: string
   publicHost: string
-  privateZone: string
-  privateZoneKey: string
   accountId: string
   accessKeyId: string
   secretAccessKey: string
   publicBucket: string
-  privateBucket: string
 }
 type FieldName = Exclude<keyof Values, "provider">
 
@@ -60,13 +56,10 @@ function initialValues(view: CdnView): Values {
     publicZone: v("publicZone"),
     publicZoneKey: "",
     publicHost: v("publicHost"),
-    privateZone: v("privateZone"),
-    privateZoneKey: "",
     accountId: v("accountId"),
     accessKeyId: "",
     secretAccessKey: "",
     publicBucket: v("publicBucket"),
-    privateBucket: v("privateBucket"),
   }
 }
 
@@ -91,7 +84,7 @@ export function StorageSettingsForm({ view }: { view: CdnView }) {
       setSaved({ provider, keys: data.saved })
       setRound((n) => n + 1)
       const values = form.getValues() as Values
-      form.reset({ ...values, publicZoneKey: "", privateZoneKey: "", accessKeyId: "", secretAccessKey: "" })
+      form.reset({ ...values, publicZoneKey: "", accessKeyId: "", secretAccessKey: "" })
     },
   })
   const provider = useWatch({ control: form.control, name: "provider" }) as CdnProvider
@@ -154,15 +147,9 @@ export function StorageSettingsForm({ view }: { view: CdnView }) {
       {provider === "bunny" && (
         <FormSection title={t("bunnyTitle")} description={t("bunnyDescription")}>
           <PlainField name="storageHost" label={t("fields.storageHost")} hint={t("hints.storageHost")} placeholder="storage.bunnycdn.com" />
-          <Group title={t("publicGroup")} description={t("publicGroupHint")}>
-            <PlainField name="publicZone" label={t("fields.publicZone")} />
-            {secret("publicZoneKey", t("hints.bunnyKey"))}
-            <PlainField name="publicHost" label={t("fields.publicHost")} hint={t("hints.bunnyHost")} placeholder="cdn.example.com" />
-          </Group>
-          <Group title={t("privateGroup")} description={t("privateGroupHint")}>
-            <PlainField name="privateZone" label={t("fields.privateZone")} />
-            {secret("privateZoneKey", t("hints.bunnyKey"))}
-          </Group>
+          <PlainField name="publicZone" label={t("fields.publicZone")} />
+          {secret("publicZoneKey", t("hints.bunnyKey"))}
+          <PlainField name="publicHost" label={t("fields.publicHost")} hint={t("hints.bunnyHost")} placeholder="cdn.example.com" />
         </FormSection>
       )}
 
@@ -171,20 +158,15 @@ export function StorageSettingsForm({ view }: { view: CdnView }) {
           <PlainField name="accountId" label={t("fields.accountId")} hint={t("hints.accountId")} />
           {secret("accessKeyId", t("hints.r2Keys"))}
           {secret("secretAccessKey")}
-          <Group title={t("publicGroup")} description={t("publicGroupHint")}>
-            <PlainField name="publicBucket" label={t("fields.publicBucket")} />
-            <PlainField name="publicHost" label={t("fields.publicHost")} hint={t("hints.r2Host")} placeholder="cdn.example.com" />
-          </Group>
-          <Group title={t("privateGroup")} description={t("privateGroupHint")}>
-            <PlainField name="privateBucket" label={t("fields.privateBucket")} />
-          </Group>
+          <PlainField name="publicBucket" label={t("fields.publicBucket")} />
+          <PlainField name="publicHost" label={t("fields.publicHost")} hint={t("hints.r2Host")} placeholder="cdn.example.com" />
         </FormSection>
       )}
 
       <div aria-live="polite">
         {test && (
           <Note tone={test.ok ? "success" : "danger"} icon={test.ok ? CircleCheckIcon : CircleXIcon}>
-            {test.ok ? t("test.ok") : t(`test.${test.step}`, { zone: test.zone ?? "public" })}
+            {test.ok ? t("test.ok") : t(`test.${test.step}`)}
           </Note>
         )}
       </div>
@@ -281,21 +263,6 @@ function SecretField({ name, label, hint, saved }: { name: FieldName; label: str
         )
       }
     </FormField>
-  )
-}
-
-function Group({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
-  return (
-    <>
-      <Separator />
-      <fieldset className="space-y-5">
-        <legend className="mb-4 space-y-0.5">
-          <span className="block text-sm font-semibold">{title}</span>
-          <span className="text-muted-foreground block text-sm text-pretty">{description}</span>
-        </legend>
-        {children}
-      </fieldset>
-    </>
   )
 }
 

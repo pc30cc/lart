@@ -3,15 +3,15 @@ import { AwsClient } from "aws4fetch"
 
 import { decrypt } from "@/lib/crypto"
 import type { SettingValue } from "@/lib/settings"
-import { expectOk, IMMUTABLE, storedFile, timeout, type Driver, type Zone } from "./driver"
+import { expectOk, IMMUTABLE, storedFile, timeout, type Driver } from "./driver"
 
 type CloudflareConfig = Extract<SettingValue<"cdn">, { provider: "cloudflare" }>
 
 /**
  * Cloudflare R2 through its S3 API (signed with aws4fetch):
- * https://<accountId>.r2.cloudflarestorage.com/<bucket>/<path>. The public
- * bucket is served from its custom domain (publicHost); the private bucket
- * has no public access.
+ * https://<accountId>.r2.cloudflarestorage.com/<bucket>/<path>. The bucket
+ * is served from its custom domain (publicHost); reading a file (`get`) is a
+ * signed GetObject.
  */
 export function r2Driver(config: CloudflareConfig): Driver {
   const client = new AwsClient({
@@ -21,10 +21,9 @@ export function r2Driver(config: CloudflareConfig): Driver {
     region: "auto",
     retries: 0,
   })
-  const buckets = { public: config.publicBucket, private: config.privateBucket }
 
-  const call = async (zone: Zone, path: string, method: string, body?: Uint8Array | Blob, headers?: HeadersInit) => {
-    const url = `https://${config.accountId}.r2.cloudflarestorage.com/${encodeURIComponent(buckets[zone])}/${path}`
+  const call = async (path: string, method: string, body?: Uint8Array | Blob, headers?: HeadersInit) => {
+    const url = `https://${config.accountId}.r2.cloudflarestorage.com/${encodeURIComponent(config.publicBucket)}/${path}`
     // The payload is not hashed (UNSIGNED-PAYLOAD), so a file-backed Blob streams from disk.
     const signed = await client.sign(url, {
       method,
@@ -38,19 +37,19 @@ export function r2Driver(config: CloudflareConfig): Driver {
   }
 
   return {
-    async put(zone, path, body, contentType) {
-      const headers: Record<string, string> = { "Content-Type": contentType }
-      if (zone === "public") headers["Cache-Control"] = IMMUTABLE
-      await expectOk(await call(zone, path, "PUT", body, headers), "R2 upload")
+    async put(path, body, contentType) {
+      // Every path is new and random, so a file never changes: cache it for good.
+      const headers = { "Content-Type": contentType, "Cache-Control": IMMUTABLE }
+      await expectOk(await call(path, "PUT", body, headers), "R2 upload")
     },
-    async get(zone, path) {
-      const res = await call(zone, path, "GET")
+    async get(path) {
+      const res = await call(path, "GET")
       if (res.status === 404) return null
       await expectOk(res, "R2 download")
       return storedFile(res)
     },
-    async remove(zone, path) {
-      const res = await call(zone, path, "DELETE")
+    async remove(path) {
+      const res = await call(path, "DELETE")
       if (res.status !== 404) await expectOk(res, "R2 delete")
     },
     publicUrl: (path) => `https://${config.publicHost}/${path}`,

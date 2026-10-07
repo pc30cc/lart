@@ -26,7 +26,6 @@ export type ProcessedImage = {
 export type RawImage = { data: Buffer; info: { width: number; height: number; channels: 1 | 2 | 3 | 4 } }
 
 export const MAX_INPUT_PIXELS = MAX_MEGAPIXELS * 1_000_000
-const MAX_ORIGINAL_SIDE = 8192
 const WEBP_QUALITY = 82
 const SHARP_FORMAT: Record<ImageType, string> = { jpeg: "jpeg", png: "png", webp: "webp", avif: "heif", heic: "heif" }
 
@@ -81,8 +80,8 @@ async function guard<T>(type: ImageType, run: () => Promise<T>): Promise<T> {
   }
 }
 
-async function encode(image: Sharp, format: "webp" | "png", quality = WEBP_QUALITY): Promise<ProcessedImage> {
-  const out = format === "png" ? image.png({ compressionLevel: 9 }) : image.webp({ quality })
+async function encode(image: Sharp, format: "webp" | "png"): Promise<ProcessedImage> {
+  const out = format === "png" ? image.png({ compressionLevel: 9 }) : image.webp({ quality: WEBP_QUALITY })
   const { data, info } = await out.toBuffer({ resolveWithObject: true })
   return {
     data,
@@ -133,14 +132,6 @@ export async function processImage(
       }
     }
   })
-}
-
-/** The full-size original (upright, metadata stripped, high quality) kept privately for gallery photos. */
-export async function processOriginal(input: Buffer): Promise<ProcessedImage> {
-  const { type } = await inspect(input)
-  return guard(type, async () =>
-    encode((await load(input)).resize(MAX_ORIGINAL_SIDE, MAX_ORIGINAL_SIDE, { fit: "inside", withoutEnlargement: true }), "webp", 90),
-  )
 }
 
 const GRID: Record<Exclude<WatermarkSettings["position"], "tiled">, [column: 0 | 1 | 2, row: 0 | 1 | 2]> = {

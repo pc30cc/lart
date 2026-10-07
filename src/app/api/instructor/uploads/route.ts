@@ -8,7 +8,7 @@ import { getSetting } from "@/lib/settings"
 import { getStorage, StorageError } from "@/lib/storage"
 import { MultipartReader, multipartBoundary } from "@/lib/storage/multipart"
 import { MAX_IMAGE_BYTES, UploadError, uploadErrorStatus, type UploadErrorCode } from "@/lib/storage/shared"
-import { storeImage } from "@/lib/storage/upload"
+import { folderName, storeImage } from "@/lib/storage/upload"
 
 /** Room for the multipart framing around the file. */
 const FRAMING_BYTES = 16 * 1024
@@ -23,7 +23,8 @@ const fail = (code: UploadErrorCode) => Response.json({ error: code }, { status:
  * The instructor's profile photo upload (the instructor panel's profile page):
  * multipart/form-data with "purpose" ("instructor_photo", the only one) first,
  * then "file". Same checks and processing as the admin upload route (type from
- * the bytes, size and pixel limits, re-encoded square WebP, no metadata).
+ * the bytes, size and pixel limits, re-encoded square WebP, no metadata),
+ * stored under instructors/<the instructor's English or Turkish name>/.
  * Answers UploadResult (201) or { error }. Each upload is audited with the
  * instructor's id, which is how saving the profile knows the photo is theirs.
  */
@@ -47,7 +48,14 @@ export async function POST(request: Request) {
     if (!fields.success || file?.name !== "file" || file.filename === null) return fail("bad_request")
 
     const [storage, watermark] = await Promise.all([getStorage(), getSetting("watermark")])
-    const result = await storeImage({ storage, purpose: "instructor_photo", file: form.file(MAX_IMAGE_BYTES), watermark })
+    const { displayName } = session.instructor
+    const result = await storeImage({
+      storage,
+      purpose: "instructor_photo",
+      file: form.file(MAX_IMAGE_BYTES),
+      watermark,
+      folder: folderName([displayName.en, displayName.tr]),
+    })
     const { path, width, height } = result
     try {
       await audit({

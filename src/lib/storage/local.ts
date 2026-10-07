@@ -7,20 +7,23 @@ import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
 import type { ReadableStream as NodeReadableStream } from "node:stream/web"
 
-import { StorageError, type Driver, type Zone } from "./driver"
+import { StorageError, type Driver } from "./driver"
 import { isSafePath, mediaContentType } from "./shared"
 
-/** Development storage: ./.data/public (served by /media/...) and ./.data/private. */
-export const LOCAL_ROOT = path.join(process.cwd(), ".data")
+/**
+ * Development storage: ./.data/public, served by /media/... (the folder kept
+ * its name from when there was a private one, so files stored before still open).
+ */
+export const LOCAL_ROOT = path.join(process.cwd(), ".data", "public")
 
 export type LocalDriver = Driver & {
-  /** Absolute file path inside the zone folder; throws for anything that could escape it. */
-  file(zone: Zone, storagePath: string): string
+  /** Absolute file path inside the storage folder; throws for anything that could escape it. */
+  file(storagePath: string): string
 }
 
 export function localDriver(root = LOCAL_ROOT): LocalDriver {
-  const file = (zone: Zone, storagePath: string) => {
-    const base = path.resolve(root, zone)
+  const file = (storagePath: string) => {
+    const base = path.resolve(root)
     const full = path.resolve(base, storagePath)
     if (!isSafePath(storagePath) || !full.startsWith(base + path.sep)) throw new StorageError("Unsafe storage path")
     return full
@@ -28,8 +31,8 @@ export function localDriver(root = LOCAL_ROOT): LocalDriver {
 
   return {
     file,
-    async put(zone, storagePath, body) {
-      const target = file(zone, storagePath)
+    async put(storagePath, body) {
+      const target = file(storagePath)
       await mkdir(path.dirname(target), { recursive: true })
       // Write to a temporary name first so a half-written file is never served.
       const temp = `${target}.${randomBytes(6).toString("hex")}.part`
@@ -45,8 +48,8 @@ export function localDriver(root = LOCAL_ROOT): LocalDriver {
         throw error
       }
     },
-    async get(zone, storagePath) {
-      const target = file(zone, storagePath)
+    async get(storagePath) {
+      const target = file(storagePath)
       const info = await stat(target).catch(() => null)
       if (!info?.isFile()) return null
       return {
@@ -55,8 +58,8 @@ export function localDriver(root = LOCAL_ROOT): LocalDriver {
         contentType: mediaContentType(storagePath),
       }
     },
-    async remove(zone, storagePath) {
-      await rm(file(zone, storagePath), { force: true })
+    async remove(storagePath) {
+      await rm(file(storagePath), { force: true })
     },
     publicUrl: (storagePath) => `/media/${storagePath}`,
   }

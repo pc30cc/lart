@@ -36,9 +36,11 @@ export const settingSchemas = {
   /** Active public-site theme folder name (src/themes/<name>). */
   theme: z.string().regex(/^[a-z0-9-]+$/),
   /**
-   * Where uploads go. `local` is for development only.
-   * Public files are served by the CDN; originals (unwatermarked) go to a
-   * separate private zone / bucket that has no public access.
+   * Where uploads go: one storage zone / bucket whose files the CDN serves.
+   * `local` is for development only. The field names (`public…`) date from
+   * when there was a second, private zone; they are kept so saved settings
+   * still parse, and the private zone's old fields are dropped (`z.object`
+   * strips unknown keys; never make these strict).
    */
   cdn: z.discriminatedUnion("provider", [
     z.object({ provider: z.literal("local") }),
@@ -48,10 +50,8 @@ export const settingSchemas = {
       storageHost: z.string().regex(/^[a-z0-9.-]+$/),
       publicZone: z.string().min(1),
       publicZoneKeyEnc: z.string().min(1),
-      /** Pull-zone hostname serving the public zone, e.g. cdn.example.com. */
+      /** Pull-zone hostname serving the zone, e.g. cdn.example.com. */
       publicHost: z.string().regex(/^[a-z0-9.-]+$/),
-      privateZone: z.string().min(1),
-      privateZoneKeyEnc: z.string().min(1),
     }),
     z.object({
       provider: z.literal("cloudflare"),
@@ -59,9 +59,8 @@ export const settingSchemas = {
       accessKeyIdEnc: z.string().min(1),
       secretAccessKeyEnc: z.string().min(1),
       publicBucket: z.string().min(1),
-      /** Custom domain connected to the public bucket, e.g. cdn.example.com. */
+      /** Custom domain connected to the bucket, e.g. cdn.example.com. */
       publicHost: z.string().regex(/^[a-z0-9.-]+$/),
-      privateBucket: z.string().min(1),
     }),
   ]),
   /**
