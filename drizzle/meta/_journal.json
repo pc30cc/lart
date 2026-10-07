@@ -26,8 +26,8 @@
     {
       "idx": 3,
       "version": "7",
-      "when": 1791349397176,
-      "tag": "0003_phase2_accounts_payments",
+      "when": 1791350323485,
+      "tag": "0003_phase2_accounts_registrations",
       "breakpoints": true
     }
   ]

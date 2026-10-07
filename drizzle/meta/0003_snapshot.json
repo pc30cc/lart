@@ -1,5 +1,5 @@
 {
-  "id": "be18c6da-f673-4ae4-861d-7b5d56572f77",
+  "id": "a9a323d8-705f-4327-a5cf-2ba921f09254",
   "prevId": "e90a0e3e-f2f8-4b55-a6e4-631d5c126f85",
   "version": "7",
   "dialect": "postgresql",
@@ -1493,20 +1493,8 @@
           "notNull": true,
           "default": false
         },
-        "hold_until": {
-          "name": "hold_until",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "payment_provider": {
-          "name": "payment_provider",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "payment_ref": {
-          "name": "payment_ref",
+        "payment_method": {
+          "name": "payment_method",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -1585,27 +1573,6 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "registrations_payment_ref": {
-          "name": "registrations_payment_ref",
-          "columns": [
-            {
-              "expression": "payment_provider",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "payment_ref",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
@@ -1657,9 +1624,9 @@
           "name": "registrations_amounts",
           "value": "\"registrations\".\"amount\" >= 0 and coalesce(\"registrations\".\"refund_amount\", 0) between 0 and \"registrations\".\"amount\""
         },
-        "registrations_provider": {
-          "name": "registrations_provider",
-          "value": "\"registrations\".\"payment_provider\" in ('iyzico', 'paytr', 'manual', 'test')"
+        "registrations_payment_method": {
+          "name": "registrations_payment_method",
+          "value": "\"registrations\".\"payment_method\" in ('cash', 'transfer')"
         }
       },
       "isRLSEnabled": false

@@ -126,9 +126,14 @@ example when a new design reference is given:
 **Students have no panel.** Everything happens on the public site itself.
 
 - Sign up and log in right on the site (small account button in the menu).
-- Choose a workshop and register on its page.
+- Choose a workshop and register on its page. Registering reserves a place;
+  there is **no online payment for now**: students pay in cash (or by bank
+  transfer) and an admin records the payment.
+- Every registration shows its payment status: **registered, not paid yet**
+  or **paid**.
 - The workshop page shows "You are registered" for workshops they joined;
-  the account menu lists their workshops. Nothing more.
+  the account menu ("My workshops") lists them with their payment status and
+  lets them cancel. Nothing more.
 
 ### Sign-up and email verification
 
@@ -136,8 +141,8 @@ example when a new design reference is given:
   waiting.
 - A gentle, always-visible banner says **"Please confirm your email"**,
   with a button to resend the email, until the email is verified.
-- Registering and paying for a workshop needs a verified email; the site
-  asks for it in plain words.
+- Registering for a workshop needs a verified email; the site asks for it
+  in plain words.
 
 ### Registration terms
 
@@ -254,7 +259,7 @@ a dark / light theme:
 | **Money** | course finances, shared wallet, accounting reports ([money](#8-money-course-finances-wallet-and-accounting)) |
 | **Content** | hero, pages, menus, home sections, FAQ, past-workshop galleries |
 | **Templates** | registration terms, contract text, emails |
-| **Settings** | brand name, default language, SEO defaults, active theme, CDN, watermark, payment gateway |
+| **Settings** | brand name, default language, SEO defaults, active theme, CDN, watermark |
 
 ## 7. Workshop lifecycle
 
@@ -365,8 +370,14 @@ and posts the result to the shared wallet.
 
 ### Payments
 
-Online payments through the Turkish gateways **iyzico** and **PayTR**,
-chosen in the settings.
+**For now, payments are manual.** Students pay in cash (or by bank
+transfer); in the workshop's registrations list an admin records each
+payment (cash or transfer), which marks the registration as paid and books
+the income in the wallet. Refunds are paid back by hand and marked as
+refunded in the refunds list.
+
+Online payment (the Turkish gateways **iyzico** and **PayTR**) is added in a
+later phase.
 
 ## 9. Emails
 
@@ -434,8 +445,8 @@ before each release.
   ([runbook](docs/DEVELOPMENT.md#encrypting-older-signed-contract-texts-once)).
 - **Uploads**: type and size checked, images re-encoded (removes hidden
   content and metadata), random file names, no executable files.
-- **Payments**: gateway callbacks verified by signature; amounts always
-  taken from the server, never from the browser.
+- **Payments**: amounts always taken from the server, never from the
+  browser; only admins record payments and refunds, each audited.
 - **Contracts and money**: signed contracts and ledger entries are never
   edited, only reversed; a full audit log of admin actions.
 - **Secrets** only in environment variables (Coolify), never in the code.
@@ -462,7 +473,7 @@ before each release.
 | Image processing | sharp (auto-rotate, resize, strip metadata, WebP, watermark) |
 | Media | Bunny CDN or Cloudflare R2 (plain files, no streaming service); a local folder in development |
 | Email | Resend + React Email |
-| Payments | iyzico, PayTR |
+| Payments | manual for now (cash / bank transfer, recorded by admins); iyzico and PayTR in a later phase |
 | Testing | Vitest (against a test database), Playwright (end to end, against a production build) |
 | Deployment | **Coolify** on the owner's server: Docker, PostgreSQL alongside with daily backups, auto-deploy on push |
 
@@ -484,7 +495,7 @@ Kept minimal; the whole schema is `src/db/schema.ts`.
 | Table | Purpose |
 | --- | --- |
 | `admins` | super admins / partners (separate login), profit share |
-| `members` | students |
+| `members` | students; language of their emails |
 | `instructors` | public profile (three languages) and private fields: official name, ID number (encrypted), mobile, email |
 | `sessions` | login sessions of admins, instructors and members, kept on the server |
 | `email_tokens` | one-time email links: verify email, reset password, instructor invite |
@@ -492,7 +503,7 @@ Kept minimal; the whole schema is `src/db/schema.ts`.
 | `templates` | editable terms and contract templates, one default of each |
 | `courses` | workshop fields, status, terms template, final participant number, closed totals |
 | `contracts` | one row per contract version: fee type, amount, advance, status (sent, signed, void), signature evidence, the exact signed text (encrypted) and its SHA-256 |
-| `registrations` | member ↔ course: participant, status, amount, accepted terms and time, photo / video consent, refund |
+| `registrations` | member ↔ course: participant, status (registered, paid, cancelled), amount, payment method (cash, transfer), accepted terms and time, photo / video consent, refund owed and refunded date, reminder sent |
 | `media` | sample work, gallery photos and videos (CDN paths; private unwatermarked originals) |
 | `ledger_transactions` | double-entry accounting: one row per movement of money (registration, refund, expense, capital, instructor advance or payment, closing, reversal) |
 | `ledger_lines` | the lines of each transaction (account, partner, amount); they always sum to zero |
@@ -514,7 +525,8 @@ Later phases add editable pages and home sections, FAQs and the shop
 1. **Super-admin panel first**: project setup, database, admin login,
    instructors, workshops, contracts, course finances, shared wallet and
    accounting, settings, charts dashboard.
-2. Instructor panel; student sign-up and registration on the site.
+2. Instructor panel; student sign-up and registration on the site, with
+   payment status per registration (payments recorded by hand).
 3. Public site on top of the theme system (first theme after the
    throttlehaus.ca reference).
 4. **Later phase**:
@@ -522,4 +534,5 @@ Later phases add editable pages and home sections, FAQs and the shop
      variants and stock in three languages, cart, checkout with iyzico /
      PayTR, orders in the student's account menu, sales in the shared
      wallet and reports).
+   - **Online payment** for registrations with iyzico and PayTR.
    - Two-factor login (2FA) for super admins.
