@@ -11,6 +11,8 @@ describe("findNav", () => {
     expect(found("/admin/workshops/123/edit")).toBe("/admin/workshops")
     expect(found("/admin/money")).toBe("/admin/money")
     expect(found("/admin/money/partners")).toBe("/admin/money/partners")
+    expect(found("/admin/students")).toBe("/admin/students")
+    expect(found("/admin/students/123")).toBe("/admin/students")
   })
 
   it("never makes an exact item a parent: a page outside the navigation has no item", () => {

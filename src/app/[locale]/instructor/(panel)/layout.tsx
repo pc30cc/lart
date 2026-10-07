@@ -24,7 +24,11 @@ export async function generateMetadata({ params }: LayoutProps<"/[locale]/instru
  */
 export default async function InstructorPanelLayout({ children, params }: LayoutProps<"/[locale]/instructor">) {
   const { locale } = await params
-  const [{ instructor }, brand, toSign] = await Promise.all([requireInstructor(), getBrand(locale), listContractsToSign()])
+  const [{ instructor, impersonatedBy }, brand, toSign] = await Promise.all([
+    requireInstructor(),
+    getBrand(locale),
+    listContractsToSign(),
+  ])
 
   return (
     <PanelShell
@@ -34,6 +38,8 @@ export default async function InstructorPanelLayout({ children, params }: Layout
       emailVerified={instructor.emailVerified}
       approved={instructor.approved}
       toSign={toSign.length}
+      // A super admin viewing as the instructor: only the admin's name goes to the browser, never their id.
+      viewing={impersonatedBy ? { personId: instructor.id, adminName: impersonatedBy.name } : null}
     >
       {children}
     </PanelShell>

@@ -1,0 +1,41 @@
+{
+  "title": "Öğrenciler",
+  "description": "Sitede hesabı olan herkes: bilgileri, kayıtları ve hesaplarına erişim.",
+  "table": {
+    "name": "Ad",
+    "phone": "Telefon",
+    "registrations": "Kayıtlar",
+    "joined": "Hesap açılışı",
+    "search": "Ad, e-posta ya da telefonla ara"
+  },
+  "emailNotConfirmed": "E-posta onaylanmadı",
+  "empty": {
+    "title": "Henüz öğrenci yok",
+    "description": "Sitede hesap açan kişiler burada görünür."
+  },
+  "backToList": "Tüm öğrenciler",
+  "detail": {
+    "detailsTitle": "Bilgiler",
+    "email": "E-posta",
+    "phone": "Telefon",
+    "noPhone": "Verilmedi",
+    "language": "E-postaların dili",
+    "accountTitle": "Hesap",
+    "emailConfirmed": "E-posta onaylandı",
+    "emailNotConfirmed": "E-posta henüz onaylanmadı",
+    "locked": "Çok sayıda yanlış şifre nedeniyle şu saate kadar kilitli: {time}",
+    "joined": "Hesap açılışı",
+    "registrations": {
+      "title": "Kayıtlar",
+      "count": "{count, plural, =0 {Henüz yok} other {# kayıt}}",
+      "empty": "Henüz kaydı yok.",
+      "workshop": "Atölye",
+      "date": "Tarih",
+      "participant": "Katılımcı",
+      "payment": "Ödeme"
+    }
+  },
+  "errors": {
+    "notFound": "Bu öğrenci artık yok."
+  }
+}

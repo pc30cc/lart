@@ -57,6 +57,13 @@
       "when": 1791393543187,
       "tag": "0007_single_storage",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791408307432,
+      "tag": "0008_session_impersonation",
+      "breakpoints": true
     }
   ]
 }

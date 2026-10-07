@@ -119,6 +119,11 @@
     "submit": "Register",
     "errors": {
       "acceptTerms": "Please tick this box to register."
+    },
+    "impersonating": {
+      "title": "Only they can register",
+      "text": "You’re viewing as this person. Registering accepts the terms and the photo and video consent, so only they can do it themselves.",
+      "account": "See their workshops"
     }
   },
   "errors": {
@@ -194,7 +199,8 @@
     "saved": "Saved. Thank you!",
     "password": "Password",
     "passwordText": "We’ll email you a link to choose a new password.",
-    "changePassword": "Change my password"
+    "changePassword": "Change my password",
+    "passwordImpersonating": "Only they can change their password. You can set a new one on their page in the admin panel."
   },
   "item": {
     "participant": "Participant",

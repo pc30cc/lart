@@ -17,7 +17,9 @@ import { defineConfig, devices } from "@playwright/test"
  * The specs run in order and build on each other's data, so they use one
  * worker: 01 → 09 the super-admin panel (phase 1), 10 → 15 phase 2 (payment
  * settings, instructors and their panel, students and registrations, admin
- * payments / refunds / reminders, security probes, screenshots). Spec 13 runs
+ * payments / refunds / reminders, security probes, screenshots), then 16 the
+ * students area, "Change password" and viewing as a student or instructor
+ * (it adds its own people; it needs an open workshop with a free place). Spec 13 runs
  * `scripts/jobs.ts` with the server's environment (lart_e2e, the mail sink as
  * Resend) and moves workshop D closer by SQL (the form only takes later
  * dates). Every run uses a fresh suffix (E2E_RUN) for names, emails and

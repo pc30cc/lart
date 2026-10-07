@@ -7,9 +7,10 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import type { paymentWays } from "@/emails/payment"
+import { isolate } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { cn } from "@/lib/utils"
-import { formatIban, isolate } from "../schema"
+import { formatIban } from "../schema"
 
 /** The payment ways that are on and usable: `paymentWays(setting, safePaymentUrl(course.paymentUrl), locale)`. */
 export type PaymentWays = ReturnType<typeof paymentWays>

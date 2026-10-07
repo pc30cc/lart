@@ -31,7 +31,7 @@ const columns = {
   photoConsent: registrations.photoConsent,
   videoConsent: registrations.videoConsent,
   createdAt: registrations.createdAt,
-  member: { name: members.name, email: members.email, phone: members.phone },
+  member: { id: members.id, name: members.name, email: members.email, phone: members.phone },
 }
 
 /** Search a registration by participant, member name, email or phone. */

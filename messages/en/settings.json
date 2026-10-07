@@ -253,7 +253,8 @@
       "report": "Report",
       "setting": "Setting",
       "template": "Template",
-      "workshop": "Workshop"
+      "workshop": "Workshop",
+      "member": "Student"
     },
     "actions": {
       "admin": {
@@ -292,9 +293,14 @@
         "delete": "Instructor deleted",
         "invite": "Invitation sent",
         "reveal_id": "ID number viewed",
-        "profile_update": "Profile edited by the instructor",
+        "profile_update": "Profile edited in the instructor panel",
         "signup": "Instructor signed up",
-        "approve": "Instructor approved"
+        "approve": "Instructor approved",
+        "activate": "Instructor activated",
+        "deactivate": "Instructor deactivated",
+        "password_set": "Password set by an admin",
+        "impersonate": "Admin entered the panel",
+        "impersonate_end": "Admin left the panel"
       },
       "media": {
         "upload": "File uploaded"
@@ -336,8 +342,15 @@
         "close": "Workshop closed",
         "gallery": "Gallery updated",
         "raiseFinal": "Final number of participants raised"
+      },
+      "member": {
+        "password_set": "Password set by an admin",
+        "impersonate": "Admin entered the account",
+        "impersonate_end": "Admin left the account",
+        "profile_update": "Details edited"
       }
-    }
+    },
+    "viewingAs": "while viewing as them"
   },
   "payments": {
     "intro": "Choose how students can pay. After registering, they see the ways you switch on here. When the money arrives, record it in the workshop’s Registrations tab: the registration is marked as paid.",

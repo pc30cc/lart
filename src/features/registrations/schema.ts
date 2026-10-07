@@ -104,9 +104,6 @@ export function paymentWayNames(
   ]
 }
 
-/** Keeps a value (an amount, a name) in one piece inside right-to-left text (U+2068 … U+2069). */
-export const isolate = (text: string) => `\u2068${text}\u2069`
-
 /** "TR330006100519786457841326" → "TR33 0006 1005 1978 6457 8413 26". */
 export const formatIban = (iban: string) => iban.replace(/\s+/g, "").replace(/(.{4})(?=.)/g, "$1 ")
 

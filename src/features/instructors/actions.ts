@@ -6,7 +6,10 @@ import { getLocale } from "next-intl/server"
 
 import { db, type Tx } from "@/db"
 import { contracts, courses, emailTokens, instructors, sessions, type LocalizedText } from "@/db/schema"
+import { impersonate, setPasswordAsAdmin } from "@/features/accounts/admin-access"
+import { adminPasswordSchema } from "@/features/accounts/schema"
 import { absoluteLocaleUrl } from "@/i18n/links"
+import { localeRedirect } from "@/i18n/redirect"
 import { adminAction, UserError } from "@/lib/action"
 import { changes } from "@/lib/audit"
 import { decrypt, encrypt, randomToken, sha256 } from "@/lib/crypto"
@@ -336,4 +339,22 @@ export const deleteInstructor = adminAction(instructorIdSchema, async ({ id }, c
   if (photo) await removePhoto(photo)
   revalidate()
   return { id }
+})
+
+/**
+ * "Change password": a new password for the instructor, typed by the admin or
+ * generated (then returned once to show). Signs them out everywhere, ends
+ * their reset links and an open invitation (the account is complete) and
+ * emails them. Not for a deactivated instructor.
+ */
+export const setInstructorPassword = adminAction(adminPasswordSchema, async (input, ctx) => {
+  const result = await setPasswordAsAdmin("instructor", input, ctx)
+  revalidate()
+  return result
+})
+
+/** "Enter their panel": this browser views the instructor panel as them for one hour. Not for a deactivated instructor. */
+export const impersonateInstructor = adminAction(instructorIdSchema, async ({ id }, ctx) => {
+  await impersonate("instructor", id, ctx)
+  await localeRedirect("/instructor")
 })

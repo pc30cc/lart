@@ -47,40 +47,91 @@ export function adminAction<S extends z.ZodType, T = undefined>(
   }
 }
 
+/** `ctx.audit` of member and instructor actions (see `personAudit`). */
+type PersonAudit = (entry: Omit<AuditEntry, "adminId">, tx?: Tx) => Promise<void>
+
+export type MemberActionContext = MemberSession & {
+  /** `audit()` as this member, or as the super admin viewing as them. Pass the transaction handle when inside one. */
+  audit: PersonAudit
+}
+
+export type InstructorActionContext = InstructorSession & {
+  /** `audit()` as this instructor, or as the super admin viewing as them. Pass the transaction handle when inside one. */
+  audit: PersonAudit
+}
+
+/**
+ * Audit an action of a member or instructor. Done by the person: no admin,
+ * `data.by` = the kind. Done by a super admin viewing as them: `adminId` = that
+ * admin (the "Who" of the audit page) and `data.impersonatedBy` = their id.
+ */
+function personAudit(by: "member" | "instructor", viewer: { id: string } | null | undefined): PersonAudit {
+  return (entry, tx) =>
+    audit(
+      {
+        ...entry,
+        adminId: viewer?.id ?? null,
+        data: { by, ...entry.data, ...(viewer ? { impersonatedBy: viewer.id } : {}) },
+      },
+      tx,
+    )
+}
+
+/**
+ * Options of `memberAction` / `instructorAction`.
+ * - `notImpersonated`: refuse while a super admin views as the person
+ *   (`common.errors.impersonationBlocked`): what only the person may do
+ *   themselves, such as signing a contract, registering (accepting terms and
+ *   consents), and any future change of their own password or email or
+ *   deletion of the account.
+ */
+type PersonActionOptions = { notImpersonated?: boolean }
+
 /**
  * A member (student) server action: like `adminAction`, with the signed-in
- * member as `ctx`. Signed out, it redirects to the member login, which comes
- * back to the page the action was posted from. Every query in the handler must
- * be scoped to `ctx.member.id` (never trust an id of another person from the
- * browser). `{ verified: true }` refuses members whose email is not verified
- * yet with a friendly message (registering and paying need it, README §4).
+ * member as `ctx` (plus `ctx.audit`, which names the viewing admin when a super
+ * admin views as the member). Signed out, it redirects to the member login,
+ * which comes back to the page the action was posted from. Every query in the
+ * handler must be scoped to `ctx.member.id` (never trust an id of another
+ * person from the browser). `{ verified: true }` refuses members whose email is
+ * not verified yet with a friendly message (registering and paying need it,
+ * README §4); `{ notImpersonated: true }` refuses a super admin viewing as them.
  */
 export function memberAction<S extends z.ZodType, T = undefined>(
   schema: S,
-  handler: (input: z.output<S>, ctx: MemberSession) => Promise<T>,
-  options: { verified?: boolean } = {},
+  handler: (input: z.output<S>, ctx: MemberActionContext) => Promise<T>,
+  options: PersonActionOptions & { verified?: boolean } = {},
 ): (input: z.input<S> | FormData) => Promise<ActionResult<T>> {
   return async (input) => {
     const session = await requireMember()
+    const ctx: MemberActionContext = { ...session, audit: personAudit("member", session.impersonatedBy) }
     return runAction(schema, input, async (data) => {
+      if (options.notImpersonated && session.impersonatedBy) throw new UserError("common.errors.impersonationBlocked")
       if (options.verified && !session.member.emailVerified) throw new UserError("account.errors.unverified")
-      return handler(data, session)
+      return handler(data, ctx)
     })
   }
 }
 
 /**
  * An instructor panel server action: like `adminAction`, with the signed-in,
- * active instructor as `ctx`. Signed out (or deactivated), it redirects to the
- * instructor login. Scope every query to `ctx.instructor.id`.
+ * active instructor as `ctx` (plus `ctx.audit`, which names the viewing admin
+ * when a super admin views as the instructor). Signed out (or deactivated), it
+ * redirects to the instructor login. Scope every query to `ctx.instructor.id`.
+ * `{ notImpersonated: true }` refuses a super admin viewing as them.
  */
 export function instructorAction<S extends z.ZodType, T = undefined>(
   schema: S,
-  handler: (input: z.output<S>, ctx: InstructorSession) => Promise<T>,
+  handler: (input: z.output<S>, ctx: InstructorActionContext) => Promise<T>,
+  options: PersonActionOptions = {},
 ): (input: z.input<S> | FormData) => Promise<ActionResult<T>> {
   return async (input) => {
     const session = await requireInstructor()
-    return runAction(schema, input, (data) => handler(data, session))
+    const ctx: InstructorActionContext = { ...session, audit: personAudit("instructor", session.impersonatedBy) }
+    return runAction(schema, input, async (data) => {
+      if (options.notImpersonated && session.impersonatedBy) throw new UserError("common.errors.impersonationBlocked")
+      return handler(data, ctx)
+    })
   }
 }
 

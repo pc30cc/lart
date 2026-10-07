@@ -7,7 +7,10 @@ import { getLocale } from "next-intl/server"
 import { z } from "zod"
 
 import { localeHref, mainLocale } from "@/i18n/links"
-import { instructorAction, memberAction, publicAction, UserError } from "@/lib/action"
+import { localeRedirect } from "@/i18n/redirect"
+import { instructorAction, memberAction, publicAction, runAction, UserError, type ActionResult } from "@/lib/action"
+import { adminPersonPath, endImpersonation } from "@/lib/auth/impersonation"
+import { getInstructor } from "@/lib/auth/instructor"
 import { getMember } from "@/lib/auth/member"
 import { LOCKOUT, verifyCredentials } from "@/lib/auth/login"
 import { createRateLimiter } from "@/lib/auth/rate-limit"
@@ -98,8 +101,14 @@ export const memberLoginAction = publicAction(
   perNetwork(10, 15),
 )
 
-/** Sign out, then the workshops list with a short "you're signed out" notice. */
+/**
+ * Sign out, then the workshops list with a short "you're signed out" notice.
+ * While a super admin views as the member, it is the bar's "End": back to the
+ * member's admin page.
+ */
 export async function memberLogoutAction(): Promise<void> {
+  const viewing = await endImpersonation("member", "logout")
+  if (viewing.status === "ended") await localeRedirect(adminPersonPath("member", viewing.subjectId))
   await endSession("member")
   redirect(withNotice(await workshopsPath(await getLocale()), "signedOut"))
 }
@@ -138,13 +147,17 @@ export const resetMemberPasswordAction = publicAction(
 
 /**
  * The site's language switch: a signed-in member's emails follow the language
- * they chose (members.locale). Signed out it does nothing (never redirects).
+ * they chose (members.locale). Signed out it does nothing (never redirects),
+ * and neither does a super admin viewing as the member (their language is the
+ * admin's, not the member's).
  */
 export const setMemberLocaleAction = publicAction(
   accountLocaleSchema,
   async ({ locale }) => {
     const session = await getMember()
-    if (session && session.member.locale !== locale) await setMemberLocale(session.member.id, locale)
+    if (session && !session.impersonatedBy && session.member.locale !== locale) {
+      await setMemberLocale(session.member.id, locale)
+    }
   },
   perNetwork(30, 15),
 )
@@ -201,8 +214,14 @@ export const instructorLoginAction = publicAction(
   perNetwork(10, 15),
 )
 
-/** Sign out, then the instructor sign-in page ("you're signed out"). */
+/**
+ * Sign out, then the instructor sign-in page ("you're signed out"). While a
+ * super admin views as the instructor, it is the bar's "End": back to the
+ * instructor's admin page.
+ */
 export async function instructorLogoutAction(): Promise<void> {
+  const viewing = await endImpersonation("instructor", "logout")
+  if (viewing.status === "ended") await localeRedirect(adminPersonPath("instructor", viewing.subjectId))
   await endSession("instructor")
   redirect(withNotice(await localeHref(await getLocale(), "/instructor/login"), "signedOut"))
 }
@@ -252,14 +271,38 @@ export const verifyInstructorEmailAction = publicAction(
   perNetwork(20, 15),
 )
 
-/** The language of the instructor's emails and panel. */
+/** The language of the instructor's emails and panel (not changed by a super admin viewing as them). */
 export const setInstructorLocaleAction = instructorAction(accountLocaleSchema, async ({ locale }, ctx) => {
+  if (ctx.impersonatedBy) return
   if (ctx.instructor.locale !== locale) await setInstructorLocale(ctx.instructor.id, locale)
 })
+
+// ─── Viewing as someone ───────────────────────────────────────────────────────
+
+const endViewSchema = z.object({ kind: z.enum(["instructor", "member"]), id: z.uuid() })
+
+/**
+ * The "viewing as" bar's End: ends this browser's viewing session and goes
+ * back to the person's admin page. Authenticated by the viewing session itself,
+ * never by the admin's cookie, so it works when that is gone (the proxy then
+ * sends the admin to /admin/login?next=…). `id` is only where to go when the
+ * viewing session already ended (expired); a person's own session is never ended here.
+ */
+export async function endImpersonationAction(input: z.input<typeof endViewSchema>): Promise<ActionResult<void>> {
+  return runAction(endViewSchema, input, async ({ kind, id }) => {
+    const viewing = await endImpersonation(kind, "end")
+    if (viewing.status === "own") await localeRedirect(kind === "instructor" ? "/instructor" : "/account")
+    if (viewing.status === "none") await endSession(kind) // a stale cookie
+    await localeRedirect(adminPersonPath(kind, viewing.status === "ended" ? viewing.subjectId : id))
+  })
+}
 
 // ─── Shared ───────────────────────────────────────────────────────────────────
 
 async function requestReset(kind: AccountKind, email: string): Promise<void> {
+  // Changing the password is the person's own: not while a super admin views as them.
+  const viewer = kind === "member" ? (await getMember())?.impersonatedBy : (await getInstructor())?.impersonatedBy
+  if (viewer) throw new UserError("common.errors.impersonationBlocked")
   // Over the per-address limit: the same answer, nothing sent.
   if (!resetEmailLimiter.consume(`${kind}:${email}`).ok) return
   const locale = await getLocale()

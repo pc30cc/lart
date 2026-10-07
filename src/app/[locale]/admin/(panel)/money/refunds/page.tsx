@@ -51,7 +51,12 @@ export default async function RefundsPage({ searchParams }: PageProps<"/[locale]
       primary: true,
       cell: (r) => (
         <span className="block min-w-0">
-          <span className="block truncate font-medium">{r.member.name}</span>
+          <Link
+            href={`/admin/students/${r.member.id}`}
+            className="hover:text-primary block truncate font-medium transition-colors"
+          >
+            {r.member.name}
+          </Link>
           {r.participantName !== r.member.name && (
             <span className="text-muted-foreground block truncate text-xs">{t("for", { name: r.participantName })}</span>
           )}

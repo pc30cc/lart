@@ -12,6 +12,8 @@ import { notFound } from "next/navigation"
 import { getLocale, getTranslations } from "next-intl/server"
 import { z } from "zod"
 
+import { AccountAccess } from "@/components/admin/account-access"
+import { Detail, Panel } from "@/components/admin/detail-panel"
 import { PageHeader } from "@/components/admin/page-header"
 import { StatusBadge, type StatusTone } from "@/components/admin/status-badge"
 import { Button } from "@/components/ui/button"
@@ -27,7 +29,7 @@ import { ApproveInstructor } from "../_components/approve-instructor"
 import { InstructorStatus } from "../_components/instructor-status"
 import { InviteButton } from "../_components/invite-button"
 import { ManageInstructor } from "../_components/manage-instructor"
-import { Detail, LocalizedValue, Panel, VisibilityBadge } from "../_components/profile-parts"
+import { LocalizedValue, VisibilityBadge } from "../_components/profile-parts"
 
 const workshopTones: Record<string, StatusTone> = {
   awaiting_signature: "warning",
@@ -302,6 +304,8 @@ export default async function InstructorPage({ params }: PageProps<"/[locale]/ad
             </Table>
           )}
         </Panel>
+
+        <AccountAccess kind="instructor" id={instructor.id} name={name} inactive={!instructor.active} />
 
         <ManageInstructor
           id={instructor.id}

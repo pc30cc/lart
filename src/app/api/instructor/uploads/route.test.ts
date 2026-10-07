@@ -7,7 +7,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 
 import { db } from "@/db"
 import { auditLog, instructors } from "@/db/schema"
-import { createInstructor, runId } from "@/features/workshops/test-fixtures"
+import { createAdmin, createInstructor, runId } from "@/features/workshops/test-fixtures"
 import { sessionCookieName } from "@/lib/auth/cookies"
 import { createSession } from "@/lib/auth/session"
 import { env } from "@/lib/env"
@@ -72,6 +72,23 @@ describe("POST /api/instructor/uploads", () => {
       .from(auditLog)
       .where(and(eq(auditLog.action, "media.upload"), eq(auditLog.entityId, body.path)))
     expect(entry).toMatchObject({ adminId: null, entity: "media", data: { purpose: "instructor_photo", by: "instructor", instructorId } })
+  })
+
+  it("records the super admin viewing as the instructor as the uploader's admin", async () => {
+    const admin = await createAdmin(run, "Mina")
+    const { token } = await createSession("instructor", instructorId, new Date(), { impersonatedBy: admin.id })
+    state.cookies.set(sessionCookieName("instructor"), token)
+    const res = await upload(formWith("instructor_photo", await jpeg()))
+    expect(res.status).toBe(201)
+    const { path: stored } = await res.json()
+    const [entry] = await db
+      .select()
+      .from(auditLog)
+      .where(and(eq(auditLog.action, "media.upload"), eq(auditLog.entityId, stored)))
+    expect(entry).toMatchObject({
+      adminId: admin.id,
+      data: { purpose: "instructor_photo", by: "instructor", instructorId, impersonatedBy: admin.id },
+    })
   })
 
   it("names the folder after the instructor's English name, else the Turkish one, else 'unnamed'", async () => {

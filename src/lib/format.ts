@@ -87,6 +87,13 @@ export function normalizeDigits(input: string): string {
     .replace(/٬/g, ".") // Arabic thousands separator
 }
 
+/**
+ * Keeps a value (an amount, a name) in one piece inside right-to-left text
+ * (U+2068 … U+2069): "Ayşe K." inside a Persian sentence keeps its period on
+ * the right side.
+ */
+export const isolate = (text: string) => `\u2068${text}\u2069`
+
 // ─── Localized text ───────────────────────────────────────────────────────────
 
 const fallbackOrder = ["tr", "en", "fa"] as const

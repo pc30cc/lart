@@ -1,8 +1,15 @@
 {
-  "meta": { "title": "Admin" },
+  "meta": {
+    "title": "Admin"
+  },
   "brandSubtitle": "Admin panel",
   "nav": {
-    "groups": { "overview": "Overview", "workshops": "Teaching", "money": "Money", "system": "System" },
+    "groups": {
+      "overview": "Overview",
+      "workshops": "Teaching",
+      "money": "Money",
+      "system": "System"
+    },
     "dashboard": "Dashboard",
     "workshops": "Workshops",
     "registrations": "Registrations",
@@ -15,7 +22,8 @@
     "reports": "Reports",
     "templates": "Templates",
     "settings": "Settings",
-    "audit": "Activity log"
+    "audit": "Activity log",
+    "students": "Students"
   },
   "shell": {
     "toggleSidebar": "Show or hide the menu",
@@ -26,5 +34,56 @@
   "home": {
     "greeting": "Hello, {name}",
     "intro": "Where would you like to start today?"
+  },
+  "access": {
+    "title": "Account access",
+    "inactive": "This instructor is inactive. Activate them first to change the password or enter their panel.",
+    "password": {
+      "title": "Password",
+      "description": "Set a new password when they can’t log in. They are signed out everywhere and get an email about it.",
+      "trigger": "Change password",
+      "dialogTitle": "New password for {name}",
+      "dialogDescription": "Type a new password, or let us create a strong one. They are signed out everywhere and get an email saying the team changed it.",
+      "field": "New password",
+      "hint": "At least {min, number} characters.",
+      "save": "Save password",
+      "or": "or",
+      "generate": "Generate a strong password",
+      "saved": "The new password for {name} is saved. We emailed them about it.",
+      "savedNotEmailed": "The new password for {name} is saved, but the email to them couldn’t be sent. Please tell them yourself.",
+      "result": {
+        "title": "New password for {name}",
+        "label": "New password (shown only now)",
+        "once": "This is the only time you’ll see it: it can’t be shown again.",
+        "share": "Send it to {name} privately, for example in a direct message, never in a group.",
+        "emailed": "We emailed {name} that the team changed their password. The email doesn’t contain the password.",
+        "notEmailed": "The email to {name} couldn’t be sent, so please tell them yourself.",
+        "copy": "Copy",
+        "copiedShort": "Copied",
+        "copied": "Password copied.",
+        "copyFailed": "Couldn’t copy. Please select the password and copy it by hand."
+      },
+      "errors": {
+        "rateLimited": "You’ve changed many passwords in a short time. Please wait a few minutes and try again."
+      }
+    },
+    "enter": {
+      "instructor": {
+        "title": "Their panel",
+        "description": "See the instructor panel just as {name} sees it, for up to one hour. Signing contracts isn’t possible while you’re viewing.",
+        "trigger": "Enter their panel",
+        "confirmTitle": "Enter {name}’s panel?",
+        "confirmDescription": "You’ll see their panel for up to one hour, with a bar at the top. Press End in the bar to come back here. What you change there is recorded under your name.",
+        "confirm": "Enter their panel"
+      },
+      "member": {
+        "title": "Their account",
+        "description": "See the site and the account just as {name} sees them, for up to one hour. Registering for a workshop isn’t possible while you’re viewing.",
+        "trigger": "Enter their account",
+        "confirmTitle": "Enter {name}’s account?",
+        "confirmDescription": "You’ll see the site as them for up to one hour, with a bar at the top. Press End in the bar to come back here. What you change there is recorded under your name.",
+        "confirm": "Enter their account"
+      }
+    }
   }
 }

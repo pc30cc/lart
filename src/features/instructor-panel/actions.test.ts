@@ -39,12 +39,16 @@ vi.mock("@/lib/storage", async (original) => ({
   remove: vi.fn(async () => {}),
 }))
 
-/** The signed-in instructor (a real row: the audit log and the contracts refer to it). */
-const signedIn = vi.hoisted(() => ({ id: "" }))
+/**
+ * The signed-in instructor (a real row: the audit log and the contracts refer to it), and the
+ * super admin viewing as them ("Enter their panel"), if any.
+ */
+const signedIn = vi.hoisted(() => ({ id: "", viewer: null as { id: string; name: string } | null }))
 vi.mock("@/lib/auth/instructor", () => {
   const session = (): InstructorSession => ({
     sessionId: "test",
     instructor: { id: signedIn.id, email: "x@test.local", displayName: { tr: "Zeynep" }, locale: "en", emailVerified: true, approved: true },
+    impersonatedBy: signedIn.viewer,
   })
   return { requireInstructor: async () => session(), getInstructor: async () => session() }
 })
@@ -68,8 +72,11 @@ beforeAll(async () => {
 
 beforeEach(() => {
   signedIn.id = zeynep
+  signedIn.viewer = null
   vi.mocked(remove).mockClear()
 })
+
+const BLOCKED = "This can’t be done while you’re viewing as this person. Only they can do it themselves."
 
 /** A workshop awaiting the signature of its contract (as createWorkshop leaves it). */
 async function awaiting(instructorId = zeynep) {
@@ -157,6 +164,15 @@ describe("signContractAction", () => {
     }
   })
 
+  it("refuses a super admin viewing as the instructor: the signature is the instructor's own", async () => {
+    const { course, contract, input } = await awaiting()
+    signedIn.viewer = { id: adminId, name: "Mina" }
+    expect(await signContractAction({ ...input, signedName: "Zeynep Yılmaz" })).toEqual({ ok: false, error: BLOCKED })
+    expect((await contractRow(contract.id)).status).toBe("sent")
+    const [row] = await db.select({ status: courses.status }).from(courses).where(eq(courses.id, course.id))
+    expect(row.status).toBe("awaiting_signature")
+  })
+
   it("refuses a replaced version", async () => {
     const { contract, input } = await awaiting()
     await db.update(contracts).set({ status: "void", voidedAt: new Date() }).where(eq(contracts.id, contract.id))
@@ -217,6 +233,45 @@ describe("updateProfileAction", () => {
       action: "instructor.profile_update",
       data: expect.objectContaining({ by: "instructor", website: { from: null, to: "https://zeynep.example" } }),
     })
+  })
+
+  it("audits a super admin's change while viewing as the instructor as that admin's", async () => {
+    signedIn.viewer = { id: adminId, name: "Mina" }
+    const website = `viewing-${run}.example`
+    expect(await updateProfileAction({ ...profile, website })).toEqual({ ok: true, data: { saved: true } })
+    expect(await lastAudit(zeynep)).toMatchObject({
+      adminId,
+      action: "instructor.profile_update",
+      data: expect.objectContaining({ by: "instructor", impersonatedBy: adminId, website: expect.any(Object) }),
+    })
+  })
+
+  it("takes a photo uploaded in the panel while an admin viewed as the instructor, never one from the admin upload", async () => {
+    const viewed = photo()
+    // The instructor upload route, with a super admin viewing: the admin is the entry's admin.
+    await db.insert(auditLog).values({
+      adminId,
+      action: "media.upload",
+      entity: "media",
+      entityId: viewed,
+      data: { purpose: "instructor_photo", by: "instructor", instructorId: zeynep, impersonatedBy: adminId },
+    })
+    expect(await updateProfileAction({ ...profile, photoPath: viewed })).toMatchObject({ ok: true })
+
+    // The admin upload route writes no `by` (and no instructorId): not the instructor's own upload.
+    const fromAdmin = photo()
+    await db.insert(auditLog).values({
+      adminId,
+      action: "media.upload",
+      entity: "media",
+      entityId: fromAdmin,
+      data: { purpose: "instructor_photo", width: 800, height: 800, instructorId: zeynep },
+    })
+    expect(await updateProfileAction({ ...profile, photoPath: fromAdmin })).toMatchObject({
+      ok: false,
+      fieldErrors: { photoPath: expect.any(String) },
+    })
+    await db.update(instructors).set({ photoPath: null }).where(eq(instructors.id, zeynep))
   })
 
   it("only takes a photo this instructor uploaded, and removes the old one after a change", async () => {

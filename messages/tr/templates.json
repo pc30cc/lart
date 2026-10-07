@@ -232,6 +232,10 @@
         "title": "Şifre sıfırlama",
         "to": "Herkes"
       },
+      "password_changed_by_team": {
+        "title": "Şifre ekip tarafından değiştirildi",
+        "to": "Katılımcılar ve eğitmenler"
+      },
       "member_exists": {
         "title": "Hesap zaten var",
         "to": "Katılımcılar"

@@ -22,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function MyWorkshopsPage({ params }: PageProps<"/[locale]/account">) {
   const { locale } = await params
-  const { member } = await requireMember()
+  const { member, impersonatedBy } = await requireMember()
   const [t, registrations] = await Promise.all([getTranslations("registration.account"), listMyRegistrations(locale)])
   const now = new Date()
   const isUpcoming = (r: (typeof registrations)[number]) => r.status !== "cancelled" && r.course.endsAt > now
@@ -99,14 +99,19 @@ export default async function MyWorkshopsPage({ params }: PageProps<"/[locale]/a
           <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-5">
             <div className="space-y-0.5">
               <p className="font-medium">{t("password")}</p>
-              <p className="text-muted-foreground text-sm">{t("passwordText")}</p>
+              <p className="text-muted-foreground text-sm">
+                {/* Only the member changes their own password, never a super admin viewing as them. */}
+                {impersonatedBy ? t("passwordImpersonating") : t("passwordText")}
+              </p>
             </div>
-            <Button asChild variant="outline" className="h-11 rounded-xl px-4">
-              <Link href="/account/forgot">
-                <KeyRoundIcon aria-hidden />
-                {t("changePassword")}
-              </Link>
-            </Button>
+            {!impersonatedBy && (
+              <Button asChild variant="outline" className="h-11 rounded-xl px-4">
+                <Link href="/account/forgot">
+                  <KeyRoundIcon aria-hidden />
+                  {t("changePassword")}
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
       </section>

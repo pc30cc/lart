@@ -140,6 +140,10 @@
     "check": {
       "title": "We can’t confirm this copy",
       "text": "This text doesn’t match what was recorded when the contract was signed. Please let the {brand} team know."
+    },
+    "impersonating": {
+      "title": "Only the instructor can sign",
+      "text": "You’re viewing as this instructor. An e-signature must be their own, so the sign form is hidden while you’re viewing."
     }
   },
   "sign": {

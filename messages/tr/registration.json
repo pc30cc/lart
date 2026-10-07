@@ -119,6 +119,11 @@
     "submit": "Kaydol",
     "errors": {
       "acceptTerms": "Kaydolmak için lütfen bu kutuyu işaretleyin."
+    },
+    "impersonating": {
+      "title": "Kaydı yalnızca kendisi yapabilir",
+      "text": "Bu kişinin hesabını görüntülüyorsunuz. Kayıt olurken koşullar ile fotoğraf ve video izni kabul edilir; bu yüzden bunu yalnızca kişinin kendisi yapabilir.",
+      "account": "Atölyelerini gör"
     }
   },
   "errors": {
@@ -194,7 +199,8 @@
     "saved": "Kaydedildi. Teşekkürler!",
     "password": "Şifre",
     "passwordText": "Yeni bir şifre belirlemeniz için size bir bağlantı göndereceğiz.",
-    "changePassword": "Şifremi değiştir"
+    "changePassword": "Şifremi değiştir",
+    "passwordImpersonating": "Şifresini yalnızca kendisi değiştirebilir. Yönetim panelindeki sayfasından yeni bir şifre belirleyebilirsiniz."
   },
   "item": {
     "participant": "Katılımcı",
