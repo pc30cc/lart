@@ -23,6 +23,7 @@ const col = (table: typeof courses | typeof contracts | typeof instructors, colu
   sql`${table}.${sql.identifier(column.name)}`
 const workshops = sql<number>`(select count(*)::int from ${courses} where ${col(courses, courses.instructorId)} = ${col(instructors, instructors.id)})`
 const hasPassword = sql<boolean>`(${instructors.passwordHash} is not null)`
+const approved = sql<boolean>`(${instructors.approvedAt} is not null)`
 
 /** Public URL of a stored photo, or null (also when the storage setting is broken). */
 function photoUrl(storage: Storage | null, path: string | null): string | null {
@@ -60,11 +61,14 @@ export async function listInstructors(params: TableParams<Sort, Filter>, locale:
       ),
     )
   }
-  // The three states of the status badge: active (signed up), invited (no password yet), inactive.
+  // The states of the status badge: waiting for approval (signed up on their own),
+  // active (has a password), invited (no password yet), inactive.
   const { status } = params.filters
+  const isApproved = isNotNull(instructors.approvedAt)
   if (status === "inactive") conditions.push(eq(instructors.active, false))
-  if (status === "active") conditions.push(and(eq(instructors.active, true), isNotNull(instructors.passwordHash)))
-  if (status === "invited") conditions.push(and(eq(instructors.active, true), isNull(instructors.passwordHash)))
+  if (status === "pending") conditions.push(and(eq(instructors.active, true), isNull(instructors.approvedAt)))
+  if (status === "active") conditions.push(and(eq(instructors.active, true), isApproved, isNotNull(instructors.passwordHash)))
+  if (status === "invited") conditions.push(and(eq(instructors.active, true), isApproved, isNull(instructors.passwordHash)))
   const where = and(...conditions)
 
   // Same fallback as the site: Persian shows the English name when there is no Persian one.
@@ -84,6 +88,7 @@ export async function listInstructors(params: TableParams<Sort, Filter>, locale:
         teachingLanguages: instructors.teachingLanguages,
         photoPath: instructors.photoPath,
         active: instructors.active,
+        approved,
         hasPassword,
         workshops,
       })
@@ -99,6 +104,16 @@ export async function listInstructors(params: TableParams<Sort, Filter>, locale:
     rows: rows.map(({ photoPath, ...row }) => ({ ...row, photoUrl: photoUrl(storage, photoPath) })),
     total,
   }
+}
+
+/** How many active instructors signed up on their own and wait for approval. */
+export async function countPendingInstructors(): Promise<number> {
+  await requireAdmin()
+  const [{ total }] = await db
+    .select({ total: count() })
+    .from(instructors)
+    .where(and(eq(instructors.active, true), isNull(instructors.approvedAt)))
+  return total
 }
 
 export type InstructorRow = Awaited<ReturnType<typeof listInstructors>>["rows"][number]
@@ -124,6 +139,7 @@ export const getInstructor = cache(async (id: string) => {
       website: instructors.website,
       photoPath: instructors.photoPath,
       active: instructors.active,
+      approved,
       hasPassword,
       emailVerifiedAt: instructors.emailVerifiedAt,
       createdAt: instructors.createdAt,
@@ -198,15 +214,14 @@ export async function getInstructorContracts(id: string) {
 }
 
 /**
- * For selects in other modules (e.g. the workshop form): active instructors,
- * plus `includeId` even when inactive (the one already chosen on a record).
+ * For selects in other modules (e.g. the workshop form): active, approved
+ * instructors, plus `includeId` even when not (the one already chosen on a record).
  * Name them with `profileText(option.displayName, locale)`.
  */
 export async function getInstructorOptions({ includeId }: { includeId?: string | null } = {}) {
   await requireAdmin()
-  const visible = includeId
-    ? or(eq(instructors.active, true), inArray(instructors.id, [includeId]))
-    : eq(instructors.active, true)
+  const available = and(eq(instructors.active, true), isNotNull(instructors.approvedAt))
+  const visible = includeId ? or(available, inArray(instructors.id, [includeId])) : available
   return db
     .select({
       id: instructors.id,

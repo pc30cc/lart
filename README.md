@@ -208,8 +208,18 @@ each participant, so the gallery team knows whose face may be published.
 - **No link to it anywhere on the site.** Instructors reach it only through
   a private address sent to them; the page is `noindex` and excluded from
   the sitemap.
-- Own login. After sign-up the instructor goes **straight into the panel**,
-  with the same "Please confirm your email" banner until verified.
+- Own login (`/<l>/instructor/login`). Two ways in:
+  - **Sign up on their own** at `/<l>/instructor/signup` (the team shares
+    the address; the login page links to it): the full profile below,
+    email and password, and "my details are correct". The instructor goes
+    **straight into the panel**, with a "waiting for approval" banner and
+    the "Please confirm your email" banner. Every super admin gets a
+    "new instructor sign-up" email. A super admin checks the details and
+    presses **Approve** (Instructors → the profile; the list shows how many
+    wait); only approved instructors can be chosen for a workshop. The
+    instructor gets a "you're approved" email.
+  - **Added by an admin** (Instructors → New): approved from the start; the
+    instructor gets an invitation email to choose a password.
 - Profile in three languages.
 - My workshops, participant lists and schedule.
 - My contracts: read and sign; my earnings per workshop.
@@ -415,6 +425,8 @@ enough), not to individuals.
 | Welcome + verify your email | student, instructor | sign-up, "send it again" |
 | Account already exists | student | someone signs up with an email that already has an account |
 | Instructor invitation | instructor | an admin adds or invites an instructor |
+| New instructor sign-up | super admins | an instructor signed up on their own and waits for approval |
+| Instructor approved | instructor | a super admin approved a self-registered instructor |
 | Contract ready to sign | instructor | a workshop is created, or its contract changed |
 | Contract signed | super admins | the instructor signed |
 | Go / no-go decision due | super admins | the decision time has passed |

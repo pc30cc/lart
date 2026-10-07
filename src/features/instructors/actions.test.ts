@@ -18,6 +18,7 @@ import {
 import { renderEmail } from "@/emails"
 import { decrypt, sha256 } from "@/lib/crypto"
 import {
+  approveInstructor,
   createInstructor,
   deleteInstructor,
   resendInvite,
@@ -30,6 +31,7 @@ import {
   getInstructorContracts,
   getInstructorForContract,
   getInstructorOptions,
+  countPendingInstructors,
   getInstructorWorkshops,
   listInstructors,
 } from "./queries"
@@ -537,5 +539,62 @@ describe("queries", () => {
     expect((await getInstructorOptions()).map((o) => o.id)).not.toContain(id)
     const withChosen = await getInstructorOptions({ includeId: id })
     expect(withChosen.find((o) => o.id === id)).toMatchObject({ active: false, displayName: expect.any(Object) })
+  })
+})
+
+describe("approval of self-registered instructors", () => {
+  /** As the sign-up leaves them: a password, not approved yet. */
+  async function selfRegistered(label: string) {
+    const id = await create(label)
+    await db.update(instructors).set({ approvedAt: null, passwordHash: "x" }).where(eq(instructors.id, id))
+    return id
+  }
+  const parse = (sp: Record<string, string>) =>
+    parseTableParams(sp, { sort: instructorTable.sort, defaultSort: "name", filters: instructorTable.filters })
+
+  it("instructors added by an admin are approved from the start", async () => {
+    const id = await create("approved-on-create")
+    expect((await row(id)).approvedAt).toBeInstanceOf(Date)
+    expect((await getInstructor(id))?.approved).toBe(true)
+  })
+
+  it("a waiting instructor is listed as pending, counted, and not offered for workshops", async () => {
+    const id = await selfRegistered("pending")
+    expect(await countPendingInstructors()).toBeGreaterThan(0)
+    const pending = await listInstructors(parse({ q: run, status: "pending" }), "en")
+    expect(pending.rows.map((r) => r.id)).toContain(id)
+    expect(pending.rows.every((r) => r.active && !r.approved)).toBe(true)
+    const active = await listInstructors(parse({ q: run, status: "active" }), "en")
+    expect(active.rows.map((r) => r.id)).not.toContain(id)
+    expect((await getInstructorOptions()).map((o) => o.id)).not.toContain(id)
+  })
+
+  it("approving makes them available, emails them in their language, audits once", async () => {
+    const id = await selfRegistered("approve")
+    await db.update(instructors).set({ locale: "fa" }).where(eq(instructors.id, id))
+    sendEmail.mockClear()
+    expect(await approveInstructor({ id })).toEqual({ ok: true, data: { id, emailed: true } })
+    expect((await row(id)).approvedAt).toBeInstanceOf(Date)
+    expect((await getInstructorOptions()).map((o) => o.id)).toContain(id)
+    expect(sendEmail).toHaveBeenCalledTimes(1)
+    expect(sendEmail.mock.calls[0][0]).toMatchObject({
+      template: "instructor_approved",
+      locale: "fa",
+      props: { panelUrl: "/fa/instructor" },
+    })
+    // Approving again changes nothing and sends nothing.
+    expect(await approveInstructor({ id })).toEqual({ ok: true, data: { id, emailed: false } })
+    expect(sendEmail).toHaveBeenCalledTimes(1)
+    expect((await audits(id)).filter((a) => a.action === "instructor.approve")).toHaveLength(1)
+  })
+
+  it("is refused for an inactive instructor and a missing one", async () => {
+    const id = await selfRegistered("approve-inactive")
+    await setInstructorActive({ id, active: false })
+    expect(await approveInstructor({ id })).toMatchObject({
+      ok: false,
+      error: "This instructor is inactive. Activate them first, then approve.",
+    })
+    expect(await approveInstructor({ id: randomUUID() })).toMatchObject({ ok: false })
   })
 })

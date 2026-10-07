@@ -54,6 +54,7 @@
     "selected": "Selected"
   },
   "status": {
+    "pending": "Waiting for approval",
     "active": "Active",
     "inactive": "Inactive",
     "invited": "Invited"
@@ -186,6 +187,19 @@
     "idUnreadable": "We couldn’t read this ID number. Please enter it again on the edit page.",
     "inviteInactive": "This instructor is inactive. Activate them first, then send the invitation.",
     "alreadySetUp": "This instructor has already set a password, so they don’t need an invitation.",
-    "inviteNotSent": "We couldn’t send the invitation email. Please try again in a moment."
+    "inviteNotSent": "We couldn’t send the invitation email. Please try again in a moment.",
+    "approveInactive": "This instructor is inactive. Activate them first, then approve."
+  },
+  "approval": {
+    "title": "Signed up on their own: waiting for your approval",
+    "description": "Check the details below (official name, ID number, mobile). Until you approve, they can use their panel but can’t be chosen for a workshop.",
+    "approve": "Approve",
+    "confirmTitle": "Approve {name}?",
+    "confirmDescription": "They can then be chosen for workshops, and get a “you’re approved” email.",
+    "confirm": "Yes, approve",
+    "approved": "Approved. We’ve emailed them the good news.",
+    "approvedNoEmail": "Approved. The email couldn’t be sent, so please let them know yourself.",
+    "waiting": "{count, plural, one {# instructor signed up and is} other {# instructors signed up and are}} waiting for your approval.",
+    "show": "Show"
   }
 }

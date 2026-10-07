@@ -19,7 +19,9 @@
     "decisionAt": "Decide by",
     "refund": "Refund",
     "price": "To pay",
-    "participant": "Participant"
+    "participant": "Participant",
+    "teachingField": "Teaches",
+    "email": "Email"
   },
   "payment": {
     "cash": {
@@ -56,6 +58,23 @@
     "intro2": "To get started, please choose a password for your account.",
     "cta": "Choose my password",
     "note": "This link is just for you, so please don’t share it. If you weren’t expecting this email, you can ignore it."
+  },
+  "instructor_signup": {
+    "subject": "New instructor sign-up: {instructorName}",
+    "preview": "Check the details and approve them in the panel.",
+    "heading": "A new instructor signed up",
+    "intro": "{instructorName} has created an instructor account at {brand} and is waiting for your approval. Until you approve them, they can’t be chosen for a workshop.",
+    "cta": "Review and approve",
+    "note": "Check the official name, ID number and mobile in the panel before you approve."
+  },
+  "instructor_approved": {
+    "subject": "You’re approved as an instructor at {brand}",
+    "preview": "Your profile is approved. We’ll be in touch about workshops.",
+    "heading": "Welcome to the team!",
+    "intro": "Good news: the {brand} team has approved your instructor profile. When we plan a workshop with you, your contract will be waiting in your panel.",
+    "intro2": "You can keep your profile and photo up to date in your panel at any time.",
+    "cta": "Open my panel",
+    "note": "If you have any questions, just reply to this email."
   },
   "contract_ready": {
     "subject": "Your contract for “{workshopTitle}” is ready to sign",

@@ -83,6 +83,8 @@ export type DetailLabel =
   | "refund"
   | "price"
   | "participant"
+  | "teachingField"
+  | "email"
 
 /**
  * A small titled block under the details (e.g. one way to pay): a title, a
@@ -195,6 +197,23 @@ export const emailTemplates = {
     schema: z.object({ name: text(), acceptUrl: siteUrl }),
     greet: "name",
     cta: "acceptUrl",
+  }),
+  instructor_signup: define({
+    schema: z.object({
+      adminName: text(),
+      instructorName: text(),
+      teachingField: text(),
+      instructorEmail: text(254),
+      instructorUrl: siteUrl,
+    }),
+    greet: "adminName",
+    cta: "instructorUrl",
+    details: { instructor: "instructorName", teachingField: "teachingField", email: "instructorEmail" },
+  }),
+  instructor_approved: define({
+    schema: z.object({ name: text(), panelUrl: siteUrl }),
+    greet: "name",
+    cta: "panelUrl",
   }),
   contract_ready: define({
     schema: z.object({ instructorName: text(), workshopTitle: text(), workshopDate: text(100), signUrl: siteUrl }),

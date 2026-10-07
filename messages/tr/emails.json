@@ -19,7 +19,9 @@
     "decisionAt": "Son karar zamanı",
     "refund": "İade tutarı",
     "price": "Ödenecek tutar",
-    "participant": "Katılımcı"
+    "participant": "Katılımcı",
+    "teachingField": "Alanı",
+    "email": "E-posta"
   },
   "payment": {
     "cash": {
@@ -56,6 +58,23 @@
     "intro2": "Başlamak için lütfen hesabınız için bir şifre belirleyin.",
     "cta": "Şifremi belirle",
     "note": "Bu bağlantı yalnızca size özel, lütfen kimseyle paylaşmayın. Bu e-postayı beklemiyorduysanız görmezden gelebilirsiniz."
+  },
+  "instructor_signup": {
+    "subject": "Yeni eğitmen kaydı: {instructorName}",
+    "preview": "Bilgileri kontrol edip panelden onaylayın.",
+    "heading": "Yeni bir eğitmen kaydoldu",
+    "intro": "{instructorName}, {brand} sitesinde eğitmen hesabı oluşturdu ve onayınızı bekliyor. Siz onaylayana kadar bir atölyeye eğitmen olarak seçilemez.",
+    "cta": "İncele ve onayla",
+    "note": "Onaylamadan önce paneldeki resmî ad, kimlik numarası ve cep telefonunu kontrol edin."
+  },
+  "instructor_approved": {
+    "subject": "{brand} eğitmen profiliniz onaylandı",
+    "preview": "Profiliniz onaylandı. Atölyeler için sizinle iletişime geçeceğiz.",
+    "heading": "Ekibe hoş geldiniz!",
+    "intro": "Güzel haber: {brand} ekibi eğitmen profilinizi onayladı. Sizinle bir atölye planladığımızda sözleşmeniz panelinizde sizi bekliyor olacak.",
+    "intro2": "Profilinizi ve fotoğrafınızı panelinizden istediğiniz zaman güncelleyebilirsiniz.",
+    "cta": "Panelimi aç",
+    "note": "Sorunuz olursa bu e-postayı yanıtlamanız yeterli."
   },
   "contract_ready": {
     "subject": "“{workshopTitle}” sözleşmeniz imzaya hazır",

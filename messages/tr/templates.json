@@ -175,7 +175,8 @@
     },
     "sample": {
       "person": "Zeynep Arslan",
-      "bring": "Bir önlük ve rahat kıyafetler"
+      "bring": "Bir önlük ve rahat kıyafetler",
+      "teachingField": "Seramik"
     },
     "errors": {
       "syntax": "Süslü parantezleri kontrol edin: her '{' için bir '}' gerekir ve bunlar yalnızca yer tutucular içindir.",
@@ -189,6 +190,14 @@
       },
       "instructor_invite": {
         "title": "Eğitmen daveti",
+        "to": "Eğitmenler"
+      },
+      "instructor_signup": {
+        "title": "Yeni eğitmen kaydı",
+        "to": "Yöneticiler"
+      },
+      "instructor_approved": {
+        "title": "Eğitmen onaylandı",
         "to": "Eğitmenler"
       },
       "contract_ready": {

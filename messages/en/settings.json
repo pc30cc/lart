@@ -216,7 +216,9 @@
         "delete": "Instructor deleted",
         "invite": "Invitation sent",
         "reveal_id": "ID number viewed",
-        "profile_update": "Profile edited by the instructor"
+        "profile_update": "Profile edited by the instructor",
+        "signup": "Instructor signed up",
+        "approve": "Instructor approved"
       },
       "media": {
         "upload": "File uploaded"

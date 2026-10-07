@@ -238,5 +238,9 @@
       "emailUnverified": "Henüz doğrulanmadı",
       "change": "Bunlardan birini değiştirmeniz mi gerekiyor? Lütfen {brand} ekibine yazın, sizin için güncelleyelim."
     }
+  },
+  "approvalBanner": {
+    "label": "Onay bekleniyor",
+    "text": "Kaydolduğunuz için teşekkürler! Ekip bilgilerinizi kontrol ediyor. Profiliniz onaylanınca sizinle atölyeler planlayabiliriz. Bu arada “Profilim” sayfasından fotoğrafınızı ekleyebilirsiniz."
   }
 }

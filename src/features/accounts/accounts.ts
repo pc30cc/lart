@@ -2,10 +2,11 @@ import "server-only"
 import { and, eq, inArray, isNotNull, sql } from "drizzle-orm"
 
 import { db, type Tx } from "@/db"
-import { emailTokens, instructors, members } from "@/db/schema"
+import { emailTokens, instructors, members, type LocalizedText } from "@/db/schema"
 import { profileText } from "@/features/instructors/schema"
 import { locales } from "@/i18n/routing"
-import { sha256 } from "@/lib/crypto"
+import { audit } from "@/lib/audit"
+import { encrypt, sha256 } from "@/lib/crypto"
 import { normalizeEmail } from "@/lib/auth/login"
 import { hashPassword } from "@/lib/auth/password"
 import { deleteSessionsOf } from "@/lib/auth/session"
@@ -144,6 +145,67 @@ export async function signUpMember(input: SignUpInput): Promise<string | null> {
     .onConflictDoNothing({ target: members.email })
     .returning({ id: members.id })
   return row?.id ?? null
+}
+
+// ─── Instructors: sign up ─────────────────────────────────────────────────────
+
+export type InstructorSignUpInput = {
+  email: string
+  password: string
+  officialName: string
+  idNumber: string
+  mobile: string
+  displayName: LocalizedText
+  teachingField: LocalizedText
+  bio: LocalizedText
+  teachingLanguages: string[]
+  website: string | null
+  locale: string
+}
+
+/**
+ * Create an instructor account from the instructor's own sign-up. It waits for
+ * an admin's approval (`approved_at` null): the instructor can use the panel,
+ * but cannot be chosen for a workshop yet. Returns the new id, or null when an
+ * instructor already has this email (nothing changes then). The password is
+ * hashed first either way, so both answers take about the same time.
+ */
+export async function signUpInstructor({ idNumber, password, ...input }: InstructorSignUpInput): Promise<string | null> {
+  const passwordHash = await hashPassword(password)
+  const email = normalizeEmail(input.email)
+  return db.transaction(async (tx) => {
+    // Unique regardless of case (older rows may not be lower-case).
+    const [taken] = await tx
+      .select({ id: instructors.id })
+      .from(instructors)
+      .where(sql`lower(${instructors.email}) = ${email}`)
+      .limit(1)
+    if (taken) return null
+    const [row] = await tx
+      .insert(instructors)
+      .values({
+        ...input,
+        email,
+        passwordHash,
+        idNumberEnc: encrypt(idNumber),
+        bio: Object.keys(input.bio).length ? input.bio : null,
+        approvedAt: null,
+      })
+      .onConflictDoNothing({ target: instructors.email })
+      .returning({ id: instructors.id })
+    if (!row) return null
+    await audit(
+      {
+        adminId: null,
+        action: "instructor.signup",
+        entity: "instructor",
+        entityId: row.id,
+        data: { by: "instructor", displayName: input.displayName, teachingField: input.teachingField },
+      },
+      tx,
+    )
+    return row.id
+  })
 }
 
 /**

@@ -26,6 +26,8 @@ export type InstructorSession = {
     /** Language of the instructor's emails and panel (instructors.locale). */
     locale: AppLocale
     emailVerified: boolean
+    /** False while a self-registered instructor waits for an admin's approval. */
+    approved: boolean
   }
 }
 
@@ -45,6 +47,7 @@ const loadInstructor = cache(async (): Promise<InstructorSession | null> => {
       locale: instructors.locale,
       active: instructors.active,
       emailVerifiedAt: instructors.emailVerifiedAt,
+      approvedAt: instructors.approvedAt,
     })
     .from(instructors)
     .where(eq(instructors.id, session.subjectId))
@@ -61,6 +64,7 @@ const loadInstructor = cache(async (): Promise<InstructorSession | null> => {
       displayName: row.displayName,
       locale: hasLocale(locales, row.locale) ? row.locale : "tr",
       emailVerified: row.emailVerifiedAt !== null,
+      approved: row.approvedAt !== null,
     },
   }
 })

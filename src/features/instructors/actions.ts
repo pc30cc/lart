@@ -13,6 +13,7 @@ import { sendEmail } from "@/lib/email"
 import { env } from "@/lib/env"
 import { errorForLog, PG, pgError } from "@/lib/errors"
 import { remove } from "@/lib/storage"
+import { sendInstructorApproved } from "./notify"
 import {
   instructorActiveSchema,
   instructorIdSchema,
@@ -106,7 +107,8 @@ export const createInstructor = adminAction(instructorSchema, async ({ idNumber,
   const locale = inviteLocale ?? inviteLocales.find((l) => l === uiLocale) ?? "tr"
   // The invitation's language is also the instructor's until they choose one (accepting, panel switch):
   // emails sent before they accept, such as `contract_ready`, go out in it.
-  const values = { ...input, bio: emptyToNull(input.bio), idNumberEnc: encrypt(idNumber), locale }
+  // Added by an admin: approved from the start (self sign-ups wait for `approveInstructor`).
+  const values = { ...input, bio: emptyToNull(input.bio), idNumberEnc: encrypt(idNumber), locale, approvedAt: new Date() }
 
   const { id, token } = await db
     .transaction(async (tx) => {
@@ -252,6 +254,30 @@ export const resendInvite = adminAction(resendInviteSchema, async ({ id, locale 
   revalidate()
   if (!sent) throw new UserError("instructors.errors.inviteNotSent")
   return { id }
+})
+
+/**
+ * Approve an instructor who signed up on their own: from now on they can be
+ * chosen for workshops (and are shown on the site with them). They get a
+ * "you're approved" email. Approving twice changes nothing.
+ */
+export const approveInstructor = adminAction(instructorIdSchema, async ({ id }, ctx) => {
+  const approved = await db.transaction(async (tx) => {
+    const [row] = await tx
+      .select({ active: instructors.active, approvedAt: instructors.approvedAt })
+      .from(instructors)
+      .where(eq(instructors.id, id))
+      .for("update")
+    if (!row) throw notFound()
+    if (row.approvedAt) return false
+    if (!row.active) throw new UserError("instructors.errors.approveInactive")
+    await tx.update(instructors).set({ approvedAt: sql`now()`, updatedAt: sql`now()` }).where(eq(instructors.id, id))
+    await ctx.audit({ action: "instructor.approve", entity: "instructor", entityId: id }, tx)
+    return true
+  })
+  const emailed = approved ? await sendInstructorApproved(id) : false
+  revalidate()
+  return { id, emailed }
 })
 
 /**

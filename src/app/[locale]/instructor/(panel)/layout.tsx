@@ -32,6 +32,7 @@ export default async function InstructorPanelLayout({ children, params }: Layout
       name={profileText(instructor.displayName, locale)}
       email={instructor.email}
       emailVerified={instructor.emailVerified}
+      approved={instructor.approved}
       toSign={toSign.length}
     >
       {children}

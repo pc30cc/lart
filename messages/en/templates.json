@@ -175,7 +175,8 @@
     },
     "sample": {
       "person": "Zeynep Arslan",
-      "bring": "An apron and comfortable clothes"
+      "bring": "An apron and comfortable clothes",
+      "teachingField": "Ceramics"
     },
     "errors": {
       "syntax": "Check the curly brackets: each '{' needs a '}', and they are only for placeholders.",
@@ -189,6 +190,14 @@
       },
       "instructor_invite": {
         "title": "Instructor invitation",
+        "to": "Instructors"
+      },
+      "instructor_signup": {
+        "title": "New instructor sign-up",
+        "to": "Admins"
+      },
+      "instructor_approved": {
+        "title": "Instructor approved",
         "to": "Instructors"
       },
       "contract_ready": {

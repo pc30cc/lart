@@ -56,7 +56,7 @@ async function defaultContractTemplate(tx: Tx): Promise<string> {
   return row.id
 }
 
-/** The chosen instructor must be active (unless unchanged) and the terms template must be a terms template. */
+/** The chosen instructor must be active and approved (unless unchanged) and the terms template must be a terms template. */
 async function checkChoices(
   tx: Tx,
   values: { instructorId: string; termsTemplateId: string | null },
@@ -64,10 +64,10 @@ async function checkChoices(
 ) {
   if (values.instructorId !== before?.instructorId) {
     const [person] = await tx
-      .select({ active: instructors.active })
+      .select({ active: instructors.active, approvedAt: instructors.approvedAt })
       .from(instructors)
       .where(eq(instructors.id, values.instructorId))
-    if (!person?.active) throw new UserError("workshops.errors.instructorUnavailable", { field: "instructorId" })
+    if (!person?.active || !person.approvedAt) throw new UserError("workshops.errors.instructorUnavailable", { field: "instructorId" })
   }
   if (values.termsTemplateId && values.termsTemplateId !== before?.termsTemplateId) {
     const [terms] = await tx

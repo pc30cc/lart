@@ -240,7 +240,7 @@ export const getWorkshop = cache(async (id: string) => {
 
 export type Workshop = NonNullable<Awaited<ReturnType<typeof getWorkshop>>>
 
-/** Choices for the workshop form. `instructorId`: keep the current instructor even if inactive. */
+/** Choices for the workshop form: active, approved instructors. `instructorId`: keep the current one regardless. */
 export async function getWorkshopFormOptions(instructorId?: string) {
   await requireAdmin()
   const [cats, people, terms, [contractTemplate]] = await Promise.all([
@@ -251,7 +251,7 @@ export async function getWorkshopFormOptions(instructorId?: string) {
     db
       .select({ id: instructors.id, displayName: instructors.displayName, officialName: instructors.officialName })
       .from(instructors)
-      .where(instructorId ? or(eq(instructors.active, true), eq(instructors.id, instructorId)) : eq(instructors.active, true))
+      .where(or(and(eq(instructors.active, true), isNotNull(instructors.approvedAt)), instructorId ? eq(instructors.id, instructorId) : undefined))
       .orderBy(asc(instructors.officialName)),
     db
       .select({ id: templates.id, name: templates.name, isDefault: templates.isDefault })

@@ -86,6 +86,14 @@ export async function sampleEmailProps<T extends EmailTemplate>(template: T, loc
   const samples: { [K in EmailTemplate]: EmailProps<K> } = {
     welcome_verify: { name: person, verifyUrl: `/${locale}` },
     instructor_invite: { name: instructorName, acceptUrl: `/${locale}` },
+    instructor_signup: {
+      adminName,
+      instructorName,
+      teachingField: t("emails.sample.teachingField"),
+      instructorEmail: "instructor@example.com",
+      instructorUrl: `/${locale}/admin/instructors`,
+    },
+    instructor_approved: { name: instructorName, panelUrl: `/${locale}/instructor` },
     contract_ready: { instructorName, workshopTitle, workshopDate: `${date}${locale === "fa" ? "،" : ","} ${time}`, signUrl: `/${locale}` },
     contract_signed: { adminName, instructorName, workshopTitle, workshopUrl: `/${locale}/admin` },
     decision_due: {

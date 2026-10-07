@@ -1,4 +1,4 @@
-import { PlusIcon, UsersRoundIcon } from "lucide-react"
+import { ChevronRightIcon, PlusIcon, UserRoundPlusIcon, UsersRoundIcon } from "lucide-react"
 import type { Metadata } from "next"
 import { getLocale, getTranslations } from "next-intl/server"
 
@@ -7,7 +7,7 @@ import { parseTableParams } from "@/components/admin/data-table/params"
 import { EmptyState } from "@/components/admin/empty-state"
 import { PageHeader } from "@/components/admin/page-header"
 import { Button } from "@/components/ui/button"
-import { listInstructors, type InstructorRow } from "@/features/instructors/queries"
+import { countPendingInstructors, listInstructors, type InstructorRow } from "@/features/instructors/queries"
 import { instructorTable, languageName, profileText } from "@/features/instructors/schema"
 import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
@@ -31,7 +31,7 @@ export default async function InstructorsPage({ searchParams }: PageProps<"/[loc
     defaultSort: "name",
     filters: instructorTable.filters,
   })
-  const { rows, total } = await listInstructors(params, locale)
+  const [{ rows, total }, pending] = await Promise.all([listInstructors(params, locale), countPendingInstructors()])
 
   const newButton = (
     <Button asChild size="lg" className="px-4">
@@ -102,7 +102,7 @@ export default async function InstructorsPage({ searchParams }: PageProps<"/[loc
     {
       key: "status",
       header: t("table.status"),
-      cell: (row) => <InstructorStatus active={row.active} hasPassword={row.hasPassword} />,
+      cell: (row) => <InstructorStatus active={row.active} approved={row.approved} hasPassword={row.hasPassword} />,
     },
     {
       key: "workshops",
@@ -134,6 +134,19 @@ export default async function InstructorsPage({ searchParams }: PageProps<"/[loc
         // With no instructors at all, the empty state carries the button instead.
         actions={total > 0 || params.q || Object.keys(params.filters).length ? newButton : undefined}
       />
+      {pending > 0 && params.filters.status !== "pending" && (
+        <Link
+          href="/admin/instructors?status=pending"
+          className="border-warning/30 bg-warning/8 hover:bg-warning/12 focus-visible:ring-ring/50 mb-6 flex items-center gap-3 rounded-xl border p-4 text-sm outline-none transition-colors focus-visible:ring-3"
+        >
+          <UserRoundPlusIcon className="text-warning size-5 shrink-0" />
+          <span className="flex-1 text-pretty">{t("approval.waiting", { count: pending })}</span>
+          <span className="text-primary inline-flex items-center gap-1 font-medium">
+            {t("approval.show")}
+            <ChevronRightIcon className="size-4 rtl:-scale-x-100" />
+          </span>
+        </Link>
+      )}
       <DataTable
         columns={columns}
         rows={rows}

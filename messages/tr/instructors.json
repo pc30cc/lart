@@ -54,6 +54,7 @@
     "selected": "Seçili"
   },
   "status": {
+    "pending": "Onay bekliyor",
     "active": "Aktif",
     "inactive": "Pasif",
     "invited": "Davet edildi"
@@ -186,6 +187,19 @@
     "idUnreadable": "Bu kimlik numarası okunamadı. Lütfen düzenleme sayfasında yeniden girin.",
     "inviteInactive": "Bu eğitmen pasif. Önce aktifleştirin, sonra daveti gönderin.",
     "alreadySetUp": "Bu eğitmen şifresini zaten belirlemiş, davete ihtiyacı yok.",
-    "inviteNotSent": "Davet e-postası gönderilemedi. Lütfen biraz sonra yeniden deneyin."
+    "inviteNotSent": "Davet e-postası gönderilemedi. Lütfen biraz sonra yeniden deneyin.",
+    "approveInactive": "Bu eğitmen pasif. Önce aktif edin, sonra onaylayın."
+  },
+  "approval": {
+    "title": "Kendisi kaydoldu: onayınızı bekliyor",
+    "description": "Aşağıdaki bilgileri (resmî ad, kimlik numarası, cep telefonu) kontrol edin. Siz onaylayana kadar panelini kullanabilir ama bir atölyeye seçilemez.",
+    "approve": "Onayla",
+    "confirmTitle": "{name} onaylansın mı?",
+    "confirmDescription": "Bundan sonra atölyelere seçilebilir ve “onaylandınız” e-postası alır.",
+    "confirm": "Evet, onayla",
+    "approved": "Onaylandı. Güzel haberi e-postayla ilettik.",
+    "approvedNoEmail": "Onaylandı. E-posta gönderilemedi, lütfen kendisine siz haber verin.",
+    "waiting": "{count, plural, other {# eğitmen kaydoldu ve onayınızı bekliyor.}}",
+    "show": "Göster"
   }
 }

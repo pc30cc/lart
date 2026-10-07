@@ -216,7 +216,9 @@
         "delete": "Eğitmen silindi",
         "invite": "Davet gönderildi",
         "reveal_id": "Kimlik numarası görüntülendi",
-        "profile_update": "Eğitmen profilini düzenledi"
+        "profile_update": "Eğitmen profilini düzenledi",
+        "signup": "Eğitmen kaydoldu",
+        "approve": "Eğitmen onaylandı"
       },
       "media": {
         "upload": "Dosya yüklendi"

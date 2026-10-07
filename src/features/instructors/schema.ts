@@ -78,7 +78,8 @@ export function maskIdNumber(idNumber: string): string {
 const ID_NUMBER = /^[A-Z0-9]{5,20}$/
 const httpsUrl = z.url({ protocol: /^https$/, hostname: z.regexes.domain })
 
-const fields = z.object({
+/** Every instructor field (the forms below and the instructor's own sign-up pick from these). */
+export const instructorFields = z.object({
   // Public, required.
   displayName: localizedText({ required: ["tr", "en"], max: 80 }),
   teachingField: localizedText({ required: ["tr", "en"], max: 80 }),
@@ -125,18 +126,22 @@ const fields = z.object({
   inviteLocale: z.enum(inviteLocales).optional(),
 })
 
+/** For `.refine`: the ID number was typed (create and sign-up). */
+export const idNumberGiven = (v: object) => (v as { idNumber?: unknown }).idNumber !== undefined
+export const idNumberRequired = {
+  path: ["idNumber"],
+  error: "common.validation.required",
+  when: (payload: { value: unknown }) => typeof payload.value === "object" && payload.value !== null,
+}
+
 /**
  * Create: the ID number is required. `when` runs the check even while other
  * fields are invalid, so every problem is shown at once.
  */
-export const instructorSchema = fields.refine((v) => (v as { idNumber?: unknown }).idNumber !== undefined, {
-  path: ["idNumber"],
-  error: "common.validation.required",
-  when: (payload) => typeof payload.value === "object" && payload.value !== null,
-})
+export const instructorSchema = instructorFields.refine(idNumberGiven, idNumberRequired)
 /** Edit form: an empty ID number keeps the stored one. */
-export const instructorEditSchema = fields
-export const instructorUpdateSchema = fields.omit({ inviteLocale: true }).extend({ id: uuid() })
+export const instructorEditSchema = instructorFields
+export const instructorUpdateSchema = instructorFields.omit({ inviteLocale: true }).extend({ id: uuid() })
 export const instructorIdSchema = z.object({ id: uuid() })
 export const instructorActiveSchema = z.object({ id: uuid(), active: z.boolean() })
 export const resendInviteSchema = z.object({ id: uuid(), locale: z.enum(inviteLocales) })
@@ -146,5 +151,5 @@ export type InstructorFormValues = z.input<typeof instructorSchema>
 /** List page: sortable columns and filters (validated by parseTableParams). */
 export const instructorTable = {
   sort: ["name", "workshops"] as const,
-  filters: { status: ["active", "inactive", "invited"] as const },
+  filters: { status: ["pending", "active", "inactive", "invited"] as const },
 }

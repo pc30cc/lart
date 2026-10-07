@@ -5,7 +5,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { db } from "@/db"
 import { instructors, members, sessions } from "@/db/schema"
-import { encrypt } from "@/lib/crypto"
+import { decrypt, encrypt } from "@/lib/crypto"
 import { sendEmail } from "@/lib/email"
 import { sessionCookieName } from "@/lib/auth/cookies"
 import { LOCKOUT } from "@/lib/auth/login"
@@ -16,6 +16,7 @@ import {
   acceptInviteAction,
   instructorLoginAction,
   instructorLogoutAction,
+  instructorSignupAction,
   memberLoginAction,
   memberLogoutAction,
   memberSignupAction,
@@ -32,6 +33,7 @@ vi.mock("next-intl/server", async () => {
     common: (await import("../../../messages/en/common.json")).default,
     auth: (await import("../../../messages/en/auth.json")).default,
     account: (await import("../../../messages/en/account.json")).default,
+    instructors: (await import("../../../messages/en/instructors.json")).default,
   }
   return {
     getTranslations: async (namespace?: string) =>
@@ -338,5 +340,95 @@ describe("instructors", () => {
     await signIn("instructor", i.id)
     await expect(instructorLogoutAction()).rejects.toMatchObject(redirectTo("/en/instructor/login?notice=signedOut"))
     expect(instructorCookie()).toBeUndefined()
+  })
+})
+
+const instructorSignup = (values: Partial<Parameters<typeof instructorSignupAction>[0] & object> = {}) =>
+  instructorSignupAction({
+    displayName: { fa: "", tr: "Zeynep Kaya", en: "Zeynep Kaya" },
+    teachingField: { fa: "", tr: "Seramik", en: "Ceramics" },
+    bio: { fa: "", tr: "", en: "" },
+    teachingLanguages: ["tr", "en"],
+    website: "@zeynep.clay",
+    officialName: "Zeynep  Kaya",
+    idNumber: "123 456 789 01",
+    mobile: "0090 532 123 45 67",
+    email: address("teach"),
+    password: PASSWORD,
+    agree: true,
+    ...values,
+  })
+
+describe("instructorSignupAction", () => {
+  it("creates an account waiting for approval, signs in, opens the panel and emails the verify link and the admins", async () => {
+    const email = address("teacher")
+    await expect(instructorSignup({ email: email.toUpperCase() })).rejects.toMatchObject(redirectTo("/en/instructor"))
+    const [row] = await db.select().from(instructors).where(eq(instructors.email, email))
+    expect(row).toMatchObject({
+      officialName: "Zeynep Kaya",
+      mobile: "+905321234567",
+      website: "https://www.instagram.com/zeynep.clay",
+      teachingLanguages: ["tr", "en"],
+      bio: null,
+      locale: "en",
+      active: true,
+      approvedAt: null,
+      emailVerifiedAt: null,
+    })
+    expect(decrypt(row.idNumberEnc)).toBe("12345678901")
+    expect(await verifyPassword(row.passwordHash!, PASSWORD)).toBe(true)
+    expect(instructorCookie()).toBeTruthy()
+
+    const sent = await emails()
+    expect(sent.find((e) => e.to === email)).toMatchObject({ template: "welcome_verify" })
+    expect(sent.find((e) => e.to === email)?.props.verifyUrl).toMatch(/^\/en\/instructor\/verify\?token=/)
+    expect(sent.filter((e) => e.to !== email).every((e) => e.template === "instructor_signup")).toBe(true)
+  })
+
+  it("refuses an email that already has an instructor account, and changes nothing", async () => {
+    const existing = await newInstructor()
+    const taken = "There’s already an instructor account with this email. Please log in, or use “Forgot your password?” on the login page."
+    expect(await instructorSignup({ email: existing.email, password: NEW })).toEqual({
+      ok: false,
+      error: taken,
+      fieldErrors: {
+        email: taken,
+      },
+    })
+    expect(instructorCookie()).toBeUndefined()
+    const [row] = await db.select().from(instructors).where(eq(instructors.id, existing.id))
+    expect(await verifyPassword(row.passwordHash!, PASSWORD)).toBe(true)
+    expect(await emails()).toEqual([])
+  })
+
+  it("needs the ID number, the confirmation, Turkish and English names, and no links in the name", async () => {
+    const email = address("incomplete")
+    const result = await instructorSignup({
+      email,
+      idNumber: "",
+      agree: false as true,
+      displayName: { fa: "", tr: "Zeynep", en: "" },
+      mobile: "123",
+    })
+    expect(result).toMatchObject({ ok: false })
+    expect(Object.keys((result as { fieldErrors: object }).fieldErrors).sort()).toEqual(
+      ["agree", "displayName.en", "idNumber", "mobile"].sort(),
+    )
+    // The display name greets the emails we send: no links, addresses or numbers (any language).
+    expect(await instructorSignup({ email, displayName: { fa: "سایت evil.example", tr: "Zeynep", en: "Zeynep" } })).toEqual({
+      ok: false,
+      error: "Please check the highlighted fields.",
+      fieldErrors: { "displayName.fa": "Please enter just your name (no links, emails or numbers)." },
+    })
+    expect(await db.select().from(instructors).where(eq(instructors.email, email))).toEqual([])
+    expect(await emails()).toEqual([])
+  })
+
+  it("is rate limited per network", async () => {
+    for (let i = 0; i < 5; i++) await instructorSignup({ password: "short" })
+    expect(await instructorSignup()).toEqual({
+      ok: false,
+      error: "Too many tries from this device. Please wait a few minutes, then try again.",
+    })
   })
 })

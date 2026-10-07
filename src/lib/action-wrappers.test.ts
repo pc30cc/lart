@@ -29,7 +29,7 @@ const member = {
 }
 const instructor = {
   sessionId: "s",
-  instructor: { id: "i1", email: "z@test.local", displayName: { tr: "Zeynep" }, locale: "tr" as const, emailVerified: true },
+  instructor: { id: "i1", email: "z@test.local", displayName: { tr: "Zeynep" }, locale: "tr" as const, emailVerified: true, approved: true },
 }
 vi.mock("./auth/member", () => ({ requireMember: vi.fn(async () => member) }))
 vi.mock("./auth/instructor", () => ({ requireInstructor: vi.fn(async () => instructor) }))

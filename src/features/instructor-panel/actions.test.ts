@@ -44,7 +44,7 @@ const signedIn = vi.hoisted(() => ({ id: "" }))
 vi.mock("@/lib/auth/instructor", () => {
   const session = (): InstructorSession => ({
     sessionId: "test",
-    instructor: { id: signedIn.id, email: "x@test.local", displayName: { tr: "Zeynep" }, locale: "en", emailVerified: true },
+    instructor: { id: signedIn.id, email: "x@test.local", displayName: { tr: "Zeynep" }, locale: "en", emailVerified: true, approved: true },
   })
   return { requireInstructor: async () => session(), getInstructor: async () => session() }
 })

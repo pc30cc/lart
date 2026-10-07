@@ -1,6 +1,6 @@
 "use client"
 
-import { MailIcon } from "lucide-react"
+import { HourglassIcon, MailIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
@@ -56,6 +56,21 @@ export function VerifyBanner({ email }: { email: string }) {
           {pending && <Spinner aria-hidden />}
           {t("resend")}
         </Button>
+      </div>
+    </div>
+  )
+}
+
+/** "Thanks for signing up: the team is checking your details", until an admin approves a self-registered instructor. */
+export function ApprovalBanner() {
+  const t = useTranslations("instructorPanel.approvalBanner")
+  return (
+    <div role="region" aria-label={t("label")} className="border-info/25 bg-info/10 border-b print:hidden">
+      <div className="mx-auto flex max-w-4xl px-4 py-3">
+        <p className="flex flex-1 items-start gap-2.5 text-sm leading-relaxed">
+          <HourglassIcon className="text-info mt-0.5 size-4.5 shrink-0" />
+          <span className="text-pretty">{t("text")}</span>
+        </p>
       </div>
     </div>
   )

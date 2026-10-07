@@ -4,6 +4,7 @@
  */
 import { z } from "zod"
 
+import { idNumberGiven, idNumberRequired, instructorFields } from "@/features/instructors/schema"
 import { locales } from "@/i18n/routing"
 import { ACCOUNT_PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH } from "@/lib/auth/schemas"
 import { normalizeDigits } from "@/lib/format"
@@ -62,6 +63,30 @@ export const signupSchema = z.object({
     .refine((v) => v === "" || /^\+?\d{7,15}$/.test(v), { error: "account.signup.errors.phone" }),
   next,
 })
+
+/**
+ * An instructor's own sign-up (`/<locale>/instructor/signup`): the same fields
+ * and rules as the admins' instructor form, minus the photo (added later in
+ * the panel, which can upload), plus a password and "my details are correct".
+ * The display name is the greeting of the emails we send, so, like a member's
+ * name, it may not carry a link, an email address or a phone number.
+ */
+export const instructorSignupSchema = instructorFields
+  .omit({ photoPath: true, inviteLocale: true })
+  .extend({
+    displayName: instructorFields.shape.displayName.check((ctx) => {
+      for (const [locale, name] of Object.entries(ctx.value)) {
+        if (name && looksLikeContact(name)) {
+          ctx.issues.push({ code: "custom", input: name, path: [locale], message: "account.signup.errors.name" })
+        }
+      }
+    }),
+    password: newPassword(),
+    agree: z.literal(true, { error: "auth.instructor.signup.errors.agree" }),
+  })
+  .refine(idNumberGiven, idNumberRequired)
+
+export type InstructorSignupValues = z.input<typeof instructorSignupSchema>
 
 /** Sign in (members and instructors). */
 export const accountLoginSchema = z.object({

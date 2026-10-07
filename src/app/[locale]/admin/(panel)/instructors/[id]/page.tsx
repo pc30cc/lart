@@ -23,6 +23,7 @@ import { requireAdmin } from "@/lib/auth/admin"
 import { formatDate, formatDateTime, formatNumber, formatTime, localized } from "@/lib/format"
 import { IdNumberReveal } from "../_components/id-number-reveal"
 import { InstructorAvatar } from "../_components/instructor-avatar"
+import { ApproveInstructor } from "../_components/approve-instructor"
 import { InstructorStatus } from "../_components/instructor-status"
 import { InviteButton } from "../_components/invite-button"
 import { ManageInstructor } from "../_components/manage-instructor"
@@ -82,6 +83,7 @@ export default async function InstructorPage({ params }: PageProps<"/[locale]/ad
       />
 
       <div className="space-y-6">
+        {instructor.active && !instructor.approved && <ApproveInstructor id={instructor.id} name={name} />}
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
           <div className="min-w-0 space-y-6">
             <Panel
@@ -183,7 +185,7 @@ export default async function InstructorPage({ params }: PageProps<"/[locale]/ad
                 <div className="space-y-1.5">
                   <dt className="text-muted-foreground">{t("detail.status")}</dt>
                   <dd>
-                    <InstructorStatus active={instructor.active} hasPassword={instructor.hasPassword} />
+                    <InstructorStatus active={instructor.active} approved={instructor.approved} hasPassword={instructor.hasPassword} />
                   </dd>
                 </div>
                 <div className="space-y-1">

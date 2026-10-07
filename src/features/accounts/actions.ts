@@ -12,6 +12,7 @@ import { LOCKOUT, verifyCredentials } from "@/lib/auth/login"
 import { createRateLimiter } from "@/lib/auth/rate-limit"
 import { safeNext } from "@/lib/auth/safe-next"
 import { endSession, startSession } from "@/lib/auth/session"
+import { sendInstructorSignup } from "@/features/instructors/notify"
 import { errorForLog } from "@/lib/errors"
 import {
   acceptInvite,
@@ -21,6 +22,7 @@ import {
   sendVerifyLink,
   setInstructorLocale,
   setMemberLocale,
+  signUpInstructor,
   signUpMember,
   verifyEmail,
   type AccountKind,
@@ -31,6 +33,7 @@ import {
   accountLoginSchema,
   accountPasswordSchema,
   accountTokenSchema,
+  instructorSignupSchema,
   signupSchema,
   withNotice,
 } from "./schema"
@@ -146,6 +149,42 @@ export const setMemberLocaleAction = publicAction(
 )
 
 // ─── Instructors ──────────────────────────────────────────────────────────────
+
+/**
+ * An instructor's own sign-up (the page is not linked from the site; the team
+ * shares its address). The new account is signed in and opens the panel,
+ * where a banner says it waits for the team's approval; the instructor gets
+ * the welcome + verify email, every admin a "new instructor" email. An email
+ * that already has an instructor account is refused with a pointer to sign in.
+ */
+export const instructorSignupAction = publicAction(
+  instructorSignupSchema,
+  async (input) => {
+    const locale = await getLocale()
+    const { displayName, teachingField, bio, teachingLanguages, website, officialName, mobile, email, password } = input
+    const id = await signUpInstructor({
+      displayName,
+      teachingField,
+      bio,
+      teachingLanguages,
+      website,
+      officialName,
+      mobile,
+      email,
+      password,
+      idNumber: input.idNumber ?? "",
+      locale,
+    })
+    if (!id) throw new UserError("auth.instructor.signup.errors.emailTaken", { field: "email" })
+    await startSession("instructor", id)
+    after(async () => {
+      await sendVerifyLink("instructor", id).catch(logFailure("instructor welcome email"))
+      await sendInstructorSignup(id).catch(logFailure("new instructor email"))
+    })
+    redirect(panelPath(locale))
+  },
+  perNetwork(5, 60),
+)
 
 /** Instructor sign-in (deactivated instructors cannot). Into the panel, or back to `next` inside it. */
 export const instructorLoginAction = publicAction(

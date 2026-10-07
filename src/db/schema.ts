@@ -88,6 +88,12 @@ export const instructors = pgTable("instructors", {
   /** Language of the instructor's emails and panel. */
   locale: text("locale").notNull().default("tr"),
   active: boolean("active").notNull().default(true),
+  /**
+   * When an admin approved the instructor. Null for someone who signed up on
+   * their own and is still waiting: they can use their panel, but cannot be
+   * chosen for a workshop. Admins' own instructors are approved on creation.
+   */
+  approvedAt: timestamp("approved_at", { withTimezone: true }),
   emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
   failedLogins: smallint("failed_logins").notNull().default(0),
   lockedUntil: timestamp("locked_until", { withTimezone: true }),

@@ -50,7 +50,7 @@ src/
       (site)/                   the public site frame (header, footer, "confirm your email" banner; phase 3 themes replace it)
         workshops/              list, /[slug] page, /[slug]/register
         account/                My workshops (page.tsx), registrations/[id], signup, login, verify, forgot, reset
-      instructor/(auth)/        instructor sign in, accept-invite, forgot, reset, verify (no panel chrome)
+      instructor/(auth)/        instructor sign in, sign up, accept-invite, forgot, reset, verify (no panel chrome)
       instructor/(panel)/       the instructor panel: home, contracts, workshops, earnings, profile
       admin/login/              super-admin sign in, forgot/ and reset/ password (no panel chrome)
       admin/(panel)/<module>/   super-admin pages, one folder per module
@@ -549,8 +549,19 @@ export const contactForm = publicAction(contactSchema, handler, { rateLimit: { l
 | `/<l>/account/login` | back to `next` or the workshops; one message for every failure; lockout after 5 tries for 15 min |
 | `/<l>/account/verify?token=` | confirms the email from the page's script (a mail scanner fetching the link does not use it up); a used link of a confirmed email still says "confirmed" |
 | `/<l>/account/forgot`, `/reset?token=` | same answer for any address; 30-minute one-time link; the reset ends every other session, confirms the email and signs this device in |
+| `/<l>/instructor/signup` | an instructor's own sign-up (`instructorSignupAction`, 5 per network per hour): the admins' instructor fields minus the photo, plus password and "my details are correct"; the display name may not carry a link, address or number (it greets the emails). Stored with `approved_at` null (audit `instructor.signup`), signed in, into the panel; `welcome_verify` to the instructor and `instructor_signup` to every active admin. An email that already has an instructor account is refused with a pointer to log in |
 | `/<l>/instructor/accept-invite?token=` | the invitation (`features/instructors`, 7 days): password, email confirmed, link used, one transaction; signed in, into the panel |
 | `/<l>/instructor/login`, `/forgot`, `/reset`, `/verify` | as for members; inactive instructors and instructors without a password never get in |
+
+**Approval.** `instructors.approved_at` is null while a self-registered
+instructor waits: they can use the panel (banner "waiting for approval",
+`InstructorSession.instructor.approved`), but the workshop form does not
+offer them and `createWorkshop` / `updateWorkshop` refuse them, like an
+inactive instructor. Instructors added by an admin are approved on creation
+(migration 0005 approved every existing row). `approveInstructor`
+(`features/instructors/actions`, audit `instructor.approve`) sets it once and
+emails `instructor_approved`; the list filter `status=pending` and
+`countPendingInstructors()` show who waits.
 
 The member's language (`members.locale`, the language of their emails)
 follows the site's language switch (header and account menu) while signed in
@@ -616,6 +627,8 @@ instructor panel's private address (README §5). Do not add them there.
 | `refund_sent` | registrations | an admin marked the refund as paid back |
 | `workshop_cancelled` | workshops (`cancelWorkshop`) | to everyone registered, one per member: with `refundAmount` (refunded in full) when they had paid, without it ("please don't come to the venue") when not |
 | `workshop_reminder` | jobs (day before) | one per member and workshop per batch of registrations (a registration added after the reminder gets its own); with `amount` (still to pay), `participantName` and the payment ways (as `registration_received`) while something is unpaid |
+| `instructor_signup` | accounts (`instructorSignupAction`) | to every active super admin, in the default language: a new instructor waits for approval, link to their profile |
+| `instructor_approved` | instructors (`approveInstructor`) | in the instructor's language, link to the panel |
 | `contract_ready` | workshops / contracts | in the instructor's language (`instructors.locale`: the invitation language the admin chose when creating the instructor or resending the invitation, then the invitation page's and the panel's language switch), sign link in that language |
 
 `paymentWays(await getSetting("payment"), course.paymentUrl, locale)`

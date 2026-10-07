@@ -30,7 +30,7 @@ import { Link, usePathname } from "@/i18n/navigation"
 import { formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { usePanelLocale } from "./use-panel-locale"
-import { VerifyBanner } from "./verify-banner"
+import { ApprovalBanner, VerifyBanner } from "./verify-banner"
 
 type NavItem = { href: string; key: "home" | "workshops" | "contracts" | "earnings" | "profile"; icon: LucideIcon }
 
@@ -48,13 +48,14 @@ const isActive = (pathname: string, href: string) =>
 /**
  * The instructor panel's frame: the brand, the menu (in the header on larger
  * screens, a bar at the bottom on phones), language, theme and the account
- * menu, plus the "Please confirm your email" banner. Nothing of it is printed.
+ * menu, plus the "waiting for approval" and "Please confirm your email" banners. Nothing of it is printed.
  */
 export function PanelShell({
   brand,
   name,
   email,
   emailVerified,
+  approved,
   toSign,
   children,
 }: {
@@ -62,6 +63,8 @@ export function PanelShell({
   name: string
   email: string
   emailVerified: boolean
+  /** False while the team has not approved a self-registered instructor: a banner says so. */
+  approved: boolean
   /** Contracts waiting for a signature: a badge on "Contracts". */
   toSign: number
   children: React.ReactNode
@@ -114,6 +117,7 @@ export function PanelShell({
         </div>
       </header>
 
+      {!approved && <ApprovalBanner />}
       {!emailVerified && <VerifyBanner email={email} />}
 
       <main

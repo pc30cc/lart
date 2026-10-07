@@ -110,7 +110,7 @@ describe("proxy", () => {
     expect(signedIn.headers.get("x-robots-tag")).toBe("noindex, nofollow")
   })
 
-  it.each(["login", "accept-invite", "forgot", "reset", "verify"])("lets /instructor/%s through without a session, noindex", (page) => {
+  it.each(["login", "signup", "accept-invite", "forgot", "reset", "verify"])("lets /instructor/%s through without a session, noindex", (page) => {
     const res = proxy(request(`/tr/instructor/${page}?token=abc`))
     expect(res.status).toBe(200)
     expect(res.headers.get("x-robots-tag")).toBe("noindex, nofollow")

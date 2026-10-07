@@ -57,6 +57,7 @@ export async function createInstructor(run: string, options: { active?: boolean 
       displayName: { tr: "Zeynep", en: "Zeynep", fa: "زینب" },
       teachingField: { tr: "Mum", en: "Candles" },
       active: options.active ?? true,
+      approvedAt: new Date(),
     })
     .returning()
   return row

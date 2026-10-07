@@ -41,6 +41,7 @@ export async function makeWorld() {
       mobile: "+900000000000",
       displayName: { tr: "Ayşe", en: "Ayse" },
       teachingField: { tr: "Seramik", en: "Ceramics" },
+      approvedAt: new Date(),
     })
     .returning({ id: instructors.id })
   const [contract, terms] = await db

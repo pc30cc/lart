@@ -238,5 +238,9 @@
       "emailUnverified": "Not confirmed yet",
       "change": "Need to change one of these? Please write to the {brand} team and we’ll update it for you."
     }
+  },
+  "approvalBanner": {
+    "label": "Waiting for approval",
+    "text": "Thank you for signing up! The team is checking your details. Once they approve your profile, we can plan workshops with you. Meanwhile you can add your photo in “My profile”."
   }
 }
