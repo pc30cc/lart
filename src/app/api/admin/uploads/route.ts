@@ -49,11 +49,14 @@ const fail = (code: UploadErrorCode) => Response.json({ error: code }, { status:
  * instructor's English or Turkish name (`instructorId`), the signed-in
  * partner's name if it has Latin letters, else their email (their photo). For a workshop or instructor not
  * saved yet, the form's `folder` hint (its slug or name), only ever used as a
- * sanitized name, else "new". Null: an unknown id, or a field the purpose
- * does not take.
+ * sanitized name, else "new". The home page's photos and video always go to
+ * site/ (no name). Null: an unknown id, or a field the purpose does not take.
  */
 async function folderOf(purpose: UploadPurpose, fields: Fields, admin: AdminSession["admin"]): Promise<string | null> {
   const { courseId, instructorId, folder } = fields
+  if (purpose === "site_image" || purpose === "site_video") {
+    return courseId || instructorId || folder !== undefined ? null : ""
+  }
   if (purpose === "admin_photo" || purpose === "watermark_logo") {
     if (courseId || instructorId || folder !== undefined) return null
     // The name only when it has Latin letters ("مینا 2" would give "2"), else the email's local part.
@@ -104,10 +107,8 @@ export async function POST(request: Request) {
     const fields = fieldsSchema.safeParse(Object.fromEntries(raw))
     if (part?.name !== "file" || part.filename === null || !fields.success) return fail("bad_request")
     const { purpose, total, upload, offset } = fields.data
-    if (isImagePurpose(purpose)) {
-      if (total !== undefined || upload !== undefined || offset !== undefined) return fail("bad_request")
-      if (declared > maxUploadBytes(purpose) + FRAMING_BYTES) return fail("too_large")
-    }
+    if (isImagePurpose(purpose) && (total !== undefined || upload !== undefined || offset !== undefined)) return fail("bad_request")
+    if (declared > maxUploadBytes(purpose) + FRAMING_BYTES) return fail("too_large")
     const folder = await folderOf(purpose, fields.data, session.admin)
     if (folder === null) return fail("bad_request")
 
@@ -116,9 +117,10 @@ export async function POST(request: Request) {
     if (isImagePurpose(purpose)) {
       result = await storeImage({ storage, purpose, file: form.file(maxUploadBytes(purpose)), watermark, folder })
     } else {
-      const limit = (total ?? MAX_VIDEO_BYTES) - (offset ?? 0)
+      const limit = (total ?? maxUploadBytes(purpose)) - (offset ?? 0)
       const stored = await storeVideoPart({
         storage,
+        purpose,
         owner: session.admin.id,
         file: form.file(Math.max(0, limit)),
         upload,

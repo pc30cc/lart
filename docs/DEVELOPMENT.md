@@ -328,8 +328,10 @@ no private storage. The database stores only the storage path, e.g.
 
 - **Upload from a form** with the components in `components/admin/upload`:
   `<ImageUpload purpose="course_cover" {...field} previewUrl={url} target={…} />`,
-  `<VideoUpload {...field} />` and `<MediaGrid value onChange target={…} />`
-  (many photos and videos, reorder, remove). The value is the storage path.
+  `<VideoUpload {...field} />` (`purpose="site_video"` for the home page's
+  video; `gallery_video` by default) and `<MediaGrid value onChange target={…} />`
+  (many photos and videos, reorder, remove; `imagePurpose`, `allowVideos`,
+  `videoPurpose`, `max`). The value is the storage path.
 - **Purposes** (`lib/storage/shared.ts`) and where they are stored
   (`uploadPath` in `lib/storage/upload.ts`; `<random>` is 128 random bits):
 
@@ -342,6 +344,12 @@ no private storage. The database stores only the storage path, e.g.
   | `instructor_photo` | square 800 | `instructors/<name>/photo-<random>.webp` |
   | `admin_photo` | a partner's photo, square 512 | `partners/<name>/photo-<random>.webp` |
   | `watermark_logo` | PNG | `brand/watermark-logo-<random>.png` |
+  | `site_image` | the home page's photos: 2560 wide, never watermarked | `site/img-<random>.webp` |
+  | `site_video` | the home page's video: MP4 or WebM only (a MOV does not play by itself in Chromium or Firefox), up to 80 MB, sent in 8 MB parts | `site/video-<random>.<ext>` |
+
+  Video purposes are listed in `videoPurposes`, the formats each one takes
+  in `videoFormats` (checked from the content on the server, from the type
+  or name in the browser) and their size in `maxUploadBytes`.
 
   Images are checked from their bytes, auto-rotated, stripped of all metadata
   (GPS) and re-encoded as WebP.
@@ -356,8 +364,10 @@ no private storage. The database stores only the storage path, e.g.
   not just digits, else the email's local part) and on the instructor route
   (the instructor's name), and for a workshop or instructor not saved yet
   from the form's `target={{ folder }}` hint (the slug field, the English
-  name), sanitized again, else `new`. An unknown id is refused (400).
-  Renaming a record never moves its files (the paths are stored). Paths
+  name), sanitized again, else `new`. An unknown id is refused (400), and so
+  is any `courseId`, `instructorId` or `folder` sent with the watermark logo,
+  a partner's photo or the home page's files (`brand/`, `partners/<name>/`
+  from the session, `site/`). Renaming a record never moves its files (the paths are stored). Paths
   from before the named folders (`courses/<yyyy-mm>/…`, `gallery/<yyyy-mm>/…`,
   `admins/…`, `brand/<yyyy-mm>/…`) stay valid.
 - **Validate a submitted path** with `isSafePath` and the layout of its kind

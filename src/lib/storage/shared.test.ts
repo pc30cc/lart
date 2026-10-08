@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { newObjectPath } from "./index"
-import { folderName, isSafePath, maxUploadBytes, mediaContentType } from "./shared"
+import { folderName, isImagePurpose, isSafePath, maxUploadBytes, mediaContentType, uploadPurposes, videoFormats, videoPurposes } from "./shared"
 
 describe("isSafePath", () => {
   it.each([
@@ -86,6 +86,14 @@ describe("limits and content types", () => {
   it("allows big videos and smaller images", () => {
     expect(maxUploadBytes("gallery_video")).toBe(500 * 1024 * 1024)
     expect(maxUploadBytes("course_cover")).toBe(15 * 1024 * 1024)
+    expect(maxUploadBytes("site_image")).toBe(15 * 1024 * 1024)
+    expect(maxUploadBytes("site_video")).toBe(80 * 1024 * 1024)
+  })
+  it("knows which purposes are videos and which formats they take", () => {
+    expect(uploadPurposes.filter((p) => !isImagePurpose(p))).toEqual([...videoPurposes])
+    expect(videoFormats.gallery_video).toEqual(["mp4", "mov", "webm"])
+    // The home page's video autoplays: MOV does not in Chromium or Firefox.
+    expect(videoFormats.site_video).toEqual(["mp4", "webm"])
   })
   it("maps only media extensions", () => {
     expect(mediaContentType("a/b.webp")).toBe("image/webp")

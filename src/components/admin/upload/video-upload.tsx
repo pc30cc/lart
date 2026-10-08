@@ -4,12 +4,14 @@ import { FilmIcon, RefreshCwIcon, Trash2Icon, VideoIcon } from "lucide-react"
 import { useId, useRef, useState, type Ref } from "react"
 
 import { Button } from "@/components/ui/button"
-import { MAX_VIDEO_BYTES, VIDEO_ACCEPT, type UploadResult, type UploadTarget } from "@/lib/storage/shared"
+import { maxUploadBytes, videoAccept, type UploadResult, type UploadTarget, type VideoPurpose } from "@/lib/storage/shared"
 import { cn } from "@/lib/utils"
 import { Dropzone, OverlayButton, UploadMessage, UploadOverlay } from "./parts"
-import { useFileDrop, useMediaText, useSingleUpload } from "./upload-client"
+import { fileKind, useFileDrop, useMediaText, useSingleUpload } from "./upload-client"
 
 export type VideoUploadProps = {
+  /** gallery_video (MP4, MOV or WebM; the default) or site_video (the home page's: MP4 or WebM, smaller). */
+  purpose?: VideoPurpose
   /** Storage path (the form field value). */
   value: string | null | undefined
   onChange: (path: string | null, result?: UploadResult) => void
@@ -28,14 +30,27 @@ export type VideoUploadProps = {
   "aria-describedby"?: string
 }
 
-/** One video (MP4, MOV or WebM, stored as a plain CDN file): drag and drop or click, progress, replace and remove. */
-export function VideoUpload({ value, onChange, previewUrl, target, onBlur, disabled, id, name, ref, className, ...aria }: VideoUploadProps) {
+/** One video (stored as a plain CDN file): drag and drop or click, progress, replace and remove. */
+export function VideoUpload({
+  purpose = "gallery_video",
+  value,
+  onChange,
+  previewUrl,
+  target,
+  onBlur,
+  disabled,
+  id,
+  name,
+  ref,
+  className,
+  ...aria
+}: VideoUploadProps) {
   const { t, size, error } = useMediaText()
   const inputRef = useRef<HTMLInputElement>(null)
   const messageId = useId()
   const [uploaded, setUploaded] = useState<UploadResult | null>(null)
   const { phase, start, cancel, dismiss } = useSingleUpload(
-    "gallery_video",
+    purpose,
     (result) => {
       setUploaded(result)
       onChange(result.path, result)
@@ -54,7 +69,7 @@ export function VideoUpload({ value, onChange, previewUrl, target, onBlur, disab
       <input
         ref={inputRef}
         type="file"
-        accept={VIDEO_ACCEPT}
+        accept={videoAccept[purpose]}
         className="sr-only"
         tabIndex={-1}
         disabled={disabled}
@@ -118,7 +133,7 @@ export function VideoUpload({ value, onChange, previewUrl, target, onBlur, disab
           id={id}
           icon={<VideoIcon />}
           title={dragging ? t("upload.dropToUpload") : t("upload.chooseVideo")}
-          hint={t("upload.videoHint", { size: size(MAX_VIDEO_BYTES) })}
+          hint={t(fileKind(purpose) === "webVideo" ? "upload.webVideoHint" : "upload.videoHint", { size: size(maxUploadBytes(purpose)) })}
           dragging={dragging}
           disabled={disabled}
           onClick={choose}
@@ -144,7 +159,7 @@ export function VideoUpload({ value, onChange, previewUrl, target, onBlur, disab
             </Button>
           }
         >
-          {error(phase.code, "gallery_video")}
+          {error(phase.code, purpose)}
         </UploadMessage>
       )}
     </div>

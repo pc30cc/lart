@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs"
 import path from "node:path"
-import { NextIntlClientProvider } from "next-intl"
+import { createTranslator, NextIntlClientProvider } from "next-intl"
 import { createElement, type ComponentProps, type ReactElement } from "react"
 import { renderToString } from "react-dom/server"
 import { afterEach, describe, expect, it, vi } from "vitest"
@@ -40,6 +40,12 @@ describe("upload components", () => {
     render(locale, createElement(VideoUpload, { value: null, onChange: noop }))
     render(locale, createElement(VideoUpload, { value: "gallery/2026-10/a.mp4", previewUrl: "/a.mp4", onChange: noop }))
     render(locale, createElement(MediaGrid, { value: [], onChange: noop }))
+    // The home page's photos and video.
+    expect(render(locale, createElement(VideoUpload, { purpose: "site_video", value: null, onChange: noop }))).toContain(
+      'accept="video/mp4,video/webm,.mp4,.webm"',
+    )
+    render(locale, createElement(ImageUpload, { purpose: "site_image", value: null, onChange: noop }))
+    render(locale, createElement(MediaGrid, { value: [], onChange: noop, imagePurpose: "site_image", max: 6 }))
     const grid = render(
       locale,
       createElement(MediaGrid, {
@@ -51,6 +57,15 @@ describe("upload components", () => {
       }),
     )
     expect(grid).toContain('src="/a.webp"')
+  })
+
+  it.each(["fa", "tr", "en"])("tell in %s that the home page's video must be an MP4 or WebM", (locale) => {
+    const t = createTranslator({ locale, messages: messages(locale), namespace: "media" })
+    const values = { size: "80 MB", megapixels: 70 }
+    const web = t("errors.unsupported_type", { ...values, kind: "webVideo" })
+    expect(web).not.toBe(t("errors.unsupported_type", { ...values, kind: "video" }))
+    expect(web).toContain("WebM")
+    expect(t("upload.webVideoHint", values)).not.toContain("MOV")
   })
 
   it("uses every message key in all three languages", () => {
@@ -68,6 +83,15 @@ describe("checkFile", () => {
     expect(checkFile(file("a.jpg", "image/jpeg"), "course_cover")).toBeNull()
     expect(checkFile(file("IMG_1.HEIC", ""), "gallery_photo")).toBeNull()
     expect(checkFile(file("clip.mov", "video/quicktime"), "gallery_video")).toBeNull()
+  })
+  it("takes only MP4 and WebM for the home page's video, up to 80 MB", () => {
+    expect(checkFile(file("clip.mp4", "video/mp4"), "site_video")).toBeNull()
+    expect(checkFile(file("clip.webm", ""), "site_video")).toBeNull()
+    expect(checkFile(file("IMG_0001.MOV", "video/quicktime"), "site_video")).toBe("unsupported_type")
+    expect(checkFile(file("IMG_0001.mov", ""), "site_video")).toBe("unsupported_type")
+    expect(checkFile(file("clip.mp4", "video/mp4", 80 * 1024 * 1024 + 1), "site_video")).toBe("too_large")
+    expect(checkFile(file("clip.mp4", "video/mp4", 80 * 1024 * 1024 + 1), "gallery_video")).toBeNull()
+    expect(checkFile(file("a.jpg", "image/jpeg"), "site_image")).toBeNull()
   })
   it("refuses wrong kinds, empty and oversized files", () => {
     expect(checkFile(file("a.gif", "image/gif"), "course_cover")).toBe("unsupported_type")

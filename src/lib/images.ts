@@ -100,6 +100,7 @@ async function encode(image: Sharp, format: "webp" | "png"): Promise<ProcessedIm
  * - course_sample: at most 1600 on the longest side
  * - gallery_photo: at most 2400 on the longest side, watermarked when a logo is given
  * - watermark_logo: PNG with its transparency, at most 1000 on the longest side
+ * - site_image: at most 2560 wide (the home page's photos, shown full width), never watermarked
  */
 export async function processImage(
   input: Buffer,
@@ -120,6 +121,8 @@ export async function processImage(
       }
       case "course_cover":
         return encode(image.resize({ width: 2000, withoutEnlargement: true }), "webp")
+      case "site_image":
+        return encode(image.resize({ width: 2560, withoutEnlargement: true }), "webp")
       case "course_sample":
         return encode(image.resize(1600, 1600, { fit: "inside", withoutEnlargement: true }), "webp")
       case "watermark_logo":
