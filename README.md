@@ -138,11 +138,15 @@ example when a new design reference is given:
 
 ### Editable from the super-admin panel
 
-- **Hero**: the moving hero video or image, headline, subtitle and
-  call-to-action button, per language.
-- **Every page and section** (home, about, contact, FAQ, footer, menus) in
-  FA / TR / EN, each with its own SEO title and description.
-- Home-page sections can be shown, hidden and reordered.
+- **Hero** (Settings → Home page): the theme's own photos, up to six of
+  your own shown one after another, or a short video (MP4 or WebM) with a
+  cover photo; headline, subtitle and button text in FA / TR / EN.
+- **Home-page sections** (our story, explore by craft, past workshops, how
+  it works): each can be shown or hidden, with its title, text and photo
+  per language. A field left empty shows the theme's own text or photo.
+- **Footer**: a few words about the brand, Instagram, email and phone.
+- **Every other page** (about, contact, FAQ) and the menus in FA / TR / EN,
+  each with its own SEO title and description.
 
 ## 4. Students
 
@@ -496,8 +500,8 @@ service). The database stores only the file path.
 
 Each part of the site has its own folder, named after the workshop or the
 person: `workshops/<workshop>/` (the cover, `samples/`, `gallery/`,
-`videos/`), `instructors/<name>/`, `partners/<name>/` and `brand/` (the
-watermark logo). Folder names are written in plain Latin letters (Turkish
+`videos/`), `instructors/<name>/`, `partners/<name>/`, `brand/` (the
+watermark logo) and `site/` (the home page's photos and video). Folder names are written in plain Latin letters (Turkish
 letters without their marks); a partner whose name has no Latin letters
 gets the name part of their email. A file keeps its folder when the
 workshop or person is renamed later.

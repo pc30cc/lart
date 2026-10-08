@@ -17,6 +17,7 @@ const frames: Record<ImagePurpose, string> = {
   watermark_logo: "aspect-[3/1] w-full max-w-md",
   // As wide as instructor_photo: any narrower and the empty dropzone's text no longer fits (Turkish is clipped).
   admin_photo: "aspect-square w-full max-w-56",
+  site_image: "aspect-[3/2] w-full",
 }
 
 /** Checkerboard behind transparent logos, in the current text colour (works in light and dark). */

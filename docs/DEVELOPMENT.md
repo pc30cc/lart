@@ -328,8 +328,10 @@ no private storage. The database stores only the storage path, e.g.
 
 - **Upload from a form** with the components in `components/admin/upload`:
   `<ImageUpload purpose="course_cover" {...field} previewUrl={url} target={…} />`,
-  `<VideoUpload {...field} />` and `<MediaGrid value onChange target={…} />`
-  (many photos and videos, reorder, remove). The value is the storage path.
+  `<VideoUpload {...field} />` (`purpose="site_video"` for the home page's
+  video; `gallery_video` by default) and `<MediaGrid value onChange target={…} />`
+  (many photos and videos, reorder, remove; `imagePurpose`, `allowVideos`,
+  `videoPurpose`, `max`). The value is the storage path.
 - **Purposes** (`lib/storage/shared.ts`) and where they are stored
   (`uploadPath` in `lib/storage/upload.ts`; `<random>` is 128 random bits):
 
@@ -342,6 +344,12 @@ no private storage. The database stores only the storage path, e.g.
   | `instructor_photo` | square 800 | `instructors/<name>/photo-<random>.webp` |
   | `admin_photo` | a partner's photo, square 512 | `partners/<name>/photo-<random>.webp` |
   | `watermark_logo` | PNG | `brand/watermark-logo-<random>.png` |
+  | `site_image` | the home page's photos: 2560 wide, never watermarked | `site/img-<random>.webp` |
+  | `site_video` | the home page's video: MP4 or WebM only (a MOV does not play by itself in Chromium or Firefox), up to 80 MB, sent in 8 MB parts | `site/video-<random>.<ext>` |
+
+  Video purposes are listed in `videoPurposes`, the formats each one takes
+  in `videoFormats` (checked from the content on the server, from the type
+  or name in the browser) and their size in `maxUploadBytes`.
 
   Images are checked from their bytes, auto-rotated, stripped of all metadata
   (GPS) and re-encoded as WebP.
@@ -356,8 +364,10 @@ no private storage. The database stores only the storage path, e.g.
   not just digits, else the email's local part) and on the instructor route
   (the instructor's name), and for a workshop or instructor not saved yet
   from the form's `target={{ folder }}` hint (the slug field, the English
-  name), sanitized again, else `new`. An unknown id is refused (400).
-  Renaming a record never moves its files (the paths are stored). Paths
+  name), sanitized again, else `new`. An unknown id is refused (400), and so
+  is any `courseId`, `instructorId` or `folder` sent with the watermark logo,
+  a partner's photo or the home page's files (`brand/`, `partners/<name>/`
+  from the session, `site/`). Renaming a record never moves its files (the paths are stored). Paths
   from before the named folders (`courses/<yyyy-mm>/…`, `gallery/<yyyy-mm>/…`,
   `admins/…`, `brand/<yyyy-mm>/…`) stay valid.
 - **Validate a submitted path** with `isSafePath` and the layout of its kind
@@ -738,6 +748,43 @@ server-renders it puts `suppressHydrationWarning` on the element), `formatTime`,
   files with their unicode-range). Bump the version in the names whenever a
   file changes: fonts are cached for a year. Nothing else changes: the page
   lists it, the schema accepts it, the site loads it once it is chosen.
+
+### Settings → Home page: the home page's content
+
+- The `home` setting (`lib/settings.ts`) holds what the home page shows, for
+  every theme: the hero (`media`: `theme` = the theme's own photos, `images`
+  = up to six photos shown in turn, `video` = one video with an optional
+  cover photo; title, subtitle, button), the story, "explore by craft", past
+  workshops and "how it works" sections (each with `show`, its texts and,
+  except past workshops, a photo; up to four steps) and the footer (about
+  text, Instagram, email, phone). Texts are per language; an empty one uses
+  the bundled text of `messages/<locale>/home.json`, an empty photo the
+  theme's own (`getHomeData`, `getSiteFrame`). Four empty steps are stored
+  as none (the theme's four steps); fewer steps show only those, each empty
+  field falling back to the bundled step of its place. The files of the
+  background not chosen stay saved, so switching back needs no new upload.
+- The page (`settings/home/`): `HomeSettingsForm` with the bundled texts of
+  all three languages as placeholders (`getHomeDefaults()`), the saved value
+  with its files' URLs (`getHomeSettings()`, `features/site/home-settings.ts`)
+  and, while the classic theme is active (it shows only the tagline and the
+  workshops), a note with a link to Appearance.
+- **Files**: photos are uploaded as `site_image`, the video as `site_video`
+  (MP4 or WebM, up to 80 MB; see [Uploads](#uploads-and-media)), both under
+  `site/`. `homeSettingsSchema` (`features/site/home-schema.ts`, client-safe)
+  takes only such paths (`isSiteImagePath`: `site/….webp`,
+  `isSiteVideoPath`: `site/….mp4|webm`), the stored setting's text limits
+  (500, paragraphs 1500), an Instagram address `https://instagram.com/<name>`
+  or `https://www.instagram.com/<name>` (a shared link's `?igsh=…` is
+  dropped), an email, and a phone of digits, spaces and a leading `+`
+  (Persian digits are converted); the chosen background must have its
+  photos or video.
+- `saveHomeSettings` (`features/site/home-actions.ts`) reads the setting
+  under a lock and writes it with one `setting.update` audit entry
+  (`entityId` "home", the changes per field: `"hero.title": { from, to }`)
+  in one transaction; nothing is written when nothing changed. After the
+  commit it removes the `site/` files the old value used and the new one
+  does not (a file that cannot be removed is only logged). A file uploaded
+  but never saved stays in storage.
 
 ### Tests
 

@@ -3,6 +3,7 @@
  * storage drivers) and the upload components, so no server code here.
  */
 import { slugify } from "@/lib/format"
+import type { VideoType } from "./sniff"
 
 export const imagePurposes = [
   "instructor_photo",
@@ -11,20 +12,36 @@ export const imagePurposes = [
   "gallery_photo",
   "watermark_logo",
   "admin_photo",
+  "site_image",
 ] as const
 export type ImagePurpose = (typeof imagePurposes)[number]
 
-export const uploadPurposes = [...imagePurposes, "gallery_video"] as const
+export const videoPurposes = ["gallery_video", "site_video"] as const
+export type VideoPurpose = (typeof videoPurposes)[number]
+
+export const uploadPurposes = [...imagePurposes, ...videoPurposes] as const
 export type UploadPurpose = (typeof uploadPurposes)[number]
 
 export const isImagePurpose = (purpose: UploadPurpose): purpose is ImagePurpose =>
-  purpose !== "gallery_video"
+  (imagePurposes as readonly UploadPurpose[]).includes(purpose)
+
+/**
+ * The video formats each video purpose takes (checked from the content). The
+ * home page's video plays by itself, muted, in every browser: MOV does not in
+ * Chromium or Firefox, so it is refused there.
+ */
+export const videoFormats: Record<VideoPurpose, readonly VideoType[]> = {
+  gallery_video: ["mp4", "mov", "webm"],
+  site_video: ["mp4", "webm"],
+}
 
 const MB = 1024 * 1024
 export const MAX_IMAGE_BYTES = 15 * MB
 export const MAX_VIDEO_BYTES = 500 * MB
+/** The home page's video loads on every visit: kept small. */
+export const MAX_SITE_VIDEO_BYTES = 80 * MB
 export const maxUploadBytes = (purpose: UploadPurpose) =>
-  isImagePurpose(purpose) ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES
+  isImagePurpose(purpose) ? MAX_IMAGE_BYTES : purpose === "site_video" ? MAX_SITE_VIDEO_BYTES : MAX_VIDEO_BYTES
 /** Larger images are refused before decoding (every phone camera fits; decompression bombs do not). */
 export const MAX_MEGAPIXELS = 70
 /**
@@ -36,6 +53,11 @@ export const VIDEO_PART_BYTES = 8 * MB
 /** For `<input accept>`. The server checks the real type from the content. */
 export const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,.heic,.heif"
 export const VIDEO_ACCEPT = "video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
+/** `<input accept>` of each video purpose. */
+export const videoAccept: Record<VideoPurpose, string> = {
+  gallery_video: VIDEO_ACCEPT,
+  site_video: "video/mp4,video/webm,.mp4,.webm",
+}
 
 /**
  * Whose folder an upload goes to (POST /api/admin/uploads decides, see

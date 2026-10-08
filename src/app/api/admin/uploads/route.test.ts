@@ -199,6 +199,11 @@ describe("POST /api/admin/uploads", () => {
     ["a folder for a partner's photo", { purpose: "admin_photo", folder: "someone-else" }],
     ["a workshop for the watermark logo", { purpose: "watermark_logo", courseId: randomUUID() }],
     ["a folder hint over 64 bytes", { purpose: "course_cover", folder: "a".repeat(65) }],
+    ["a workshop for a home page photo", { purpose: "site_image", courseId: randomUUID() }],
+    ["an instructor for a home page photo", { purpose: "site_image", instructorId: randomUUID() }],
+    ["a folder for a home page photo", { purpose: "site_image", folder: "workshops" }],
+    ["a workshop for the home page video", { purpose: "site_video", courseId: randomUUID() }],
+    ["a folder for the home page video", { purpose: "site_video", folder: "" }],
   ])("answers 400 for %s, storing nothing", async (_, fields) => {
     const before = await storedFiles()
     const res = await upload(formOf(fields, await jpegBlob()))
@@ -250,6 +255,52 @@ describe("POST /api/admin/uploads", () => {
     const body = await last.json()
     expect(body.path).toMatch(new RegExp(`^workshops/${saved.slug}/videos/[\\w-]{22}\\.mp4$`))
     expect(state.audit).toHaveBeenLastCalledWith(expect.objectContaining({ action: "media.upload", entityId: body.path }))
+  })
+
+  it("stores a home page photo in site/, never watermarked, also while no watermark logo is set", async () => {
+    const res = await upload(await formWith("site_image", await jpegBlob()))
+    expect(res.status).toBe(201)
+    const body = await res.json()
+    expect(body).toMatchObject({ width: 900, height: 600, url: `/media/${body.path}` })
+    expect(body.path).toMatch(/^site\/img-[\w-]{22}\.webp$/)
+    expect(state.audit).toHaveBeenLastCalledWith(expect.objectContaining({ entityId: body.path, data: expect.objectContaining({ purpose: "site_image" }) }))
+    // The same photo for a gallery waits for the logo.
+    const gallery = await upload(await formWith("gallery_photo", await jpegBlob()))
+    expect([gallery.status, await gallery.json()]).toEqual([409, { error: "watermark_missing" }])
+  })
+
+  describe("the home page's video", () => {
+    const mp4 = new Uint8Array(Buffer.concat([Buffer.from([0, 0, 0, 0x18]), Buffer.from("ftypisom\0\0\0\0isommp41"), Buffer.alloc(20_000, 3)]))
+    const mov = new Uint8Array(Buffer.concat([Buffer.from([0, 0, 0, 0x14]), Buffer.from("ftypqt  \0\0\0\0qt  "), Buffer.alloc(20_000, 3)]))
+    const send = (bytes: Uint8Array<ArrayBuffer>, total = bytes.length) => {
+      const form = new FormData()
+      form.append("purpose", "site_video")
+      form.append("total", String(total))
+      form.append("file", new Blob([bytes]), "clip.mp4")
+      return upload(form)
+    }
+    const siteFiles = async () => (await storedFiles()).filter((name) => name.startsWith("site/video-"))
+
+    it("stores an MP4 in site/", async () => {
+      const res = await send(mp4)
+      expect(res.status).toBe(201)
+      const body = await res.json()
+      expect(body.path).toMatch(/^site\/video-[\w-]{22}\.mp4$/)
+      expect((await stat(path.join(state.root, body.path))).size).toBe(mp4.length)
+      expect(state.audit).toHaveBeenLastCalledWith(expect.objectContaining({ entityId: body.path, data: expect.objectContaining({ purpose: "site_video" }) }))
+    })
+
+    it("refuses a MOV (it does not play by itself in every browser), storing nothing", async () => {
+      const before = await siteFiles()
+      const res = await send(mov)
+      expect([res.status, await res.json()]).toEqual([415, { error: "unsupported_type" }])
+      expect(await siteFiles()).toEqual(before)
+    })
+
+    it("refuses one over 80 MB", async () => {
+      const res = await send(mp4, 80 * 1024 * 1024 + 1)
+      expect([res.status, await res.json()]).toEqual([413, { error: "too_large" }])
+    })
   })
 
   it("refuses video part fields on images", async () => {

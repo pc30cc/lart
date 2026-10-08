@@ -47,6 +47,8 @@ describe("processImage", () => {
     ["course_sample", [1000, 3200], [500, 1600]],
     ["gallery_photo", [4800, 3200], [2400, 1600]],
     ["watermark_logo", [2000, 500], [1000, 250]],
+    ["site_image", [4000, 3000], [2560, 1920]],
+    ["site_image", [1200, 3000], [1200, 3000]],
   ] as const)("%s %j → %j", async (purpose, [w, h], expected) => {
     const out = await processImage(await solid(w, h).png().toBuffer(), purpose)
     expect([out.width, out.height]).toEqual(expected)

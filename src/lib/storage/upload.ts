@@ -10,14 +10,16 @@ import { processImage, type WatermarkSettings } from "@/lib/images"
 import { newObjectPath, type Storage } from "./index"
 import {
   folderName,
-  MAX_VIDEO_BYTES,
+  maxUploadBytes,
   UploadError,
+  videoFormats,
   type ImagePurpose,
   type UploadPurpose,
   type UploadResult,
   type VideoPartReceived,
+  type VideoPurpose,
 } from "./shared"
-import { SNIFF_BYTES, sniffVideo, videoContentType } from "./sniff"
+import { SNIFF_BYTES, sniffVideo, videoContentType, type VideoType } from "./sniff"
 
 /** Each purpose's folder and file name prefix; `name` is the workshop's or person's folder name. */
 const layouts: Record<UploadPurpose, (name: string) => [dir: string, prefix: string]> = {
@@ -28,11 +30,15 @@ const layouts: Record<UploadPurpose, (name: string) => [dir: string, prefix: str
   instructor_photo: (name) => [`instructors/${name}`, "photo-"],
   admin_photo: (name) => [`partners/${name}`, "photo-"],
   watermark_logo: () => ["brand", "watermark-logo-"],
+  // The home page's photos and video (Settings → Home page).
+  site_image: () => ["site", "img-"],
+  site_video: () => ["site", "video-"],
 }
 
 /**
- * A new random path in the purpose's folder, e.g. `workshops/<slug>/cover-<random>.webp`
- * or `partners/<name>/photo-<random>.webp`. `folder` is sanitized again here.
+ * A new random path in the purpose's folder, e.g. `workshops/<slug>/cover-<random>.webp`,
+ * `partners/<name>/photo-<random>.webp` or `site/img-<random>.webp`. `folder` is
+ * sanitized again here (the logo and the home page's files ignore it).
  */
 export function uploadPath(purpose: UploadPurpose, folder: string | undefined, ext: string): string {
   const [dir, prefix] = layouts[purpose](folderName([folder]))
@@ -56,7 +62,7 @@ export async function storeImage({
   purpose: ImagePurpose
   file: ReadableStream<Uint8Array>
   watermark: WatermarkSettings
-  /** The workshop's or person's folder name (`folderName`); not used by the watermark logo. */
+  /** The workshop's or person's folder name (`folderName`); not used by the watermark logo and the home page's photos. */
   folder?: string
 }): Promise<UploadResult> {
   const input = Buffer.from(await new Response(file).arrayBuffer())
@@ -75,6 +81,10 @@ async function readLogo(storage: Storage, logoPath: string | null): Promise<Buff
 }
 
 // ─── Videos ────────────────────────────────────────────────────────────────
+
+/** A video of a format the purpose takes. */
+const accepts = (purpose: VideoPurpose, type: VideoType | null): type is VideoType =>
+  type !== null && videoFormats[purpose].includes(type)
 
 const TEMP_PREFIX = "lart-video-"
 const UPLOAD_ID = /^[A-Za-z0-9_-]{22}$/
@@ -128,7 +138,9 @@ async function sweepStaleParts() {
  * timeouts never cut a long upload) and are appended to a private temporary
  * file: memory stays small and the length becomes known. When the last part
  * is in, the type is checked from its magic bytes and the file is streamed to
- * the CDN. Nothing reaches the CDN unless the whole video arrived.
+ * the CDN. Nothing reaches the CDN unless the whole video arrived. The
+ * purpose decides the size limit, the formats it takes (`videoFormats`: no
+ * MOV for the home page) and the folder.
  *
  * - No `upload`: a new upload; `total` is the full size (absent: this request is the whole file).
  * - With `upload` and `offset`: the next part of that upload.
@@ -136,6 +148,7 @@ async function sweepStaleParts() {
  */
 export async function storeVideoPart({
   storage,
+  purpose,
   owner,
   file,
   upload,
@@ -144,18 +157,19 @@ export async function storeVideoPart({
   folder,
 }: {
   storage: Storage
+  purpose: VideoPurpose
   /** The admin id: an upload can only be continued by the admin who started it. */
   owner: string
   file: ReadableStream<Uint8Array>
   upload?: string
   offset?: number
   total?: number
-  /** The workshop's folder name (`folderName`), used when the last part arrives. */
+  /** The workshop's folder name (`folderName`), used when the last part arrives; not used by the home page's video. */
   folder?: string
 }): Promise<UploadResult | VideoPartReceived> {
   if ((upload ? !UPLOAD_ID.test(upload) : offset !== 0) || !/^[\w-]{1,64}$/.test(owner)) throw new UploadError("bad_request")
   if (total !== undefined && (total < 1 || offset >= total)) throw new UploadError("bad_request")
-  if ((total ?? 0) > MAX_VIDEO_BYTES) throw new UploadError("too_large")
+  if ((total ?? 0) > maxUploadBytes(purpose)) throw new UploadError("too_large")
 
   const id = upload ?? randomBytes(16).toString("base64url")
   const temp = path.join(os.tmpdir(), `${TEMP_PREFIX}${owner}-${id}`)
@@ -176,7 +190,7 @@ export async function storeVideoPart({
 
     // Look at the first bytes before storing anything.
     const head = offset === 0 ? await readHead(reader) : null
-    if (head && !sniffVideo(head)) {
+    if (head && !accepts(purpose, sniffVideo(head))) {
       await reader.cancel().catch(() => {})
       throw new UploadError("unsupported_type")
     }
@@ -200,9 +214,9 @@ export async function storeVideoPart({
     try {
       if (total !== undefined && received !== total) throw new UploadError("bad_request")
       const type = sniffVideo(await fileHead(temp))
-      if (!type) throw new UploadError("unsupported_type")
+      if (!accepts(purpose, type)) throw new UploadError("unsupported_type")
       const contentType = videoContentType[type]
-      const storagePath = uploadPath("gallery_video", folder, type)
+      const storagePath = uploadPath(purpose, folder, type)
       await storage.put(storagePath, await openAsBlob(temp, { type: contentType }), contentType)
       return { path: storagePath, url: storage.publicUrl(storagePath) }
     } finally {
