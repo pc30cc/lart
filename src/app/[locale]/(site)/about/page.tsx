@@ -14,7 +14,7 @@ const clip = (text: string, max: number) =>
 
 /**
  * "About us · brand", described by the brand's own sentences in this
- * language, its picture the first partner's portrait. With no partner on it
+ * language, with the site's picture. With no partner on it
  * the page only repeats the footer's text: not indexed then (its links are
  * followed), and out of the sitemap.
  */
@@ -27,7 +27,6 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/about">)
     alternates("/about", locale),
   ])
   const description = clip(data.intro.replace(/\s+/g, " "), DESCRIPTION_MAX)
-  const portrait = data.partners.find((p) => p.portraitUrl)
   const indexed = data.partners.length > 0
   return {
     title: t("metaTitle"),
@@ -38,7 +37,8 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/about">)
       title: `${t("metaTitle")} · ${brand}`,
       description,
       siteName: brand,
-      ...openGraphOf(locale, links.canonical, portrait ? [{ url: absoluteUrl(portrait.portraitUrl!), alt: portrait.name }] : undefined),
+      // The site's picture: an upright portrait would be cut to a wide card's middle.
+      ...openGraphOf(locale, links.canonical),
     },
   }
 }
@@ -46,12 +46,15 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/about">)
 /** The About page (/about): the brand's story and the partners who chose to be on it, in the active theme. */
 export default async function AboutPage({ params }: PageProps<"/[locale]/about">) {
   const locale = pageLocale((await params).locale)
-  const [{ theme }, data, links, t] = await Promise.all([
+  const [{ theme }, data, links, home, t] = await Promise.all([
     getActiveTheme(),
     getAboutData(locale),
     alternates("/about", locale),
+    alternates("/", locale),
     getTranslations({ locale, namespace: "about" }),
   ])
+  // The same organisation as the home page's JSON-LD: at the main language's home address.
+  const organization = home.languages["x-default"]
   // The page, and the people behind the brand, for search engines: each person's words in this page's language only.
   const jsonLd = {
     "@context": "https://schema.org",
@@ -63,9 +66,9 @@ export default async function AboutPage({ params }: PageProps<"/[locale]/about">
     description: data.intro,
     mainEntity: {
       "@type": "Organization",
-      "@id": `${links.languages["x-default"]}#organization`,
+      "@id": `${organization}#organization`,
       name: data.brand,
-      url: links.languages["x-default"],
+      url: organization,
       ...(data.partners.length
         ? {
             member: data.partners.map((p) => ({

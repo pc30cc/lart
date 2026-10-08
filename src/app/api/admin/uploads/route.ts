@@ -59,9 +59,12 @@ async function folderOf(purpose: UploadPurpose, fields: Fields, admin: AdminSess
   }
   if (purpose === "admin_photo" || purpose === "partner_portrait" || purpose === "watermark_logo") {
     if (courseId || instructorId || folder !== undefined) return null
-    // The name only when it has Latin letters ("مینا 2" would give "2"), else the email's local part.
+    // The name only when it has Latin letters ("مینا 2" would give "2"), else the email's local part;
+    // never the email for the portrait, which the public About page shows (its address would give the email away).
     const fromName = folderName([admin.name], "")
-    return folderName([/[a-z]/.test(fromName) ? fromName : null, admin.email.split("@")[0]]) // the logo's folder is always brand/
+    const latin = /[a-z]/.test(fromName) ? fromName : null
+    if (purpose === "partner_portrait") return folderName([latin], "partner")
+    return folderName([latin, admin.email.split("@")[0]]) // the logo's folder is always brand/
   }
   if (purpose === "instructor_photo") {
     if (courseId) return null

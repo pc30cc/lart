@@ -152,6 +152,15 @@ describe("POST /api/admin/uploads", () => {
     expect(body.path).toMatch(/^partners\/mina-k\/photo-[\w-]{22}\.webp$/)
   })
 
+  it("never names a partner's public portrait after their email (the About page shows its address)", async () => {
+    Object.assign(state, { name: "مینا کریمی", email: "mina.k@example.com" })
+    const persian = await (await upload(await formWith("partner_portrait", await jpegBlob()))).json()
+    expect(persian.path).toMatch(/^partners\/partner\/portrait-[\w-]{22}\.webp$/)
+    Object.assign(state, { name: "Mina Karimi", email: "mina.k@example.com" })
+    const latin = await (await upload(await formWith("partner_portrait", await jpegBlob()))).json()
+    expect(latin.path).toMatch(/^partners\/mina-karimi\/portrait-[\w-]{22}\.webp$/)
+  })
+
   it("removes a partner's photo when the audit entry cannot be written", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {})
     const photos = async () => (await storedFiles()).filter((name) => name.startsWith("partners/") && name.endsWith(".webp")).sort()

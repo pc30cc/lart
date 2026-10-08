@@ -25,31 +25,34 @@ afterAll(async () => {
 
 describe("listAboutPartners", () => {
   it("lists active partners who chose to be shown, each text in the page's language only", async () => {
-    const mina = await partner({
-      name: "Mina Rahimi",
+    const tag = randomUUID().slice(0, 8)
+    await partner({
+      name: `Mina Rahimi ${tag}`,
       aboutShown: true,
-      aboutName: { fa: "مینا رحیمی" },
+      aboutName: { fa: `مینا رحیمی ${tag}` },
       aboutRole: { fa: "هم‌بنیان‌گذار", tr: "Kurucu ortak" },
       aboutBio: { fa: "سلام", tr: "Merhaba", en: "Hello" },
-      portraitPath: "partners/mina/portrait-abc.webp",
+      portraitPath: `partners/mina/portrait-${tag}.webp`,
       createdAt: new Date("2000-01-01T00:00:00Z"),
     })
-    const hidden = await partner({ name: "Hidden", aboutShown: false, aboutBio: { fa: "x", tr: "x", en: "x" } })
-    const gone = await partner({ name: "Gone", active: false, aboutShown: true, aboutBio: { fa: "x", tr: "x", en: "x" } })
+    await partner({ name: `Hidden ${tag}`, aboutShown: false, aboutBio: { fa: "x", tr: "x", en: "x" } })
+    await partner({ name: `Gone ${tag}`, active: false, aboutShown: true, aboutBio: { fa: "x", tr: "x", en: "x" } })
 
-    const ids = (list: { key: string }[]) => list.map((p) => p.key).filter((k) => created.includes(k))
-    const fa = await listAboutPartners("fa")
-    expect(ids(fa)).toEqual([mina])
-    expect(fa.find((p) => p.key === mina)).toEqual({
-      key: mina,
-      name: "مینا رحیمی",
-      role: "هم‌بنیان‌گذار",
-      bio: "سلام",
-      portraitUrl: "https://cdn.test/partners/mina/portrait-abc.webp",
-    })
+    const mine = (list: { name: string }[]) => list.filter((p) => p.name.endsWith(tag))
+    const fa = mine(await listAboutPartners("fa"))
+    expect(fa).toEqual([
+      {
+        key: expect.stringMatching(/^partner-\d+$/),
+        name: `مینا رحیمی ${tag}`,
+        role: "هم‌بنیان‌گذار",
+        bio: "سلام",
+        portraitUrl: `https://cdn.test/partners/mina/portrait-${tag}.webp`,
+      },
+    ])
     // English: their profile's name, and no role (none written in English; never another language's).
-    expect((await listAboutPartners("en")).find((p) => p.key === mina)).toMatchObject({ name: "Mina Rahimi", role: "", bio: "Hello" })
-    expect(ids(await listAboutPartners("tr"))).not.toContain(hidden)
-    expect(ids(await listAboutPartners("tr"))).not.toContain(gone)
+    expect(mine(await listAboutPartners("en"))).toEqual([expect.objectContaining({ name: `Mina Rahimi ${tag}`, role: "", bio: "Hello" })])
+    // Hidden and inactive partners are not listed; no internal id reaches the page.
+    expect(mine(await listAboutPartners("tr")).map((p) => p.name)).toEqual([`Mina Rahimi ${tag}`])
+    expect(JSON.stringify(await listAboutPartners("tr"))).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-/)
   })
 })

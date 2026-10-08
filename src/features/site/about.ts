@@ -33,8 +33,9 @@ export const listAboutPartners = cache(async (locale: string): Promise<AboutPart
       .orderBy(asc(admins.createdAt), asc(admins.id)),
     publicUrls(),
   ])
-  return rows.map((r) => ({
-    key: r.id,
+  // The key is the place on the page, not the partner's id: no internal id reaches the public page.
+  return rows.map((r, i) => ({
+    key: `partner-${i + 1}`,
     name: ownText(r.aboutName, locale) || r.name,
     role: ownText(r.aboutRole, locale),
     bio: ownText(r.aboutBio, locale),
