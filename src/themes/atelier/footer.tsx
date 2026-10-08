@@ -66,14 +66,14 @@ export async function Footer({
                 <li key={c.href}>
                   <a
                     href={c.href}
-                    {...(c.ltr ? { dir: "ltr" } : { target: "_blank", rel: "noopener noreferrer" })}
+                    {...(c.ltr ? {} : { target: "_blank", rel: "noopener noreferrer" })}
                     className={cn(
                       "hover:text-at-cream focus-visible:ring-at-cream/50 text-at-cream/80 inline-flex max-w-full items-center gap-2.5 rounded-sm outline-none focus-visible:ring-3 [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:opacity-70",
                       c.wrap ? "[overflow-wrap:anywhere]" : "whitespace-nowrap",
                     )}
                   >
                     {c.icon}
-                    {c.label}
+                    <span dir={c.ltr ? "ltr" : undefined}>{c.label}</span>
                   </a>
                 </li>
               ))}
@@ -118,9 +118,7 @@ function FooterLink({ href, children }: { href: string; children: React.ReactNod
     <li>
       <Link
         href={href}
-        className={cn(
-          "text-at-cream/80 hover:text-at-cream focus-visible:ring-at-cream/50 rounded-sm underline-offset-[6px] outline-none hover:underline focus-visible:ring-3",
-        )}
+        className="text-at-cream/80 hover:text-at-cream focus-visible:ring-at-cream/50 rounded-sm underline-offset-[6px] outline-none hover:underline focus-visible:ring-3"
       >
         {children}
       </Link>

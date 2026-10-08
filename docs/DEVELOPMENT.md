@@ -987,6 +987,46 @@ not name them, so crawlers can fetch them and see the noindex (a blocked page
 can still be indexed as a bare URL), and robots.txt does not publish the
 instructor panel's private address (README §5). Do not add them there.
 
+### Themes
+
+The public site's look is a theme (`src/themes`, chosen in Settings →
+Appearance): `default` (shown as "Classic", the original look) and
+`atelier`. Pages and layouts fetch the data and hand the active theme plain
+props; a theme only decides how things look. The contract is
+`src/themes/types.ts`: a `Theme` has a `Frame` (header, the page in one
+`<main>`, footer), a `Home` (the home page's sections from `HomeData`,
+`src/features/site/home.ts`; a hidden section is `null`), a `WorkshopCard`
+(home page and `/workshops`), its `themeColor` and its default `fonts`. Its
+header lists what every theme keeps: one `h1` on the home page, the brand;
+the brand as the first link of the first `<header>`; a header at most 80px
+tall on a phone; `top` (the "viewing as" bar) above it and `banner` under it.
+
+A new theme is a folder `src/themes/<id>/` exporting its `Theme`, its id and
+fonts in `ids.ts`, one line in `registry.ts`, and its `theme.css` imported in
+`src/app/globals.css`. Its colour tokens go under `[data-site-theme="<id>"]`
+and `html[data-site-theme="<id>"]` (dark: `.dark [data-site-theme="<id>"]`,
+`html.dark[data-site-theme="<id>"]`), never on bare `:root` or `body` (the
+panels share them): `SiteRoot` puts the attribute on the site's wrapper and
+`HtmlTheme` on `<html>` while a site page is open, so dialogs and toasts at
+the end of `<body>` get them too. The chosen fonts arrive as
+`--site-font-heading`, `--site-font-heading-weight` and `--site-font-body`
+(`font-serif` and `font-sans` follow them on the site).
+
+Atelier (`src/themes/atelier`, after throttlehaus.ca) maps the owner's
+palette (cream `#F2E9E5`, beige `#C5AA8E`, brick `#8B4A2E`, dark brown
+`#5B311E`, earthy brown `#9D816B`) onto the shadcn tokens in `theme.css`, so
+the shared pages (a workshop, registering, the account, dialogs, toasts)
+follow it, and adds the palette as colours (`bg-at-paper`, `text-at-cream`,
+`bg-at-deep`…) and the utilities `at-container` (1280px of content with 80px
+sides, 20px on a phone), `at-heading` and `at-caps`. Its headings use the
+heading font, Latin ones in capitals with a little letter-spacing (Persian
+never). Its own photos are in `public/themes/atelier/` (versioned names: they
+are cached for a year) and are named only in `photos.ts` (the hero's
+slideshow, the story, crafts and steps bands, the card fallback), with their
+descriptions in `home.atelier.photos`: swapping a photo is an edit of that
+file. Sections fade up into view through `data-reveal` (`reveal.tsx`, one
+observer; with reduced motion everything simply shows).
+
 ### Emails of phase 2
 
 | Email | Sent by | When |

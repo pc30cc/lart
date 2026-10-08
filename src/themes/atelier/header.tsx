@@ -62,7 +62,7 @@ export function Header({
         "sticky top-0 z-40 border-b transition-[background-color,color,border-color,box-shadow] duration-500 ease-out",
         clear
           ? "text-at-cream border-transparent bg-transparent"
-          : "bg-background/92 supports-backdrop-filter:bg-background/80 text-foreground border-border/80 shadow-[0_10px_30px_-24px_rgb(91_49_30/0.45)] backdrop-blur-md",
+          : "bg-background/96 supports-backdrop-filter:bg-background/88 text-foreground border-border/80 shadow-[0_10px_30px_-24px_rgb(91_49_30/0.45)] backdrop-blur-md",
       )}
     >
       {top}
@@ -249,7 +249,7 @@ function MobileMenu({ brand, member, nav, clear }: { brand: string; member: Head
                       type="button"
                       disabled={leaving}
                       onClick={() => startLeaving(() => memberLogoutAction())}
-                      className="border-at-cream/35 hover:bg-at-cream/12 focus-visible:ring-at-cream/50 inline-flex h-12 items-center gap-2 rounded-full border px-6 text-sm outline-none focus-visible:ring-3 disabled:opacity-60"
+                      className="at-caps border-at-cream/35 hover:bg-at-cream/12 focus-visible:ring-at-cream/50 inline-flex h-12 items-center gap-2 rounded-full border px-6 text-[13px] font-semibold outline-none focus-visible:ring-3 disabled:opacity-60 rtl:text-[15px]"
                     >
                       {leaving ? <Spinner aria-hidden /> : <LogOutIcon className="size-4 rtl:-scale-x-100" aria-hidden />}
                       {t("logOut")}

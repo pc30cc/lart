@@ -96,7 +96,7 @@ function Hero({ data }: { data: HomeData }) {
         >
           {brand}
         </h1>
-        <p className="at-heading mt-6 max-w-[17ch] text-[36px] leading-[1.04] text-balance sm:mt-8 sm:text-[56px] lg:max-w-[19ch] lg:text-[68px] xl:text-[72px] rtl:max-w-[20ch] rtl:text-[32px] rtl:leading-[1.5] sm:rtl:text-[48px] lg:rtl:text-[56px]">
+        <p className="at-heading mt-6 max-w-[14em] text-[36px] leading-[1.04] text-balance sm:mt-8 sm:text-[56px] lg:text-[68px] xl:text-[72px] rtl:text-[32px] rtl:leading-[1.5] sm:rtl:text-[48px] lg:rtl:text-[56px]">
           {hero.title}
         </p>
         {hero.subtitle && (

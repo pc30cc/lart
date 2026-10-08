@@ -6,6 +6,8 @@ import { useLayoutEffect, useRef } from "react"
 const SHOWN = 0.86
 /** Room above the letters, as a share of their height. */
 const ABOVE = 0.04
+/** The most the wordmark may take in height, as a share of its width. */
+const MAX_HEIGHT = 0.3
 /** The size the letters are measured at (px). */
 const SIZE = 100
 
@@ -68,9 +70,11 @@ export function Wordmark({ text }: { text: string }) {
       }
       if (right < left) return
 
-      const scale = width / (right - left + 1)
+      // As wide as the page, unless that makes it too tall (a short Persian brand): then it keeps to the start side.
+      const scale = Math.min(width / (right - left + 1), (width * MAX_HEIGHT) / (ascent * (ABOVE + SHOWN)))
+      const inkWidth = (right - left + 1) * scale
       el.style.fontSize = `${SIZE * scale}px`
-      el.style.left = `${pad - (left - x0) * scale}px`
+      el.style.left = `${(css.direction === "rtl" ? pad + width - inkWidth : pad) - (left - x0) * scale}px`
       // From just above the letters' top to SHOWN of their height above the baseline.
       el.style.top = `${ascent * scale * ABOVE - (probe.offsetTop - ascent * scale)}px`
       wrap.style.height = `${ascent * scale * (ABOVE + SHOWN)}px`

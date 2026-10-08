@@ -41,8 +41,8 @@ const photo = (file: string, width: number, height: number, alt: AtelierPhotoAlt
   focus,
 })
 
-const candlesPouring = photo("candles-wide.v1.webp", 1920, 1088, "candlesPouring", "42% 50%")
-const candlesTable = photo("candles-table.v1.webp", 1344, 768, "candlesTable", "40% 50%")
+const candlesPouring = photo("candles-wide.v1.webp", 1920, 1088, "candlesPouring", "24% 50%")
+const candlesTable = photo("candles-table.v1.webp", 1344, 768, "candlesTable", "30% 50%")
 const candlesFriends = photo("candles-friends.v1.webp", 1344, 768, "candlesFriends", "48% 40%")
 
 export const atelierPhotos = {
