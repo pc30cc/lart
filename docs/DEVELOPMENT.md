@@ -13,8 +13,9 @@ pnpm admin:create               # first super admin (interactive)
 pnpm dev
 ```
 
-Checks: `pnpm typecheck`, `pnpm lint`, `pnpm test` (uses the `lart_test`
-and `lart_test_dashboard` databases: `pnpm db:test:migrate` migrates both),
+Checks: `pnpm typecheck`, `pnpm lint`, `pnpm test` (uses the `lart_test`,
+`lart_test_dashboard` and `lart_test_reset` databases: `pnpm db:test:migrate`
+migrates all three),
 `pnpm build`. End-to-end: see `playwright.config.ts` (database `lart_e2e`).
 
 ## Stack
@@ -115,7 +116,7 @@ drizzle/                        SQL migrations (generated + custom guards)
   When existing rows must be converted, hand-edit the generated SQL (e.g.
   `drizzle/0002_venue_localized.sql`: text → `{ "tr": … }` with `USING`).
   Then apply it to all four local databases: `pnpm db:migrate` (`lart`),
-  `pnpm db:test:migrate` (`lart_test` and `lart_test_dashboard`) and
+  `pnpm db:test:migrate` (`lart_test`, `lart_test_dashboard` and `lart_test_reset`) and
   `DATABASE_URL=postgres://lart:lart@127.0.0.1:5432/lart_e2e pnpm db:migrate`
   (end to end). A missed one does not always fail loudly (a jsonb value
   written into a column that is still `text` is accepted), so run all of them.
@@ -273,6 +274,7 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 | `/admin/settings/payments` | admin | private | |
 | `/admin/settings/storage` | admin | private | |
 | `/admin/settings/watermark` | admin | private | |
+| `/admin/settings/danger` | admin | private | |
 | `/admin/students` | admin | private | |
 | `/admin/students/[id]` | admin | private | |
 | `/admin/templates` | admin | private | |

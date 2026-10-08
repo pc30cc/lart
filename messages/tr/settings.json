@@ -9,7 +9,8 @@
     "payments": "Ödemeler",
     "email": "E-posta",
     "storage": "Depolama",
-    "watermark": "Filigran"
+    "watermark": "Filigran",
+    "danger": "Tehlikeli bölge"
   },
   "toast": {
     "saved": "Ayarlar kaydedildi."
@@ -322,7 +323,8 @@
         "export": "Kayıtlar dışa aktarıldı"
       },
       "setting": {
-        "update": "Ayarlar değiştirildi"
+        "update": "Ayarlar değiştirildi",
+        "factory_reset": "Fabrika ayarlarına dönüş (işlemler silindi)"
       },
       "template": {
         "create": "Şablon oluşturuldu",
@@ -394,6 +396,42 @@
       "ibanCountry": "IBAN, TR ile başlamalı.",
       "ibanLength": "Türk IBAN’ı TR ve ardından 24 rakamdan oluşur. Lütfen kontrol edin.",
       "ibanChecksum": "Bu IBAN tutmuyor: bir rakam yanlış yazılmış olabilir. Lütfen kontrol edin."
+    }
+  },
+  "danger": {
+    "confirmPhrase": "hepsini sil",
+    "reset": {
+      "title": "Tüm işlemleri sil ve sıfırla",
+      "description": "Temiz hesaplarla yeniden başlamak için, örneğin siteyi denedikten sonra. Cüzdan ve tüm hesaplar sıfırlanır.",
+      "removedTitle": "Silinecekler",
+      "removed": {
+        "transactions": "{count, plural, =0 {Cüzdanda işlem yok} other {Cüzdanın {n} işleminin tümü (sermaye, giderler, avanslar, kayıt ödemeleri ve iadeler, atölye kapanışları)}}",
+        "contracts": "{count, plural, =0 {Silinecek sözleşme yok} other {İmzalanmamış ya da yapılmamış atölyelere ait {n} sözleşme}}",
+        "audit": "{count, plural, =0 {Etkinlik kaydında para satırı yok} other {Etkinlik kaydındaki {n} para satırı}}"
+      },
+      "keptTitle": "Olduğu gibi kalır",
+      "kept": {
+        "people": "Tüm hesaplar: ortaklar, eğitmenler ve üyeler",
+        "workshops": "Atölyeler, kayıtlar, fotoğraflar ve videolar",
+        "heldContracts": "Yapılmış atölyelerin imzalı sözleşmeleri",
+        "settings": "Şablonlar, kategoriler ve diğer tüm ayarlar"
+      },
+      "irreversible": "Bu işlem geri alınamaz. Sözleşmesi silinen bir atölye yeniden kaydedildiğinde yeni bir sözleşme alır.",
+      "button": "Tüm işlemleri sil"
+    },
+    "confirm": {
+      "title": "Emin misiniz?",
+      "description": "Cüzdan işlemleri ve yukarıdaki sözleşmeler kalıcı olarak silinir. Devam etmek için aşağıdaki ifadeyi ve şifrenizi yazın.",
+      "phraseLabel": "Yazın: <phrase></phrase>",
+      "password": "Şifreniz",
+      "submit": "Evet, hepsini sil"
+    },
+    "done": "Tüm işlemler silindi; cüzdan sıfırda.",
+    "errors": {
+      "phrase": "İfadeyi gösterildiği gibi yazın.",
+      "passwordNeeded": "Şifrenizi girin.",
+      "wrongPassword": "Şifre doğru değil.",
+      "rateLimited": "Çok fazla deneme. 15 dakika sonra yeniden deneyin."
     }
   }
 }

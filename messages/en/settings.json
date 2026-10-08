@@ -9,7 +9,8 @@
     "payments": "Payments",
     "email": "Email",
     "storage": "Storage",
-    "watermark": "Watermark"
+    "watermark": "Watermark",
+    "danger": "Danger zone"
   },
   "toast": {
     "saved": "Settings saved."
@@ -322,7 +323,8 @@
         "export": "Registrations exported"
       },
       "setting": {
-        "update": "Settings changed"
+        "update": "Settings changed",
+        "factory_reset": "Reset to factory settings (transactions deleted)"
       },
       "template": {
         "create": "Template created",
@@ -394,6 +396,42 @@
       "ibanCountry": "The IBAN should start with TR.",
       "ibanLength": "A Turkish IBAN is TR followed by 24 digits. Please check it.",
       "ibanChecksum": "This IBAN doesn’t add up: a digit may be mistyped. Please check it."
+    }
+  },
+  "danger": {
+    "confirmPhrase": "delete all",
+    "reset": {
+      "title": "Delete all transactions and reset",
+      "description": "To start again with clean books, e.g. after trying the site out. The wallet and every account go back to zero.",
+      "removedTitle": "Deleted",
+      "removed": {
+        "transactions": "{count, plural, =0 {No wallet transactions} one {The wallet's only transaction} other {All {n} wallet transactions (capital, expenses, advances, registration payments and refunds, workshop closings)}}",
+        "contracts": "{count, plural, =0 {No contracts to delete} one {{n} contract not signed or of a workshop not held} other {{n} contracts not signed or of workshops not held}}",
+        "audit": "{count, plural, =0 {No money rows in the activity log} one {{n} money row of the activity log} other {{n} money rows of the activity log}}"
+      },
+      "keptTitle": "Kept as it is",
+      "kept": {
+        "people": "Every account: partners, instructors and members",
+        "workshops": "Workshops, registrations, photos and videos",
+        "heldContracts": "The signed contracts of workshops that took place",
+        "settings": "Templates, categories and every other setting"
+      },
+      "irreversible": "This cannot be undone. A workshop whose contract is deleted gets a new one when it is saved again.",
+      "button": "Delete all transactions"
+    },
+    "confirm": {
+      "title": "Are you sure?",
+      "description": "The wallet's transactions and the contracts above are deleted for good. To go on, type the phrase below and your password.",
+      "phraseLabel": "Type: <phrase></phrase>",
+      "password": "Your password",
+      "submit": "Yes, delete everything"
+    },
+    "done": "All transactions are deleted; the wallet is at zero.",
+    "errors": {
+      "phrase": "Type the phrase exactly as shown.",
+      "passwordNeeded": "Enter your password.",
+      "wrongPassword": "The password is not correct.",
+      "rateLimited": "Too many tries. Try again in 15 minutes."
     }
   }
 }

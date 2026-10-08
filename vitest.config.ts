@@ -21,7 +21,7 @@ export default defineConfig({
           ...test,
           name: "main",
           include: ["src/**/*.test.{ts,tsx}", "scripts/**/*.test.ts"],
-          exclude: ["src/features/dashboard/**", "**/node_modules/**"],
+          exclude: ["src/features/dashboard/**", "src/features/settings/reset.test.ts", "**/node_modules/**"],
         },
       },
       {
@@ -32,6 +32,16 @@ export default defineConfig({
           name: "dashboard",
           include: ["src/features/dashboard/**/*.test.{ts,tsx}"],
           env: { TEST_DATABASE_URL: process.env.TEST_DASHBOARD_DATABASE_URL ?? db("lart_test_dashboard") },
+        },
+      },
+      {
+        // The factory reset empties the whole ledger: a database of its own, or it would pull other tests' rows away.
+        ...shared,
+        test: {
+          ...test,
+          name: "reset",
+          include: ["src/features/settings/reset.test.ts"],
+          env: { TEST_DATABASE_URL: process.env.TEST_RESET_DATABASE_URL ?? db("lart_test_reset") },
         },
       },
     ],
