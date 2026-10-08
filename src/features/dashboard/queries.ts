@@ -14,9 +14,10 @@ import {
 } from "@/db/schema"
 import { partnerCapitals, walletBalance } from "@/features/money/ledger"
 import { requireAdmin } from "@/lib/auth/admin"
-import { zonedParts, zonedToIso } from "@/lib/format"
+import { calendarFields, periodStart } from "@/lib/calendar"
+import { zonedParts, zonedToIso, type CalendarSystem } from "@/lib/format"
 import { publicUrls } from "@/lib/storage"
-import { addMonths, change, fillMonths, fillRate, lastMonths, paymentNote, workshopAlert } from "./metrics"
+import { addMonths, change, fillMonths, fillRate, lastMonths, MONTHS, monthOf, paymentNote, workshopAlert } from "./metrics"
 
 /**
  * Everything the dashboard shows, in a handful of SQL aggregates.
@@ -84,13 +85,17 @@ async function gather<const T extends readonly (() => unknown)[]>(exec: Exec, ta
   return out as Results<T>
 }
 
-/** Income and expenses per month (closing entries left out), dated from `from` up to (not including) `until`. */
-function monthly(exec: Exec, from: string, until: string) {
+/**
+ * Income and expenses per month (closing entries left out), dated from the
+ * first of `months` (first days, oldest first) up to (not including) `until`.
+ * The database sums each day; the days are put into the months here, so the
+ * months can be the viewer's calendar's (Persian: Solar Hijri months).
+ */
+async function monthly(exec: Exec, months: string[], until: string) {
   const t = ledgerTransactions
-  const month = sql<string>`to_char(date_trunc('month', ${t.occurredOn}::timestamp), 'YYYY-MM-DD')`
-  return exec
+  const days = await exec
     .select({
-      month,
+      day: t.occurredOn,
       revenue: sql<number>`coalesce(-sum(${amount}) filter (where ${ledgerLines.account} = 'revenue'), 0)`.mapWith(Number),
       expenses: sql<number>`coalesce(sum(${amount}) filter (where ${ledgerLines.account} <> 'revenue'), 0)`.mapWith(Number),
     })
@@ -100,11 +105,21 @@ function monthly(exec: Exec, from: string, until: string) {
       and(
         ne(t.kind, "course_close"),
         inArray(ledgerLines.account, ["revenue", "instructor_fees", "course_expenses", "general_expenses"]),
-        gte(t.occurredOn, from),
+        gte(t.occurredOn, months[0]),
         lt(t.occurredOn, until),
       ),
     )
-    .groupBy(month)
+    .groupBy(t.occurredOn)
+  const byMonth = new Map<string, { month: string; revenue: number; expenses: number }>()
+  for (const { day, revenue, expenses } of days) {
+    const month = monthOf(day, months)
+    if (!month) continue
+    const row = byMonth.get(month) ?? { month, revenue: 0, expenses: 0 }
+    row.revenue += revenue
+    row.expenses += expenses
+    byMonth.set(month, row)
+  }
+  return [...byMonth.values()]
 }
 
 /** Counts for the cards, the attention strip and the first-steps guide: one pass over the workshops. */
@@ -253,17 +268,19 @@ async function partners(exec: Exec) {
 }
 
 /**
- * The dashboard. `now` and `exec` are for tests (a fixed clock, a transaction
- * that is rolled back afterwards).
+ * The dashboard, its months and year in `calendar` (the viewer's language's:
+ * Persian counts Solar Hijri months, and the year from Nowruz). `now` and
+ * `exec` are for tests (a fixed clock, a transaction that is rolled back
+ * afterwards).
  */
-export async function getDashboard(now: Date = new Date(), exec: Exec = db) {
+export async function getDashboard(now: Date = new Date(), exec: Exec = db, calendar: CalendarSystem = "gregory") {
   await requireAdmin()
   const today = zonedParts(now).date
-  const months = lastMonths(today)
+  const months = lastMonths(today, MONTHS, calendar)
   const windowStart = new Date(zonedToIso(months[0], "00:00")!)
 
   const [monthRows, wallet, counts, upcomingRows, heldRows, byWorkshop, byInstructor, people] = await gather(exec, [
-    () => monthly(exec, months[0], addMonths(today, 1)),
+    () => monthly(exec, months, addMonths(today, 1, calendar)),
     () => walletBalance(exec),
     () => summary(exec, now, windowStart),
     () => upcomingWorkshops(exec, now),
@@ -275,7 +292,8 @@ export async function getDashboard(now: Date = new Date(), exec: Exec = db) {
 
   const figures = fillMonths(months, monthRows)
   const [lastMonth, thisMonth] = figures.slice(-2)
-  const year = today.slice(0, 4)
+  const year = calendarFields(today, calendar).year
+  const yearStart = periodStart(today, "year", calendar)
   const upcoming = upcomingRows.map((w) => ({
     ...w,
     running: w.startsAt <= now,
@@ -285,7 +303,8 @@ export async function getDashboard(now: Date = new Date(), exec: Exec = db) {
 
   return {
     today,
-    year: Number(year),
+    /** The calendar's year of today (1405 in Persian). */
+    year,
     /** No workshop yet: show the first-steps guide. */
     fresh: counts.workshops === 0,
     /** Nothing at all yet (no workshop, no money): the guide alone. */
@@ -303,7 +322,7 @@ export async function getDashboard(now: Date = new Date(), exec: Exec = db) {
       revenueThisMonth: thisMonth.revenue,
       revenueLastMonth: lastMonth.revenue,
       revenueChange: change(thisMonth.revenue, lastMonth.revenue),
-      netThisYear: figures.filter((m) => m.month.startsWith(year)).reduce((s, m) => s + m.net, 0),
+      netThisYear: figures.filter((m) => m.month >= yearStart).reduce((s, m) => s + m.net, 0),
       upcoming: counts.upcoming,
       upcomingSeats: counts.upcomingSeats,
       upcomingTaken: counts.upcomingTaken,

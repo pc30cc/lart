@@ -3,6 +3,7 @@
  * one-line summary and a readable, size-limited JSON for the details popover.
  */
 
+import { formatDate, formatDateTime } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 
 const SUMMARY_MAX = 140
@@ -37,10 +38,25 @@ const isLocalizedOrNone = (v: unknown): v is Partial<Record<Locale, unknown>> | 
   v === null || v === undefined || (isRecord(v) && Object.keys(v).every(isLocale))
 const textOf = (v: unknown) => (typeof v === "string" ? v.trim() : "")
 
-/** A short text for any JSON value. Localized texts show the page's language, else the first one filled in. */
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/
+const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})$/
+
+/**
+ * A stored date as the page's language writes it, in its calendar and in
+ * Istanbul time: "2026-10-08" → "۱۶ مهر ۱۴۰۵", "2026-10-14T15:00:00.000Z" →
+ * "14 Oct 2026, 18:00". Null when `value` is not an ISO day or instant.
+ */
+function asDate(value: string, locale: string): string | null {
+  // A day is shown from its noon in Istanbul, so no time zone moves it.
+  const instant = ISO_DAY.test(value) ? `${value}T09:00:00Z` : ISO_INSTANT.test(value) ? value : null
+  if (!instant || Number.isNaN(Date.parse(instant))) return null
+  return instant === value ? formatDateTime(instant, locale, "medium") : formatDate(instant, locale, "medium")
+}
+
+/** A short text for any JSON value. Localized texts show the page's language, else the first one filled in; dates its calendar. */
 function short(value: unknown, locale?: string): string {
   if (value === null || value === undefined || value === "") return "—"
-  if (typeof value === "string") return clip(value.replace(/\s+/g, " ").trim(), VALUE_MAX)
+  if (typeof value === "string") return clip((locale && asDate(value, locale)) || value.replace(/\s+/g, " ").trim(), VALUE_MAX)
   if (typeof value === "number" || typeof value === "boolean") return String(value)
   if (Array.isArray(value)) return value.length ? clip(value.slice(0, 3).map((v) => short(v, locale)).join(", "), VALUE_MAX) : "—"
   if (isRecord(value)) {

@@ -15,10 +15,11 @@ import {
   profitAndLoss,
   workshopResults,
 } from "@/features/money/reports"
+import { periodLabel } from "@/features/money/period-label"
 import { parseReportParams, periodGroups, reportKinds, type ReportParams } from "@/features/money/schema"
 import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
-import { formatDate, formatNumber, intlLocale, localized } from "@/lib/format"
+import { calendarOf, formatDate, formatNumber, localized } from "@/lib/format"
 import { getBrand } from "@/lib/settings"
 import { cn } from "@/lib/utils"
 import { WorkshopStatusBadge } from "../../workshops/_components/workshop-status"
@@ -36,7 +37,7 @@ type T = Awaited<ReturnType<typeof getTranslations<"money">>>
 export default async function ReportsPage({ searchParams }: PageProps<"/[locale]/admin/money/reports">) {
   const { admin } = await requireAdmin()
   const [sp, t, locale] = await Promise.all([searchParams, getTranslations("money"), getLocale()])
-  const params = parseReportParams(sp)
+  const params = parseReportParams(sp, undefined, calendarOf(locale))
   const [brand, { partners }] = await Promise.all([getBrand(locale), getLedgerFilterOptions()])
   if (params.report === "partner" && !params.partner) {
     params.partner = partners.find((p) => p.id === admin.id)?.id ?? partners[0]?.id ?? null
@@ -200,15 +201,8 @@ function EstimatedNote({ t, estimated }: { t: T; estimated: number }) {
 // ─── Reports ──────────────────────────────────────────────────────────────────
 
 async function PnlReport({ params, t, locale }: { params: ReportParams; t: T; locale: string }) {
-  const { periods, total } = await profitAndLoss(params)
-  const month = new Intl.DateTimeFormat(intlLocale(locale), { month: "long", year: "numeric", timeZone: "UTC" })
-  const year = (p: string) => formatNumber(Number(p.slice(0, 4)), locale, { useGrouping: false })
-  const label = (p: string) =>
-    params.group === "month"
-      ? month.format(new Date(`${p}T00:00:00Z`))
-      : params.group === "quarter"
-        ? t("reports.quarter", { quarter: formatNumber(Math.floor(Number(p.slice(5, 7)) / 3) + 1, locale), year: year(p) })
-        : year(p)
+  const { periods, total } = await profitAndLoss(params, calendarOf(locale))
+  const label = (p: string) => periodLabel(p, params.group, locale, (values) => t("reports.quarter", values))
   const cols = ["revenue", "instructorFees", "courseExpenses", "generalExpenses", "net"] as const
 
   return (

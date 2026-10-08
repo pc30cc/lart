@@ -31,8 +31,11 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Link } from "@/i18n/navigation"
 import {
+  calendarOf,
   formatDate,
   formatDateTime,
+  formatMonth,
+  formatMonthYear,
   formatNumber,
   formatPercent,
   formatTimeRange,
@@ -50,16 +53,19 @@ import { enter, Panel } from "./panel"
 
 /** The dashboard below the page header (streams in; `DashboardSkeleton` shows meanwhile). */
 export async function DashboardContent() {
-  const [data, locale] = await Promise.all([getDashboard(), getLocale()])
+  const locale = await getLocale()
+  // Months and the year in the language's calendar (Persian: Solar Hijri months, the year from Nowruz).
+  const data = await getDashboard(undefined, undefined, calendarOf(locale))
   if (data.blank) return <GettingStarted setup={data.setup} />
 
-  const monthName = (month: string, style: "short" | "long") =>
-    new Intl.DateTimeFormat(intlLocale(locale), {
-      month: style,
-      ...(style === "long" ? { year: "numeric" } : {}),
-      timeZone: "UTC",
-    }).format(new Date(`${month}T12:00:00Z`))
-  const months: MonthPoint[] = data.months.map((m) => ({ ...m, key: m.month, label: monthName(m.month, "short"), full: monthName(m.month, "long") }))
+  // A month's first day ("2026-09-23" is 1 Mehr): its name on the axis, its name and year in the tooltip and table.
+  const noon = (month: string) => `${month}T12:00:00Z`
+  const months: MonthPoint[] = data.months.map((m) => ({
+    ...m,
+    key: m.month,
+    label: formatMonth(noon(m.month), locale, "short"),
+    full: formatMonthYear(noon(m.month), locale),
+  }))
   const dayMonth = new Intl.DateTimeFormat(intlLocale(locale), { day: "numeric", month: "short", timeZone: TIME_ZONE })
   const seats: SeatPoint[] = data.seats.map((w) => ({
     id: w.id,

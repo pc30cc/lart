@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { addMonths, change, fillMonths, fillRate, lastMonths, partOfDay, paymentNote, workshopAlert } from "./metrics"
+import { addMonths, change, fillMonths, fillRate, lastMonths, monthOf, partOfDay, paymentNote, workshopAlert } from "./metrics"
 
 describe("dashboard metrics", () => {
   it("steps months across year ends", () => {
@@ -17,6 +17,26 @@ describe("dashboard metrics", () => {
     expect(months.at(-1)).toBe("2026-10-01")
     // Always reaches back to January, so the year so far is inside the window.
     expect(lastMonths("2026-12-31")[0]).toBe("2026-01-01")
+  })
+
+  it("steps and lists Solar Hijri months for Persian", () => {
+    // 6 Oct 2026 is 14 Mehr 1405; Mehr starts on 23 Sep, Farvardin 1405 on 21 Mar 2026.
+    expect(addMonths("2026-10-06", 0, "persian")).toBe("2026-09-23")
+    expect(addMonths("2026-10-06", 1, "persian")).toBe("2026-10-23")
+    expect(addMonths("2026-03-21", -1, "persian")).toBe("2026-02-20")
+    const months = lastMonths("2026-10-06", 12, "persian")
+    expect(months[0]).toBe("2025-10-23") // 1 Aban 1404
+    expect(months.at(-1)).toBe("2026-09-23") // 1 Mehr 1405
+    // On the last day of Esfand the window starts at Farvardin: the whole year is inside it.
+    expect(lastMonths("2027-03-20", 12, "persian")[0]).toBe("2026-03-21")
+  })
+
+  it("puts a day into its month", () => {
+    const months = ["2026-08-23", "2026-09-23"]
+    expect(monthOf("2026-09-20", months)).toBe("2026-08-23")
+    expect(monthOf("2026-09-23", months)).toBe("2026-09-23")
+    expect(monthOf("2026-10-30", months)).toBe("2026-09-23")
+    expect(monthOf("2026-08-22", months)).toBeNull()
   })
 
   it("fills missing months with zero and computes the net", () => {

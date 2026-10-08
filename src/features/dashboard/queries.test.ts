@@ -152,6 +152,29 @@ async function seed(tx: Tx) {
 const month = (d: Dashboard, m: string) => d.months.find((x) => x.month === m)!
 
 describe("dashboard queries", () => {
+  it("counts Solar Hijri months and the year from Nowruz for Persian", async () => {
+    await rolledBack(async (tx) => {
+      const before = await getDashboard(NOW, tx, "persian")
+      await seed(tx)
+      const d = await getDashboard(NOW, tx, "persian")
+
+      // 6 Oct 2026 is 14 Mehr 1405: the window runs from 1 Aban 1404 to 1 Mehr 1405.
+      expect(d.year).toBe(1405)
+      expect(d.months[0].month).toBe("2025-10-23")
+      expect(d.months.at(-1)!.month).toBe("2026-09-23")
+      const delta = (m: string) => {
+        const [x, y] = [month(d, m), month(before, m)]
+        return { revenue: x.revenue - y.revenue, expenses: x.expenses - y.expenses, net: x.net - y.net }
+      }
+      // 20 Sep is in Shahrivar (from 23 Aug); 25 Sep and 2 Oct are in Mehr.
+      expect(delta("2026-08-23")).toEqual({ revenue: 30_000, expenses: 0, net: 30_000 })
+      expect(delta("2026-09-23")).toEqual({ revenue: 45_000, expenses: 8_000, net: 37_000 })
+      expect(d.kpis.revenueThisMonth - before.kpis.revenueThisMonth).toBe(45_000)
+      expect(d.kpis.revenueLastMonth - before.kpis.revenueLastMonth).toBe(30_000)
+      expect(d.kpis.netThisYear - before.kpis.netThisYear).toBe(67_000)
+    })
+  })
+
   it("adds up money, workshops and partners", async () => {
     await rolledBack(async (tx) => {
       const before = await getDashboard(NOW, tx)

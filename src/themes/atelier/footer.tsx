@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server"
 
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Link } from "@/i18n/navigation"
-import { formatNumber } from "@/lib/format"
+import { formatYear } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { BrandLogo } from "../logo"
 import type { FooterContent, HeaderMember, LogoSize, NavItem } from "../types"
@@ -35,7 +35,8 @@ export async function Footer({
     getTranslations("site.header"),
     getTranslations("site.footer"),
   ])
-  const year = formatNumber(new Date().getFullYear(), locale, { useGrouping: false })
+  // This year in the language's calendar (۱۴۰۵ in Persian).
+  const year = formatYear(new Date(), locale)
 
   const contacts = [
     footer.email && { href: `mailto:${footer.email}`, label: footer.email, icon: <MailIcon />, ltr: true, wrap: true },

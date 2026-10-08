@@ -5,7 +5,7 @@ import { z } from "zod"
 
 import { db } from "@/db"
 import { courses } from "@/db/schema"
-import { lira, toCsv, type Cell } from "@/features/money/csv"
+import { csvDate, lira, toCsv, type Cell } from "@/features/money/csv"
 import { today } from "@/features/money/ledger"
 import { exportRegistrations } from "@/features/registrations/admin/queries"
 import { paymentState } from "@/features/registrations/schema"
@@ -16,9 +16,10 @@ import { zonedParts } from "@/lib/format"
 
 /**
  * CSV of a workshop's registrations (participant, member's contact, payment,
- * refund, consents), column titles in the page's language. Super admins only;
- * every export is written to the audit log. Safe against CSV / formula
- * injection (`toCsv`): names and phone numbers are typed by members.
+ * refund, consents), column titles and dates in the page's language and its
+ * calendar. Super admins only; every export is written to the audit log. Safe
+ * against CSV / formula injection (`toCsv`): names and phone numbers are
+ * typed by members.
  */
 export async function GET(request: Request, ctx: RouteContext<"/[locale]/admin/workshops/[id]/registrations/export">) {
   const session = await requireAdminApi(request)
@@ -32,7 +33,8 @@ export async function GET(request: Request, ctx: RouteContext<"/[locale]/admin/w
   const t = await getTranslations({ locale, namespace: "workshops.registrations" })
 
   const rows = await exportRegistrations(id)
-  const day = (value: Date | null) => (value ? zonedParts(value).date : "")
+  // Istanbul days, in the language's calendar (Persian: "1405/07/16").
+  const day = (value: Date | null) => (value ? csvDate(zonedParts(value).date, locale) : "")
   const yesNo = (value: boolean) => (value ? t("csv.yes") : t("csv.no"))
   const columns = [
     "participant",

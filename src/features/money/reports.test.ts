@@ -12,7 +12,7 @@ import {
   postWithdrawal,
   reverseTransaction,
 } from "./ledger"
-import { instructorResults, ledgerExport, partnerStatement, periodStarts, profitAndLoss, workshopResults } from "./reports"
+import { instructorResults, ledgerExport, partnerStatement, profitAndLoss, workshopResults } from "./reports"
 import { addRegistration, makeAdmin, makeCourse, makeWorld, retireAdmins } from "./testing"
 
 const session = vi.hoisted(() => ({ sessionId: "test", admin: { id: "", email: "", name: "Reports", shareBp: 0 } }))
@@ -38,26 +38,19 @@ describe("csv", () => {
   })
 })
 
-describe("periodStarts", () => {
-  it("lists every month, quarter or year of a range", () => {
-    expect(periodStarts("2026-01-15", "2026-04-02", "month")).toEqual(["2026-01-01", "2026-02-01", "2026-03-01", "2026-04-01"])
-    expect(periodStarts("2026-02-10", "2026-12-31", "quarter")).toEqual(["2026-01-01", "2026-04-01", "2026-07-01", "2026-10-01"])
-    expect(periodStarts("2025-06-01", "2027-01-01", "year")).toEqual(["2025-01-01", "2026-01-01", "2027-01-01"])
-    expect(periodStarts("2026-11-01", "2027-02-28", "month")).toEqual(["2026-11-01", "2026-12-01", "2027-01-01", "2027-02-01"])
-  })
-})
-
 describe("reports", () => {
   let partner: { id: string; name: string }
   let courseId: string
   let world: Awaited<ReturnType<typeof makeWorld>>
   let before: Awaited<ReturnType<typeof profitAndLoss>>
+  let beforePersian: Awaited<ReturnType<typeof profitAndLoss>>
 
   beforeAll(async () => {
     partner = await makeAdmin("Statement")
     session.admin.id = partner.id
     world = await makeWorld()
     before = await profitAndLoss({ ...YEAR, group: "quarter" })
+    beforePersian = await profitAndLoss({ ...YEAR, group: "quarter" }, "persian")
 
     courseId = await makeCourse(world, partner.id, { endsAt: new Date("2003-08-01T12:00:00Z"), finalParticipants: 1 })
     const registrationId = await addRegistration(world, courseId)
@@ -114,6 +107,30 @@ describe("reports", () => {
       [0, 0, 0, 0, 0],
     ])
     expect(after.total.net - before.total.net).toBe(36000)
+  })
+
+  it("profit and loss by Solar Hijri season for Persian", async () => {
+    const after = await profitAndLoss({ ...YEAR, group: "quarter" }, "persian")
+    // Winter 1381 (from 1 Dey, 22 Dec 2002), spring, summer, autumn and winter 1382 (Nowruz: 21 Mar 2003).
+    expect(after.periods.map((p) => p.period)).toEqual(["2002-12-22", "2003-03-21", "2003-06-22", "2003-09-23", "2003-12-22"])
+    const delta = after.periods.map((p, i) => {
+      const b = beforePersian.periods[i]
+      return [p.revenue - b.revenue, p.instructorFees - b.instructorFees, p.courseExpenses - b.courseExpenses, p.generalExpenses - b.generalExpenses, p.net - b.net]
+    })
+    // 10 Feb is in winter 1381; 5–6 May in spring 1382; 1 Aug in summer 1382.
+    expect(delta).toEqual([
+      [50000, 0, 0, 0, 50000],
+      [0, 0, 3000, 1000, -4000],
+      [0, 10000, 0, 0, -10000],
+      [0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0],
+    ])
+    expect(after.total.net - beforePersian.total.net).toBe(36000)
+    const years = await profitAndLoss({ ...YEAR, group: "year" }, "persian")
+    expect(years.periods.map((p) => p.period)).toEqual(["2002-03-21", "2003-03-21"])
+    // Ordibehesht 1382 runs 21 Apr – 21 May 2003.
+    const months = await profitAndLoss({ from: "2003-04-21", to: "2003-05-21", group: "month" }, "persian")
+    expect(months.periods.map((p) => p.period)).toEqual(["2003-04-21"])
   })
 
   it("by workshop and by instructor", async () => {

@@ -2,23 +2,32 @@
  * Pure helpers of the dashboard (no database, safe on the client): month
  * windows, changes between periods and the warnings shown on a workshop.
  */
+import { addPeriods, periodStart } from "@/lib/calendar"
+import type { CalendarSystem } from "@/lib/format"
 
 /** How many months the charts and the "last 12 months" figures cover (this month included). */
 export const MONTHS = 12
 /** A go / no-go decision closer than this is flagged on the upcoming list. */
 export const DECISION_SOON_MS = 3 * 24 * 3_600_000
 
-const pad = (n: number) => String(n).padStart(2, "0")
-
-/** The first day of the month `n` months after (or before, n < 0) the month of `date` ("YYYY-MM-DD"). */
-export function addMonths(date: string, n: number): string {
-  const total = Number(date.slice(0, 4)) * 12 + Number(date.slice(5, 7)) - 1 + n
-  return `${Math.floor(total / 12)}-${pad((total % 12) + 1)}-01`
+/**
+ * The first day ("YYYY-MM-DD") of the month `n` months after (or before, n < 0)
+ * the month of `date`, in `calendar`'s months (Persian: 1 Mehr is 2026-09-23).
+ */
+export function addMonths(date: string, n: number, calendar: CalendarSystem = "gregory"): string {
+  return addPeriods(periodStart(date, "month", calendar), n, "month", calendar)
 }
 
-/** The first day of each of the last `count` months up to the month of `today`, oldest first. */
-export function lastMonths(today: string, count = MONTHS): string[] {
-  return Array.from({ length: count }, (_, i) => addMonths(today, i - count + 1))
+/** The first day of each of the last `count` months of `calendar` up to the month of `today`, oldest first. */
+export function lastMonths(today: string, count = MONTHS, calendar: CalendarSystem = "gregory"): string[] {
+  return Array.from({ length: count }, (_, i) => addMonths(today, i - count + 1, calendar))
+}
+
+/** The month (its first day) of `months` (first days, oldest first) that holds `day`, or null before the first. */
+export function monthOf(day: string, months: string[]): string | null {
+  let found: string | null = null
+  for (const month of months) if (month <= day) found = month
+  return found
 }
 
 export type MonthFigures = { month: string; revenue: number; expenses: number; net: number }

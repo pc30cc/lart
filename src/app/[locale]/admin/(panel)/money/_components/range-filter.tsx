@@ -5,31 +5,30 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import { useState, useTransition } from "react"
 import type { DateRange } from "react-day-picker"
-import { enGB, faIR, tr } from "react-day-picker/locale"
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { formatDate, zonedParts } from "@/lib/format"
+import { addPeriods, periodEnd, periodStart, type PeriodUnit } from "@/lib/calendar"
+import { calendarOf, formatDate, zonedParts, type CalendarSystem } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-const dayPickerLocales = { fa: faIR, tr, en: enGB }
 const pad = (n: number) => String(n).padStart(2, "0")
 const iso = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 const local = (s: string) => new Date(`${s}T12:00:00`)
-const lastDay = (y: number, m: number) => new Date(y, m + 1, 0).getDate() // m: 0-based
 
-/** Ready-made ranges, from today's date in Istanbul. */
-function presets() {
-  const [y, m] = zonedParts(new Date()).date.split("-").map(Number)
-  const month = (yy: number, mm: number) => ({ from: `${yy}-${pad(mm)}-01`, to: `${yy}-${pad(mm)}-${pad(lastDay(yy, mm - 1))}` })
-  const q = Math.floor((m - 1) / 3) * 3 + 1
+/** Ready-made ranges, from today's date in Istanbul, in the language's calendar (Persian: Jalali months, seasons, years). */
+function presets(calendar: CalendarSystem) {
+  const today = zonedParts(new Date()).date
+  const whole = (start: string, unit: PeriodUnit) => ({ from: start, to: periodEnd(start, unit, calendar) })
+  const month = periodStart(today, "month", calendar)
+  const year = periodStart(today, "year", calendar)
   return {
-    thisMonth: month(y, m),
-    lastMonth: m === 1 ? month(y - 1, 12) : month(y, m - 1),
-    thisQuarter: { from: `${y}-${pad(q)}-01`, to: `${y}-${pad(q + 2)}-${pad(lastDay(y, q + 1))}` },
-    thisYear: { from: `${y}-01-01`, to: `${y}-12-31` },
-    lastYear: { from: `${y - 1}-01-01`, to: `${y - 1}-12-31` },
+    thisMonth: whole(month, "month"),
+    lastMonth: whole(addPeriods(month, -1, "month", calendar), "month"),
+    thisQuarter: whole(periodStart(today, "quarter", calendar), "quarter"),
+    thisYear: whole(year, "year"),
+    lastYear: whole(addPeriods(year, -1, "year", calendar), "year"),
   }
 }
 
@@ -65,7 +64,7 @@ export function RangeFilter({ from, to, clearable = false }: { from?: string; to
     from && to
       ? `${formatDate(`${from}T09:00:00Z`, locale, "medium")} – ${formatDate(`${to}T09:00:00Z`, locale, "medium")}`
       : t("allDates")
-  const choices = presets()
+  const choices = presets(calendarOf(locale))
 
   return (
     <div className="flex items-center gap-1">
@@ -108,10 +107,6 @@ export function RangeFilter({ from, to, clearable = false }: { from?: string; to
                   apply({ from: iso(range.from), to: iso(range.to) })
                 }
               }}
-              locale={dayPickerLocales[locale as keyof typeof dayPickerLocales] ?? tr}
-              numerals={locale === "fa" ? "arabext" : undefined}
-              dir={locale === "fa" ? "rtl" : "ltr"}
-              weekStartsOn={1}
             />
           </div>
         </PopoverContent>

@@ -7,6 +7,8 @@ import { admins, courses, instructors, ledgerLines, ledgerTransactions, registra
 import { requireAdmin } from "@/lib/auth/admin"
 import { projectedFees } from "./closing"
 import { partnerCapitals, type TransactionKind } from "./ledger"
+import { periodStart, periodStarts } from "@/lib/calendar"
+import type { CalendarSystem } from "@/lib/format"
 import type { PeriodGroup } from "./schema"
 
 /**
@@ -46,42 +48,18 @@ function addTotals<T extends PnlFigures>(rows: T[]): PnlFigures {
 
 // ─── Profit and loss by period ────────────────────────────────────────────────
 
-const units: Record<PeriodGroup, ReturnType<typeof sql.raw>> = {
-  month: sql.raw("'month'"),
-  quarter: sql.raw("'quarter'"),
-  year: sql.raw("'year'"),
-}
-const stepMonths: Record<PeriodGroup, number> = { month: 1, quarter: 3, year: 12 }
-
-/** The first day of every period from `from` to `to` ("YYYY-MM-01"). */
-export function periodStarts(from: string, to: string, group: PeriodGroup): string[] {
-  const step = stepMonths[group]
-  let y = Number(from.slice(0, 4))
-  let m = Number(from.slice(5, 7)) - 1
-  if (group === "quarter") m -= m % 3
-  if (group === "year") m = 0
-  const out: string[] = []
-  for (let i = 0; i < 1200; i++) {
-    const start = `${y}-${String(m + 1).padStart(2, "0")}-01`
-    if (start > to) break
-    out.push(start)
-    m += step
-    y += Math.floor(m / 12)
-    m %= 12
-  }
-  return out
-}
-
 /**
- * Income and expenses per month, quarter or year, by the date each entry
+ * Income and expenses per month, quarter or year of the viewer's calendar
+ * (Persian: Solar Hijri months, seasons and years), by the date each entry
  * happened; an instructor fee counts on the day its workshop was closed.
+ * Summed per day in SQL (Postgres knows no Jalali calendar), then per period.
+ * Each period is named by its first day (Gregorian ISO, "2026-09-23" for Mehr 1405).
  */
-export async function profitAndLoss(range: { from: string; to: string; group: PeriodGroup }) {
+export async function profitAndLoss(range: { from: string; to: string; group: PeriodGroup }, calendar: CalendarSystem = "gregory") {
   await requireAdmin()
-  const period = sql<string>`to_char(date_trunc(${units[range.group]}, ${t.occurredOn}::timestamp), 'YYYY-MM-DD')`
   const rows = await db
     .select({
-      period,
+      day: t.occurredOn,
       revenue: sum("revenue", true),
       instructorFees: sum("instructor_fees"),
       courseExpenses: sum("course_expenses"),
@@ -96,21 +74,25 @@ export async function profitAndLoss(range: { from: string; to: string; group: Pe
         sql`${t.occurredOn} between ${range.from} and ${range.to}`,
       ),
     )
-    .groupBy(period)
-  const byPeriod = new Map(rows.map((r) => [r.period, r]))
-  const periods = periodStarts(range.from, range.to, range.group).map((start) => {
-    const r = byPeriod.get(start)
-    return {
-      period: start,
-      ...withNet({
-        revenue: r?.revenue ?? 0,
-        instructorFees: r?.instructorFees ?? 0,
-        courseExpenses: r?.courseExpenses ?? 0,
-        generalExpenses: r?.generalExpenses ?? 0,
-      }),
-    }
-  })
-  return { periods, total: addTotals(periods) }
+    .groupBy(t.occurredOn)
+  const periods = periodStarts(range.from, range.to, range.group, calendar).map((start) => ({
+    period: start,
+    revenue: 0,
+    instructorFees: 0,
+    courseExpenses: 0,
+    generalExpenses: 0,
+  }))
+  const byStart = new Map(periods.map((p) => [p.period, p]))
+  for (const r of rows) {
+    const p = byStart.get(periodStart(r.day, range.group, calendar))
+    if (!p) continue
+    p.revenue += r.revenue
+    p.instructorFees += r.instructorFees
+    p.courseExpenses += r.courseExpenses
+    p.generalExpenses += r.generalExpenses
+  }
+  const figures = periods.map(({ period, ...f }) => ({ period, ...withNet(f) }))
+  return { periods: figures, total: addTotals(figures) }
 }
 
 // ─── By workshop and by instructor ────────────────────────────────────────────

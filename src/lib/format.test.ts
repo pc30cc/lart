@@ -2,9 +2,13 @@ import { describe, expect, it } from "vitest"
 
 import { likePattern, parseTableParams } from "@/components/admin/data-table/params"
 import {
+  calendarOf,
   formatDate,
+  formatDateTime,
+  formatMonthYear,
   formatTime,
   formatWeekday,
+  formatYear,
   localized,
   normalizeDigits,
   slugify,
@@ -34,10 +38,39 @@ describe("Istanbul time", () => {
 describe("formatting per language", () => {
   const instant = "2026-10-13T15:30:00.000Z" // Tuesday 18:30 in Istanbul
 
-  it("uses the Gregorian calendar with Persian digits for Persian", () => {
-    expect(formatDate(instant, "fa", "long")).toContain("۲۰۲۶")
-    expect(formatDate(instant, "fa", "long")).toContain("اکتبر")
+  it("writes Persian dates in the Solar Hijri calendar, in their natural order", () => {
+    // 13 October 2026 is Tuesday 21 Mehr 1405.
+    expect(calendarOf("fa")).toBe("persian")
+    expect(formatDate(instant, "fa", "short")).toBe("۱۴۰۵/۷/۲۱")
+    expect(formatDate(instant, "fa")).toBe("۲۱ مهر ۱۴۰۵")
+    expect(formatDate(instant, "fa", "long")).toBe("۲۱ مهر ۱۴۰۵")
+    expect(formatDate(instant, "fa", "full")).toBe("سه‌شنبه ۲۱ مهر ۱۴۰۵")
+    expect(formatDateTime(instant, "fa")).toBe("۲۱ مهر ۱۴۰۵، ۱۸:۳۰")
+    expect(formatDateTime(instant, "fa", "full")).toBe("سه‌شنبه ۲۱ مهر ۱۴۰۵ ساعت ۱۸:۳۰")
+    expect(formatMonthYear(instant, "fa")).toBe("مهر ۱۴۰۵")
     expect(formatTime(instant, "fa")).toBe("۱۸:۳۰")
+    for (const style of ["short", "medium", "long", "full"] as const) {
+      expect(formatDateTime(instant, "fa", style)).not.toMatch(/۲۰۲۶|اکتبر|[0-9]/)
+    }
+  })
+
+  it("turns the Persian year at Nowruz, not on 1 January", () => {
+    expect(formatYear("2026-03-20T12:00:00.000Z", "fa")).toBe("۱۴۰۴")
+    expect(formatYear("2026-03-21T12:00:00.000Z", "fa")).toBe("۱۴۰۵")
+    expect(formatYear("2026-12-31T12:00:00.000Z", "fa")).toBe("۱۴۰۵")
+    expect(formatDate("2026-03-21T12:00:00.000Z", "fa")).toBe("۱ فروردین ۱۴۰۵")
+  })
+
+  it("writes Turkish and English dates in the Gregorian calendar", () => {
+    expect(calendarOf("tr")).toBe("gregory")
+    expect(calendarOf("en")).toBe("gregory")
+    expect(formatDate(instant, "tr", "long")).toBe("13 Ekim 2026")
+    expect(formatDate(instant, "tr", "full")).toBe("13 Ekim 2026 Salı")
+    expect(formatDate(instant, "en", "long")).toBe("13 October 2026")
+    expect(formatMonthYear(instant, "tr")).toBe("Ekim 2026")
+    expect(formatMonthYear(instant, "en")).toBe("October 2026")
+    expect(formatYear("2026-03-20T12:00:00.000Z", "tr")).toBe("2026")
+    expect(formatYear("2026-12-31T22:30:00.000Z", "en")).toBe("2027") // Istanbul is already in the new year
   })
 
   it("shows weekdays and 24-hour times in Istanbul time", () => {

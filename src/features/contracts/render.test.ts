@@ -51,6 +51,10 @@ describe("renderContract", () => {
     expect(text).toContain("«شمع‌سازی» در Moda Sanat Evi")
     expect(text).toContain("حداقل ۴ و حداکثر ۱۲ نفر")
     expect(text).not.toMatch(/\{(brand|workshop_title|instructor_name)\}/)
+    // Dates in the Solar Hijri calendar: 14 Oct 2026 is Wednesday 22 Mehr 1405.
+    expect(text).toContain("تاریخ: چهارشنبه ۲۲ مهر ۱۴۰۵")
+    expect(text).toContain("آخرین زمان تصمیم‌گیری دربارهٔ برگزاری: ۲۰ مهر ۱۴۰۵ ساعت ۱۸:۰۰")
+    expect(text).not.toMatch(/اکتبر|۲۰۲۶/)
   })
 
   it("says so when the fee is fixed and there is no advance (English)", async () => {

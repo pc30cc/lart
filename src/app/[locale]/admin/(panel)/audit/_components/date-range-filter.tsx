@@ -5,16 +5,15 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import { useState, useTransition } from "react"
 import type { DateRange as DayRange } from "react-day-picker"
-import { enGB, faIR, tr } from "react-day-picker/locale"
 
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { shiftDay, type DateRange } from "@/features/audit/range"
-import { formatDate, zonedParts } from "@/lib/format"
+import { periodStart } from "@/lib/calendar"
+import { calendarOf, formatDate, zonedParts } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-const dayPickerLocales = { fa: faIR, tr, en: enGB }
 
 /** "YYYY-MM-DD" ⇄ a local Date at noon (what the calendar works with). */
 const toDay = (date?: string) => {
@@ -43,7 +42,8 @@ export function DateRangeFilter({ from, to }: DateRange) {
     { label: t("today"), range: { from: today, to: today } },
     { label: t("last7"), range: { from: shiftDay(today, -6), to: today } },
     { label: t("last30"), range: { from: shiftDay(today, -29), to: today } },
-    { label: t("thisMonth"), range: { from: `${today.slice(0, 8)}01`, to: today } },
+    // From the 1st of the month in the language's calendar (Persian: 1 Mehr, not 1 October).
+    { label: t("thisMonth"), range: { from: periodStart(today, "month", calendarOf(locale)), to: today } },
   ]
 
   function apply(next: DateRange) {
@@ -114,10 +114,6 @@ export function DateRangeFilter({ from, to }: DateRange) {
               onSelect={setDraft}
               defaultMonth={draft?.from}
               disabled={{ after: new Date() }}
-              locale={dayPickerLocales[locale as keyof typeof dayPickerLocales] ?? tr}
-              numerals={locale === "fa" ? "arabext" : undefined}
-              dir={locale === "fa" ? "rtl" : "ltr"}
-              weekStartsOn={1}
             />
           </div>
           <div className="flex items-center justify-between gap-2 border-t p-2">

@@ -88,6 +88,18 @@ describe("GET /api/admin/money/export/[report]", () => {
     expect(entry).toMatchObject({ entity: "report", entityId: "partner", data: { from: "2004-01-01", to: "2004-12-31" } })
   })
 
+  it("writes Persian dates and periods in the Solar Hijri calendar", async () => {
+    state.admin = { id: partner.id }
+    const statement = await csvLines(await call("partner", `from=2004-01-01&to=2004-12-31&partner=${partner.id}&locale=fa`))
+    // 3 Feb 2004 is 14 Bahman 1382; Latin digits, year first, so the column sorts.
+    expect(statement.slice(2).map((line) => line.split(",")[0])).toEqual(["1382/10/11", "1382/11/14", "1383/10/11"])
+    const pnl = await csvLines(await call("pnl", "from=2004-01-01&to=2004-12-31&group=month&locale=fa"))
+    // Thirteen Jalali months touch 2004: Dey 1382 (from 22 Dec 2003) to Dey 1383 (from 21 Dec 2004).
+    const periods = pnl.slice(1, -1).map((line) => line.split(",")[0])
+    expect(periods).toHaveLength(13)
+    expect([periods[0], periods[1], periods[12]]).toEqual(["دی ۱۳۸۲", "بهمن ۱۳۸۲", "دی ۱۳۸۳"])
+  })
+
   it("exports the ledger line by line, filtered", async () => {
     state.admin = { id: partner.id }
     const response = await call("transactions", `from=2004-01-01&to=2004-12-31&partner=${partner.id}&kind=nonsense`)

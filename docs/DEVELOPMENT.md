@@ -692,10 +692,31 @@ const thingSchema = z.object({
 ### Formatting (`@/lib/format`)
 
 `formatDate(value, locale, "short" | "medium" | "long" | "full")` (full adds the
-weekday; its punctuation differs between ICU builds, so a client component that
-server-renders it puts `suppressHydrationWarning` on the element), `formatTime`, `formatDateTime`, `formatWeekday`, `formatTimeRange`,
-`formatNumber`, `formatPercent(fraction)` (shares: `bp / 10000`), all in
-`Europe/Istanbul`; Persian uses the Gregorian calendar with Persian digits.
+weekday; its English and Turkish punctuation differs between ICU builds, so a
+client component that server-renders it puts `suppressHydrationWarning` on the
+element), `formatTime`, `formatDateTime`, `formatWeekday`, `formatTimeRange`,
+`formatMonth`, `formatMonthYear`, `formatYear`, `formatNumber`,
+`formatPercent(fraction)` (shares: `bp / 10000`), all in `Europe/Istanbul`.
+
+Calendars: each language shows dates in its own calendar (`calendarOf`).
+Persian is Solar Hijri (Jalali) with Persian digits ("۱۶ مهر ۱۴۰۵", built from
+ICU's parts in day-month-year order, the same on the server and in browsers);
+Turkish and English are Gregorian ("16 Ekim 2026", "16 Oct 2026"). Show dates
+only through these helpers, never with `Intl.DateTimeFormat(intlLocale(…))`
+directly (ICU's Persian patterns put the year first). Stored values, URLs,
+`<time dateTime>`, JSON-LD, sitemaps and CSV file names stay Gregorian ISO.
+Periods (a month, a quarter, a year) follow the viewer's calendar:
+`@/lib/calendar` (`periodStart`, `periodEnd`, `addPeriods`, `periodStarts`,
+`calendarFields`, over ISO days; date-fns / date-fns-jalali) gives their
+bounds, so "this month" in Persian runs from 1 Mehr and a year from Nowruz.
+Postgres has no Jalali calendar: sum per day (`occurred_on`) in SQL and fold
+the days into periods in TypeScript (dashboard `monthly`, money
+`profitAndLoss`). A Jalali quarter is a season (Farvardin–Khordad is spring;
+the reports name it "بهار ۱۴۰۵"). The date picker (`components/ui/calendar`)
+shows Jalali months for Persian with weeks from Saturday, and returns ordinary
+Dates. CSV exports write Persian dates as "1405/07/16" (`csvDate`: year first,
+Latin digits, so the column sorts) and ISO days otherwise. A signed contract
+keeps the exact text signed, with the dates as they were written then.
 `localized(text, locale)` picks a `LocalizedText` with a tr → en → fa fallback.
 `slugify` (Turkish-aware), `zonedToIso(date, time)` / `zonedParts(iso)`,
 `normalizeDigits`. Money: `formatLira` / `parseLira` (`@/lib/money`).

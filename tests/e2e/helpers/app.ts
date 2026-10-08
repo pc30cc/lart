@@ -144,13 +144,14 @@ export function istanbulDate(d: Date): string {
 
 /**
  * Pick a date in the react-day-picker popover opened by `trigger`, walking
- * months forward or back. Works for the en-GB calendar (data-day "dd/mm/yyyy").
+ * months forward or back. Days carry their Gregorian date as data-day
+ * "YYYY-MM-DD" in every calendar; the walk reads the en-GB caption.
  */
 export async function pickDate(page: Page, trigger: Locator, isoDate: string) {
   await trigger.click()
-  const [y, m, d] = isoDate.split("-")
+  const [y, m] = isoDate.split("-")
   const pop = page.locator('[data-slot="popover-content"]').last()
-  const day = pop.locator(`button[data-day="${d}/${m}/${y}"]`)
+  const day = pop.locator(`button[data-day="${isoDate}"]`)
   const target = Number(y) * 12 + Number(m)
   for (let i = 0; i < 36 && !(await day.isVisible()); i++) {
     const caption = (await pop.locator(".rdp-caption_label, [role=status]").first().textContent()) ?? ""

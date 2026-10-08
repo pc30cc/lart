@@ -42,6 +42,15 @@ describe("audit data formatting", () => {
     expect(long.endsWith("…")).toBe(true)
   })
 
+  it("writes stored dates in the page's language and calendar, in Istanbul time", () => {
+    const data = { occurredOn: "2026-10-08", startsAt: { from: "2026-10-14T15:00:00.000Z", to: "2026-10-21T15:00:00.000Z" } }
+    expect(auditSummary(data, "en")).toBe("occurredOn: 8 Oct 2026 · startsAt: 14 Oct 2026, 18:00 → 21 Oct 2026, 18:00")
+    expect(auditSummary(data, "tr")).toBe("occurredOn: 8 Eki 2026 · startsAt: 14 Eki 2026 18:00 → 21 Eki 2026 18:00")
+    expect(auditSummary(data, "fa")).toBe("occurredOn: ۱۶ مهر ۱۴۰۵ · startsAt: ۲۲ مهر ۱۴۰۵، ۱۸:۰۰ → ۲۹ مهر ۱۴۰۵، ۱۸:۰۰")
+    // Not a date: left as it is.
+    expect(auditSummary({ slug: "2026-10-08-candles", code: "2026-13-45" }, "fa")).toBe("slug: 2026-10-08-candles · code: 2026-13-45")
+  })
+
   it("shows a localized change in the language that changed, preferring the page's language", () => {
     const venue = { fa: "خانهٔ هنر مودا", tr: "Moda Sanat Evi", en: "Moda Art House" }
     // Only the English text changed (the e2e edit): shown in English, not as the unchanged Persian text.

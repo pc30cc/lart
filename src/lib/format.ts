@@ -1,7 +1,9 @@
 /**
  * Locale-aware formatting for the whole app (server and client).
- * The business runs in Europe/Istanbul; Persian uses the Gregorian calendar
- * with Persian digits.
+ * The business runs in Europe/Istanbul. Each language shows dates in its own
+ * calendar: Persian in the Solar Hijri (Jalali) calendar with Persian digits
+ * ("۱۶ مهر ۱۴۰۵"), Turkish and English in the Gregorian ("16 Ekim 2026",
+ * "16 Oct 2026"). Stored dates, URLs and machine formats stay Gregorian ISO.
  */
 import type { LocalizedText } from "@/db/schema"
 
@@ -9,9 +11,13 @@ export const TIME_ZONE = "Europe/Istanbul"
 
 type DateInput = Date | string | number
 
-/** The Intl locale for an app locale. */
+/** The calendar a language shows dates in. */
+export type CalendarSystem = "persian" | "gregory"
+export const calendarOf = (locale: string): CalendarSystem => (locale === "fa" ? "persian" : "gregory")
+
+/** The Intl locale for an app locale (its calendar and digits included). */
 export function intlLocale(locale: string): string {
-  if (locale === "fa") return "fa-IR-u-ca-gregory"
+  if (locale === "fa") return "fa-IR-u-ca-persian-nu-arabext"
   if (locale === "en") return "en-GB"
   return "tr-TR"
 }
@@ -38,13 +44,35 @@ const dateStyles = {
 
 export type DateStyle = keyof typeof dateStyles
 
+/** The parts of an instant in `locale`'s calendar, in Istanbul ("day", "month", "year", "weekday"…). */
+function parts(value: DateInput, locale: string, options: Intl.DateTimeFormatOptions): Record<string, string> {
+  return Object.fromEntries(dtf(locale, options).formatToParts(toDate(value)).map((p) => [p.type, p.value]))
+}
+
 /**
- * "14 Oct 2026" / "14 Eki 2026" / "۱۴ اکتبر ۲۰۲۶". `full` adds the weekday.
- * The `full` text differs between ICU builds ("Tuesday, 20 October 2026" in
- * Node, no comma in Chromium for en-GB): a client component that renders it
+ * A Persian date in its natural order, put together from its parts: ICU's
+ * patterns for the Persian calendar write the year first with a Latin comma
+ * in places ("۱۴۰۵ مهر ۱۶, پنجشنبه"), and the parts are the same in every
+ * ICU build (server and browser render the same text).
+ */
+function persianDate(value: DateInput, style: DateStyle): string {
+  if (style === "short") {
+    const p = parts(value, "fa", dateStyles.short)
+    return `${p.year}/${p.month}/${p.day}`
+  }
+  const p = parts(value, "fa", style === "full" ? dateStyles.full : dateStyles.long)
+  const date = `${p.day} ${p.month} ${p.year}`
+  return style === "full" ? `${p.weekday} ${date}` : date
+}
+
+/**
+ * "14 Oct 2026" / "14 Eki 2026" / "۲۲ مهر ۱۴۰۵". `full` adds the weekday.
+ * The English `full` text differs between ICU builds ("Tuesday, 20 October
+ * 2026" in Node, no comma in Chromium): a client component that renders it
  * during SSR must put `suppressHydrationWarning` on the element holding it.
  */
 export function formatDate(value: DateInput, locale: string, style: DateStyle = "medium"): string {
+  if (locale === "fa") return persianDate(value, style)
   return dtf(locale, dateStyles[style]).format(toDate(value))
 }
 
@@ -53,10 +81,35 @@ export function formatTime(value: DateInput, locale: string): string {
   return dtf(locale, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(toDate(value))
 }
 
+/** A date and its time: "14 Oct 2026, 18:30" / "۲۲ مهر ۱۴۰۵، ۱۸:۳۰" / "پنجشنبه ۲۲ مهر ۱۴۰۵ ساعت ۱۸:۳۰". */
 export function formatDateTime(value: DateInput, locale: string, style: DateStyle = "medium"): string {
+  if (locale === "fa") {
+    const glue = style === "long" || style === "full" ? " ساعت " : "، "
+    return `${persianDate(value, style)}${glue}${formatTime(value, locale)}`
+  }
   return dtf(locale, { ...dateStyles[style], hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(
     toDate(value),
   )
+}
+
+/** The name of the month of `locale`'s calendar: "Oct" / "October", "Eki" / "Ekim", "مهر" (Persian months have no short names). */
+export function formatMonth(value: DateInput, locale: string, width: "short" | "long" = "long"): string {
+  return dtf(locale, { month: locale === "fa" ? "long" : width }).format(toDate(value))
+}
+
+/** A month of `locale`'s calendar: "October 2026" / "Ekim 2026" / "مهر ۱۴۰۵". */
+export function formatMonthYear(value: DateInput, locale: string): string {
+  if (locale === "fa") {
+    const p = parts(value, "fa", { month: "long", year: "numeric" })
+    return `${p.month} ${p.year}`
+  }
+  return dtf(locale, { month: "long", year: "numeric" }).format(toDate(value))
+}
+
+/** The year of `locale`'s calendar: "2026" / "۱۴۰۵" (Persian: the year part alone, never with an era). */
+export function formatYear(value: DateInput, locale: string): string {
+  if (locale === "fa") return parts(value, "fa", { year: "numeric" }).year
+  return dtf(locale, { year: "numeric" }).format(toDate(value))
 }
 
 /** "Tuesday" / "Salı" / "سه‌شنبه". */

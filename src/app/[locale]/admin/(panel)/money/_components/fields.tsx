@@ -3,7 +3,6 @@
 import { CalendarIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { useState } from "react"
-import { enGB, faIR, tr } from "react-day-picker/locale"
 import type { FieldValues, Path } from "react-hook-form"
 
 import { FormField } from "@/components/admin/form/form"
@@ -15,7 +14,6 @@ import { formatDate, zonedParts } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { cn } from "@/lib/utils"
 
-const dayPickerLocales = { fa: faIR, tr, en: enGB }
 
 /** Today in Istanbul, "YYYY-MM-DD": the default date of a new entry. */
 export const todayIso = () => zonedParts(new Date()).date
@@ -63,10 +61,6 @@ export function DateField<T extends FieldValues>({ name, label }: { name: Path<T
                   onChange(`${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}`)
                   setOpen(false)
                 }}
-                locale={dayPickerLocales[locale as keyof typeof dayPickerLocales] ?? tr}
-                numerals={locale === "fa" ? "arabext" : undefined}
-                dir={locale === "fa" ? "rtl" : "ltr"}
-                weekStartsOn={1}
               />
             </PopoverContent>
           </Popover>

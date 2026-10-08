@@ -3,7 +3,6 @@
 import { CalendarIcon, ClockIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { useId, useState } from "react"
-import { enGB, faIR, tr } from "react-day-picker/locale"
 import { useFormContext, useWatch } from "react-hook-form"
 
 import { RequiredMark, useErrorText } from "@/components/admin/form/form"
@@ -15,7 +14,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { formatDate, zonedParts, zonedToIso } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
-const dayPickerLocales = { fa: faIR, tr, en: enGB }
 
 type Parts = { date: string; start: string; end: string }
 
@@ -116,10 +114,6 @@ export function DateTimeFields({
                 update({ date: `${y}-${m}-${d}` })
                 setOpen(false)
               }}
-              locale={dayPickerLocales[locale as keyof typeof dayPickerLocales] ?? tr}
-              numerals={locale === "fa" ? "arabext" : undefined}
-              dir={locale === "fa" ? "rtl" : "ltr"}
-              weekStartsOn={1}
             />
           </PopoverContent>
         </Popover>

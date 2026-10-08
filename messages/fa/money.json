@@ -248,7 +248,7 @@
       "instructors": "به تفکیک مدرس",
       "partner": "صورت‌حساب شریک"
     },
-    "quarter": "فصل {quarter} {year}",
+    "quarter": "{season, select, spring {بهار} summer {تابستان} autumn {پاییز} other {زمستان}} {year}",
     "costs": "هزینه‌ها",
     "margin": "حاشیهٔ سود",
     "change": "تغییر در این دوره",

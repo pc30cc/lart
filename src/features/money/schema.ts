@@ -1,7 +1,8 @@
 import { z } from "zod"
 
 import { uuid } from "@/components/admin/form/schemas"
-import { zonedParts } from "@/lib/format"
+import { periodEnd, periodStart } from "@/lib/calendar"
+import { zonedParts, type CalendarSystem } from "@/lib/format"
 
 /**
  * Money forms and actions: Zod schemas shared by the client (instant feedback)
@@ -138,18 +139,21 @@ export type PeriodGroup = (typeof periodGroups)[number]
 
 const first = (v: unknown) => (Array.isArray(v) ? v[0] : v)
 
-/** A date range from the URL (?from=&to=), defaulting to this calendar year. Never throws. */
-export function parseRange(searchParams: Record<string, unknown>, now: Date = new Date()) {
-  const year = zonedParts(now).date.slice(0, 4)
+/**
+ * A date range from the URL (?from=&to=), defaulting to this year in the
+ * viewer's calendar (Persian: from Nowruz, 1 Farvardin). Never throws.
+ */
+export function parseRange(searchParams: Record<string, unknown>, now: Date = new Date(), calendar: CalendarSystem = "gregory") {
+  const today = zonedParts(now).date
   const [f, t] = [first(searchParams.from), first(searchParams.to)]
-  let from = isIsoDate(f) ? f : `${year}-01-01`
-  let to = isIsoDate(t) ? t : `${year}-12-31`
+  let from = isIsoDate(f) ? f : periodStart(today, "year", calendar)
+  let to = isIsoDate(t) ? t : periodEnd(today, "year", calendar)
   if (from > to) [from, to] = [to, from]
   return { from, to }
 }
 
 /** Report page params: which report, the range, the grouping and the partner. Never throws. */
-export function parseReportParams(searchParams: Record<string, unknown>, now: Date = new Date()) {
+export function parseReportParams(searchParams: Record<string, unknown>, now: Date = new Date(), calendar: CalendarSystem = "gregory") {
   const report = first(searchParams.report)
   const group = first(searchParams.group)
   const partner = first(searchParams.partner)
@@ -157,7 +161,7 @@ export function parseReportParams(searchParams: Record<string, unknown>, now: Da
     report: (reportKinds as readonly unknown[]).includes(report) ? (report as ReportKind) : "pnl",
     group: (periodGroups as readonly unknown[]).includes(group) ? (group as PeriodGroup) : "month",
     partner: z.uuid().safeParse(partner).success ? (partner as string) : null,
-    ...parseRange(searchParams, now),
+    ...parseRange(searchParams, now, calendar),
   }
 }
 export type ReportParams = ReturnType<typeof parseReportParams>

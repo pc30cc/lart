@@ -1,3 +1,5 @@
+import { calendarOf } from "@/lib/format"
+
 /**
  * CSV for spreadsheets (RFC 4180, comma separated, CRLF, UTF-8 with a BOM so
  * Excel reads Persian and Turkish letters). Safe against CSV / formula
@@ -22,3 +24,17 @@ export function toCsv(rows: Cell[][]): string {
 
 /** Kuruş as a lira number for a spreadsheet: 125050 → 1250.5. */
 export const lira = (kurus: number) => kurus / 100
+
+const persianDay = new Intl.DateTimeFormat("fa-IR-u-ca-persian-nu-latn", { timeZone: "UTC", year: "numeric", month: "2-digit", day: "2-digit" })
+
+/**
+ * A day ("YYYY-MM-DD") in the export's language's calendar: Turkish and
+ * English keep the ISO date; Persian writes the Solar Hijri date, year first
+ * with Latin digits ("1405/07/16"), as Iranian spreadsheets do, so the column
+ * still sorts.
+ */
+export function csvDate(day: string, locale: string): string {
+  if (calendarOf(locale) !== "persian") return day
+  const p = Object.fromEntries(persianDay.formatToParts(new Date(`${day}T12:00:00Z`)).map((x) => [x.type, x.value]))
+  return `${p.year}/${p.month}/${p.day}`
+}

@@ -1,12 +1,13 @@
 import { getTranslations } from "next-intl/server"
 
 import { ThemeToggle } from "@/components/theme-toggle"
-import { formatNumber } from "@/lib/format"
+import { formatYear } from "@/lib/format"
 
 /** The classic theme's quiet footer: the brand and the year, and the light / dark switch. */
 export async function SiteFooter({ brand, locale }: { brand: string; locale: string }) {
   const t = await getTranslations("site.footer")
-  const year = formatNumber(new Date().getFullYear(), locale, { useGrouping: false })
+  // This year in the language's calendar (۱۴۰۵ in Persian).
+  const year = formatYear(new Date(), locale)
 
   return (
     <footer className="mt-auto border-t">

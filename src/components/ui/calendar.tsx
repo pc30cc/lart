@@ -1,56 +1,108 @@
 "use client"
 
 import * as React from "react"
-import { intlLocale } from "@/lib/format"
-import { cn } from "@/lib/utils"
 import {
+  addMonths,
+  addYears,
+  differenceInCalendarMonths,
+  eachMonthOfInterval,
+  eachYearOfInterval,
+  endOfMonth,
+  endOfWeek,
+  endOfYear,
+  format,
+  getMonth,
+  getWeek,
+  getYear,
+  isSameMonth,
+  isSameYear,
+  setMonth,
+  setYear,
+  startOfMonth,
+  startOfWeek,
+  startOfYear,
+} from "date-fns-jalali"
+import { faIR as jalaliFaIR } from "date-fns-jalali/locale"
+import { useLocale } from "next-intl"
+import {
+  DateLib,
   DayPicker,
   getDefaultClassNames,
   type DayButton,
-  type Locale,
+  type DayPickerLocale,
 } from "react-day-picker"
+import { enGB, faIR, tr } from "react-day-picker/locale"
 
+import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 
-type CalendarLocale = React.ComponentProps<typeof DayPicker>["locale"]
-
 /**
- * Persian Gregorian month names as Intl writes them (ژوئن), the spelling every
- * other date in the app uses. date-fns' faIR spells them colloquially (جون).
+ * Persian in the Solar Hijri (Jalali) calendar, as every date of the app in
+ * Persian (lib/format): Jalali months and years from date-fns-jalali, weeks
+ * from Saturday, Persian digits, DayPicker's Persian labels. The day the
+ * picker returns is an ordinary Date, so stored values stay Gregorian ISO.
  */
-const faMonthFormat = new Intl.DateTimeFormat(intlLocale("fa"), { month: "long", timeZone: "UTC" })
-const faMonths = Array.from({ length: 12 }, (_, m) => faMonthFormat.format(Date.UTC(2026, m, 15)))
-const isFa = (locale: CalendarLocale) => !!locale?.code?.startsWith("fa")
+const persian: DayPickerLocale = { ...jalaliFaIR, labels: faIR.labels }
+// The functions that depend on the calendar's months and years; days and weeks are the same in both.
+const jalali = {
+  addMonths,
+  addYears,
+  differenceInCalendarMonths,
+  eachMonthOfInterval,
+  eachYearOfInterval,
+  endOfMonth,
+  endOfWeek,
+  endOfYear,
+  format,
+  getMonth,
+  getWeek,
+  getYear,
+  isSameMonth,
+  isSameYear,
+  setMonth,
+  setYear,
+  startOfMonth,
+  startOfWeek,
+  startOfYear,
+}
+const jalaliLib = new DateLib({ locale: persian, numerals: "arabext", weekStartsOn: 6 }, jalali)
 
-/** The locale with Intl's Persian month names (caption, grid label, day labels). */
-function withIntlMonths(locale: CalendarLocale): CalendarLocale {
-  const localize = locale?.localize
-  if (!isFa(locale) || !localize) return locale
-  return {
-    ...locale,
-    localize: {
-      ...localize,
-      month: (month, options) => (options?.width === "narrow" ? localize.month(month, options) : faMonths[month]),
-    },
+/** What each language's calendar needs: its locale, digits, direction and date library. */
+function calendarProps(appLocale: string) {
+  if (appLocale === "fa") {
+    return { locale: persian, numerals: "arabext" as const, dir: "rtl" as const, dateLib: jalaliLib, weekStartsOn: 6 as const }
   }
+  return { locale: appLocale === "en" ? enGB : tr, dir: "ltr" as const, weekStartsOn: 1 as const }
 }
 
+/** A day's own date as "YYYY-MM-DD" (Gregorian), whatever the calendar shows: `data-day`, for tests. */
+const isoDay = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+
+/** `Omit` for each member of a union (DayPicker's props differ by `mode`). */
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never
+
+/**
+ * The app's date picker, in the page's language and its calendar (Persian:
+ * Jalali; Turkish, English: Gregorian). The language comes from next-intl;
+ * callers do not pass a locale.
+ */
 function Calendar({
   className,
   classNames,
   showOutsideDays = true,
   captionLayout = "label",
   buttonVariant = "ghost",
-  locale,
   formatters,
   components,
   ...props
-}: React.ComponentProps<typeof DayPicker> & {
+}: DistributiveOmit<React.ComponentProps<typeof DayPicker>, "locale" | "numerals" | "dir" | "dateLib" | "weekStartsOn"> & {
   buttonVariant?: React.ComponentProps<typeof Button>["variant"]
 }) {
   const defaultClassNames = getDefaultClassNames()
-  const dayLocale = React.useMemo(() => withIntlMonths(locale), [locale])
+  const appLocale = useLocale()
+  const own = calendarProps(appLocale)
 
   return (
     <DayPicker
@@ -62,12 +114,13 @@ function Calendar({
         className
       )}
       captionLayout={captionLayout}
-      locale={dayLocale}
+      {...own}
       formatters={{
-        formatMonthDropdown: (date) =>
-          isFa(locale)
-            ? faMonths[date.getMonth()]
-            : date.toLocaleString(locale?.code, { month: "short" }),
+        // "مهر ۱۴۰۵", "Ekim 2026", "October 2026": month then year, in the calendar's own months.
+        formatCaption: (month, _options, lib) => (lib ?? new DateLib()).format(month, "LLLL y"),
+        formatMonthDropdown: (month, lib) => (lib ?? new DateLib()).format(month, appLocale === "fa" ? "LLLL" : "LLL"),
+        // Persian weekdays as one letter (ش ی د س چ پ ج), as Persian calendars write them.
+        ...(appLocale === "fa" ? { formatWeekdayName: (date: Date, _options?: unknown, lib?: DateLib) => (lib ?? jalaliLib).format(date, "ccccc") } : {}),
         ...formatters,
       }}
       classNames={{
@@ -197,9 +250,7 @@ function Calendar({
             />
           )
         },
-        DayButton: ({ ...props }) => (
-          <CalendarDayButton locale={dayLocale} {...props} />
-        ),
+        DayButton: ({ ...props }) => <CalendarDayButton {...props} />,
         WeekNumber: ({ children, ...props }) => {
           return (
             <td {...props}>
@@ -211,7 +262,7 @@ function Calendar({
         },
         ...components,
       }}
-      {...props}
+      {...(props as React.ComponentProps<typeof DayPicker>)}
     />
   )
 }
@@ -220,9 +271,8 @@ function CalendarDayButton({
   className,
   day,
   modifiers,
-  locale,
   ...props
-}: React.ComponentProps<typeof DayButton> & { locale?: Partial<Locale> }) {
+}: React.ComponentProps<typeof DayButton>) {
   const defaultClassNames = getDefaultClassNames()
 
   const ref = React.useRef<HTMLButtonElement>(null)
@@ -235,7 +285,7 @@ function CalendarDayButton({
       ref={ref}
       variant="ghost"
       size="icon"
-      data-day={day.date.toLocaleDateString(locale?.code)}
+      data-day={isoDay(day.date)}
       data-selected-single={
         modifiers.selected &&
         !modifiers.range_start &&
