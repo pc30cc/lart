@@ -180,7 +180,7 @@ export function HomeSettingsForm({
       </FormSection>
 
       <FormSection title={t("story.title")} description={t("story.description")}>
-        <ShowSwitch section="story" />
+        <ShowSwitch section="story" title={t("story.title")} />
         <Hideable section="story">
           <LocalizedInput name="story.title" label={t("story.heading")} placeholder={defaults.story.title} maxLength={HOME_TEXT_MAX} />
           <LocalizedTextarea
@@ -197,7 +197,7 @@ export function HomeSettingsForm({
       </FormSection>
 
       <FormSection title={t("crafts.title")} description={t("crafts.description")}>
-        <ShowSwitch section="crafts" />
+        <ShowSwitch section="crafts" title={t("crafts.title")} />
         <Hideable section="crafts">
           <LocalizedInput name="crafts.title" label={t("crafts.heading")} placeholder={defaults.crafts.title} maxLength={HOME_TEXT_MAX} />
           <PhotoField name="crafts.image" label={t("crafts.photo")} media={media} />
@@ -205,14 +205,14 @@ export function HomeSettingsForm({
       </FormSection>
 
       <FormSection title={t("past.title")} description={t("past.description")}>
-        <ShowSwitch section="past" />
+        <ShowSwitch section="past" title={t("past.title")} />
         <Hideable section="past">
           <LocalizedInput name="past.title" label={t("past.heading")} placeholder={defaults.past.title} maxLength={HOME_TEXT_MAX} />
         </Hideable>
       </FormSection>
 
       <FormSection title={t("steps.title")} description={t("steps.description", { max: HOME_STEPS_MAX })}>
-        <ShowSwitch section="steps" />
+        <ShowSwitch section="steps" title={t("steps.title")} />
         <Hideable section="steps">
           <LocalizedInput name="steps.title" label={t("steps.heading")} placeholder={defaults.steps.title} maxLength={HOME_TEXT_MAX} />
           <Steps defaults={defaults.steps.items} />
@@ -277,8 +277,8 @@ export function HomeSettingsForm({
   )
 }
 
-/** "Show on the home page", at the top of a section that can be hidden. */
-function ShowSwitch({ section }: { section: Section }) {
+/** "Show on the home page", at the top of a section that can be hidden (`title` names the section for screen readers). */
+function ShowSwitch({ section, title }: { section: Section; title: string }) {
   const t = useTranslations("homeEditor")
   return (
     <FormField<Values> name={`${section}.show`}>
@@ -286,6 +286,7 @@ function ShowSwitch({ section }: { section: Section }) {
         <div className="flex items-center justify-between gap-4">
           <label htmlFor={field.id} className="cursor-pointer text-sm font-medium">
             {t("show")}
+            <span className="sr-only">: {title}</span>
           </label>
           <Switch
             id={field.id}
