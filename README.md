@@ -287,14 +287,10 @@ The form is one short, friendly page; the required fields come first.
 A completely separate application area with its **own login**, not shared
 with students or instructors.
 
-- **Partners**: one to three super admins, who are also the business
-  partners. The first one is created with the setup command; any partner
-  invites the next ones from **Money → Partners** (name, email, language of
-  the invitation): an email with a one-time link (7 days) to choose a
-  password, and the same link shown once to copy (e.g. for WhatsApp). The
-  new partner starts with a 0 % profit share until the partners set the
-  shares again. Open invitations count towards the three, and can be sent
-  again or cancelled. Each partner edits their own profile (**My profile**
+- **Partners**: the two super admins, who are also the business partners,
+  with fixed, equal profit shares (50 / 50, locked; shown in **Settings →
+  Money**). The panel offers no invitations. Capital goes in from both at
+  once, the same amount each. Each partner edits their own profile (**My profile**
   in the user menu): name, email (needs the current password) and photo.
   The photo (only partners see it) shows in the user menu, on the partners'
   cards and shares, and on the dashboard; without one, the initials. On the

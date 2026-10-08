@@ -936,8 +936,11 @@ flagged as possibly changed, and one that can't be decrypted is not shown.
 
 ## Partners (super admins)
 
-The super admins are the business partners: at most `MAX_PARTNERS` (3),
-counting active admins and invitations that still work
+The super admins are the business partners: the business has two, so
+`MAX_PARTNERS` is 2 (counting active admins and invitations that still
+work), and the panel no longer offers invitations: Money → Partners shows
+the two partners' accounts only. The invitation code (actions, accept page,
+email) stays for a later change of partners
 (`src/features/partners/limits.ts`, import-free so `scripts/create-admin.ts`
 shares it). Logic in `src/features/partners` (`invites.ts`: the invitation
 rules; `actions.ts`; `queries.ts`; `schema.ts`: the form schemas, client-safe).
@@ -969,8 +972,12 @@ rules; `actions.ts`; `queries.ts`; `schema.ts`: the form schemas, client-safe).
 - **Locking**: inviting, sending again, cancelling, accepting, changing one's
   email and `pnpm admin:create` all take `pg_advisory_xact_lock(hashtext(
   'admins:partners'))` first (`lockPartners`), never a lock on the `admins`
-  table (it deadlocked with audit entries and ledger lines, see
-  `updateShares`).
+  table (it deadlocked with audit entries and ledger lines).
+- **Shares** are fixed (50 / 50) and locked: the panel shows them in
+  Settings → Money and has no way to change them (`admins.share_bp`).
+  Capital goes in from both partners at once, the same amount each
+  (`recordContribution` → `postJointContribution`: one transaction, one
+  `partner_capital` line per partner with a share).
 - **My profile** (`/admin/profile`, `updateMyProfile`, `getMyProfile`):
   name (2 to 80 characters), photo and email. A new email needs the current
   password (5 tries per 15 minutes), must be free among admins (letter case
@@ -1000,7 +1007,7 @@ rules; `actions.ts`; `queries.ts`; `schema.ts`: the form schemas, client-safe).
   only (never another's); with nobody on it the page is `noindex` and out of
   the sitemap. The About page (/about) is separate: only the brand's own
   words (the footer's "About us" text), always indexed.
-- **Pages and components**: Money → Partners has "Invite a partner"
+- **Pages and components** (before invitations were closed): Money → Partners had "Invite a partner"
   (`money/partners/_components/invite-dialog.tsx`; disabled with a note when
   every place is taken, which asks to cancel an invitation only while a
   working one holds a place: `invite.full` and `errors.limit` get

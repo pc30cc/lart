@@ -21,7 +21,7 @@ import { requireAdmin } from "@/lib/auth/admin"
 import { formatDate, localized } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { WorkshopStatusBadge } from "../workshops/_components/workshop-status"
-import { CapitalDialog, ExpenseDialog } from "./_components/dialogs"
+import { ContributionDialog, ExpenseDialog, WithdrawalDialog } from "./_components/dialogs"
 import { kindIcons, Panel, Stat } from "./_components/parts"
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -32,7 +32,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function WalletPage() {
   await requireAdmin()
   const [t, locale, data, rules] = await Promise.all([getTranslations("money"), getLocale(), getWalletOverview(), getMoneyRules()])
-  const partners = data.partners.map((p) => ({ adminId: p.adminId, name: p.name }))
+  // Capital goes in from every partner with a share, the same amount each.
+  const partners = data.partners.filter((p) => p.shareBp > 0).map((p) => ({ adminId: p.adminId, name: p.name }))
   const { balances } = data
   const empty = data.recent.length === 0
 
@@ -44,8 +45,8 @@ export default async function WalletPage() {
         actions={
           partners.length > 0 && (
             <>
-              <CapitalDialog direction="contribution" partners={partners} trigger={{ variant: "default" }} />
-              {rules.withdrawals && <CapitalDialog direction="withdrawal" partners={partners} />}
+              <ContributionDialog partners={partners} trigger={{ variant: "default" }} />
+              {rules.withdrawals && <WithdrawalDialog partners={partners} />}
               <ExpenseDialog blocked={spendBlockText(rules, t)} />
             </>
           )

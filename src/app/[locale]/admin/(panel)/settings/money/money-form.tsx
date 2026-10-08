@@ -1,23 +1,32 @@
 "use client"
 
-import { useTranslations } from "next-intl"
+import { LockIcon } from "lucide-react"
+import { useLocale, useTranslations } from "next-intl"
 
 import { Form, FormActions, FormField, FormSection, SubmitButton } from "@/components/admin/form/form"
 import { useActionForm } from "@/components/admin/form/use-action-form"
 import { Switch } from "@/components/ui/switch"
 import { saveMoneySettings } from "@/features/settings/money-actions"
 import { moneySettingsSchema, type MoneySettingsValues } from "@/features/settings/money-schema"
+import { formatPercent } from "@/lib/format"
 import { cn } from "@/lib/utils"
 
 /**
- * Whether a partner may take money out of the shared wallet (a switch, off),
- * and the one partner who pays the business's costs from it (one of the
- * active partners, as large choices).
+ * The partners' profit shares (fixed: shown, never edited), the one partner
+ * who pays the business's costs from the wallet (large choices), and whether
+ * a partner may take money out of it (a switch, off).
  */
-export function MoneySettingsForm({ saved, partners }: { saved: MoneySettingsValues; partners: { id: string; name: string }[] }) {
+export function MoneySettingsForm({
+  saved,
+  partners,
+}: {
+  saved: MoneySettingsValues
+  partners: { id: string; name: string; shareBp: number }[]
+}) {
   const t = useTranslations("settings.money")
   const ts = useTranslations("settings")
   const tc = useTranslations("common")
+  const locale = useLocale()
   const { form, submit, pending } = useActionForm({
     schema: moneySettingsSchema,
     action: saveMoneySettings,
@@ -28,6 +37,20 @@ export function MoneySettingsForm({ saved, partners }: { saved: MoneySettingsVal
 
   return (
     <Form form={form} onSubmit={submit}>
+      <FormSection title={t("shares.title")} description={t("shares.description")}>
+        <ul className="divide-y rounded-xl border">
+          {partners.map((p) => (
+            <li key={p.id} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
+              <span className="font-medium">{p.name}</span>
+              <span className="text-muted-foreground inline-flex items-center gap-1.5">
+                <LockIcon className="size-3.5" aria-hidden />
+                <span className="text-foreground text-base font-semibold tabular-nums">{formatPercent(p.shareBp / 10000, locale, 2)}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </FormSection>
+
       <FormSection title={t("spender.title")} description={t("spender.description")}>
         <FormField<MoneySettingsValues> name="spenderId" label={t("spender.label")}>
           {(field) => (

@@ -109,8 +109,10 @@
     "contribution": {
       "trigger": "Add contribution",
       "title": "Add a capital contribution",
-      "description": "Money a partner puts into the shared wallet.",
-      "done": "Contribution saved."
+      "description": "Both partners always put in the same amount. Enter one partner's part; it is recorded for each of them.",
+      "done": "Contribution saved.",
+      "each": "Amount per partner",
+      "total": "Total into the wallet"
     },
     "withdrawal": {
       "trigger": "Withdrawal",
@@ -168,45 +170,37 @@
   },
   "partners": {
     "title": "Partners",
-    "description": "Each partner’s share of the profit, and their capital account.",
+    "description": "Each partner's capital account, step by step. Profit shares are fixed and equal (Settings → Money).",
     "sharesWarning": {
       "title": "The shares don’t add up to 100%.",
-      "description": "Workshops can’t be closed until they do. Fix them below."
+      "description": "Until this is fixed, no workshop can be closed."
     },
     "empty": {
       "title": "No partners yet",
-      "description": "Partners are the super admins. Invite one with “Invite a partner” above."
+      "description": "The partners are the site's super admins."
     },
     "card": {
-      "share": "share",
+      "share": "Profit share (fixed)",
       "inactive": "No longer active",
-      "contributions": "Put in",
-      "withdrawals": "Taken out",
-      "profitShares": "Share of workshop results",
-      "capital": "Capital",
-      "openShare": "Part of the result not shared out yet",
-      "equity": "If settled today"
-    },
-    "shares": {
-      "title": "Profit shares",
-      "description": "How the result of each workshop is shared when it is closed. Workshops closed earlier keep the shares they were closed with.",
-      "total": "Together: {total}. All good.",
-      "missing": "{rest} still to share.",
-      "tooMuch": "{rest} too much.",
-      "unreadable": "Please write each share as a number, for example 33.33.",
-      "splitEqually": "Split equally",
-      "save": "Save shares",
-      "done": "Shares saved."
+      "contributions": "Contributions",
+      "withdrawals": "Withdrawals",
+      "profitShares": "Share of closed workshops",
+      "capital": "Capital now",
+      "openShare": "Share of the open result",
+      "equity": "If settled today",
+      "capitalTitle": "Capital account",
+      "contributionsHint": "Money put into the shared wallet",
+      "withdrawalsHint": "Money taken out of the shared wallet",
+      "profitSharesHint": "Profit or loss of the workshops whose books are closed",
+      "openShareHint": "Workshops not closed yet and general expenses",
+      "equityHint": "Capital now plus the share of the open result",
+      "lastMovement": "Last movement: {date}",
+      "noMovement": "No movement yet",
+      "statement": "Full statement"
     },
     "explain": {
-      "title": "How this works",
-      "capital": "A partner’s capital grows with the money they put in and their share of each closed workshop, and goes down with what they take out. Every cost is paid from the shared wallet.",
-      "open": "Workshops that are not closed yet (after the fees confirmed ones owe their instructors) and general expenses are not shared out yet. This is each partner’s part of them, by today’s shares:",
-      "openLabel": "Result not shared out yet",
-      "settled": "“If settled today” is the capital plus that part: what each partner would get if the business settled up today.",
       "statement": "See a partner’s full statement"
     },
-    "sumError": "The shares must add up to exactly 100%.",
     "partnerGone": "One of these people is no longer an active admin. Please reload the page."
   },
   "ledger": {

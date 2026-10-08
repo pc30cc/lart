@@ -8,7 +8,7 @@ import { cancelRegistration, recordPayment } from "@/features/registrations/admi
 import { splitByShares } from "@/lib/money"
 import en from "../../../messages/en/money.json"
 import { setSetting } from "@/lib/settings"
-import { closeWorkshop, payInstructor, recordAdvance, recordCapital, recordExpense, reverseEntry, updateShares } from "./actions"
+import { closeWorkshop, payInstructor, recordAdvance, recordContribution, recordExpense, recordWithdrawal, reverseEntry } from "./actions"
 import { closingPlan, instructorFee, prepareClosing, projectedFees, workshopsToClose, type Partner } from "./closing"
 import { courseBalances, partnerCapitals, postRegistrationPayment, postRegistrationRefund, today } from "./ledger"
 import { isReversible, listTransactions } from "./queries"
@@ -193,16 +193,32 @@ afterAll(async () => {
   await retireAdmins([p1.id, p2.id, p3.id, ...extra])
 })
 
+describe("partner shares", () => {
+  // Shares are locked in the panel (Settings → Money shows them): set here directly. Uneven thirds: the rounding test below relies on these.
+  it("are set for the closings below", async () => {
+    await db.update(admins).set({ shareBp: 0 }).where(ne(admins.shareBp, 0))
+    for (const [p, shareBp] of [[p1, 3334], [p2, 3333], [p3, 3333]] as const) {
+      await db.update(admins).set({ shareBp }).where(eq(admins.id, p.id))
+    }
+  })
+})
+
 describe("money rules (Settings → Money)", () => {
   const entry = () => ({ amount: 1000, occurredOn: yesterday() })
 
   it("refuses withdrawals while they are closed, and takes contributions", async () => {
-    const withdrawal = await recordCapital({ direction: "withdrawal", partnerId: p1.id, ...entry(), note: "" })
+    const withdrawal = await recordWithdrawal({ partnerId: p1.id, ...entry(), note: "" })
     expect(withdrawal).toMatchObject({ ok: false, error: en.errors.withdrawalsClosed })
-    ok(await recordCapital({ direction: "contribution", partnerId: p1.id, ...entry(), note: "" }))
+    // Capital goes in from every partner with a share, the same amount each, in one transaction.
+    const { id } = ok(await recordContribution({ ...entry(), note: "" }))
+    const lines = await db.select().from(ledgerLines).where(eq(ledgerLines.transactionId, id))
+    expect(lines.filter((l) => l.account === "partner_capital").map((l) => [l.partnerId, l.amount]).sort()).toEqual(
+      [[p1.id, -1000], [p2.id, -1000], [p3.id, -1000]].sort(),
+    )
+    expect(lines.find((l) => l.account === "wallet")?.amount).toBe(3000)
     await setSetting("money", { withdrawals: true, spenderId: p1.id })
     try {
-      ok(await recordCapital({ direction: "withdrawal", partnerId: p1.id, ...entry(), note: "" }))
+      ok(await recordWithdrawal({ partnerId: p1.id, ...entry(), note: "" }))
     } finally {
       await setSetting("money", { withdrawals: false, spenderId: p1.id })
     }
@@ -230,54 +246,6 @@ describe("money rules (Settings → Money)", () => {
       session.admin.id = p1.id
       await setSetting("money", { withdrawals: false, spenderId: p1.id })
     }
-  })
-})
-
-describe("updateShares", () => {
-  it("must add up to 100 % for one to three active partners", async () => {
-    const short = await updateShares({ shares: [{ adminId: p1.id, shareBp: 5000 }, { adminId: p2.id, shareBp: 4999 }] })
-    expect(short).toMatchObject({ ok: false, fieldErrors: { shares: en.partners.sumError } })
-    const four = await updateShares({
-      shares: [p1, p2, p3, { id: randomUUID() }].map((p) => ({ adminId: p.id, shareBp: 2500 })),
-    })
-    expect(four.ok).toBe(false)
-    const left = await makeAdmin("Left")
-    extra.push(left.id)
-    await retireAdmins([left.id])
-    expect(await updateShares({ shares: [{ adminId: p1.id, shareBp: 5000 }, { adminId: left.id, shareBp: 5000 }] })).toEqual({
-      ok: false,
-      error: en.partners.partnerGone,
-    })
-  })
-
-  it("sets the listed shares, zeroes everyone else and audits the change", async () => {
-    const stale = await makeAdmin("Stale", 4000)
-    extra.push(stale.id)
-    ok(
-      await updateShares({
-        shares: [
-          { adminId: p1.id, shareBp: 5000 },
-          { adminId: p2.id, shareBp: 3000 },
-          { adminId: p3.id, shareBp: 2000 },
-        ],
-      }),
-    )
-    const rows = await db.select({ id: admins.id, shareBp: admins.shareBp }).from(admins).where(ne(admins.shareBp, 0))
-    expect(Object.fromEntries(rows.map((r) => [r.id, r.shareBp]))).toEqual({ [p1.id]: 5000, [p2.id]: 3000, [p3.id]: 2000 })
-    const [entry] = await db.select().from(auditLog).where(eq(auditLog.action, "partner.shares")).orderBy(desc(auditLog.at)).limit(1)
-    expect(entry.adminId).toBe(p1.id)
-    expect(entry.data).toMatchObject({ [stale.id]: { from: 4000, to: 0 }, [p1.id]: { from: 0, to: 5000 } })
-
-    // Uneven thirds: the rounding test below relies on these.
-    ok(
-      await updateShares({
-        shares: [
-          { adminId: p1.id, shareBp: 3334 },
-          { adminId: p2.id, shareBp: 3333 },
-          { adminId: p3.id, shareBp: 3333 },
-        ],
-      }),
-    )
   })
 })
 
@@ -531,15 +499,19 @@ describe("closing: what the admin saw", () => {
     { adminId: "", shareBp: 3333 },
     { adminId: "", shareBp: 3333 },
   ]
-  const restoreThirds = async () =>
-    ok(await updateShares({ shares: [p1, p2, p3].map((p, i) => ({ ...thirds[i], adminId: p.id })) }))
+  // Shares are locked in the panel: set them directly (as a change by someone else would).
+  const setShares = async (shares: { adminId: string; shareBp: number }[]) => {
+    await db.update(admins).set({ shareBp: 0 }).where(ne(admins.shareBp, 0))
+    for (const s of shares) await db.update(admins).set({ shareBp: s.shareBp }).where(eq(admins.id, s.adminId))
+  }
+  const restoreThirds = () => setShares([p1, p2, p3].map((p, i) => ({ ...thirds[i], adminId: p.id })))
 
   it("refuses to close when the shares changed after the preview", async () => {
     const courseId = await makeCourse(world, p1.id, { fee: { type: "fixed", amount: 100000 } })
     const seen = await previewOf(courseId)
     expect(seen.partners.map((p) => p.amount)).toEqual([-33340, -33330, -33330])
     try {
-      ok(await updateShares({ shares: [{ adminId: p1.id, shareBp: 9000 }, { adminId: p2.id, shareBp: 1000 }] }))
+      await setShares([{ adminId: p1.id, shareBp: 9000 }, { adminId: p2.id, shareBp: 1000 }])
       expect(await closeWorkshop(seen)).toEqual({ ok: false, error: en.close.changed })
       expect(await courseRow(courseId)).toMatchObject({ status: "confirmed", closedAt: null })
       // Looking again shows the new split, which then closes.

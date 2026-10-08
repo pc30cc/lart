@@ -1,29 +1,29 @@
 "use server"
 
-import { asc, eq, inArray, ne, or, sql } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 import { db } from "@/db"
 import { admins } from "@/db/schema"
 import { adminAction, UserError } from "@/lib/action"
 import { getSetting } from "@/lib/settings"
-import { closeCourse } from "./closing"
+import { activePartners, closeCourse } from "./closing"
 import {
   postAdvance,
-  postContribution,
   postExpense,
   postInstructorPayment,
+  postJointContribution,
   postWithdrawal,
   reverseTransaction,
 } from "./ledger"
 import {
   advanceSchema,
-  capitalSchema,
   closeSchema,
+  contributionSchema,
   expenseSchema,
   instructorPaymentSchema,
   reverseSchema,
-  sharesSchema,
+  withdrawalSchema,
 } from "./schema"
 
 /**
@@ -49,14 +49,38 @@ async function assertSpender(adminId: string) {
   throw new UserError("money.errors.notSpender", { values: { name: spender?.name ?? "" } })
 }
 
-/** A partner puts money into the wallet, or takes money out (only while Settings → Money allows it). */
-export const recordCapital = adminAction(capitalSchema, async ({ direction, partnerId, amount, occurredOn, note }, ctx) => {
-  if (direction === "withdrawal" && !(await getSetting("money")).withdrawals) throw new UserError("money.errors.withdrawalsClosed")
+/**
+ * Capital goes in from every partner at once, the same amount each (the
+ * shares are equal and locked): one transaction, one line per active partner.
+ */
+export const recordContribution = adminAction(contributionSchema, async ({ amount, occurredOn, note }, ctx) => {
   const id = await db.transaction(async (tx) => {
-    const post = direction === "contribution" ? postContribution : postWithdrawal
-    const id = await post(tx, { partnerId, amount, occurredOn, description: note, createdBy: ctx.admin.id })
+    const partners = (await activePartners(tx, true)).filter((p) => p.shareBp > 0)
+    if (partners.length === 0) throw new UserError("money.errors.partnerGone")
+    const partnerIds = partners.map((p) => p.adminId)
+    const id = await postJointContribution(tx, { partnerIds, amountEach: amount, occurredOn, description: note, createdBy: ctx.admin.id })
     await ctx.audit(
-      { action: `money.${direction}`, entity: "ledger_transaction", entityId: id, data: { partnerId, amount, occurredOn, note } },
+      {
+        action: "money.contribution",
+        entity: "ledger_transaction",
+        entityId: id,
+        data: { partners: partnerIds, amountEach: amount, total: amount * partnerIds.length, occurredOn, note },
+      },
+      tx,
+    )
+    return id
+  })
+  revalidate()
+  return { id }
+})
+
+/** A partner takes money out of the wallet: only while Settings → Money allows it (closed for now). */
+export const recordWithdrawal = adminAction(withdrawalSchema, async ({ partnerId, amount, occurredOn, note }, ctx) => {
+  if (!(await getSetting("money")).withdrawals) throw new UserError("money.errors.withdrawalsClosed")
+  const id = await db.transaction(async (tx) => {
+    const id = await postWithdrawal(tx, { partnerId, amount, occurredOn, description: note, createdBy: ctx.admin.id })
+    await ctx.audit(
+      { action: "money.withdrawal", entity: "ledger_transaction", entityId: id, data: { partnerId, amount, occurredOn, note } },
       tx,
     )
     return id
@@ -173,40 +197,4 @@ export const reverseEntry = adminAction(reverseSchema, async ({ id }, ctx) => {
   })
   revalidate()
   return { id: reversal.id }
-})
-
-/**
- * Set the partners' profit shares. The listed people (one to three active
- * admins) are the partners and together hold exactly 100 %; everyone else
- * holds 0 %. Workshops closed earlier keep the shares they were closed with.
- */
-export const updateShares = adminAction(sharesSchema, async ({ shares }, ctx) => {
-  await db.transaction(async (tx) => {
-    // One change of shares at a time. Then only the people whose share can change are locked (current
-    // partners and the listed people), in id order: locking every admin row deadlocked with transactions
-    // that reference admins (audit entries, ledger lines).
-    await tx.execute(sql`select pg_advisory_xact_lock(hashtext('admins:shares'))`)
-    const everyone = await tx
-      .select({ id: admins.id, name: admins.name, active: admins.active, shareBp: admins.shareBp })
-      .from(admins)
-      .where(or(ne(admins.shareBp, 0), inArray(admins.id, shares.map((s) => s.adminId))))
-      .orderBy(asc(admins.id))
-      .for("update")
-    const byId = new Map(everyone.map((a) => [a.id, a]))
-    if (shares.some((s) => !byId.get(s.adminId)?.active)) throw new UserError("money.partners.partnerGone")
-
-    const next = new Map(shares.map((s) => [s.adminId, s.shareBp]))
-    const changed: Record<string, { name: string; from: number; to: number }> = {}
-    for (const person of everyone) {
-      const to = next.get(person.id) ?? 0
-      if (to === person.shareBp) continue
-      await tx.update(admins).set({ shareBp: to }).where(eq(admins.id, person.id))
-      changed[person.id] = { name: person.name, from: person.shareBp, to }
-    }
-    if (Object.keys(changed).length) {
-      await ctx.audit({ action: "partner.shares", entity: "admin", data: changed }, tx)
-    }
-  })
-  revalidate()
-  return undefined
 })

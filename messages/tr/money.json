@@ -109,8 +109,10 @@
     "contribution": {
       "trigger": "Sermaye ekle",
       "title": "Sermaye girişi ekleyin",
-      "description": "Bir ortağın ortak kasaya koyduğu para.",
-      "done": "Sermaye girişi kaydedildi."
+      "description": "İki ortak her zaman aynı tutarda sermaye koyar. Bir ortağın payını yazın; her biri için bu tutar kaydedilir.",
+      "done": "Sermaye girişi kaydedildi.",
+      "each": "Ortak başına tutar",
+      "total": "Kasaya giren toplam"
     },
     "withdrawal": {
       "trigger": "Para çekme",
@@ -168,45 +170,37 @@
   },
   "partners": {
     "title": "Ortaklar",
-    "description": "Her ortağın kârdaki payı ve sermaye hesabı.",
+    "description": "Her ortağın sermaye hesabı, adım adım. Kâr payları sabit ve eşittir (Ayarlar → Para).",
     "sharesWarning": {
       "title": "Payların toplamı %100 değil.",
-      "description": "Toplam %100 olana kadar atölyeler kapatılamaz. Aşağıdan düzeltebilirsiniz."
+      "description": "Düzeltilene kadar hiçbir atölye kapatılamaz."
     },
     "empty": {
       "title": "Henüz ortak yok",
-      "description": "Ortaklar, süper yöneticilerdir. Yukarıdaki “Ortak davet et” düğmesiyle birini davet edin."
+      "description": "Ortaklar sitenin süper yöneticileridir."
     },
     "card": {
-      "share": "pay",
+      "share": "Kâr payı (sabit)",
       "inactive": "Artık aktif değil",
-      "contributions": "Koyduğu sermaye",
-      "withdrawals": "Çektiği para",
-      "profitShares": "Atölye sonuçlarındaki payı",
-      "capital": "Sermaye",
-      "openShare": "Henüz paylaştırılmamış sonuçtaki payı",
-      "equity": "Bugün hesaplaşılsa"
-    },
-    "shares": {
-      "title": "Kâr payları",
-      "description": "Her atölyenin sonucu, atölye kapatılırken bu paylara göre bölüşülür. Daha önce kapatılan atölyeler, kapatıldıkları andaki paylarla kalır.",
-      "total": "Toplam: {total}. Her şey yolunda.",
-      "missing": "Paylaştırılacak kalan: {rest}",
-      "tooMuch": "Fazla: {rest}",
-      "unreadable": "Lütfen her payı bir sayı olarak yazın, örneğin 33,33.",
-      "splitEqually": "Eşit böl",
-      "save": "Payları kaydet",
-      "done": "Paylar kaydedildi."
+      "contributions": "Sermaye girişi",
+      "withdrawals": "Para çekme",
+      "profitShares": "Kapanan atölyelerden pay",
+      "capital": "Güncel sermaye",
+      "openShare": "Açık sonuçtan pay",
+      "equity": "Bugün hesaplaşılsa",
+      "capitalTitle": "Sermaye hesabı",
+      "contributionsHint": "Ortak kasaya konan para",
+      "withdrawalsHint": "Ortak kasadan çekilen para",
+      "profitSharesHint": "Hesabı kapanan atölyelerin kârı ya da zararı",
+      "openShareHint": "Henüz kapanmamış atölyeler ve genel giderler",
+      "equityHint": "Güncel sermaye ile açık sonuçtan payın toplamı",
+      "lastMovement": "Son hareket: {date}",
+      "noMovement": "Henüz hareket yok",
+      "statement": "Tam döküm"
     },
     "explain": {
-      "title": "Bu hesaplar nasıl işler?",
-      "capital": "Bir ortağın sermayesi kasaya koyduğu para ve kapanan her atölyedeki payıyla artar, çektiği parayla azalır. Bütün giderler ortak kasadan ödenir.",
-      "open": "Henüz kapanmamış atölyeler (kesinleşenlerin eğitmen ücretleri düşülerek) ve genel giderler henüz ortaklara paylaştırılmadı. Her ortağın bunlardaki payı, bugünkü paylara göre hesaplanır:",
-      "openLabel": "Henüz paylaştırılmamış sonuç",
-      "settled": "“Bugün hesaplaşılsa”, sermaye ile bu payın toplamıdır: işletme bugün hesaplaşsaydı her ortağın alacağı tutar.",
       "statement": "Bir ortağın hesap dökümünü görün"
     },
-    "sumError": "Payların toplamı tam olarak %100 olmalıdır.",
     "partnerGone": "Bu kişilerden biri artık aktif bir yönetici değil. Lütfen sayfayı yenileyin."
   },
   "ledger": {

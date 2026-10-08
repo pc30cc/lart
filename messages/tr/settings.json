@@ -450,6 +450,10 @@
     },
     "errors": {
       "spender": "Etkin ortaklardan birini seçin."
+    },
+    "shares": {
+      "title": "Kâr payları",
+      "description": "Her atölyenin kârı ya da zararı, hesabı kapatılırken ortaklar arasında bu oranlarla bölünür. Paylar sabit ve kilitlidir; panelden değiştirilemez."
     }
   }
 }

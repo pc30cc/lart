@@ -4,8 +4,8 @@
  * Next.js with relative imports only.
  */
 
-/** At most this many partners (active super admins), counting invitations that still work. */
-export const MAX_PARTNERS = 3
+/** At most this many partners (active super admins), counting invitations that still work: the business has two. */
+export const MAX_PARTNERS = 2
 
 /** How long an invitation link works. */
 export const PARTNER_INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000

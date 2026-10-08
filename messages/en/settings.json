@@ -450,6 +450,10 @@
     },
     "errors": {
       "spender": "Choose one of the active partners."
+    },
+    "shares": {
+      "title": "Profit shares",
+      "description": "Each workshop's profit or loss is split between the partners in these shares when its books are closed. The shares are fixed and locked: they cannot be changed in the panel."
     }
   }
 }

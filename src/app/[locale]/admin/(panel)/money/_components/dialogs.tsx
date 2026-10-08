@@ -13,7 +13,7 @@ import {
 } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { useId, useState } from "react"
-import type { FieldValues, Path, UseFormReturn } from "react-hook-form"
+import { useWatch, type FieldValues, type Path, type UseFormReturn } from "react-hook-form"
 
 import { Form, FormField, SubmitButton, TextField } from "@/components/admin/form/form"
 import { MoneyInput } from "@/components/admin/form/money-input"
@@ -28,16 +28,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { payInstructor, recordAdvance, recordCapital, recordExpense } from "@/features/money/actions"
+import { payInstructor, recordAdvance, recordContribution, recordExpense, recordWithdrawal } from "@/features/money/actions"
 import {
   advanceSchema,
-  capitalSchema,
+  contributionSchema,
   expenseSchema,
   instructorPaymentSchema,
+  withdrawalSchema,
   type AdvanceValues,
-  type CapitalValues,
+  type ContributionValues,
   type ExpenseValues,
   type InstructorPaymentValues,
+  type WithdrawalValues,
 } from "@/features/money/schema"
 import { formatLira } from "@/lib/money"
 import { DateField, PartnerField, SourceField, todayIso, type PartnerOption } from "./fields"
@@ -151,61 +153,78 @@ function AmountField<T extends FieldValues>({ label, description }: { label: str
 
 // ─── Capital: contribution / withdrawal ───────────────────────────────────────
 
-export function CapitalDialog({
-  direction,
-  partners,
-  defaultPartnerId,
-  trigger,
-}: {
-  direction: "contribution" | "withdrawal"
-  partners: PartnerOption[]
-  defaultPartnerId?: string
-  trigger?: TriggerProps
-}) {
-  const t = useTranslations(`money.capital.${direction}`)
+/**
+ * Capital goes in from every partner at once, the same amount each (the
+ * shares are equal and locked): the form asks for one partner's part and
+ * shows who pays it and the total.
+ */
+export function ContributionDialog({ partners, trigger }: { partners: PartnerOption[]; trigger?: TriggerProps }) {
+  const t = useTranslations("money.capital.contribution")
   return (
-    <FormDialog
-      icon={direction === "contribution" ? ArrowDownToLineIcon : ArrowUpFromLineIcon}
-      label={t("trigger")}
-      title={t("title")}
-      description={t("description")}
-      trigger={trigger}
-    >
-      {(close) => <CapitalForm direction={direction} partners={partners} defaultPartnerId={defaultPartnerId} onDone={close} />}
+    <FormDialog icon={ArrowDownToLineIcon} label={t("trigger")} title={t("title")} description={t("description")} trigger={trigger}>
+      {(close) => <ContributionForm partners={partners} onDone={close} />}
     </FormDialog>
   )
 }
 
-function CapitalForm({
-  direction,
-  partners,
-  defaultPartnerId,
-  onDone,
-}: {
-  direction: "contribution" | "withdrawal"
-  partners: PartnerOption[]
-  defaultPartnerId?: string
-  onDone: () => void
-}) {
+function ContributionForm({ partners, onDone }: { partners: PartnerOption[]; onDone: () => void }) {
+  const t = useTranslations("money")
+  const locale = useLocale()
+  const { form, submit, pending } = useActionForm({
+    schema: contributionSchema,
+    action: recordContribution,
+    defaultValues: { occurredOn: todayIso(), note: "" },
+    successMessage: t("capital.contribution.done"),
+    onSuccess: onDone,
+  })
+  const each = useWatch({ control: form.control, name: "amount" })
+  const amount = typeof each === "number" && each > 0 ? each : 0
+  return (
+    <DialogForm form={form} submit={submit} pending={pending} submitLabel={t("forms.save")}>
+      <AmountField<ContributionValues> label={t("capital.contribution.each")} />
+      <div className="bg-muted/50 space-y-1.5 rounded-lg p-3 text-sm">
+        {partners.map((p) => (
+          <p key={p.adminId} className="flex justify-between gap-4">
+            <span>{p.name}</span>
+            <span className="tabular-nums">{formatLira(amount, locale)}</span>
+          </p>
+        ))}
+        <p className="flex justify-between gap-4 border-t pt-1.5 font-semibold">
+          <span>{t("capital.contribution.total")}</span>
+          <span className="tabular-nums">{formatLira(amount * partners.length, locale)}</span>
+        </p>
+      </div>
+      <DateField<ContributionValues> name="occurredOn" label={t("forms.date")} />
+      <TextField<ContributionValues> name="note" label={t("forms.note")} description={t("forms.noteHint")} maxLength={200} />
+    </DialogForm>
+  )
+}
+
+/** One partner takes money out (shown only while Settings → Money allows withdrawals). */
+export function WithdrawalDialog({ partners, trigger }: { partners: PartnerOption[]; trigger?: TriggerProps }) {
+  const t = useTranslations("money.capital.withdrawal")
+  return (
+    <FormDialog icon={ArrowUpFromLineIcon} label={t("trigger")} title={t("title")} description={t("description")} trigger={trigger}>
+      {(close) => <WithdrawalForm partners={partners} onDone={close} />}
+    </FormDialog>
+  )
+}
+
+function WithdrawalForm({ partners, onDone }: { partners: PartnerOption[]; onDone: () => void }) {
   const t = useTranslations("money")
   const { form, submit, pending } = useActionForm({
-    schema: capitalSchema,
-    action: recordCapital,
-    defaultValues: {
-      direction,
-      partnerId: defaultPartnerId ?? (partners.length === 1 ? partners[0].adminId : ""),
-      occurredOn: todayIso(),
-      note: "",
-    },
-    successMessage: t(`capital.${direction}.done`),
+    schema: withdrawalSchema,
+    action: recordWithdrawal,
+    defaultValues: { partnerId: partners.length === 1 ? partners[0].adminId : "", occurredOn: todayIso(), note: "" },
+    successMessage: t("capital.withdrawal.done"),
     onSuccess: onDone,
   })
   return (
     <DialogForm form={form} submit={submit} pending={pending} submitLabel={t("forms.save")}>
-      <PartnerField<CapitalValues> name="partnerId" label={t("forms.partner")} partners={partners} />
-      <AmountField<CapitalValues> label={t("forms.amount")} />
-      <DateField<CapitalValues> name="occurredOn" label={t("forms.date")} />
-      <TextField<CapitalValues> name="note" label={t("forms.note")} description={t("forms.noteHint")} maxLength={200} />
+      <PartnerField<WithdrawalValues> name="partnerId" label={t("forms.partner")} partners={partners} />
+      <AmountField<WithdrawalValues> label={t("forms.amount")} />
+      <DateField<WithdrawalValues> name="occurredOn" label={t("forms.date")} />
+      <TextField<WithdrawalValues> name="note" label={t("forms.note")} description={t("forms.noteHint")} maxLength={200} />
     </DialogForm>
   )
 }

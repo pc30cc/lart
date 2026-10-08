@@ -124,7 +124,7 @@ async function liveContract(exec: Exec, courseId: string) {
 
 /**
  * Active partners with their shares, in a stable order. `lock`: hold the shares
- * until commit; the rows are locked in id order, like `updateShares` does, so the
+ * until commit; the rows are locked in id order, so two transactions
  * two never deadlock.
  */
 export async function activePartners(exec: Exec, lock = false): Promise<Partner[]> {

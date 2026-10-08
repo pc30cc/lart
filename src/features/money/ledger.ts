@@ -220,6 +220,25 @@ export function postContribution(tx: Tx, input: Common & { partnerId: string; am
   })
 }
 
+/**
+ * The partners put the same amount each into the shared wallet, as one
+ * transaction (one line per partner): with equal shares, capital goes in
+ * equally. A reversal takes all of it back at once.
+ */
+export function postJointContribution(tx: Tx, input: Common & { partnerIds: string[]; amountEach: number }) {
+  positive(input.amountEach)
+  if (input.partnerIds.length === 0) throw new LedgerError("a contribution needs at least one partner")
+  const { partnerIds, amountEach, ...common } = input
+  return postTransaction(tx, {
+    ...common,
+    kind: "capital_contribution",
+    lines: [
+      { account: "wallet", amount: amountEach * partnerIds.length },
+      ...partnerIds.map((partnerId): Line => ({ account: "partner_capital", partnerId, amount: -amountEach })),
+    ],
+  })
+}
+
 /** A partner takes money out of the shared wallet. */
 export function postWithdrawal(tx: Tx, input: Common & { partnerId: string; amount: number }) {
   positive(input.amount)

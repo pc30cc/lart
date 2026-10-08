@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: `${t("tabs.money")} · ${t("title")}` }
 }
 
-/** Settings → Money: withdrawals (closed for now) and the partner who pays the costs from the wallet. */
+/** Settings → Money: the partners' profit shares (fixed), the partner who pays the costs from the wallet, and withdrawals (closed for now). */
 export default async function MoneySettingsPage() {
   await requireAdmin()
   const [t, money, partners] = await Promise.all([getTranslations("settings"), getSetting("money"), listActivePartners()])
@@ -21,7 +21,7 @@ export default async function MoneySettingsPage() {
       <BreadcrumbTitle title={t("tabs.money")} />
       <MoneySettingsForm
         saved={{ withdrawals: money.withdrawals, spenderId: money.spenderId ?? "" }}
-        partners={partners.map((p) => ({ id: p.adminId, name: p.name }))}
+        partners={partners.map((p) => ({ id: p.adminId, name: p.name, shareBp: p.shareBp }))}
       />
     </>
   )

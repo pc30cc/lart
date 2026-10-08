@@ -192,7 +192,7 @@ export function spendBlockText(rules: Awaited<ReturnType<typeof getMoneyRules>>,
  */
 export async function listPartnerAccounts() {
   await requireAdmin()
-  const [people, capitals, open, url] = await Promise.all([
+  const [people, capitals, open, url, lastMoves] = await Promise.all([
     db
       .select({
         id: admins.id,
@@ -207,7 +207,15 @@ export async function listPartnerAccounts() {
     partnerCapitals(db),
     notSharedOut(),
     publicUrls(),
+    // Each partner's last movement of capital (contribution, withdrawal, profit share).
+    db
+      .select({ partnerId: ledgerLines.partnerId, last: sql<string>`max(${ledgerTransactions.occurredOn})` })
+      .from(ledgerLines)
+      .innerJoin(ledgerTransactions, eq(ledgerTransactions.id, ledgerLines.transactionId))
+      .where(eq(ledgerLines.account, "partner_capital"))
+      .groupBy(ledgerLines.partnerId),
   ])
+  const lastOf = new Map(lastMoves.map((r) => [r.partnerId, r.last]))
   const partners = people.filter((p) => p.active || capitals.has(p.id))
   const sharing = partners.filter((p) => p.active && p.shareBp > 0)
   const sharesOk = sharing.reduce((s, p) => s + p.shareBp, 0) === 10000
@@ -225,6 +233,8 @@ export async function listPartnerAccounts() {
       withdrawals: c?.withdrawals ?? 0,
       profitShares: c?.profitShares ?? 0,
       capital,
+      /** The day of their last movement of capital, or null. */
+      lastMovement: lastOf.get(p.id) ?? null,
       openShare,
       equity: capital + openShare,
     }

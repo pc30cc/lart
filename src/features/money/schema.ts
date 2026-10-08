@@ -57,14 +57,22 @@ export const entryDate = () =>
 
 const note = z.string().trim().max(200)
 
-export const capitalSchema = z.object({
-  direction: z.enum(["contribution", "withdrawal"]),
+/** Capital put in by every partner: `amount` is each partner's part (the same for all). */
+export const contributionSchema = z.object({
+  amount,
+  occurredOn: entryDate(),
+  note,
+})
+export type ContributionValues = z.input<typeof contributionSchema>
+
+/** One partner takes money out (only while Settings → Money allows withdrawals). */
+export const withdrawalSchema = z.object({
   partnerId: z.uuid({ error: "money.validation.choosePartner" }),
   amount,
   occurredOn: entryDate(),
   note,
 })
-export type CapitalValues = z.input<typeof capitalSchema>
+export type WithdrawalValues = z.input<typeof withdrawalSchema>
 
 export const expenseSchema = z
   .object({
@@ -107,17 +115,6 @@ export const closeSchema = z.object({
 })
 
 export const reverseSchema = z.object({ id: uuid() })
-
-/** Profit shares in basis points (10000 = 100 %): one to three partners, together exactly 100 %. */
-export const sharesSchema = z.object({
-  shares: z
-    .array(z.object({ adminId: z.uuid(), shareBp: z.number().int().min(0).max(10000) }))
-    .min(1)
-    .max(3)
-    .refine((s) => new Set(s.map((x) => x.adminId)).size === s.length, { error: "common.validation.invalid" })
-    .refine((s) => s.reduce((sum, x) => sum + x.shareBp, 0) === 10000, { error: "money.partners.sumError" }),
-})
-export type SharesValues = z.input<typeof sharesSchema>
 
 // ─── Lists and reports (URL params) ───────────────────────────────────────────
 
