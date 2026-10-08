@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest"
 
 import { logoSchema, logoSize } from "@/lib/logo"
-import { LOGO_FILE_MAX, LogoSvgError, normalizePath, paintOf, parseLogoSvg, transformMatrix } from "./logo-svg"
+import { chooseInk, LOGO_FILE_MAX, LogoSvgError, normalizePath, paintOf, parseLogoSvg, readPath, transformMatrix } from "./logo-svg"
+
+/** The logo as the panel keeps it, but for the browser's crop: white shapes left out as a background. */
+const ink = (svg: string) => {
+  const { viewBox, paths } = parseLogoSvg(svg)
+  return { viewBox, paths: chooseInk(paths) }
+}
 
 const codeOf = (svg: string) => {
   try {
@@ -14,33 +20,33 @@ const codeOf = (svg: string) => {
 
 describe("parseLogoSvg", () => {
   it("reads a traced logo: one path, its fill rule from the root", () => {
-    const logo = parseLogoSvg(
+    const logo = ink(
       `<svg xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" viewBox="6 10 4468 1478"><path d="m6 19l0 9 14 0z"/></svg>`,
     )
     expect(logo).toEqual({ viewBox: "6 10 4468 1478", paths: [{ d: "m6 19l0 9 14 0z", evenodd: true }] })
   })
 
   it("reads an Illustrator file: class styles, white background left out, shapes as paths", () => {
-    const logo = parseLogoSvg(`<?xml version="1.0" encoding="UTF-8"?>
+    const logo = ink(`<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <!-- Generator: Adobe Illustrator -->
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" viewBox="0 0 200 100">
   <defs><style>.cls-1{fill:#231f20;}.cls-2{fill:#fff;}</style></defs>
   <rect class="cls-2" width="200" height="100"/>
-  <path class="cls-1" d="M 10 10 L 20.123456 20 Z"/>
-  <polygon class="cls-1" points="1,2 3,4 5,6"/>
+  <path class="cls-1" d="M 10 10 L 20.123456 20 L 10 20 Z"/>
+  <polygon class="cls-1" points="1,2 3,4 1,6"/>
   <circle class="cls-1" cx="50" cy="50" r="5"/>
 </svg>`)
     expect(logo.viewBox).toBe("0 0 200 100")
     expect(logo.paths).toEqual([
-      { d: "M10 10L20.12 20Z" },
-      { d: "M1 2L3 4L5 6Z" },
+      { d: "M10 10L20.12 20L10 20Z" },
+      { d: "M1 2L3 4L1 6Z" },
       { d: "M45 50A5 5 0 1 0 55 50A5 5 0 1 0 45 50Z" },
     ])
   })
 
   it("reads a Figma file: fill on each path, evenodd per path, clip paths left out", () => {
-    const logo = parseLogoSvg(`<svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    const logo = ink(`<svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g clip-path="url(#clip0_1_2)">
 <path d="M0 0H10V10Z" fill="#5B311E"/>
 <path fill-rule="evenodd" clip-rule="evenodd" d="M20 0H30V10H20Z" fill="black"/>
@@ -51,7 +57,7 @@ describe("parseLogoSvg", () => {
   })
 
   it("keeps transforms, a group's and the shape's multiplied into one", () => {
-    const logo = parseLogoSvg(
+    const logo = ink(
       `<svg viewBox="0 0 10 10"><g transform="translate(2 3)"><path transform="scale(2)" d="M0 0h1v1z"/><path transform="translate(1,1)" d="M0 0h1v1z"/></g><g transform="scale(1)"><path d="M1 1h1v1z"/></g></svg>`,
     )
     expect(logo.paths).toEqual([
@@ -64,13 +70,13 @@ describe("parseLogoSvg", () => {
   it("keeps a deep nest of design-app matrices short enough for the setting", () => {
     const m = "matrix(0.9876543,0.0123457,-0.0123457,0.9876543,12.345678,-23.456789)"
     const svg = `<svg viewBox="0 0 100 100">${`<g transform="${m}">`.repeat(12)}<path d="M1 1h1v1z"/>${"</g>".repeat(12)}</svg>`
-    const { viewBox, paths } = parseLogoSvg(svg)
+    const { viewBox, paths } = ink(svg)
     expect(paths[0].transform).toMatch(/^matrix\(/)
     expect(logoSchema.safeParse({ viewBox, paths }).success).toBe(true)
   })
 
   it("leaves out hidden shapes and a design app's own elements", () => {
-    const logo = parseLogoSvg(`<svg width="10px" height="10px" xmlns:sodipodi="x">
+    const logo = ink(`<svg width="10px" height="10px" xmlns:sodipodi="x">
 <sodipodi:namedview><path d="M9 9h1v1z"/></sodipodi:namedview>
 <path style="display:none" d="M5 5h1v1z"/>
 <g opacity="0"><path d="M6 6h1v1z"/></g>
@@ -80,11 +86,11 @@ describe("parseLogoSvg", () => {
   })
 
   it("keeps the shapes of a logo all in white", () => {
-    expect(parseLogoSvg(`<svg viewBox="0 0 10 10"><path fill="#FFFFFF" d="M1 1h1v1z"/></svg>`).paths).toHaveLength(1)
+    expect(ink(`<svg viewBox="0 0 10 10"><path fill="#FFFFFF" d="M1 1h1v1z"/></svg>`).paths).toHaveLength(1)
   })
 
   it("has no viewBox when the file has no size", () => {
-    expect(parseLogoSvg(`<svg width="100%"><path d="M1 1h1v1z"/></svg>`).viewBox).toBeNull()
+    expect(ink(`<svg width="100%"><path d="M1 1h1v1z"/></svg>`).viewBox).toBeNull()
   })
 
   it("refuses what it cannot draw", () => {
@@ -97,11 +103,14 @@ describe("parseLogoSvg", () => {
     expect(codeOf(`\x89PNG\r\n`)).toBe("notSvg")
     expect(codeOf(`<svg viewBox="0 0 10 10"><path d="M0 0 url(javascript:x)"/></svg>`)).toBe("invalid")
     expect(codeOf(`<svg viewBox="0 0 10 10"><path transform="url(#x)" d="M0 0h1v1z"/></svg>`)).toBe("invalid")
-    expect(codeOf(`<svg viewBox="0 0 10 10">${'<path d="M0 0h1v1z"/>'.repeat(601)}</svg>`)).toBe("tooComplex")
+    // Drafts beside the page count only up to ten times the logo's limits; the logo's own apply after the crop (logoSchema).
+    expect(codeOf(`<svg viewBox="0 0 10 10">${'<path d="M0 0h1v1z"/>'.repeat(6001)}</svg>`)).toBe("tooComplex")
+    const many = ink(`<svg viewBox="0 0 10 10">${'<path d="M0 0h1v1z"/>'.repeat(601)}</svg>`)
+    expect(logoSchema.safeParse({ viewBox: "0 0 10 10", paths: many.paths }).success).toBe(false)
   })
 
   it("gives data the setting accepts", () => {
-    const { viewBox, paths } = parseLogoSvg(`<svg viewBox="0 0 200 100"><path fill-rule="evenodd" d="M0 0h1v1z"/></svg>`)
+    const { viewBox, paths } = ink(`<svg viewBox="0 0 200 100"><path fill-rule="evenodd" d="M0 0h1v1z"/></svg>`)
     const logo = logoSchema.parse({ viewBox, paths })
     expect(logoSize(logo)).toEqual({ width: 200, height: 100 })
   })
@@ -115,27 +124,27 @@ describe("parseLogoSvg: strokes, classes and hostile files", () => {
   })
 
   it("keeps a filled shape whose stroke only thickens it", () => {
-    const logo = parseLogoSvg(`<svg viewBox="0 0 10 10"><path d="M4 4h2v2z" fill="#5B311E" stroke="#5B311E" stroke-width="0.2"/></svg>`)
+    const logo = ink(`<svg viewBox="0 0 10 10"><path d="M4 4h2v2z" fill="#5B311E" stroke="#5B311E" stroke-width="0.2"/></svg>`)
     expect(logo.paths).toEqual([{ d: "M4 4h2v2z" }])
   })
 
   it("applies class rules in the sheet's order, not the attribute's", () => {
     // .cls-1 comes later in the sheet, so it wins although the element names it first.
-    const logo = parseLogoSvg(
+    const logo = ink(
       `<svg viewBox="0 0 10 10"><style>.cls-2{fill:#fff}.cls-1{fill:#5b311e}</style><path class="cls-1 cls-2" d="M1 1h1v1z"/><rect class="cls-2" width="10" height="10"/></svg>`,
     )
     expect(logo.paths).toEqual([{ d: "M1 1h1v1z" }])
   })
 
   it("reads styles in CDATA, with comments, and after the shapes", () => {
-    const logo = parseLogoSvg(
+    const logo = ink(
       `<svg viewBox="0 0 10 10"><path class="bg" d="M0 0h10v10z"/><path class="ink" d="M1 1h1v1z"/><style><![CDATA[/* a { */ .bg{fill:#FFF} .ink{fill:#000}]]></style></svg>`,
     )
     expect(logo.paths).toEqual([{ d: "M1 1h1v1z" }])
   })
 
   it("reads a DOCTYPE with an internal subset, and prefixed svg: elements", () => {
-    const logo = parseLogoSvg(`<?xml version="1.0"?>
+    const logo = ink(`<?xml version="1.0"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "x.dtd" [ <!ENTITY ns_x "http://x/"> <!ENTITY a "b"> ]>
 <svg:svg xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><svg:g><svg:path d="M1 1h1v1z"/></svg:g></svg:svg>`)
     expect(logo.paths).toEqual([{ d: "M1 1h1v1z" }])
@@ -182,7 +191,7 @@ describe("parseLogoSvg: files as design apps export them", () => {
     // Figma: "Use as mask".
     expect(codeOf(`<svg viewBox="0 0 200 80"><mask id="m"><circle cx="100" cy="40" r="30" fill="#fff"/></mask><g mask="url(#m)"><path d="M-20 30H220V50H-20Z"/></g></svg>`)).toBe("clip")
     // Figma's frame, even moved into place.
-    const frame = parseLogoSvg(
+    const frame = ink(
       `<svg width="120" height="40" viewBox="0 0 120 40" fill="none"><g clip-path="url(#f)"><path d="M0 0H10V10Z" fill="#5B311E"/></g><defs><clipPath id="f"><rect width="120" height="40" fill="white" transform="translate(0 0)"/></clipPath></defs></svg>`,
     )
     expect(frame.paths).toEqual([{ d: "M0 0H10V10Z" }])
@@ -197,7 +206,7 @@ describe("parseLogoSvg: files as design apps export them", () => {
   })
 
   it("reads Illustrator's entity-reference styles", () => {
-    const logo = parseLogoSvg(`<?xml version="1.0"?>
+    const logo = ink(`<?xml version="1.0"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [
   <!ENTITY st0 "fill:#FFFFFF;">
   <!ENTITY st1 "fill-rule:evenodd;clip-rule:evenodd;fill:#5B311E;">
@@ -214,14 +223,73 @@ describe("parseLogoSvg: files as design apps export them", () => {
 
   it("knows white and transparent in every spelling", () => {
     for (const background of ["rgb(100%, 100%, 100%)", "rgb(255 255 255)", "hsl(0 0% 100%)", "#FFFFFFFF", "transparent", "rgba(255,255,255,0)", "#ffffff00", "rgb(10 20 30 / 0)"]) {
-      const logo = parseLogoSvg(`<svg viewBox="0 0 200 80"><rect x="-15" y="-6" width="230" height="92" fill="${background}"/><path d="M10 10h20v20h-20z" fill="#5B311E"/></svg>`)
+      const logo = ink(`<svg viewBox="0 0 200 80"><rect x="-15" y="-6" width="230" height="92" fill="${background}"/><path d="M10 10h20v20h-20z" fill="#5B311E"/></svg>`)
       expect(logo.paths, background).toEqual([{ d: "M10 10h20v20h-20z" }])
     }
   })
 
   it("leaves out a lone point (a stray anchor)", () => {
-    const logo = parseLogoSvg(`<svg viewBox="0 0 200 80"><path d="M196,3"/><path d="M10 10h20v20h-20z"/></svg>`)
+    const logo = ink(`<svg viewBox="0 0 200 80"><path d="M196,3"/><path d="M10 10h20v20h-20z"/></svg>`)
     expect(logo.paths).toEqual([{ d: "M10 10h20v20h-20z" }])
+  })
+})
+
+describe("parseLogoSvg: what the browser draws, and frames", () => {
+  it("keeps a polygon written with implicit lines after its move (svgo, Inkscape)", () => {
+    expect(ink(`<svg viewBox="0 0 20 20"><path d="M0 0 10 0 10 10z"/><path d="m2 2 3 0 0 3z"/></svg>`).paths).toEqual([
+      { d: "M0 0 10 0 10 10z" },
+      { d: "m2 2 3 0 0 3z" },
+    ])
+  })
+
+  it("leaves out a filled outline with no area (a diagonal stray)", () => {
+    expect(ink(`<svg viewBox="0 0 200 80"><path d="M0 0L200 80"/><path d="M0 78H200"/><path d="M10 10h20v20h-20z"/></svg>`).paths).toEqual([
+      { d: "M10 10h20v20h-20z" },
+    ])
+  })
+
+  it("draws nothing for an element name in the wrong case, as browsers (XML is case-sensitive)", () => {
+    expect(codeOf(`<svg viewBox="0 0 10 10"><PATH d="M1 1h5v5z"/></svg>`)).toBe("empty")
+    expect(ink(`<svg viewBox="0 0 10 10"><G><path d="M1 1h5v5z"/></G><path d="M2 2h1v1z"/></svg>`).paths).toEqual([{ d: "M2 2h1v1z" }])
+  })
+
+  it("does not refuse what the browser does not draw either", () => {
+    expect(ink(`<svg viewBox="0 0 10 10"><text style="display:none">Draft</text><image visibility="hidden" href="a.png"/><path d="M1 1h5v5z"/></svg>`).paths).toEqual([
+      { d: "M1 1h5v5z" },
+    ])
+  })
+
+  it("takes a frame only when it is a plain rectangle as large as the file where it is used", () => {
+    const file = (clip: string, use = 'clip-path="url(#f)"', units = "") =>
+      codeOf(`<svg viewBox="0 0 120 40"><clipPath id="f"${units}>${clip}</clipPath><g ${use}><path d="M1 1h50v30H1z"/></g></svg>`)
+    expect(file(`<rect width="120" height="40"/>`)).toBeNull()
+    expect(file(`<path d="M0 0H120V40H0Z"/>`)).toBeNull()
+    expect(file(`<rect x="-10" y="-10" width="140" height="60"/>`)).toBeNull()
+    expect(file(`<rect width="1" height="1"/>`, 'clip-path="url(#f)"', ' clipPathUnits="objectBoundingBox"')).toBeNull()
+    // Rounded corners, a smaller frame, a frame shrunk by the group's own transform, half a box: they clip.
+    expect(file(`<rect width="120" height="40" rx="20"/>`)).toBe("clip")
+    expect(file(`<rect width="100" height="40"/>`)).toBe("clip")
+    expect(file(`<rect width="120" height="40"/>`, 'clip-path="url(#f)" transform="scale(0.5)"')).toBe("clip")
+    expect(file(`<rect width="0.5" height="1"/>`, 'clip-path="url(#f)"', ' clipPathUnits="objectBoundingBox"')).toBe("clip")
+    expect(file(`<circle cx="60" cy="20" r="100"/>`)).toBe("clip")
+  })
+})
+
+describe("readPath", () => {
+  it("tells what a path draws", () => {
+    expect(readPath("M5,5", null)).toMatchObject({ draws: false, noArea: true, rect: null })
+    expect(readPath("M0 0H10V5H0Z", null)).toMatchObject({ draws: true, noArea: false, rect: [0, 0, 10, 5] })
+    expect(readPath("m2 3 4 0 0 2-4 0z", null)).toMatchObject({ rect: [2, 3, 6, 5] })
+    expect(readPath("M0 0L10 0L10 5Z", null)).toMatchObject({ noArea: false, rect: null })
+    expect(readPath("M0 0C5 5 10 5 10 0Z", null)).toMatchObject({ draws: true, noArea: false, rect: null })
+    expect(readPath("M0 0L10 10L20 20", null)).toMatchObject({ draws: true, noArea: true })
+  })
+})
+
+describe("chooseInk", () => {
+  it("leaves white shapes out unless the logo is all white", () => {
+    expect(chooseInk([{ d: "M0 0h1v1z", white: true }, { d: "M2 2h1v1z", evenodd: true }])).toEqual([{ d: "M2 2h1v1z", evenodd: true }])
+    expect(chooseInk([{ d: "M0 0h1v1z", white: true, transform: "translate(1 1)" }])).toEqual([{ d: "M0 0h1v1z", transform: "translate(1 1)" }])
   })
 })
 

@@ -9,8 +9,8 @@ import { ConfirmAction } from "@/components/admin/confirm-action"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { removeSiteLogo, saveSiteLogo } from "@/features/settings/appearance-actions"
-import { LOGO_FILE_MAX, LogoSvgError, parseLogoSvg, type ParsedLogo } from "@/features/settings/logo-svg"
-import { LOGO_DATA_MAX, logoSchema, type LogoData } from "@/lib/logo"
+import { chooseInk, LOGO_FILE_MAX, LogoSvgError, parseLogoSvg, type ParsedLogo } from "@/features/settings/logo-svg"
+import { LOGO_DATA_MAX, LOGO_SHAPES_MAX, logoSchema, type LogoData } from "@/lib/logo"
 import { LogoPicture } from "@/themes/logo"
 import { Panel } from "../_components/fields"
 
@@ -18,10 +18,11 @@ import { Panel } from "../_components/fields"
  * The logo as the browser draws it, cropped to its ink. Each shape is measured
  * on its own (its transform included); one that paints nothing (no area) or
  * lies wholly outside the file's own box (a draft beside the page, which the
- * browser never shows) is left out, and the viewBox is the box around the
- * rest, within the file's box.
+ * browser never shows) is left out; of the rest, white shapes are the
+ * background (`chooseInk`); the viewBox is the box around what is kept,
+ * within the file's box.
  */
-function cropToInk(logo: ParsedLogo): { viewBox: string; paths: ParsedLogo["paths"] } {
+function cropToInk(logo: ParsedLogo): { viewBox: string; paths: LogoData["paths"] } {
   const ns = "http://www.w3.org/2000/svg"
   const svg = document.createElementNS(ns, "svg")
   svg.setAttribute("style", "position:absolute;width:0;height:0;overflow:hidden;visibility:hidden")
@@ -37,19 +38,23 @@ function cropToInk(logo: ParsedLogo): { viewBox: string; paths: ParsedLogo["path
   document.body.appendChild(svg)
   try {
     const file = logo.viewBox?.split(" ").map(Number) ?? null
-    const kept: ParsedLogo["paths"] = []
-    let [x1, y1, x2, y2] = [Infinity, Infinity, -Infinity, -Infinity]
-    logo.paths.forEach((p, i) => {
-      const b = groups[i].getBBox()
-      if (!(b.width > 0 && b.height > 0)) return
+    const shown: { path: ParsedLogo["paths"][number]; box: DOMRect }[] = []
+    logo.paths.forEach((path, i) => {
+      const box = groups[i].getBBox()
+      if (!(box.width > 0 && box.height > 0)) return
       if (file) {
         const [fx, fy, fw, fh] = file
-        if (b.x >= fx + fw || b.y >= fy + fh || b.x + b.width <= fx || b.y + b.height <= fy) return
+        if (box.x >= fx + fw || box.y >= fy + fh || box.x + box.width <= fx || box.y + box.height <= fy) return
       }
-      kept.push(p)
-      ;[x1, y1, x2, y2] = [Math.min(x1, b.x), Math.min(y1, b.y), Math.max(x2, b.x + b.width), Math.max(y2, b.y + b.height)]
+      shown.push({ path, box })
     })
-    if (kept.length === 0) throw new LogoSvgError("empty")
+    if (shown.length === 0) throw new LogoSvgError("empty")
+    const coloured = shown.filter((s) => !s.path.white)
+    const kept = coloured.length > 0 ? coloured : shown
+    let [x1, y1, x2, y2] = [Infinity, Infinity, -Infinity, -Infinity]
+    for (const { box: b } of kept) {
+      ;[x1, y1, x2, y2] = [Math.min(x1, b.x), Math.min(y1, b.y), Math.max(x2, b.x + b.width), Math.max(y2, b.y + b.height)]
+    }
     if (file) {
       const [fx, fy, fw, fh] = file
       ;[x1, y1, x2, y2] = [Math.max(x1, fx), Math.max(y1, fy), Math.min(x2, fx + fw), Math.min(y2, fy + fh)]
@@ -57,7 +62,7 @@ function cropToInk(logo: ParsedLogo): { viewBox: string; paths: ParsedLogo["path
     const down = (n: number) => Math.floor(n * 100) / 100
     const up = (n: number) => Math.ceil(n * 100) / 100
     const [x, y] = [down(x1), down(y1)]
-    return { viewBox: `${x} ${y} ${up(x2 - x)} ${up(y2 - y)}`, paths: kept }
+    return { viewBox: `${x} ${y} ${up(x2 - x)} ${up(y2 - y)}`, paths: chooseInk(kept.map((s) => s.path)) }
   } finally {
     svg.remove()
   }
@@ -85,8 +90,9 @@ export function LogoPanel({ saved, brand }: { saved: LogoData | null; brand: str
         // The server checks the same schema: a logo it would refuse gets its reason here, not a generic error.
         const checked = logoSchema.safeParse(cropToInk(parsed))
         if (!checked.success) {
-          const total = parsed.paths.reduce((sum, p) => sum + p.d.length, 0)
-          throw new LogoSvgError(total > LOGO_DATA_MAX ? "tooComplex" : "invalid")
+          const cropped = cropToInk(parsed).paths
+          const total = cropped.reduce((sum, p) => sum + p.d.length, 0)
+          throw new LogoSvgError(total > LOGO_DATA_MAX || cropped.length > LOGO_SHAPES_MAX ? "tooComplex" : "invalid")
         }
         const result = await saveSiteLogo({ logo: checked.data })
         if (!result) return // the action redirected (e.g. the session ended)

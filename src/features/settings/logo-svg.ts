@@ -50,9 +50,14 @@ export class LogoSvgError extends Error {
 
 /**
  * The logo before it is cropped to its ink: `viewBox` is the file's own
- * (null when it has no size): a browser draws nothing outside it.
+ * (null when it has no size): a browser draws nothing outside it. `white`
+ * marks a white shape, which `chooseInk` leaves out as a background.
  */
-export type ParsedLogo = { viewBox: string | null; paths: LogoData["paths"] }
+export type ParsedLogo = { viewBox: string | null; paths: (LogoData["paths"][number] & { white?: true })[] }
+
+/** The most shapes and path data read from a file, drafts beside the page included (the logo's own limits apply after the crop). */
+const READ_SHAPES_MAX = 10 * LOGO_SHAPES_MAX
+const READ_DATA_MAX = 10 * LOGO_DATA_MAX
 
 type Props = {
   fill: string | null
@@ -72,7 +77,7 @@ type Frame = { name: string; ignore: boolean; props: Props; matrix: Matrix }
 const REFUSED: Record<string, LogoSvgErrorCode> = {
   text: "text",
   tspan: "text",
-  textpath: "text",
+  textPath: "text",
   image: "image",
   use: "use",
   svg: "invalid",
@@ -199,13 +204,13 @@ function* tokens(source: string, entities: Map<string, string>): Generator<Token
       const body = source.slice(i + 1, j)
       i = j + 1
       if (body.startsWith("/")) {
-        yield { kind: "close", name: body.slice(1).trim().toLowerCase() }
+        yield { kind: "close", name: body.slice(1).trim() }
         continue
       }
       const name = /^[\w:.-]+/.exec(body)?.[0]
       if (!name) continue // a "<" that starts no tag
       const selfClosing = body.endsWith("/")
-      yield { kind: "open", name: name.toLowerCase(), attrs: body.slice(name.length, selfClosing ? -1 : undefined), selfClosing }
+      yield { kind: "open", name, attrs: body.slice(name.length, selfClosing ? -1 : undefined), selfClosing }
     }
     if (i < 0) return
   }
@@ -438,18 +443,42 @@ function matrixText(m: Matrix): string {
 const PARAMS: Record<string, number> = { m: 2, l: 2, h: 1, v: 1, c: 6, s: 4, q: 4, t: 2, a: 7, z: 0 }
 const NUMBER = /[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/y
 
+/** A path's data written again, and what it draws (see `readPath`). */
+export type PathFacts = {
+  d: string
+  /** It draws something: a segment after its first point (a lone moveto, a stray anchor, draws nothing). */
+  draws: boolean
+  /** All straight and without area: filled, it paints nothing (a line, a stray zero-area outline). */
+  noArea: boolean
+  /** A plain rectangle with sides along the axes (one subpath, straight): its box [x1, y1, x2, y2]. */
+  rect: [number, number, number, number] | null
+}
+
 /**
  * Path data read number by number and written again: rounded to `decimals`
  * (none: as they are), one space between numbers unless the next one starts
  * with a minus. An arc's two flags are read as single digits, as browsers do
- * ("a1 1 0 01.5.5"). Refuses path data a browser would stop drawing at.
+ * ("a1 1 0 01.5.5"); the pairs after a moveto are lines, as in SVG. Refuses
+ * path data a browser would stop drawing at.
  */
-export function normalizePath(d: string, decimals: number | null): string {
+export function readPath(d: string, decimals: number | null): PathFacts {
   // Parts joined at the end: reading the end of a growing string would copy it each time.
   const out: string[] = []
   let afterNumber = false
   let command = ""
+  let group = 0
   let i = 0
+  // The geometry, for the facts: current point, subpath start, outlines of the subpaths.
+  let [x, y, sx, sy] = [0, 0, 0, 0]
+  let draws = false
+  let curved = false
+  const outlines: number[][] = []
+  let outline: number[] = []
+  const lineTo = (nx: number, ny: number) => {
+    draws = true
+    ;[x, y] = [nx, ny]
+    outline.push(x, y)
+  }
   const skip = () => {
     while (i < d.length && (d[i] === " " || d[i] === "," || d[i] === "\t" || d[i] === "\n" || d[i] === "\r" || d[i] === "\f")) i++
   }
@@ -465,20 +494,28 @@ export function normalizePath(d: string, decimals: number | null): string {
       // Path data starts with a move.
       if (!command && c.toLowerCase() !== "m") throw new LogoSvgError("invalid")
       command = c
+      group = 0
       out.push(c)
       afterNumber = false
       i++
       skip()
-      if (c.toLowerCase() === "z") continue
+      if (c.toLowerCase() === "z") {
+        ;[x, y] = [sx, sy]
+        outlines.push(outline)
+        outline = [x, y] // what follows starts from the subpath's start
+        continue
+      }
     } else if (!command || command.toLowerCase() === "z") {
       throw new LogoSvgError("invalid")
     }
     const lower = command.toLowerCase()
+    const values: number[] = []
     for (let k = 0; k < PARAMS[lower]; k++) {
       if (k > 0) skip()
       if (lower === "a" && (k === 3 || k === 4)) {
         if (d[i] !== "0" && d[i] !== "1") throw new LogoSvgError("invalid")
         write(d[i])
+        values.push(Number(d[i]))
         i++
         continue
       }
@@ -489,11 +526,56 @@ export function normalizePath(d: string, decimals: number | null): string {
       const value = Number(m[0])
       if (!Number.isFinite(value)) throw new LogoSvgError("invalid")
       write(String(decimals === null ? value : Number(value.toFixed(decimals))))
+      values.push(value)
     }
+    const rel = command !== command.toUpperCase()
+    const [ox, oy] = rel ? [x, y] : [0, 0]
+    if (lower === "m" && group === 0) {
+      if (outline.length > 2) outlines.push(outline)
+      ;[x, y] = [ox + values[0], oy + values[1]]
+      ;[sx, sy] = [x, y]
+      outline = [x, y]
+    } else if (lower === "m" || lower === "l") lineTo(ox + values[0], oy + values[1])
+    else if (lower === "h") lineTo(ox + values[0], y)
+    else if (lower === "v") lineTo(x, oy + values[0])
+    else {
+      // A curve or an arc: it draws, with an area this reader does not measure.
+      const end = values.length - 2
+      curved = true
+      lineTo(ox + values[end], oy + values[end + 1])
+    }
+    group++
     skip()
   }
-  return out.join("")
+  if (outline.length > 2) outlines.push(outline)
+
+  // The area of each outline, closed as a fill closes it (shoelace).
+  const extent = Math.max(1, ...outlines.flat().map(Math.abs))
+  const tiny = 1e-9 * extent * extent
+  const area = (o: number[]) => {
+    let sum = 0
+    for (let k = 0; k < o.length; k += 2) {
+      const n = (k + 2) % o.length
+      sum += o[k] * o[n + 1] - o[n] * o[k + 1]
+    }
+    return Math.abs(sum) / 2
+  }
+  const filled = outlines.filter((o) => area(o) > tiny)
+  let rect: PathFacts["rect"] = null
+  if (!curved && filled.length === 1) {
+    const o = filled[0]
+    const xs = o.filter((_, k) => k % 2 === 0)
+    const ys = o.filter((_, k) => k % 2 === 1)
+    const box: [number, number, number, number] = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]
+    // Every side, the closing one included, along an axis, and the area all of its box.
+    const axis = xs.every((px, k) => px === xs[(k + 1) % xs.length] || ys[k] === ys[(k + 1) % ys.length])
+    if (axis && Math.abs(area(o) - (box[2] - box[0]) * (box[3] - box[1])) <= tiny) rect = box
+  }
+  return { d: out.join(""), draws, noArea: !curved && filled.length === 0, rect }
 }
+
+/** Path data written again (see `readPath`). */
+export const normalizePath = (d: string, decimals: number | null): string => readPath(d, decimals).d
 
 /** The SVG's own coordinates box: its viewBox, else its width and height in px (null when it has neither). */
 function ownViewBox(a: Map<string, string>): number[] | null {
@@ -509,22 +591,57 @@ function ownViewBox(a: Map<string, string>): number[] | null {
 }
 
 /**
+ * A clip path that is only a design app's frame, as long as it is at least as
+ * large as the file's own box where it is used: its one rectangle (a <rect>
+ * without rounded corners, or a path that is a plain rectangle) in the clip's
+ * coordinates, or, in `objectBoundingBox` units, one that covers the whole of
+ * the shape it clips (no clipping at all).
+ */
+type FrameClip = { units: "user"; box: [number, number, number, number] } | { units: "bbox" }
+
+/** A box [x1, y1, x2, y2] through a matrix that only moves and scales (null when it turns or slants). */
+function mapBox(m: Matrix, [x1, y1, x2, y2]: [number, number, number, number]): [number, number, number, number] | null {
+  const [a, b, c, d, e, f] = m
+  if (Math.abs(b) > 1e-12 || Math.abs(c) > 1e-12) return null
+  const xs = [a * x1 + e, a * x2 + e].sort((p, q) => p - q)
+  const ys = [d * y1 + f, d * y2 + f].sort((p, q) => p - q)
+  return [xs[0], ys[0], xs[1], ys[1]]
+}
+
+/** Whether `inner` covers all of `outer` (both [x1, y1, x2, y2]), give or take rounding. */
+function covers(inner: [number, number, number, number], outer: [number, number, number, number]): boolean {
+  const eps = 1e-6 * Math.max(outer[2] - outer[0], outer[3] - outer[1])
+  return inner[0] <= outer[0] + eps && inner[1] <= outer[1] + eps && inner[2] >= outer[2] - eps && inner[3] >= outer[3] - eps
+}
+
+/**
  * What the file defines for its shapes to use (first pass): its class rules,
- * its patterns (and whether they hold a picture), its clip paths (and whether
- * each is only a design app's frame: one rectangle at least as large as the
- * file's own box).
+ * its patterns (and whether they hold a picture) and its clip paths (the
+ * frame of each that is only a frame, else null).
  */
 function definitions(source: string, entities: Map<string, string>, decode: (value: string) => string) {
   const rules: ClassRules = new Map()
   const patterns = new Map<string, boolean>()
-  const clips = new Map<string, boolean>()
-  let box: number[] | null = null
-  let rootSeen = false
+  const clips = new Map<string, FrameClip | null>()
   let order = 0
   let css: string | null = null
   let depth = 0
-  // The pattern or clip path being read (a mask too, to skip its content), and the depth it ends at.
-  let inside: { kind: "pattern" | "clip" | "mask"; id: string; depth: number; children: number; frame: boolean } | null = null
+  // The pattern, clip path or mask being read, and the depth it ends at.
+  let inside: {
+    kind: "pattern" | "clip" | "mask"
+    id: string
+    depth: number
+    children: number
+    frame: [number, number, number, number] | null
+    matrix: Matrix | null
+    bbox: boolean
+  } | null = null
+  const endClip = () => {
+    if (inside?.kind !== "clip") return
+    const { id, children, frame, bbox } = inside
+    const one = children === 1 && frame
+    clips.set(id, !one ? null : bbox ? (covers(frame, [0, 0, 1, 1]) ? { units: "bbox" } : null) : { units: "user", box: frame })
+  }
 
   for (const token of tokens(source, entities)) {
     if (token.kind === "text") {
@@ -539,48 +656,71 @@ function definitions(source: string, entities: Map<string, string>, decode: (val
       }
       depth = Math.max(0, depth - 1)
       if (inside && depth < inside.depth) {
-        if (inside.kind === "clip") clips.set(inside.id, inside.children === 1 && inside.frame)
+        endClip()
         inside = null
       }
       continue
-    }
-    if (!rootSeen) {
-      rootSeen = true
-      box = ownViewBox(attributes(token.attrs, decode))
     }
     if (name === "style" && !token.selfClosing) css = ""
     if (inside) {
       if (inside.kind === "pattern" && (name === "image" || name === "use")) patterns.set(inside.id, true)
       if (inside.kind === "clip") {
         inside.children++
-        if (name === "rect" && box) {
-          const a = attributes(token.attrs, decode)
+        const a = attributes(token.attrs, decode)
+        let shape: [number, number, number, number] | null = null
+        if (name === "rect" && !(num(a.get("rx")) > 0) && !(num(a.get("ry")) > 0)) {
           const [x, y, w, h] = ["x", "y", "width", "height"].map((k) => num(a.get(k)) || 0)
-          // A rectangle moved or scaled (not turned) stays a rectangle: its corners after the transform.
-          let [p, q, s, t, e, f] = IDENTITY
+          if (w > 0 && h > 0) shape = [x, y, x + w, y + h]
+        } else if (name === "path") {
           try {
-            ;[p, q, s, t, e, f] = a.has("transform") ? transformMatrix(a.get("transform")!) : IDENTITY
+            shape = readPath(a.get("d") ?? "", null).rect
           } catch {
-            q = 1 // unreadable: never a frame
+            shape = null
           }
-          const [x1, x2] = [p * x + e, p * (x + w) + e].sort((m, n) => m - n)
-          const [y1, y2] = [t * y + f, t * (y + h) + f].sort((m, n) => m - n)
-          const [bx, by, bw, bh] = box
-          const eps = 1e-6 * Math.max(bw, bh)
-          inside.frame = q === 0 && s === 0 && x1 <= bx + eps && y1 <= by + eps && x2 >= bx + bw - eps && y2 >= by + bh - eps
         }
+        let own: Matrix | null = IDENTITY
+        try {
+          own = a.has("transform") ? transformMatrix(a.get("transform")!) : IDENTITY
+        } catch {
+          own = null
+        }
+        inside.frame = shape && own && inside.matrix ? mapBox(multiply(inside.matrix, own), shape) : null
       }
-    } else if (name === "pattern" || name === "clippath" || name === "mask") {
-      const id = attributes(token.attrs, decode).get("id") ?? ""
+    } else if (name === "pattern" || name === "clipPath" || name === "mask") {
+      const a = attributes(token.attrs, decode)
+      const id = a.get("id") ?? ""
       if (name === "pattern") patterns.set(id, false)
-      if (!token.selfClosing) {
-        inside = { kind: name === "pattern" ? "pattern" : name === "mask" ? "mask" : "clip", id, depth: depth + 1, children: 0, frame: false }
-      } else if (name === "clippath") clips.set(id, false)
+      let matrix: Matrix | null = IDENTITY
+      try {
+        matrix = a.has("transform") ? transformMatrix(a.get("transform")!) : IDENTITY
+      } catch {
+        matrix = null
+      }
+      const kind = name === "pattern" ? "pattern" : name === "mask" ? "mask" : "clip"
+      inside = { kind, id, depth: depth + 1, children: 0, frame: null, matrix, bbox: a.get("clippathunits") === "objectBoundingBox" }
+      if (token.selfClosing) {
+        endClip()
+        inside = null
+      }
     }
     if (!token.selfClosing) depth++
   }
-  if (inside?.kind === "clip") clips.set(inside.id, inside.children === 1 && inside.frame)
+  endClip()
   return { rules, patterns, clips }
+}
+
+/**
+ * The shapes the logo keeps: white ones are its background and left out,
+ * unless the whole logo is white. Run on the shapes the browser shows
+ * (after `cropToInk` in the panel).
+ */
+export function chooseInk(paths: ParsedLogo["paths"]): LogoData["paths"] {
+  const coloured = paths.filter((p) => !p.white)
+  return (coloured.length > 0 ? coloured : paths).map(({ d, evenodd, transform }) => ({
+    d,
+    ...(evenodd ? { evenodd } : {}),
+    ...(transform ? { transform } : {}),
+  }))
 }
 
 export function parseLogoSvg(source: string): ParsedLogo {
@@ -598,6 +738,7 @@ export function parseLogoSvg(source: string): ParsedLogo {
   let box: number[] | null = null
   let decimals: number | null = null
   const shapes: { d: string; evenodd: boolean; matrix: Matrix; white: boolean }[] = []
+  let data = 0
   let strokeOnly = false
 
   const rootProps: Props = {
@@ -638,8 +779,6 @@ export function parseLogoSvg(source: string): ParsedLogo {
       // Numbers are kept to about 1/10,000 of the logo's size.
       const size = box ? Math.max(box[2], box[3]) : null
       decimals = size ? Math.min(6, Math.max(1, 4 - Math.floor(Math.log10(size)))) : null
-    } else if (!parent?.ignore && (!prefix || prefix === "svg")) {
-      if (REFUSED[name]) throw new LogoSvgError(REFUSED[name])
     }
 
     // Presentation attributes, then class rules in the sheet's order, then the style attribute (CSS order).
@@ -688,10 +827,18 @@ export function parseLogoSvg(source: string): ParsedLogo {
       Boolean(prefix && prefix !== "svg") ||
       (!isRoot && !GROUPS.has(name) && !SHAPES.has(name))
 
+    // What would be missing from the logo, unless the browser does not draw it either.
+    if (!isRoot && !parent?.ignore && !hidden && (!prefix || prefix === "svg") && REFUSED[name]) throw new LogoSvgError(REFUSED[name])
+
     if (!skip) {
       // A clipping mask or a mask would change what shows; a design app's frame (a clip as large as the file) does not.
       const clip = own.get("clip-path")
-      if (clip !== undefined && !isNone(clip) && !clips.get(urlId(clip) ?? "")) throw new LogoSvgError("clip")
+      if (clip !== undefined && !isNone(clip)) {
+        const frame = clips.get(urlId(clip) ?? "")
+        const drawn = frame?.units === "user" ? mapBox(matrix, frame.box) : null
+        const file: [number, number, number, number] | null = box && [box[0], box[1], box[0] + box[2], box[1] + box[3]]
+        if (!frame || (frame.units === "user" && !(drawn && file && covers(drawn, file)))) throw new LogoSvgError("clip")
+      }
       const mask = own.get("mask")
       if (mask !== undefined && !isNone(mask)) throw new LogoSvgError("clip")
     }
@@ -708,9 +855,13 @@ export function parseLogoSvg(source: string): ParsedLogo {
       const d = filled ? shapePath(name, attrs) : null
       if (d !== null) {
         if (!PATH_DATA.test(d)) throw new LogoSvgError("invalid")
-        const path = normalizePath(d, decimals)
-        // A lone point (a stray anchor) draws nothing.
-        if (/[LlHhVvCcSsQqTtAa]/.test(path)) shapes.push({ d: path, evenodd: props.fillRule === "evenodd", matrix, white: fill === "white" })
+        const path = readPath(d, decimals)
+        // A lone point (a stray anchor) or a fill with no area draws nothing.
+        if (path.draws && !path.noArea) {
+          shapes.push({ d: path.d, evenodd: props.fillRule === "evenodd", matrix, white: fill === "white" })
+          data += path.d.length
+          if (shapes.length > READ_SHAPES_MAX || data > READ_DATA_MAX) throw new LogoSvgError("tooComplex")
+        }
       }
     }
 
@@ -722,16 +873,16 @@ export function parseLogoSvg(source: string): ParsedLogo {
 
   if (!root) throw new LogoSvgError("notSvg")
   if (strokeOnly) throw new LogoSvgError("stroke")
-  // White shapes on a coloured logo are its background; a logo all in white keeps them.
-  const coloured = shapes.filter((s) => !s.white)
-  const kept = coloured.length > 0 ? coloured : shapes
-  if (kept.length === 0) throw new LogoSvgError("empty")
-  if (kept.length > LOGO_SHAPES_MAX) throw new LogoSvgError("tooComplex")
+  if (shapes.length === 0) throw new LogoSvgError("empty")
 
-  const paths = kept.map((s) => {
+  const paths = shapes.map((s) => {
     const transform = matrixText(s.matrix)
-    return { d: s.d, ...(s.evenodd ? { evenodd: true as const } : {}), ...(transform ? { transform } : {}) }
+    return {
+      d: s.d,
+      ...(s.evenodd ? { evenodd: true as const } : {}),
+      ...(transform ? { transform } : {}),
+      ...(s.white ? { white: true as const } : {}),
+    }
   })
-  if (paths.reduce((sum, p) => sum + p.d.length, 0) > LOGO_DATA_MAX) throw new LogoSvgError("tooComplex")
   return { viewBox: box ? box.map(fmt).join(" ") : null, paths }
 }

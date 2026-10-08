@@ -47,7 +47,9 @@ export function BrandLogo({ logo, className }: { logo: LogoSize; className?: str
  * `BrandLogo`.
  */
 export function LogoPicture({ logo, className }: { logo: LogoData; className?: string }) {
-  const [, , width, height] = logo.viewBox.split(" ").map(Number)
+  const [x, y, width, height] = logo.viewBox.split(" ").map(Number)
+  // Only its box shows, as with `#site-logo` (a symbol clips to its box): a shape may reach past the crop.
+  const clip = `logo-box-${[x, y, width, height].join("_").replace(/[^\w-]/g, "_")}`
   return (
     <svg
       viewBox={logo.viewBox}
@@ -57,9 +59,14 @@ export function LogoPicture({ logo, className }: { logo: LogoData; className?: s
       className={className}
       style={{ aspectRatio: `${width} / ${height}` }}
     >
-      {logo.paths.map((p, i) => (
-        <path key={i} d={p.d} fillRule={p.evenodd ? "evenodd" : undefined} transform={p.transform} />
-      ))}
+      <clipPath id={clip}>
+        <rect x={x} y={y} width={width} height={height} />
+      </clipPath>
+      <g clipPath={`url(#${clip})`}>
+        {logo.paths.map((p, i) => (
+          <path key={i} d={p.d} fillRule={p.evenodd ? "evenodd" : undefined} transform={p.transform} />
+        ))}
+      </g>
     </svg>
   )
 }
