@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "ledger_tx_one_payment" ON "ledger_transactions" USING btree ("registration_id") WHERE "ledger_transactions"."kind" = 'registration_payment';

@@ -429,6 +429,8 @@ export const ledgerTransactions = pgTable("ledger_transactions", {
 }, (t) => [
   index("ledger_tx_course_idx").on(t.courseId),
   index("ledger_tx_occurred_idx").on(t.occurredOn),
+  // A registration is paid once: the app checks it under a lock, the database makes sure.
+  uniqueIndex("ledger_tx_one_payment").on(t.registrationId).where(sql`${t.kind} = 'registration_payment'`),
 ])
 
 /** The lines of each transaction sum to zero (deferred trigger). */

@@ -43,11 +43,11 @@ vi.mock("@/lib/storage", async (original) => ({
  * The signed-in instructor (a real row: the audit log and the contracts refer to it), and the
  * super admin viewing as them ("Enter their panel"), if any.
  */
-const signedIn = vi.hoisted(() => ({ id: "", viewer: null as { id: string; name: string } | null }))
+const signedIn = vi.hoisted(() => ({ id: "", viewer: null as { id: string; name: string } | null, verified: true }))
 vi.mock("@/lib/auth/instructor", () => {
   const session = (): InstructorSession => ({
     sessionId: "test",
-    instructor: { id: signedIn.id, email: "x@test.local", displayName: { tr: "Zeynep" }, locale: "en", emailVerified: true, approved: true },
+    instructor: { id: signedIn.id, email: "x@test.local", displayName: { tr: "Zeynep" }, locale: "en", emailVerified: signedIn.verified, approved: true },
     impersonatedBy: signedIn.viewer,
   })
   return { requireInstructor: async () => session(), getInstructor: async () => session() }
@@ -110,6 +110,16 @@ async function awaiting(instructorId = zeynep) {
 const contractRow = async (id: string) => (await db.select().from(contracts).where(eq(contracts.id, id)))[0]
 
 describe("signContractAction", () => {
+  it("is refused until the instructor confirmed their email address", async () => {
+    const { input } = await awaiting()
+    signedIn.verified = false
+    try {
+      expect(await signContractAction({ ...input, signedName: "Zeynep Yılmaz" })).toMatchObject({ ok: false })
+    } finally {
+      signedIn.verified = true
+    }
+  })
+
   it("signs with the typed name (spacing and case aside) and keeps the evidence; the workshop is published", async () => {
     const { course, contract, input } = await awaiting()
     const result = await signContractAction({ ...input, signedName: "  zeynep   YILMAZ " })

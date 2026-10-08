@@ -267,13 +267,15 @@ export const resendInvite = adminAction(resendInviteSchema, async ({ id, locale 
 export const approveInstructor = adminAction(instructorIdSchema, async ({ id }, ctx) => {
   const approved = await db.transaction(async (tx) => {
     const [row] = await tx
-      .select({ active: instructors.active, approvedAt: instructors.approvedAt })
+      .select({ active: instructors.active, approvedAt: instructors.approvedAt, emailVerifiedAt: instructors.emailVerifiedAt })
       .from(instructors)
       .where(eq(instructors.id, id))
       .for("update")
     if (!row) throw notFound()
     if (row.approvedAt) return false
     if (!row.active) throw new UserError("instructors.errors.approveInactive")
+    // Someone could sign up with another person's address: only its owner can confirm it.
+    if (!row.emailVerifiedAt) throw new UserError("instructors.errors.approveUnverified")
     await tx.update(instructors).set({ approvedAt: sql`now()`, updatedAt: sql`now()` }).where(eq(instructors.id, id))
     await ctx.audit({ action: "instructor.approve", entity: "instructor", entityId: id }, tx)
     return true

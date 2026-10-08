@@ -158,7 +158,8 @@
     "errors": {
       "agree": "Please tick the box to say you agree.",
       "name": "Please type your full name.",
-      "nameMismatch": "This doesn’t match the name in the contract. Please type it as written there: {name}"
+      "nameMismatch": "This doesn’t match the name in the contract. Please type it as written there: {name}",
+      "emailUnverified": "Confirm your email address first (the link we sent you), then sign the contract."
     }
   },
   "earnings": {

@@ -507,7 +507,12 @@ export async function POST(request: Request) { // route handlers
   client-safe); `loginRateLimiter`, `createRateLimiter`, `rateLimitClient(ip)`
   (`@/lib/auth/rate-limit`, in memory; key by `rateLimitClient`, which groups
   IPv6 addresses by /64); `clientIp(headers)`, `isSameOrigin(request)`
-  (`@/lib/auth/request`). Store emails lower-case (`normalizeEmail`). Show one
+  (`@/lib/auth/request`). `clientIp` (`@/lib/auth/client-ip`) is the address
+  that connected to Traefik (`X-Real-IP`; Traefik replaces whatever the client
+  sent), or `CF-Connecting-IP` when that address is one of Cloudflare's
+  published ranges: behind Cloudflare every visitor would otherwise share an
+  edge's address, and a direct visitor cannot pick an address by sending the
+  header. Store emails lower-case (`normalizeEmail`). Show one
   generic message for every failed login.
 - Admin sign-in / sign-out: `adminLoginAction`, `adminLogoutAction`
   (`@/lib/auth/actions`). First admin: `pnpm admin:create`; the others are
@@ -899,7 +904,11 @@ contract gets a new one when it is saved again. It needs the admin's password
 and the phrase typed out, runs in one transaction with the tables locked, and
 is logged as `setting.factory_reset` with the counts. The ledger and the log
 stay append-only: `forbid_change()` lets a DELETE through only inside a
-transaction that set `lart.factory_reset` (`drizzle/0013_factory_reset.sql`).
+transaction that set `lart.factory_reset` (`drizzle/0013_factory_reset.sql`),
+and TRUNCATE is refused on those tables (`drizzle/0015_ledger_truncate_guard.sql`).
+A registration is paid once in the database too (`ledger_tx_one_payment`, a
+partial unique index). `reverseEntry` counts as a payment when the mirror
+takes money out of the wallet: only the spender may make it.
 Its test runs on a database of its own (`lart_test_reset`).
 
 ## Operations
@@ -1128,8 +1137,9 @@ instructor waits: they can use the panel (banner "waiting for approval",
 offer them and `createWorkshop` / `updateWorkshop` refuse them, like an
 inactive instructor. Instructors added by an admin are approved on creation
 (migration 0005 approved every existing row). `approveInstructor`
-(`features/instructors/actions`, audit `instructor.approve`) sets it once and
-emails `instructor_approved`; the list filter `status=pending` and
+(`features/instructors/actions`, audit `instructor.approve`) needs a confirmed
+email address (anyone could sign up with someone else's), sets it once and
+emails `instructor_approved`; `signContractAction` also needs a confirmed address; the list filter `status=pending` and
 `countPendingInstructors()` show who waits.
 
 The member's language (`members.locale`, the language of their emails)

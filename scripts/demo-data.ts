@@ -8,6 +8,10 @@
  *   pnpm tsx scripts/demo-data.ts seed <photos-dir> <manifest.json>
  *   pnpm tsx scripts/demo-data.ts remove <manifest.json>
  *
+ * Against a database whose APP_URL is not on this computer (the live site),
+ * add --production: without it the script refuses. `remove` also refuses a
+ * manifest naming a person whose address is not one of the demo's.
+ *
  * Everything is written through the app's own functions (storage, ledger,
  * payments, closing), so the figures are what the real flows would give. Every
  * row and file it creates is listed in the manifest; `remove` deletes exactly
@@ -445,6 +449,14 @@ async function remove(manifestPath: string) {
   const S = await import("../src/db/schema")
   const { remove: removeFile } = await import("../src/lib/storage")
 
+  // Only the demo's own people: a wrong or edited manifest must never delete real members or instructors.
+  const people = [
+    ...(m.members.length ? await db.select({ email: S.members.email }).from(S.members).where(inArray(S.members.id, m.members)) : []),
+    ...(m.instructors.length ? await db.select({ email: S.instructors.email }).from(S.instructors).where(inArray(S.instructors.id, m.instructors)) : []),
+  ]
+  const stranger = people.find((p) => !p.email?.endsWith(`@${STUDENT_DOMAIN}`))
+  if (stranger) throw new Error(`the manifest names ${stranger.email}, who is not demo data: nothing removed`)
+
   const counts = await db.transaction(async (tx) => {
     await tx.execute(sql`select set_config('lart.factory_reset', 'on', true)`)
     const courseIds = m.courses.length ? m.courses : ["00000000-0000-0000-0000-000000000000"]
@@ -475,8 +487,13 @@ async function remove(manifestPath: string) {
   console.info(`[demo] removed: ${counts.courses} workshops, ${counts.members} students, ${counts.transactions} transactions, ${removed} files`)
 }
 
-const [mode, a, b] = process.argv.slice(2)
-const run = mode === "seed" && a && b ? seed(a, b) : mode === "remove" && a ? remove(a) : Promise.reject(new Error("usage: seed <photos-dir> <manifest> | remove <manifest>"))
+const args = process.argv.slice(2)
+const production = args.includes("--production")
+const [mode, a, b] = args.filter((arg) => arg !== "--production")
+const local = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/.test(process.env.APP_URL ?? "")
+const run = !local && !production
+  ? Promise.reject(new Error(`APP_URL is ${process.env.APP_URL ?? "not set"}, not this computer: add --production if this is meant for the live site`))
+  : mode === "seed" && a && b ? seed(a, b) : mode === "remove" && a ? remove(a) : Promise.reject(new Error("usage: seed <photos-dir> <manifest> | remove <manifest>"))
 run.then(
   () => process.exit(0),
   (err) => {

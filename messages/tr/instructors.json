@@ -190,7 +190,8 @@
     "inviteNotSent": "Davet e-postası gönderilemedi. Lütfen biraz sonra yeniden deneyin.",
     "approveInactive": "Bu eğitmen pasif. Önce aktif edin, sonra onaylayın.",
     "passwordInactive": "Bu eğitmen pasif. Önce aktifleştirin, sonra şifresini değiştirin.",
-    "impersonateInactive": "Bu eğitmen pasif olduğu için paneline giremezsiniz. Önce aktifleştirin."
+    "impersonateInactive": "Bu eğitmen pasif olduğu için paneline giremezsiniz. Önce aktifleştirin.",
+    "approveUnverified": "Bu eğitmenin e-posta adresi henüz doğrulanmadı. E-postadaki bağlantıya tıkladıktan sonra onaylayabilirsiniz."
   },
   "approval": {
     "title": "Kendisi kaydoldu: onayınızı bekliyor",

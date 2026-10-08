@@ -3,16 +3,7 @@ import { headers } from "next/headers"
 
 import { env } from "@/lib/env"
 
-/**
- * The client IP as seen by the reverse proxy (Coolify / Traefik overwrites
- * these headers, so the first X-Forwarded-For entry is the real client).
- */
-export function clientIp(headers: Headers): string | null {
-  const real = headers.get("x-real-ip")?.trim()
-  if (real) return real.slice(0, 64)
-  const forwarded = headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-  return forwarded ? forwarded.slice(0, 64) : null
-}
+export { clientIp } from "./client-ip"
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"])
 

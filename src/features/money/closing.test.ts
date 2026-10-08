@@ -238,7 +238,13 @@ describe("money rules (Settings → Money)", () => {
       ok(await advance("paid"))
       // Money coming back into the wallet is not a cost: anyone records it.
       session.admin.id = p2.id
-      ok(await advance("returned"))
+      const returned = ok(await advance("returned"))
+      // Undoing money that came in takes it out of the wallet again: the spender's job.
+      expect(await reverseEntry({ id: returned.id })).toMatchObject({ ok: false, error: en.errors.notSpender.replace("{name}", "Partner One") })
+      const contribution = ok(await recordContribution({ ...entry(), note: "" }))
+      expect(await reverseEntry({ id: contribution.id })).toMatchObject({ ok: false })
+      session.admin.id = p1.id
+      ok(await reverseEntry({ id: contribution.id }))
       await setSetting("money", { withdrawals: false, spenderId: null })
       session.admin.id = p1.id
       expect(await expense()).toMatchObject({ ok: false, error: en.errors.noSpender })

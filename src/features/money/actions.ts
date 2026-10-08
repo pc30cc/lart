@@ -1,10 +1,10 @@
 "use server"
 
-import { eq } from "drizzle-orm"
+import { and, eq, sum } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 import { db } from "@/db"
-import { admins } from "@/db/schema"
+import { admins, ledgerLines } from "@/db/schema"
 import { adminAction, UserError } from "@/lib/action"
 import { getSetting } from "@/lib/settings"
 import { activePartners, closeCourse } from "./closing"
@@ -180,8 +180,18 @@ export const closeWorkshop = adminAction(closeSchema, async ({ courseId, ...expe
   return { netProfit: totals.netProfit }
 })
 
-/** Correct a mistake: post the mirror image of a transaction. */
+/**
+ * Correct a mistake: post the mirror image of a transaction. When the mirror
+ * takes money out of the wallet (undoing a contribution, an advance paid back,
+ * …), it is a payment like any other: only the partner chosen in Settings →
+ * Money may make it.
+ */
 export const reverseEntry = adminAction(reverseSchema, async ({ id }, ctx) => {
+  const [wallet] = await db
+    .select({ total: sum(ledgerLines.amount).mapWith(Number) })
+    .from(ledgerLines)
+    .where(and(eq(ledgerLines.transactionId, id), eq(ledgerLines.account, "wallet")))
+  if ((wallet?.total ?? 0) > 0) await assertSpender(ctx.admin.id)
   const reversal = await db.transaction(async (tx) => {
     const reversal = await reverseTransaction(id, ctx.admin.id, { tx })
     await ctx.audit(

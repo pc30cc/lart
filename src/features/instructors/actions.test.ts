@@ -1,3 +1,4 @@
+import instructorsEn from "../../../messages/en/instructors.json"
 import { randomUUID } from "node:crypto"
 import { and, asc, eq, inArray } from "drizzle-orm"
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
@@ -571,7 +572,9 @@ describe("approval of self-registered instructors", () => {
 
   it("approving makes them available, emails them in their language, audits once", async () => {
     const id = await selfRegistered("approve")
-    await db.update(instructors).set({ locale: "fa" }).where(eq(instructors.id, id))
+    // Not before they confirmed their address: anyone can sign up with someone else's.
+    expect(await approveInstructor({ id })).toMatchObject({ ok: false, error: instructorsEn.errors.approveUnverified })
+    await db.update(instructors).set({ locale: "fa", emailVerifiedAt: new Date() }).where(eq(instructors.id, id))
     sendEmail.mockClear()
     expect(await approveInstructor({ id })).toEqual({ ok: true, data: { id, emailed: true } })
     expect((await row(id)).approvedAt).toBeInstanceOf(Date)

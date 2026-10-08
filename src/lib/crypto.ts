@@ -27,8 +27,11 @@ export const isCiphertext = (value: string) => ciphertext.test(value)
 export function decrypt(payload: string): string {
   const [version, iv, tag, data] = payload.split(".")
   if (version !== "v1" || !iv || !tag || !data) throw new Error("Invalid ciphertext")
-  const decipher = createDecipheriv("aes-256-gcm", key, Buffer.from(iv, "base64url"))
-  decipher.setAuthTag(Buffer.from(tag, "base64url"))
+  // The full 16-byte tag only: a shortened one would make a forged value far cheaper to find.
+  const authTag = Buffer.from(tag, "base64url")
+  if (authTag.length !== 16) throw new Error("Invalid ciphertext")
+  const decipher = createDecipheriv("aes-256-gcm", key, Buffer.from(iv, "base64url"), { authTagLength: 16 })
+  decipher.setAuthTag(authTag)
   return Buffer.concat([decipher.update(Buffer.from(data, "base64url")), decipher.final()]).toString("utf8")
 }
 

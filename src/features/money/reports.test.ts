@@ -25,6 +25,7 @@ describe("csv", () => {
   it("defuses formulas and quotes what needs quoting", () => {
     expect(csvCell("=HYPERLINK(\"http://x\")")).toBe(`"'=HYPERLINK(""http://x"")"`)
     for (const start of ["+", "-", "@", "\t", "\r"]) expect(csvCell(`${start}1`).replace(/^"/, "").startsWith(`'${start}`)).toBe(true)
+    for (const sneaky of [" =1+1", "\n=1+1", "＝1+1"]) expect(csvCell(sneaky).replace(/^"/, "").startsWith("'")).toBe(true)
     expect(csvCell("Kira, salon")).toBe(`"Kira, salon"`)
     expect(csvCell("satır\nsatır")).toBe(`"satır\nsatır"`)
     expect(csvCell("Seramik atölyesi")).toBe("Seramik atölyesi")

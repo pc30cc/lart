@@ -30,6 +30,8 @@ const revalidatePanel = () => revalidatePath("/[locale]/instructor", "layout")
 export const signContractAction = instructorAction(
   signSchema,
   async (input, ctx) => {
+    // An e-signature binds the owner of the address: a confirmed one only.
+    if (!ctx.instructor.emailVerified) throw new UserError("instructorPanel.sign.errors.emailUnverified")
     const [row] = await db
       .select({ status: contracts.status, courseStatus: courses.status, officialName: instructors.officialName })
       .from(contracts)

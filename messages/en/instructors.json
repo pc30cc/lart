@@ -190,7 +190,8 @@
     "inviteNotSent": "We couldn’t send the invitation email. Please try again in a moment.",
     "approveInactive": "This instructor is inactive. Activate them first, then approve.",
     "passwordInactive": "This instructor is inactive. Activate them first, then change the password.",
-    "impersonateInactive": "This instructor is inactive, so you can’t enter their panel. Activate them first."
+    "impersonateInactive": "This instructor is inactive, so you can’t enter their panel. Activate them first.",
+    "approveUnverified": "This instructor's email address is not confirmed yet. Once they click the link in their email, you can approve them."
   },
   "approval": {
     "title": "Signed up on their own: waiting for your approval",
