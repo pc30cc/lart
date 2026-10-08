@@ -13,10 +13,10 @@ const HOME_WORKSHOPS = 6
  * The classic theme: the site's original look (shown as "Classic"; its id is
  * "default"). A quiet header, the brand and one sentence, the next workshops.
  */
-function Frame({ locale, brand, member, top, banner, children }: SiteFrameProps) {
+function Frame({ locale, brand, logo, member, top, banner, children }: SiteFrameProps) {
   return (
     <>
-      <SiteHeader brand={brand} member={member} top={top} />
+      <SiteHeader brand={brand} logo={logo} member={member} top={top} />
       {banner}
       <main className="flex flex-1 flex-col">{children}</main>
       <SiteFooter brand={brand} locale={locale} />
@@ -29,6 +29,7 @@ function Home({ data }: { data: HomeData }) {
     <>
       <HomeHero
         brand={data.brand}
+        logo={data.logo}
         text={data.tagline}
         cta={data.upcoming.length > 0 ? data.labels.seeAllWorkshops : undefined}
       />

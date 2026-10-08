@@ -7,13 +7,14 @@ import { requireAdmin } from "@/lib/auth/admin"
 import { getBrand } from "@/lib/settings"
 import { fontPoolCss } from "@/themes/font-css"
 import { AppearanceSettingsForm } from "./appearance-form"
+import { LogoPanel } from "./logo-panel"
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("settings")
   return { title: `${t("tabs.appearance")} · ${t("title")}` }
 }
 
-/** The site's theme and fonts (Settings → Appearance). */
+/** The site's logo, theme and fonts (Settings → Appearance). */
 export default async function AppearanceSettingsPage() {
   await requireAdmin()
   const locale = await getLocale()
@@ -23,7 +24,10 @@ export default async function AppearanceSettingsPage() {
       {/* Every font of the registry, for the preview (src/themes/font-css.ts; registry values only). */}
       <style dangerouslySetInnerHTML={{ __html: fontPoolCss() }} />
       <BreadcrumbTitle title={t("tabs.appearance")} />
-      <AppearanceSettingsForm saved={{ theme: saved.theme, fonts: saved.fonts }} brand={brand} />
+      <div className="space-y-6">
+        <LogoPanel saved={saved.logo} brand={brand} />
+        <AppearanceSettingsForm saved={{ theme: saved.theme, fonts: saved.fonts }} brand={brand} />
+      </div>
     </>
   )
 }

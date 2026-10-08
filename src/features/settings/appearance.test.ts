@@ -8,7 +8,7 @@ import { setSetting, type SettingValue } from "@/lib/settings"
 import type { SiteFonts } from "@/themes/fonts"
 import { themeDefaultFonts } from "@/themes/ids"
 import { getAppearanceSettings } from "./appearance"
-import { saveAppearanceSettings } from "./appearance-actions"
+import { removeSiteLogo, saveAppearanceSettings, saveSiteLogo } from "./appearance-actions"
 import { appearanceSettingsSchema, nearestWeight } from "./appearance-schema"
 
 vi.mock("next-intl/server", async () => {
@@ -31,7 +31,7 @@ const session = vi.hoisted(() => ({
 }))
 vi.mock("@/lib/auth/admin", () => ({ requireAdmin: async () => session, getAdmin: async () => session }))
 
-const KEYS = ["theme", "fonts"] as const
+const KEYS = ["theme", "fonts", "logo"] as const
 const run = randomUUID().slice(0, 8)
 let startedAt: Date
 
@@ -199,7 +199,7 @@ describe("saveAppearanceSettings", () => {
 
 describe("getAppearanceSettings", () => {
   it("gives the theme, the saved fonts and every theme's fonts", async () => {
-    expect(await getAppearanceSettings()).toEqual({ theme: "default", saved: {}, fonts: themeDefaultFonts })
+    expect(await getAppearanceSettings()).toEqual({ theme: "default", saved: {}, fonts: themeDefaultFonts, logo: null })
 
     await setSetting("theme", "atelier")
     await setSetting("fonts", { atelier: custom })
@@ -207,6 +207,7 @@ describe("getAppearanceSettings", () => {
       theme: "atelier",
       saved: { atelier: custom },
       fonts: { default: themeDefaultFonts.default, atelier: custom },
+      logo: null,
     })
   })
 
@@ -221,5 +222,42 @@ describe("getAppearanceSettings", () => {
     const result = await getAppearanceSettings()
     expect(result.theme).toBe("default")
     expect(result.fonts.atelier).toEqual(atelier)
+  })
+})
+
+describe("saveSiteLogo / removeSiteLogo", () => {
+  const logo = { viewBox: "6 10 4468 1478", paths: [{ d: "m6 19l0 9 14 0z", evenodd: true as const }] }
+
+  it("stores a logo, replaces it and removes it, each with an audit entry", async () => {
+    expect(await saveSiteLogo({ logo })).toEqual({ ok: true, data: undefined })
+    expect(await stored("logo")).toEqual(logo)
+    expect((await auditsOf("logo"))[0].data).toEqual({ size: "4468×1478", shapes: 1 })
+
+    const other = { viewBox: "0 0 10 10", paths: [{ d: "M0 0h1v1z" }, { d: "M2 2h1v1z", transform: "translate(1 1)" }] }
+    expect((await saveSiteLogo({ logo: other })).ok).toBe(true)
+    expect(await stored("logo")).toEqual(other)
+    expect((await auditsOf("logo"))[0].data).toEqual({ size: "10×10", shapes: 2, replaced: true })
+    expect((await getAppearanceSettings()).logo).toEqual(other)
+
+    expect((await removeSiteLogo({})).ok).toBe(true)
+    expect(await stored("logo")).toBeUndefined()
+    expect((await auditsOf("logo"))[0].data).toEqual({ removed: true, size: "10×10", shapes: 2 })
+    expect(cache.refresh).toHaveBeenCalledTimes(3)
+
+    // Nothing to remove: no entry.
+    expect((await removeSiteLogo({})).ok).toBe(true)
+    expect(await auditsOf("logo")).toHaveLength(3)
+  })
+
+  it("refuses anything but numbers and path commands", async () => {
+    for (const bad of [
+      { viewBox: "0 0 10 10", paths: [{ d: '"/><script>alert(1)</script>' }] },
+      { viewBox: "0 0 10 10", paths: [{ d: "M0 0", transform: "url(#x)" }] },
+      { viewBox: "javascript:0", paths: [{ d: "M0 0" }] },
+      { viewBox: "0 0 10 10", paths: [] },
+    ]) {
+      expect((await saveSiteLogo({ logo: bad as never })).ok).toBe(false)
+    }
+    expect(await stored("logo")).toBeUndefined()
   })
 })

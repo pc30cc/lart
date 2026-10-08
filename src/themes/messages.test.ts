@@ -1,6 +1,7 @@
 import { createTranslator } from "next-intl"
 import { describe, expect, it } from "vitest"
 
+import { logoSvgErrorCodes } from "@/features/settings/logo-svg"
 import { locales } from "@/i18n/routing"
 import { fonts } from "./fonts"
 import { themeIds } from "./ids"
@@ -16,7 +17,7 @@ const flat = (obj: object, prefix = ""): [string, string][] =>
   )
 
 /** Values for every placeholder the messages use; numbers where they are formatted as numbers. */
-const values = { theme: "Atelier", name: "Bold", n: 700 }
+const values = { theme: "Atelier", name: "Bold", n: 700, brand: "Limer" }
 
 describe("appearance messages", () => {
   it("have the same keys in fa, tr and en", async () => {
@@ -41,6 +42,11 @@ describe("appearance messages", () => {
       expect(t(`appearance.theme.descriptions.${id}` as never)).toBeTruthy()
     }
     for (const weight of new Set(fonts.flatMap((f) => f.weights))) expect(t(`appearance.fonts.weights.${weight}` as never)).toBeTruthy()
+  })
+
+  it.each(locales)("explain every reason an SVG logo is refused in %s", async (locale) => {
+    const t = createTranslator({ locale, messages: await load(locale), onError: (error) => { throw error } })
+    for (const code of logoSvgErrorCodes) expect(t(`appearance.logo.errors.${code}` as never)).toBeTruthy()
   })
 
   it("write weights with Persian digits in Persian", async () => {

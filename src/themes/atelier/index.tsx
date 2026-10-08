@@ -10,16 +10,16 @@ import { WorkshopCard } from "./workshop-card"
  * in the owner's palette (cream, beige, brick, dark brown; theme.css) and
  * photos (photos.ts). A sticky header that is see-through over the home
  * page's full-screen hero, rounded photo bands, framed workshop cards and a
- * dark brown footer ending in the brand as a giant wordmark.
+ * dark brown footer ending in the brand (or its logo) as a giant wordmark.
  */
-function Frame({ locale, brand, member, top, banner, nav, footer, children }: SiteFrameProps) {
+function Frame({ locale, brand, logo, member, top, banner, nav, footer, children }: SiteFrameProps) {
   return (
     <>
-      <Header brand={brand} member={member} top={top} nav={nav} overHero={!banner} />
+      <Header brand={brand} logo={logo} member={member} top={top} nav={nav} overHero={!banner} />
       {/* The hero starts under the banner instead of under the header (theme.css). */}
       {banner && <div data-at-banner>{banner}</div>}
       <main className="flex flex-1 flex-col">{children}</main>
-      <Footer brand={brand} locale={locale} member={member} nav={nav} footer={footer} />
+      <Footer brand={brand} logo={logo} locale={locale} member={member} nav={nav} footer={footer} />
     </>
   )
 }

@@ -7,6 +7,7 @@ import { db, type Tx } from "@/db"
 import { settings } from "@/db/schema"
 import { EMAIL_TEXT_MAX, emailTemplateNames, emailTextFields } from "@/emails/names"
 import { FALLBACK_LOCALE } from "@/i18n/locales"
+import { logoSchema } from "@/lib/logo"
 
 /**
  * Typed site settings. Each key has a Zod schema and a default, so a missing
@@ -57,6 +58,11 @@ export const settingSchemas = {
   seo: z.object({ title: localized, description: localized }),
   /** Active public-site theme: an id of src/themes/ids.ts (an unknown one shows the default theme). */
   theme: z.string().regex(/^[a-z0-9-]+$/),
+  /**
+   * The site's logo (Settings → Appearance; lib/logo.ts), shown instead of the
+   * brand's name in the site's header and footer. Null: none, the name shows.
+   */
+  logo: logoSchema.nullable(),
   /**
    * The site's fonts per theme (Settings → Appearance): heading and text font
    * for Latin (Turkish, English) and Persian. A theme or script left out uses
@@ -216,6 +222,7 @@ export const settingDefaults: { [K in SettingKey]: SettingValue<K> } = {
   defaultLocale: FALLBACK_LOCALE,
   seo: { title: {}, description: {} },
   theme: "default",
+  logo: null,
   fonts: {},
   home: {
     hero: { media: "theme", images: [], video: "", poster: "", title: {}, subtitle: {}, button: {} },

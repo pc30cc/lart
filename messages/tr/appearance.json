@@ -1,4 +1,30 @@
 {
+  "logo": {
+    "title": "Logo",
+    "description": "Her sayfanın üstünde markanızın adı yerine, Atelier şablonunda ise sayfanın en altında büyük olarak gösterilir.",
+    "hint": "Tek renkli bir SVG dosyası yükleyin. Siteniz onu kendi renkleriyle çizer: açık sayfalarda koyu, koyu sayfalarda açık. Dosyadaki yazılar önce dış hatlara (outline) dönüştürülmelidir.",
+    "upload": "SVG logo yükle",
+    "replace": "Logoyu değiştir",
+    "remove": "Logoyu kaldır",
+    "removeTitle": "Logo kaldırılsın mı?",
+    "removeDescription": "Siteniz yeniden “{brand}” adını harflerle gösterecek. İstediğiniz zaman yeniden logo yükleyebilirsiniz.",
+    "saved": "Logo kaydedildi. Artık sitenizde.",
+    "removed": "Logo kaldırıldı.",
+    "none": "Henüz logo yok: siteniz adını harflerle gösteriyor.",
+    "onLight": "Açık zemin üzerinde",
+    "onDark": "Koyu zemin üzerinde",
+    "errors": {
+      "tooBig": "Bu dosya çok büyük. Bir logonun SVG dosyası genellikle 1 MB’ın çok altındadır.",
+      "notSvg": "Bu bir SVG dosyası değil. Lütfen logonuzu PNG veya JPG değil, SVG (vektör) olarak dışa aktarın.",
+      "text": "Bu logoda yazı var. Tasarım uygulamanızda yazıyı dış hatlara dönüştürün (“Create outlines”) ve yeniden dışa aktarın.",
+      "image": "Bu SVG yalnızca bir resim (PNG veya JPG) içeriyor. Lütfen logonuzun vektör sürümünü kullanın.",
+      "use": "Bu SVG şekilleri sitenin okuyamadığı bir şekilde yeniden kullanıyor. Şekilleri düzleştirerek (“Outline” / “Flatten”) yeniden dışa aktarın.",
+      "stroke": "Bu logonun bazı kısımları çizgi olarak çizilmiş. Tasarım uygulamanızda “Outline stroke” seçip yeniden dışa aktarın.",
+      "empty": "Bu dosyada çizilecek bir şey yok.",
+      "tooComplex": "Bu logo bir web sitesi için fazla ayrıntılı. Lütfen sadeleştirin ya da daha az noktayla dışa aktarın.",
+      "invalid": "Bu SVG dosyası okunamadı. Lütfen sade bir SVG olarak yeniden dışa aktarın."
+    }
+  },
   "theme": {
     "title": "Site teması",
     "description": "Sitenizin ziyaretçilere görünen yüzü. Yönetim paneli ve eğitmen paneli her zaman kendi görünümünü korur.",

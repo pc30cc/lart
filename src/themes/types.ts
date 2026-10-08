@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 
 import type { WorkshopCard } from "@/features/registrations/public"
+import type { LogoSize } from "@/lib/logo"
 import type { SiteFonts } from "./fonts"
 import type { ThemeId } from "./ids"
 
@@ -16,12 +17,15 @@ import type { ThemeId } from "./ids"
  * - the home page has exactly one h1, equal to the brand;
  * - the first link in the first <header> is the brand, to the home page; the
  *   header is at most 80px tall on a phone;
+ * - where a theme shows the brand's name as a wordmark, it shows the `logo`
+ *   instead when there is one (`BrandLogo`, src/themes/logo.tsx), the name then
+ *   being the link's or heading's accessible text;
  * - `top` (the "viewing as" bar) is shown at the top of the header, `banner`
  *   (the "Please confirm your email" banner) right under it;
  * - the page renders inside one <main> the frame provides.
  */
 
-export type { WorkshopCard }
+export type { WorkshopCard, LogoSize }
 
 /** The signed-in member, for the header's account button. */
 export type HeaderMember = { name: string; email: string }
@@ -42,6 +46,8 @@ export type FooterContent = {
 export type SiteFrameProps = {
   locale: string
   brand: string
+  /** The site's logo (Settings → Appearance), else null: the brand's name shows. */
+  logo: LogoSize | null
   member: HeaderMember | null
   /** The "viewing as" bar while a super admin views as the member, else null. */
   top: ReactNode
@@ -82,6 +88,8 @@ export type HeroMedia =
 export type HomeData = {
   locale: string
   brand: string
+  /** The site's logo, else null (as in `SiteFrameProps`). */
+  logo: LogoSize | null
   /** One sentence about the site: the SEO description setting, else the bundled tagline. */
   tagline: string
   hero: { media: HeroMedia; title: string; subtitle: string; button: string }

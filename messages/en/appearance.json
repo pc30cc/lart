@@ -1,4 +1,30 @@
 {
+  "logo": {
+    "title": "Logo",
+    "description": "Shown instead of your brand’s name at the top of every page and, in large, at the foot of the Atelier template.",
+    "hint": "Upload an SVG file in one colour. Your site draws it in its own colours, dark on light pages and light on dark ones. Text in the file must be converted to outlines first.",
+    "upload": "Upload an SVG logo",
+    "replace": "Replace the logo",
+    "remove": "Remove the logo",
+    "removeTitle": "Remove the logo?",
+    "removeDescription": "Your site will show “{brand}” in letters again. You can upload a logo again at any time.",
+    "saved": "Logo saved. It’s on your site now.",
+    "removed": "Logo removed.",
+    "none": "No logo yet: your site shows its name in letters.",
+    "onLight": "On a light background",
+    "onDark": "On a dark background",
+    "errors": {
+      "tooBig": "This file is too large. A logo’s SVG is usually well under 1 MB.",
+      "notSvg": "This isn’t an SVG file. Please export your logo as SVG (vector), not PNG or JPG.",
+      "text": "This logo has text in it. In your design app, convert the text to outlines (“Create outlines” / “Outline stroke”) and export it again.",
+      "image": "This SVG only wraps a picture (PNG or JPG). Please use a vector version of your logo.",
+      "use": "This SVG reuses shapes in a way the site can’t read. Export it again with shapes flattened (“Outline” / “Flatten”).",
+      "stroke": "Parts of this logo are drawn as lines. In your design app, choose “Outline stroke” and export it again.",
+      "empty": "There’s nothing to draw in this file.",
+      "tooComplex": "This logo has too many details for a website. Please simplify it or export it with fewer points.",
+      "invalid": "This SVG file couldn’t be read. Please export it again as a plain SVG."
+    }
+  },
   "theme": {
     "title": "Site template",
     "description": "How your website looks to visitors. The admin panel and the instructor panel always keep their own look.",

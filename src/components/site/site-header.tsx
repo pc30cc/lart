@@ -2,6 +2,8 @@ import { getTranslations } from "next-intl/server"
 import { Suspense } from "react"
 
 import { Link } from "@/i18n/navigation"
+import type { LogoSize } from "@/lib/logo"
+import { BrandLogo } from "@/themes/logo"
 import { AccountMenu } from "./account-menu"
 import { LocaleMenu } from "./locale-menu"
 
@@ -9,16 +11,18 @@ export type HeaderMember = { name: string; email: string }
 
 /**
  * The classic theme's header (src/themes/default; other themes bring their
- * own): the brand as a wordmark (to the home page), a "Workshops" link, the
+ * own): the brand as a wordmark, or its logo (to the home page), a "Workshops" link, the
  * language and the account button. `top` is shown above it, inside the sticky
  * header (the "viewing as" bar while a super admin views as the member).
  */
 export async function SiteHeader({
   brand,
+  logo,
   member,
   top,
 }: {
   brand: string
+  logo: LogoSize | null
   member: HeaderMember | null
   top?: React.ReactNode
 }) {
@@ -29,13 +33,23 @@ export async function SiteHeader({
     <header className="bg-background/85 supports-backdrop-filter:bg-background/70 sticky top-0 z-40 border-b backdrop-blur-md">
       {top}
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:gap-6">
-        <Link
-          href="/"
-          className="focus-visible:ring-ring/50 min-w-0 shrink truncate rounded-md font-serif text-lg [font-weight:var(--site-font-heading-weight)] tracking-wide outline-none focus-visible:ring-3 sm:text-2xl rtl:tracking-normal"
-          aria-label={t("home", { brand })}
-        >
-          {brand}
-        </Link>
+        {logo ? (
+          <Link
+            href="/"
+            className="focus-visible:ring-ring/50 shrink-0 rounded-md py-1 outline-none focus-visible:ring-3"
+            aria-label={t("home", { brand })}
+          >
+            <BrandLogo logo={logo} className="h-7 w-auto sm:h-8" />
+          </Link>
+        ) : (
+          <Link
+            href="/"
+            className="focus-visible:ring-ring/50 min-w-0 shrink truncate rounded-md font-serif text-lg [font-weight:var(--site-font-heading-weight)] tracking-wide outline-none focus-visible:ring-3 sm:text-2xl rtl:tracking-normal"
+            aria-label={t("home", { brand })}
+          >
+            {brand}
+          </Link>
+        )}
         <nav aria-label={t("nav")} className="shrink-0">
           <Link
             href="/workshops"

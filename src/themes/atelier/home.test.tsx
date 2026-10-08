@@ -49,6 +49,7 @@ const workshop = (slug: string, title: string) =>
 const full = (): HomeData => ({
   locale: "en",
   brand: "Limer",
+  logo: null,
   tagline: "Art workshops in Istanbul.",
   hero: { media: { kind: "theme" }, title: "Make something beautiful", subtitle: "Small, warm workshops.", button: "Explore workshops" },
   upcoming: [workshop("candles", "Scented candles"), workshop("macrame", "Macramé")],

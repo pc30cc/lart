@@ -13,13 +13,14 @@ import { memberLogoutAction } from "@/features/accounts/actions"
 import { Link, usePathname } from "@/i18n/navigation"
 import { locales } from "@/i18n/routing"
 import { cn } from "@/lib/utils"
-import type { HeaderMember, NavItem } from "../types"
+import { BrandLogo } from "../logo"
+import type { HeaderMember, LogoSize, NavItem } from "../types"
 
 /** How far the visitor scrolls down the home page before the header turns solid (px). */
 const SOLID_AFTER = 200
 
 /**
- * Atelier's sticky header: the brand as a wordmark on the start side; the
+ * Atelier's sticky header: the brand as a wordmark (or its logo) on the start side; the
  * menu, the language and the account as pills on the end side (on a phone
  * one menu button opening a full-screen sheet). Over the home page's hero it
  * is see-through with cream text, and turns solid (cream, dark text, a
@@ -29,12 +30,14 @@ const SOLID_AFTER = 200
  */
 export function Header({
   brand,
+  logo,
   member,
   top,
   nav,
   overHero,
 }: {
   brand: string
+  logo: LogoSize | null
   member: HeaderMember | null
   top: React.ReactNode
   nav: NavItem[]
@@ -76,11 +79,14 @@ export function Header({
           href="/"
           aria-label={t("home", { brand })}
           className={cn(
-            "at-heading focus-visible:ring-ring/50 min-w-0 truncate rounded-md text-xl leading-none outline-none focus-visible:ring-3 sm:text-2xl ltr:tracking-[0.22em]! rtl:text-[26px]",
+            "focus-visible:ring-ring/50 rounded-md outline-none focus-visible:ring-3",
+            logo
+              ? "shrink-0 py-1"
+              : "at-heading min-w-0 truncate text-xl leading-none sm:text-2xl ltr:tracking-[0.22em]! rtl:text-[26px]",
             ring,
           )}
         >
-          {brand}
+          {logo ? <BrandLogo logo={logo} className="h-8 w-auto md:h-10" /> : brand}
         </Link>
 
         <nav aria-label={t("nav")} className="ms-auto hidden items-center gap-1 md:flex lg:gap-4">
@@ -131,7 +137,7 @@ export function Header({
         </div>
 
         <Suspense>
-          <MobileMenu brand={brand} member={member} nav={nav} clear={clear} />
+          <MobileMenu brand={brand} logo={logo} member={member} nav={nav} clear={clear} />
         </Suspense>
       </div>
     </header>
@@ -142,7 +148,19 @@ export function Header({
  * The phone's menu: one round button opening a full-screen sheet in dark
  * brown with big links, the languages and the account. Every link closes it.
  */
-function MobileMenu({ brand, member, nav, clear }: { brand: string; member: HeaderMember | null; nav: NavItem[]; clear: boolean }) {
+function MobileMenu({
+  brand,
+  logo,
+  member,
+  nav,
+  clear,
+}: {
+  brand: string
+  logo: LogoSize | null
+  member: HeaderMember | null
+  nav: NavItem[]
+  clear: boolean
+}) {
   const t = useTranslations("site.header")
   const tm = useTranslations("home.atelier")
   const tc = useTranslations("common")
@@ -174,7 +192,14 @@ function MobileMenu({ brand, member, nav, clear }: { brand: string; member: Head
         >
           <Dialog.Title className="sr-only">{tm("menu")}</Dialog.Title>
           <div className="at-container flex h-16 shrink-0 items-center gap-4">
-            <span className="at-heading min-w-0 truncate text-xl leading-none ltr:tracking-[0.22em]! rtl:text-[26px]">{brand}</span>
+            {logo ? (
+              <span className="shrink-0">
+                <span className="sr-only">{brand}</span>
+                <BrandLogo logo={logo} className="h-8 w-auto" />
+              </span>
+            ) : (
+              <span className="at-heading min-w-0 truncate text-xl leading-none ltr:tracking-[0.22em]! rtl:text-[26px]">{brand}</span>
+            )}
             <Dialog.Close
               className="border-at-cream/35 hover:bg-at-cream/12 focus-visible:ring-at-cream/50 ms-auto flex size-11 shrink-0 items-center justify-center rounded-full border outline-none focus-visible:ring-3"
               aria-label={tm("closeMenu")}

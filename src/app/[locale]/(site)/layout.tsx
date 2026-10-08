@@ -6,6 +6,7 @@ import { NoticeToast } from "@/components/site/notice-toast"
 import { VerifyBanner } from "@/components/site/verify-banner"
 import { getSiteFrame } from "@/features/site/frame"
 import { getMember } from "@/lib/auth/member"
+import { logoSize } from "@/lib/logo"
 import { getBrand } from "@/lib/settings"
 import { getActiveTheme } from "@/themes/registry"
 import { SiteRoot } from "@/themes/site-root"
@@ -42,10 +43,11 @@ export default async function SiteLayout({ children, params }: LayoutProps<"/[lo
   const member = session && { name: session.member.name, email: session.member.email }
 
   return (
-    <SiteRoot themeId={theme.id} fonts={fonts} locale={locale}>
+    <SiteRoot themeId={theme.id} fonts={fonts} logo={frame.logo} locale={locale}>
       <theme.Frame
         locale={locale}
         brand={brand}
+        logo={frame.logo && logoSize(frame.logo)}
         member={member}
         top={
           session?.impersonatedBy ? (

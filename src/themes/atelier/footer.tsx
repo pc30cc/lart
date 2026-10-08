@@ -5,23 +5,26 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { Link } from "@/i18n/navigation"
 import { formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
-import type { FooterContent, HeaderMember, NavItem } from "../types"
+import { BrandLogo } from "../logo"
+import type { FooterContent, HeaderMember, LogoSize, NavItem } from "../types"
 import { Wordmark } from "./wordmark"
 
 /**
  * Atelier's footer, in dark brown: link columns (Explore, My account,
  * Contact: only the ways in that are set), "About us", then the brand as a
- * giant wordmark cut off by a light bar with the copyright and the light /
- * dark switch.
+ * giant wordmark (its logo when there is one) cut off by a light bar with the
+ * copyright and the light / dark switch.
  */
 export async function Footer({
   brand,
+  logo,
   locale,
   member,
   nav,
   footer,
 }: {
   brand: string
+  logo: LogoSize | null
   locale: string
   member: HeaderMember | null
   nav: NavItem[]
@@ -87,7 +90,7 @@ export async function Footer({
         </div>
       </div>
 
-      <Wordmark text={brand} />
+      {logo ? <LogoWordmark logo={logo} /> : <Wordmark text={brand} />}
 
       <div className="bg-at-bar text-foreground relative">
         <div className="at-container flex min-h-16 items-center justify-between gap-4 py-3 text-sm">
@@ -96,6 +99,40 @@ export async function Footer({
         </div>
       </div>
     </footer>
+  )
+}
+
+/**
+ * How much of the logo's height shows above the bar: its feet go behind it, as
+ * the wordmark's capitals' do (less is cut than of capitals, so lowercase
+ * letters keep their bowls and tails).
+ */
+const LOGO_SHOWN = 0.93
+/** Room above the logo, as a share of its height. */
+const LOGO_ABOVE = 0.04
+/** The most the logo may take in height, as a share of the page's width (a squarer logo then keeps to the start side). */
+const LOGO_MAX_HEIGHT = 0.36
+
+/**
+ * The logo as the footer's giant wordmark: as wide as the page and cut off by
+ * the bar under it, like the brand's letters in `Wordmark`. Plain CSS: the
+ * logo's own proportions give its size. Decorative (the brand is in the
+ * header and in the bar).
+ */
+function LogoWordmark({ logo }: { logo: LogoSize }) {
+  const shown = logo.height * (LOGO_ABOVE + LOGO_SHOWN)
+  const width = Math.min(1, (logo.width * LOGO_MAX_HEIGHT) / shown)
+  return (
+    <div aria-hidden className="at-container select-none">
+      <div
+        className="relative overflow-hidden"
+        style={{ width: `${(width * 100).toFixed(3)}%`, aspectRatio: `${logo.width} / ${shown}` }}
+      >
+        <div className="absolute inset-x-0" style={{ top: `${((LOGO_ABOVE / (LOGO_ABOVE + LOGO_SHOWN)) * 100).toFixed(3)}%` }}>
+          <BrandLogo logo={logo} className="block h-auto w-full" />
+        </div>
+      </div>
+    </div>
   )
 }
 

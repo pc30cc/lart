@@ -716,7 +716,7 @@ server-renders it puts `suppressHydrationWarning` on the element), `formatTime`,
 - Messages shared by all modules: `common` (actions, toast, errors,
   validation, table, form, date, theme, locales), `auth`, `admin` (nav, shell).
 
-### Settings → Appearance: theme and fonts
+### Settings → Appearance: logo, theme and fonts
 
 - `theme` is the public site's theme, an id of `src/themes/ids.ts`
   (`themeIds`; an unknown id shows the classic theme). `fonts` holds, **per
@@ -749,6 +749,19 @@ server-renders it puts `suppressHydrationWarning` on the element), `formatTime`,
   files with their unicode-range). Bump the version in the names whenever a
   file changes: fonts are cached for a year. Nothing else changes: the page
   lists it, the schema accepts it, the site loads it once it is chosen.
+- **Logo**: the `logo` setting (`lib/logo.ts`, `logoSchema`) is a one-colour
+  logo as SVG path data (viewBox, paths with their fill rule and transform),
+  or null: the brand's name then shows. The admin uploads an SVG file; the
+  browser reads it (`features/settings/logo-svg.ts`: filled shapes as paths,
+  `<style>` class rules, transforms; a white background left out; text,
+  pictures, `<use>` and stroked lines refused with what to do) and crops it
+  to its ink (`getBBox`), and `saveSiteLogo` / `removeSiteLogo` store it
+  with a `setting.update` audit entry. The server never reads the file:
+  `logoSchema` lets through only numbers and path commands. `SiteRoot` puts
+  the shapes once in the page as `<symbol id="site-logo">`; themes draw it
+  with `BrandLogo` (`src/themes/logo.tsx`, `fill: currentColor`, so it takes
+  the text colour of where it shows, light or dark), sized by
+  `SiteFrameProps.logo` / `HomeData.logo` (its width and height).
 
 ### Settings → Home page: the home page's content
 
@@ -1123,7 +1136,9 @@ props; a theme only decides how things look. The contract is
 (home page and `/workshops`), its `themeColor` and its default `fonts`. Its
 header lists what every theme keeps: one `h1` on the home page, the brand;
 the brand as the first link of the first `<header>`; a header at most 80px
-tall on a phone; `top` (the "viewing as" bar) above it and `banner` under it.
+tall on a phone; `top` (the "viewing as" bar) above it and `banner` under it;
+the logo (`logo`, when set) instead of the brand's name wherever a theme
+shows the name as a wordmark, the name staying the accessible text.
 
 A new theme is a folder `src/themes/<id>/` exporting its `Theme`, its id and
 fonts in `ids.ts`, one line in `registry.ts`, and its `theme.css` imported in

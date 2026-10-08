@@ -1,11 +1,13 @@
 "use server"
 
 import { refresh } from "next/cache"
+import { z } from "zod"
 
 import { db } from "@/db"
 import { adminAction } from "@/lib/action"
 import { changes } from "@/lib/audit"
-import { getSetting, setSetting, type SettingKey } from "@/lib/settings"
+import { logoSchema, logoSize } from "@/lib/logo"
+import { deleteSetting, getSetting, setSetting, type SettingKey } from "@/lib/settings"
 import { fontScripts, type SiteFonts } from "@/themes/fonts"
 import { themeDefaultFonts } from "@/themes/ids"
 import { resolveSiteFonts } from "@/themes/resolve-fonts"
@@ -55,4 +57,34 @@ export const saveAppearanceSettings = adminAction(appearanceSettingsSchema, asyn
   })
   refresh()
   return { changed }
+})
+
+/** The audit's short description of a logo: "4468×1478, 1 shape". */
+const logoAudit = (logo: z.infer<typeof logoSchema>) => {
+  const { width, height } = logoSize(logo)
+  return { size: `${Math.round(width)}×${Math.round(height)}`, shapes: logo.paths.length }
+}
+
+/**
+ * The site's logo, read from an SVG in the browser (logo-svg.ts) and checked
+ * here again by `logoSchema`: only numbers and path commands are stored.
+ */
+export const saveSiteLogo = adminAction(z.object({ logo: logoSchema }), async ({ logo }, ctx) => {
+  const before = await getSetting("logo")
+  await db.transaction(async (tx) => {
+    await setSetting("logo", logo, tx)
+    await ctx.audit(settingAudit("logo", { ...logoAudit(logo), ...(before ? { replaced: true } : {}) }), tx)
+  })
+  refresh()
+})
+
+/** No logo: the site shows the brand's name again. */
+export const removeSiteLogo = adminAction(z.object({}), async (_, ctx) => {
+  const before = await getSetting("logo")
+  if (!before) return
+  await db.transaction(async (tx) => {
+    await deleteSetting("logo", tx)
+    await ctx.audit(settingAudit("logo", { removed: true, ...logoAudit(before) }), tx)
+  })
+  refresh()
 })

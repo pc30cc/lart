@@ -106,6 +106,9 @@ a heading font and a text font, each with its weight, for Turkish & English
 and for Persian, from a short list of self-hosted fonts. Each theme starts
 with its own fonts (Atelier: Cormorant Garamond and Montserrat, Noto Naskh
 Arabic and IRANSans), and "Use the template's own fonts" goes back to them.
+The site's **logo** is uploaded there too (an SVG in one colour): it replaces
+the brand's name in the header (and the Atelier footer's giant wordmark) and
+takes the site's colours, light and dark.
 
 ### Swappable landing theme
 

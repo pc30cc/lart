@@ -2,6 +2,7 @@ import "server-only"
 import { getTranslations } from "next-intl/server"
 
 import { listOpenWorkshops } from "@/features/registrations/public"
+import { logoSize } from "@/lib/logo"
 import { getBrand, getSetting } from "@/lib/settings"
 import { publicUrls } from "@/lib/storage"
 import type { HeroMedia, HomeData } from "@/themes/types"
@@ -18,7 +19,7 @@ type Localized = { fa?: string; tr?: string; en?: string }
  * field is empty, the next workshops, the categories and past workshops.
  */
 export async function getHomeData(locale: string): Promise<HomeData> {
-  const [t, ts, tl, brand, seo, home, upcoming, categories, past, url] = await Promise.all([
+  const [t, ts, tl, brand, seo, home, upcoming, categories, past, url, logo] = await Promise.all([
     getTranslations({ locale, namespace: "home" }),
     getTranslations({ locale, namespace: "site.home" }),
     getTranslations({ locale, namespace: "registration.list" }),
@@ -30,6 +31,7 @@ export async function getHomeData(locale: string): Promise<HomeData> {
     // Only read when the section is shown (the setting is cached per request).
     getSetting("home").then((h) => (h.past.show ? listPastWorkshops(locale) : [])),
     publicUrls(),
+    getSetting("logo"),
   ])
   const text = (value: Localized | undefined, fallback: string) => value?.[locale as keyof Localized]?.trim() || fallback
 
@@ -52,6 +54,7 @@ export async function getHomeData(locale: string): Promise<HomeData> {
   return {
     locale,
     brand,
+    logo: logo && logoSize(logo),
     tagline: text(seo.description, ts("tagline")),
     hero: {
       media,
