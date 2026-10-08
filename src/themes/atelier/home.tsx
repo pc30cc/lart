@@ -32,8 +32,8 @@ export function Home({ data }: { data: HomeData }) {
   )
 }
 
-/** A stagger for the items of a row (`data-reveal` elements). */
-const delay = (i: number, columns = 4): CSSProperties => ({ ["--reveal-delay" as string]: `${(i % columns) * 110}ms` })
+/** A stagger for the items of a row of four (`data-reveal` elements). */
+const delay = (i: number): CSSProperties => ({ ["--reveal-delay" as string]: `${(i % 4) * 110}ms` })
 
 /** A section photo: the admin's upload, else the theme's own (with its description). */
 function useSectionPhoto(url: string | null, own: AtelierPhoto): HeroPhoto {

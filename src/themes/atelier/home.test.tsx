@@ -91,7 +91,7 @@ function render(data: HomeData) {
 const h1s = (html: string) => [...html.matchAll(/<h1[^>]*>(.*?)<\/h1>/g)].map((m) => m[1].replace(/<[^>]+>/g, ""))
 /** The texts of the links to exactly `href`. */
 const linksTo = (html: string, href: string) =>
-  [...html.matchAll(/<a href="([^"]*)"[^>]*>(.*?)<\/a>/gs)]
+  [...html.matchAll(/<a href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/g)]
     .filter((m) => m[1].replaceAll("&amp;", "&") === href)
     .map((m) => m[2].replace(/<[^>]+>/g, "").trim())
 
