@@ -68,7 +68,6 @@ export async function getAboutData(locale: string, page: "about" | "story"): Pro
     publicUrls(),
   ])
   return {
-    page,
     locale,
     brand,
     ...(page === "story"
