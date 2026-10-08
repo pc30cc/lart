@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { toast } from "sonner"
 
-import { isSiteNotice } from "@/features/accounts/schema"
+// Not from ./schema: that module brings zod, and this toast is on every page of the site.
+import { isSiteNotice } from "@/features/accounts/notices"
 
 /**
  * Shows the one-time `?notice=…` an action left for this page (e.g. "check

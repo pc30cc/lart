@@ -12,7 +12,8 @@ export const LOGO_DATA_MAX = 120_000
 /** The most shapes a logo may have. */
 export const LOGO_SHAPES_MAX = 600
 
-const number = String.raw`-?(?:\d+(?:\.\d*)?|\.\d+)(?:e[-+]?\d+)?`
+/** A number as SVG and CSS write it (no trailing dot: "1000." is not one). */
+const number = String.raw`-?(?:\d+(?:\.\d+)?|\.\d+)(?:e[-+]?\d+)?`
 
 /** "min-x min-y width height", the size positive. */
 const viewBox = z

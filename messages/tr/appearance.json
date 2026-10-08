@@ -20,6 +20,7 @@
       "image": "Bu SVG yalnızca bir resim (PNG veya JPG) içeriyor. Lütfen logonuzun vektör sürümünü kullanın.",
       "use": "Bu SVG şekilleri sitenin okuyamadığı bir şekilde yeniden kullanıyor. Şekilleri düzleştirerek (“Outline” / “Flatten”) yeniden dışa aktarın.",
       "stroke": "Bu logonun bazı kısımları çizgi olarak çizilmiş. Tasarım uygulamanızda “Outline stroke” seçip yeniden dışa aktarın.",
+      "clip": "Bu logoda kırpma maskesi (clipping mask) ya da maske var; site bunu uygulayamıyor. Tasarım uygulamanızda kırpma maskesini kaldırın (ya da Genişlet / Düzleştir’i seçin) ve yeniden dışa aktarın.",
       "empty": "Bu dosyada çizilecek bir şey yok.",
       "tooComplex": "Bu logo bir web sitesi için fazla ayrıntılı. Lütfen sadeleştirin ya da daha az noktayla dışa aktarın.",
       "invalid": "Bu SVG dosyası okunamadı. Lütfen sade bir SVG olarak yeniden dışa aktarın."

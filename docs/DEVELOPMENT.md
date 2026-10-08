@@ -753,9 +753,12 @@ server-renders it puts `suppressHydrationWarning` on the element), `formatTime`,
   logo as SVG path data (viewBox, paths with their fill rule and transform),
   or null: the brand's name then shows. The admin uploads an SVG file; the
   browser reads it (`features/settings/logo-svg.ts`: filled shapes as paths,
-  `<style>` class rules, transforms; a white background left out; text,
-  pictures, `<use>` and stroked lines refused with what to do) and crops it
-  to its ink (`getBBox`), and `saveSiteLogo` / `removeSiteLogo` store it
+  `<style>` class rules in sheet order, DOCTYPE entities, transforms as one
+  matrix; a white or transparent background left out; text, pictures (also as
+  a pattern fill), `<use>`, clipping masks and masks, and stroked lines
+  refused with what to do; linear in the file's size whatever it holds) and
+  crops it to its ink (`getBBox` per shape, within the file's own box: what
+  the browser would not draw is left out), and `saveSiteLogo` / `removeSiteLogo` store it
   with a `setting.update` audit entry. The server never reads the file:
   `logoSchema` lets through only numbers and path commands. `SiteRoot` puts
   the shapes once in the page as `<symbol id="site-logo">`; themes draw it

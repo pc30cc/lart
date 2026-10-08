@@ -20,6 +20,7 @@
       "image": "This SVG only wraps a picture (PNG or JPG). Please use a vector version of your logo.",
       "use": "This SVG reuses shapes in a way the site can’t read. Export it again with shapes flattened (“Outline” / “Flatten”).",
       "stroke": "Parts of this logo are drawn as lines. In your design app, choose “Outline stroke” and export it again.",
+      "clip": "This logo uses a clipping mask or a mask, which the site can’t apply. In your design app, release the clipping mask (or choose Expand / Flatten) and export it again.",
       "empty": "There’s nothing to draw in this file.",
       "tooComplex": "This logo has too many details for a website. Please simplify it or export it with fewer points.",
       "invalid": "This SVG file couldn’t be read. Please export it again as a plain SVG."

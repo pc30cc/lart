@@ -47,7 +47,7 @@ export function BrandLogo({ logo, className }: { logo: LogoSize; className?: str
  * `BrandLogo`.
  */
 export function LogoPicture({ logo, className }: { logo: LogoData; className?: string }) {
-  const [, , width, height] = logo.viewBox.split(" ")
+  const [, , width, height] = logo.viewBox.split(" ").map(Number)
   return (
     <svg
       viewBox={logo.viewBox}

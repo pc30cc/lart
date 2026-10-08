@@ -14,28 +14,50 @@ import { LOGO_DATA_MAX, logoSchema, type LogoData } from "@/lib/logo"
 import { LogoPicture } from "@/themes/logo"
 import { Panel } from "../_components/fields"
 
-/** The logo cropped to its ink, as the browser draws it: the viewBox around every shape (transforms included). */
-function inkBox(logo: ParsedLogo): string {
+/**
+ * The logo as the browser draws it, cropped to its ink. Each shape is measured
+ * on its own (its transform included); one that paints nothing (no area) or
+ * lies wholly outside the file's own box (a draft beside the page, which the
+ * browser never shows) is left out, and the viewBox is the box around the
+ * rest, within the file's box.
+ */
+function cropToInk(logo: ParsedLogo): { viewBox: string; paths: ParsedLogo["paths"] } {
   const ns = "http://www.w3.org/2000/svg"
   const svg = document.createElementNS(ns, "svg")
   svg.setAttribute("style", "position:absolute;width:0;height:0;overflow:hidden;visibility:hidden")
-  const group = document.createElementNS(ns, "g")
-  for (const p of logo.paths) {
+  const groups = logo.paths.map((p) => {
+    const group = document.createElementNS(ns, "g")
     const path = document.createElementNS(ns, "path")
     path.setAttribute("d", p.d)
     if (p.transform) path.setAttribute("transform", p.transform)
     group.appendChild(path)
-  }
-  svg.appendChild(group)
+    svg.appendChild(group)
+    return group
+  })
   document.body.appendChild(svg)
   try {
-    const box = group.getBBox()
-    if (!(box.width > 0 && box.height > 0)) throw new LogoSvgError("empty")
+    const file = logo.viewBox?.split(" ").map(Number) ?? null
+    const kept: ParsedLogo["paths"] = []
+    let [x1, y1, x2, y2] = [Infinity, Infinity, -Infinity, -Infinity]
+    logo.paths.forEach((p, i) => {
+      const b = groups[i].getBBox()
+      if (!(b.width > 0 && b.height > 0)) return
+      if (file) {
+        const [fx, fy, fw, fh] = file
+        if (b.x >= fx + fw || b.y >= fy + fh || b.x + b.width <= fx || b.y + b.height <= fy) return
+      }
+      kept.push(p)
+      ;[x1, y1, x2, y2] = [Math.min(x1, b.x), Math.min(y1, b.y), Math.max(x2, b.x + b.width), Math.max(y2, b.y + b.height)]
+    })
+    if (kept.length === 0) throw new LogoSvgError("empty")
+    if (file) {
+      const [fx, fy, fw, fh] = file
+      ;[x1, y1, x2, y2] = [Math.max(x1, fx), Math.max(y1, fy), Math.min(x2, fx + fw), Math.min(y2, fy + fh)]
+    }
     const down = (n: number) => Math.floor(n * 100) / 100
-    const x = down(box.x)
-    const y = down(box.y)
     const up = (n: number) => Math.ceil(n * 100) / 100
-    return `${x} ${y} ${up(box.x + box.width - x)} ${up(box.y + box.height - y)}`
+    const [x, y] = [down(x1), down(y1)]
+    return { viewBox: `${x} ${y} ${up(x2 - x)} ${up(y2 - y)}`, paths: kept }
   } finally {
     svg.remove()
   }
@@ -61,7 +83,7 @@ export function LogoPanel({ saved, brand }: { saved: LogoData | null; brand: str
         if (file.size > LOGO_FILE_MAX) throw new LogoSvgError("tooBig")
         const parsed = parseLogoSvg(await file.text())
         // The server checks the same schema: a logo it would refuse gets its reason here, not a generic error.
-        const checked = logoSchema.safeParse({ viewBox: inkBox(parsed), paths: parsed.paths })
+        const checked = logoSchema.safeParse(cropToInk(parsed))
         if (!checked.success) {
           const total = parsed.paths.reduce((sum, p) => sum + p.d.length, 0)
           throw new LogoSvgError(total > LOGO_DATA_MAX ? "tooComplex" : "invalid")

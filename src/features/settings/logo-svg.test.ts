@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { logoSchema, logoSize } from "@/lib/logo"
-import { LOGO_FILE_MAX, LogoSvgError, normalizePath, parseLogoSvg, transformMatrix } from "./logo-svg"
+import { LOGO_FILE_MAX, LogoSvgError, normalizePath, paintOf, parseLogoSvg, transformMatrix } from "./logo-svg"
 
 const codeOf = (svg: string) => {
   try {
@@ -152,6 +152,10 @@ describe("parseLogoSvg: strokes, classes and hostile files", () => {
       `<style>${big("/*")}`,
       `<style>${big(".a{")}`,
       `<path d="M0 0${big(" 1")}"/>`,
+      // Many class rules and many elements with a class (each element must not walk the whole sheet).
+      `<style>${".a{fill:#000}".repeat(40_000)}</style>${'<g class="a b">'.repeat(30_000)}`,
+      // Many open groups, then closing tags that match none of them.
+      `${"<g>".repeat(60_000)}${"</x>".repeat(60_000)}`,
     ]) {
       const started = performance.now()
       try {
@@ -161,6 +165,78 @@ describe("parseLogoSvg: strokes, classes and hostile files", () => {
       }
       expect(performance.now() - started, body.slice(0, 12)).toBeLessThan(1500)
     }
+  })
+})
+
+describe("parseLogoSvg: files as design apps export them", () => {
+  it("refuses a clipping mask or a mask, but not a frame as large as the file", () => {
+    // Illustrator: a gradient painted through a clip path that is the real shape.
+    expect(
+      codeOf(`<svg viewBox="0 0 80 80"><defs><clipPath id="c"><circle cx="40" cy="40" r="30"/></clipPath><linearGradient id="g"/></defs>
+<rect x="10" y="10" width="60" height="60" style="clip-path:url(#c);fill:url(#g)"/></svg>`),
+    ).toBe("clip")
+    // Illustrator's clipping mask through a class rule.
+    expect(
+      codeOf(`<svg viewBox="0 0 200 80"><style>.st0{clip-path:url(#SVGID_2_)}</style><clipPath id="SVGID_2_"><use xlink:href="#SVGID_1_"/></clipPath><g class="st0"><path d="M0 12H200V22H0Z"/></g></svg>`),
+    ).toBe("clip")
+    // Figma: "Use as mask".
+    expect(codeOf(`<svg viewBox="0 0 200 80"><mask id="m"><circle cx="100" cy="40" r="30" fill="#fff"/></mask><g mask="url(#m)"><path d="M-20 30H220V50H-20Z"/></g></svg>`)).toBe("clip")
+    // Figma's frame, even moved into place.
+    const frame = parseLogoSvg(
+      `<svg width="120" height="40" viewBox="0 0 120 40" fill="none"><g clip-path="url(#f)"><path d="M0 0H10V10Z" fill="#5B311E"/></g><defs><clipPath id="f"><rect width="120" height="40" fill="white" transform="translate(0 0)"/></clipPath></defs></svg>`,
+    )
+    expect(frame.paths).toEqual([{ d: "M0 0H10V10Z" }])
+  })
+
+  it("refuses a picture painted as a pattern (Figma's image fill)", () => {
+    expect(
+      codeOf(`<svg width="200" height="80" viewBox="0 0 200 80"><rect width="200" height="80" fill="url(#pattern0)"/>
+<defs><pattern id="pattern0" patternContentUnits="objectBoundingBox" width="1" height="1"><use xlink:href="#image0" transform="scale(0.005)"/></pattern>
+<image id="image0" width="200" height="80" xlink:href="data:image/png;base64,iVBORw0KGgo="/></defs></svg>`),
+    ).toBe("image")
+  })
+
+  it("reads Illustrator's entity-reference styles", () => {
+    const logo = parseLogoSvg(`<?xml version="1.0"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [
+  <!ENTITY st0 "fill:#FFFFFF;">
+  <!ENTITY st1 "fill-rule:evenodd;clip-rule:evenodd;fill:#5B311E;">
+  <!ENTITY note "a ] and a > in a value">
+]>
+<svg viewBox="0 0 200 80"><rect style="&st0;" width="200" height="80"/><path style="&st1;" d="M10 10h20v20h-20z"/></svg>`)
+    expect(logo.paths).toEqual([{ d: "M10 10h20v20h-20z", evenodd: true }])
+  })
+
+  it("does not let entities grow the file without end", () => {
+    const refs = "&big;".repeat(4000)
+    expect(codeOf(`<!DOCTYPE svg [<!ENTITY big "${"x".repeat(1000)}">]><svg viewBox="0 0 10 10"><path d="M0 0h1v1z" class="${refs}"/></svg>`)).toBe("tooBig")
+  })
+
+  it("knows white and transparent in every spelling", () => {
+    for (const background of ["rgb(100%, 100%, 100%)", "rgb(255 255 255)", "hsl(0 0% 100%)", "#FFFFFFFF", "transparent", "rgba(255,255,255,0)", "#ffffff00", "rgb(10 20 30 / 0)"]) {
+      const logo = parseLogoSvg(`<svg viewBox="0 0 200 80"><rect x="-15" y="-6" width="230" height="92" fill="${background}"/><path d="M10 10h20v20h-20z" fill="#5B311E"/></svg>`)
+      expect(logo.paths, background).toEqual([{ d: "M10 10h20v20h-20z" }])
+    }
+  })
+
+  it("leaves out a lone point (a stray anchor)", () => {
+    const logo = parseLogoSvg(`<svg viewBox="0 0 200 80"><path d="M196,3"/><path d="M10 10h20v20h-20z"/></svg>`)
+    expect(logo.paths).toEqual([{ d: "M10 10h20v20h-20z" }])
+  })
+})
+
+describe("paintOf", () => {
+  it("tells nothing, white and ink apart", () => {
+    expect(paintOf("none")).toBe("none")
+    expect(paintOf("#fff")).toBe("white")
+    expect(paintOf("#FFF8")).toBe("white")
+    expect(paintOf("#fff0")).toBe("none")
+    expect(paintOf("rgba(255, 255, 255, 0%)")).toBe("none")
+    expect(paintOf("hsla(120, 50%, 100%, 1)")).toBe("white")
+    expect(paintOf("#5B311E")).toBe("ink")
+    expect(paintOf("url(#gradient)")).toBe("ink")
+    expect(paintOf("currentColor")).toBe("ink")
+    expect(paintOf("#ffff")).toBe("white")
   })
 })
 
@@ -211,6 +287,8 @@ describe("logoSchema", () => {
     expect(logoSchema.safeParse(ok).success).toBe(true)
     expect(logoSchema.safeParse({ ...ok, viewBox: "0 0 0 10" }).success).toBe(false)
     expect(logoSchema.safeParse({ ...ok, viewBox: "0 0 10" }).success).toBe(false)
+    expect(logoSchema.safeParse({ ...ok, viewBox: "0 0 1000. 500." }).success).toBe(false)
+    expect(logoSchema.safeParse({ ...ok, viewBox: "-0.5 .5 1e3 5E2" }).success).toBe(true)
     expect(logoSchema.safeParse({ ...ok, paths: [] }).success).toBe(false)
     expect(logoSchema.safeParse({ ...ok, paths: [{ d: 'M0 0"/><script>' }] }).success).toBe(false)
     expect(logoSchema.safeParse({ ...ok, paths: [{ d: "M0 0", transform: "translate(1,2)" }] }).success).toBe(true)
