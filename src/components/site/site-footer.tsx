@@ -28,7 +28,7 @@ export async function SiteFooter({
   nav: NavItem[]
   footer: FooterContent
 }) {
-  const [t, th, tf] = await Promise.all([getTranslations("site.footer"), getTranslations("site.header"), getTranslations("home.footer")])
+  const [t, tf] = await Promise.all([getTranslations("site.footer"), getTranslations("home.footer")])
   // Only a web address (never a javascript: or other scheme typed into the setting).
   const instagram = /^https:\/\/[^\s"]+$/i.test(footer.instagram) ? footer.instagram : ""
   const contact = "hover:text-foreground focus-visible:ring-ring/50 inline-flex items-center gap-2 rounded-sm outline-none focus-visible:ring-3 [&_svg]:size-4 [&_svg]:shrink-0"
@@ -38,7 +38,8 @@ export async function SiteFooter({
   return (
     <footer className="mt-auto border-t">
       <div className="text-muted-foreground mx-auto flex max-w-6xl flex-wrap items-start justify-between gap-x-8 gap-y-4 px-4 pt-6 text-sm">
-        <nav aria-label={th("nav")} className="flex flex-wrap gap-x-6 gap-y-2 font-medium">
+        {/* Its own name: the header's menu is "Main". */}
+        <nav aria-label={tf("explore")} className="flex flex-wrap gap-x-6 gap-y-2 font-medium">
           {nav.map((item) => (
             <Link key={item.href} href={item.href} className="hover:text-foreground focus-visible:ring-ring/50 rounded-sm outline-none focus-visible:ring-3">
               {item.label}

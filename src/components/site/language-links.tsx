@@ -1,5 +1,6 @@
 "use client"
 
+import { useSearchParams } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 
 import { Link, usePathname } from "@/i18n/navigation"
@@ -17,6 +18,8 @@ export function LanguageLinks({ signedIn, className, linkClassName }: { signedIn
   const t = useTranslations("common")
   const locale = useLocale()
   const pathname = usePathname()
+  // The query goes along (a reset link's token, ?next=…); a page with one is not indexed anyway.
+  const query = Object.fromEntries(useSearchParams())
   const { switchTo } = useSwitchLocale(signedIn)
 
   return (
@@ -26,12 +29,13 @@ export function LanguageLinks({ signedIn, className, linkClassName }: { signedIn
         .map((l) => (
           <Link
             key={l}
-            href={pathname}
+            href={{ pathname, query }}
             locale={l}
             hrefLang={l}
             lang={l}
             onClick={(event) => {
-              if (!signedIn) return
+              // A plain click of a signed-in member also saves their emails' language; a new tab or window does not.
+              if (!signedIn || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
               event.preventDefault()
               switchTo(l)
             }}

@@ -86,7 +86,9 @@ export async function Footer({
                     code={footer.phoneCode}
                     label={t("showPhone")}
                     icon={<PhoneIcon aria-hidden />}
-                    className={cn(contactLink, "whitespace-nowrap")}
+                    className={contactLink}
+                    // Whole on wide screens; the narrow column of a tablet lets it break at its spaces.
+                    valueClassName="lg:whitespace-nowrap"
                   />
                 </li>
               )}

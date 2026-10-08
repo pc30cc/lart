@@ -5,8 +5,14 @@ import { getLocale, getTranslations } from "next-intl/server"
 
 import { getBrand } from "@/lib/settings"
 
+/** The document's language (the root layout's `<html lang>`), for the texts and the brand alike. */
+async function texts() {
+  const locale = await getLocale()
+  return Promise.all([getTranslations({ locale, namespace: "common.notFound" }), getBrand(locale)])
+}
+
 export async function generateMetadata(): Promise<Metadata> {
-  const [t, brand] = await Promise.all([getTranslations("common.notFound"), getLocale().then(getBrand)])
+  const [t, brand] = await texts()
   return { title: `${t("metaTitle")} · ${brand}`, robots: { index: false, follow: true } }
 }
 
@@ -16,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
  * Above the language layout, so server texts and a plain link only.
  */
 export default async function RootNotFound() {
-  const t = await getTranslations("common.notFound")
+  const [t] = await texts()
   return (
     <main className="flex min-h-svh items-center justify-center p-6">
       <div className="flex max-w-sm flex-col items-center gap-4 text-center">

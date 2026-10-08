@@ -1104,9 +1104,12 @@ under `/account`) shows inside the theme's frame; the panels have their own
 inside the sidebar, back to the panel's start). `[locale]/not-found.tsx` is
 the plain fallback, `src/app/not-found.tsx` the last one (an address with a
 dot, which the proxy leaves alone). A not-found page sets its title and
-`noindex, follow`, never a canonical or language links; catch-alls and
-missing records call `notFound()` in `generateMetadata` too, so the title is
-the not-found page's. Next renders a not-found boundary with every page below
+`noindex, follow`, never a canonical or language links; the catch-alls and
+the public workshop pages call `notFound()` in `generateMetadata` too, so the
+title is the not-found page's (the panels' record pages keep their own
+title). The language layout refuses a request the proxy did not see (an
+address with a dot, e.g. /fa/nope.php: no page has one), so it gets the last
+not-found page instead of a frame in mixed languages. Next renders a not-found boundary with every page below
 it, so they read nothing of their own. Never put a `loading.tsx` or a
 `<Suspense>` around a page above a `notFound()`: the response would stream
 with status 200 (a soft 404).
@@ -1191,8 +1194,8 @@ Instagram as `sameAs`, and this language's `WebSite`).
 canonical is always the page's own language, and hreflang (fa, tr, en,
 x-default = the main language) is in the HTML and the sitemap. The footers
 of both themes link the same page in the other languages
-(`components/site/language-links.tsx`, plain `<a hreflang>`; the header's
-menu is a button crawlers cannot follow). A text shown from another language
+(`components/site/language-links.tsx`, plain `<a hreflang>` keeping the
+query; the header's menu is a button crawlers cannot follow). A text shown from another language
 because this one has none (a workshop's intro, venue, an instructor's bio:
 `fallbackLanguage`, `textLang`) is marked with its `lang` and `dir`, and meta
 descriptions and JSON-LD use only the page's own language (`ownText`,
@@ -1203,8 +1206,9 @@ address (the setting's hint says so).
 never in a page's HTML or data as text: `getSiteFrame` conceals them
 (`lib/conceal`, letters only) and `ProtectedContact` writes the `mailto:` /
 `tel:` link in the browser on the first sign of a person (scroll, pointer,
-touch, key, focus), or when its stand-in button ("Show email address") is
-pressed. Keep real addresses out of the messages too: all of them reach the
+touch, key, focus), or when its stand-in ("Show email address", one element
+with the link, so focus stays and the press that shows it never dials) is
+pressed; without JavaScript neither shows. Keep real addresses out of the messages too: all of them reach the
 browser (examples use example.com).
 
 The proxy sends `X-Robots-Tag: noindex` for `/admin/**`, `/instructor/**`,
