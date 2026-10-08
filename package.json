@@ -2,6 +2,7 @@
   "name": "lart",
   "version": "0.1.0",
   "private": true,
+  "author": "Design by m [at] davoudi [dot] net",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -15,7 +16,8 @@
     "jobs": "tsx scripts/jobs.ts",
     "admin:create": "tsx scripts/create-admin.ts",
     "db:seed": "tsx scripts/seed.ts",
-    "contracts:encrypt": "tsx scripts/encrypt-signed-contracts.ts"
+    "contracts:encrypt": "tsx scripts/encrypt-signed-contracts.ts",
+    "icons": "tsx scripts/favicons.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

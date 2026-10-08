@@ -44,6 +44,7 @@ Next.js 16 differs from older versions: read the relevant guide in
 ```
 src/
   app/
+    icon.svg, favicon.ico, apple-icon.png   the site's icons, the "L" of the logo on clay (`pnpm icons` draws them again from public/brand/limer-logo.svg)
     sitemap.ts, robots.ts       /sitemap.xml (home, workshops list + open workshop pages, /about, /story while a partner is on it, fa/tr/en with hreflang), /robots.txt (disallows only /admin, /<l>/admin and /api)
     og.png/route.tsx            /og.png: the site's share picture (its logo on paper, 1200×630) for pages without their own
     [locale]/                   every page (URL rules: the main language has no prefix, the proxy rewrites it here)
@@ -113,6 +114,12 @@ drizzle/                        SQL migrations (generated + custom guards)
   or closes withdrawals (closed by default: `recordCapital` refuses one and
   the Withdraw buttons are hidden). The pages show a locked dialog
   (`blocked`, `spendBlockText`) to anyone else.
+- Closing a workshop credits each partner's share of its result to their
+  capital. Money → Partners lists it per workshop on each card
+  (`listPartnerAccounts` → `workshops`, latest first, a reversed closing
+  netting out) and shows the profit not taken out yet (`owed` = profit
+  shares − withdrawals): it stays in the shared wallet while withdrawals are
+  closed.
 
 ### Lean code and database
 

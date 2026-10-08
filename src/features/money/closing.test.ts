@@ -11,7 +11,7 @@ import { setSetting } from "@/lib/settings"
 import { closeWorkshop, payInstructor, recordAdvance, recordContribution, recordExpense, recordWithdrawal, reverseEntry } from "./actions"
 import { closingPlan, instructorFee, prepareClosing, projectedFees, workshopsToClose, type Partner } from "./closing"
 import { courseBalances, partnerCapitals, postRegistrationPayment, postRegistrationRefund, today } from "./ledger"
-import { isReversible, listTransactions } from "./queries"
+import { isReversible, listPartnerAccounts, listTransactions } from "./queries"
 import { partnerStatement, profitAndLoss, workshopResults } from "./reports"
 import { addRegistration, courseRow, makeAdmin, makeCourse, makeWorld, retireAdmins, type World } from "./testing"
 
@@ -315,6 +315,9 @@ describe("closing a workshop", () => {
     expect(capitalAfter.get(p1.id)!.profitShares - (capitalBefore.get(p1.id)?.profitShares ?? 0)).toBe(21672)
     expect(capitalAfter.get(p3.id)!.capital - (capitalBefore.get(p3.id)?.capital ?? 0)).toBe(21664)
     expect(await lastAudit(courseId, "workshop.close")).toMatchObject({ adminId: p1.id, data: { netProfit: 65000 } })
+    // The partners page lists each one's share of this workshop.
+    const card = (await listPartnerAccounts()).rows.find((r) => r.id === p2.id)!
+    expect(card.workshops.find((w) => w.courseId === courseId)).toMatchObject({ closedOn: today(), amount: 21664 })
 
     // Locked: no more expenses, no second closing, no reversing the closing entry.
     expect(await recordExpense({ courseId, category: "Late", amount: 100, occurredOn: yesterday(), source: "wallet" })).toEqual({

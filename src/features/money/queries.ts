@@ -192,7 +192,7 @@ export function spendBlockText(rules: Awaited<ReturnType<typeof getMoneyRules>>,
  */
 export async function listPartnerAccounts() {
   await requireAdmin()
-  const [people, capitals, open, url, lastMoves] = await Promise.all([
+  const [people, capitals, open, url, lastMoves, shares] = await Promise.all([
     db
       .select({
         id: admins.id,
@@ -214,6 +214,7 @@ export async function listPartnerAccounts() {
       .innerJoin(ledgerTransactions, eq(ledgerTransactions.id, ledgerLines.transactionId))
       .where(eq(ledgerLines.account, "partner_capital"))
       .groupBy(ledgerLines.partnerId),
+    workshopShares(),
   ])
   const lastOf = new Map(lastMoves.map((r) => [r.partnerId, r.last]))
   const partners = people.filter((p) => p.active || capitals.has(p.id))
@@ -235,6 +236,10 @@ export async function listPartnerAccounts() {
       capital,
       /** The day of their last movement of capital, or null. */
       lastMovement: lastOf.get(p.id) ?? null,
+      /** Their profit or loss from each closed workshop, latest first. */
+      workshops: shares.get(p.id) ?? [],
+      /** Profit credited and not taken out yet: it stays in the shared wallet, owed to them. */
+      owed: Math.max(0, (c?.profitShares ?? 0) - (c?.withdrawals ?? 0)),
       openShare,
       equity: capital + openShare,
     }
@@ -242,7 +247,39 @@ export async function listPartnerAccounts() {
   return { rows, openResult: open, sharesOk, activeCount: people.filter((p) => p.active).length }
 }
 
-export type PartnerAccount = Awaited<ReturnType<typeof listPartnerAccounts>>["rows"][number]
+/**
+ * Each partner's share of every closed workshop (the closing's capital lines,
+ * a reversed closing netting out), latest first: what the workshop earned them.
+ */
+async function workshopShares() {
+  const original = alias(ledgerTransactions, "original")
+  const kind = sql`coalesce(${original.kind}, ${ledgerTransactions.kind})`
+  const rows = await db
+    .select({
+      partnerId: ledgerLines.partnerId,
+      courseId: courses.id,
+      title: courses.title,
+      closedOn: sql<string>`max(${ledgerTransactions.occurredOn})`,
+      total: sql<number>`coalesce(sum(${ledgerLines.amount}), 0)`.mapWith(Number),
+    })
+    .from(ledgerLines)
+    .innerJoin(ledgerTransactions, eq(ledgerTransactions.id, ledgerLines.transactionId))
+    .leftJoin(original, eq(original.id, ledgerTransactions.reversalOf))
+    .innerJoin(courses, eq(courses.id, ledgerTransactions.courseId))
+    .where(and(eq(ledgerLines.account, "partner_capital"), sql`${kind} = 'course_close'`))
+    .groupBy(ledgerLines.partnerId, courses.id, courses.title)
+    .orderBy(desc(sql`max(${ledgerTransactions.occurredOn})`), asc(courses.id))
+  const out = new Map<string, { courseId: string; title: LocalizedText; closedOn: string; amount: number }[]>()
+  for (const r of rows) {
+    if (!r.partnerId || r.total === 0) continue
+    const list = out.get(r.partnerId) ?? []
+    list.push({ courseId: r.courseId, title: r.title, closedOn: r.closedOn, amount: -r.total })
+    out.set(r.partnerId, list)
+  }
+  return out
+}
+
+export type PartnerAccount =Awaited<ReturnType<typeof listPartnerAccounts>>["rows"][number]
 
 // ─── Ledger ───────────────────────────────────────────────────────────────────
 

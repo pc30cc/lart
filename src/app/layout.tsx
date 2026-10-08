@@ -1,3 +1,7 @@
+/*
+ * Limer
+ * Design by m [at] davoudi [dot] net
+ */
 import type { Metadata, Viewport } from "next"
 import localFont from "next/font/local"
 import { headers } from "next/headers"

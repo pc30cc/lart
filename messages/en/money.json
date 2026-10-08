@@ -196,7 +196,14 @@
       "equityHint": "Capital now plus the share of the open result",
       "lastMovement": "Last movement: {date}",
       "noMovement": "No movement yet",
-      "statement": "Full statement"
+      "statement": "Full statement",
+      "workshopsTitle": "Profit per workshop",
+      "noWorkshops": "No workshop has been closed yet. When one is closed, the profit share shows up here by itself.",
+      "closedOn": "Closed {date}",
+      "moreWorkshops": "and {count} more in the full statement",
+      "owed": "Profit owed",
+      "owedHintClosed": "Profit not taken out yet. While withdrawals are closed, it stays in the shared wallet.",
+      "owedHintOpen": "Profit not taken out yet, held in the shared wallet."
     },
     "explain": {
       "statement": "See a partner’s full statement"

@@ -196,7 +196,14 @@
       "equityHint": "Güncel sermaye ile açık sonuçtan payın toplamı",
       "lastMovement": "Son hareket: {date}",
       "noMovement": "Henüz hareket yok",
-      "statement": "Tam döküm"
+      "statement": "Tam döküm",
+      "workshopsTitle": "Atölye başına kâr",
+      "noWorkshops": "Henüz kapanan atölye yok. Her atölye kapandığında kâr payı burada kendiliğinden görünür.",
+      "closedOn": "Kapandı: {date}",
+      "moreWorkshops": "ve tam hesap dökümünde {count} atölye daha",
+      "owed": "Alacak kâr",
+      "owedHintClosed": "Çekilmemiş kâr. Para çekme kapalıyken ortak kasada kalır.",
+      "owedHintOpen": "Henüz çekilmemiş, ortak kasadaki kâr."
     },
     "explain": {
       "statement": "Bir ortağın hesap dökümünü görün"

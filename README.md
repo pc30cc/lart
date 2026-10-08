@@ -661,3 +661,7 @@ Later phases add editable pages and home sections, FAQs and the shop
    - **Gateway integration** (iyzico / PayTR) with automatic payment
      confirmation, once there is a registered business.
    - Two-factor login (2FA) for super admins.
+
+---
+
+Design by m [at] davoudi [dot] net
