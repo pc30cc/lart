@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 
 import type { WorkshopCard } from "@/features/registrations/public"
-import type { LogoSize } from "@/lib/logo"
+import type { LogoData, LogoSize } from "@/lib/logo"
 import type { SiteFonts } from "./fonts"
 import type { ThemeId } from "./ids"
 
@@ -25,7 +25,7 @@ import type { ThemeId } from "./ids"
  * - the page renders inside one <main> the frame provides.
  */
 
-export type { WorkshopCard, LogoSize }
+export type { WorkshopCard, LogoData, LogoSize }
 
 /** The signed-in member, for the header's account button. */
 export type HeaderMember = { name: string; email: string }
@@ -88,8 +88,13 @@ export type HeroMedia =
 export type HomeData = {
   locale: string
   brand: string
-  /** The site's logo, else null (as in `SiteFrameProps`). */
-  logo: LogoSize | null
+  /**
+   * The site's logo with its shapes, else null. A page draws it with
+   * `LogoPicture`, never `BrandLogo`: after a logo change, a visitor moving
+   * around the site gets new pages inside the layout (and its `#site-logo`)
+   * rendered before the change.
+   */
+  logo: LogoData | null
   /** One sentence about the site: the SEO description setting, else the bundled tagline. */
   tagline: string
   hero: { media: HeroMedia; title: string; subtitle: string; button: string }

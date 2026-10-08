@@ -2,7 +2,6 @@ import "server-only"
 import { getTranslations } from "next-intl/server"
 
 import { listOpenWorkshops } from "@/features/registrations/public"
-import { logoSize } from "@/lib/logo"
 import { getBrand, getSetting } from "@/lib/settings"
 import { publicUrls } from "@/lib/storage"
 import type { HeroMedia, HomeData } from "@/themes/types"
@@ -54,7 +53,7 @@ export async function getHomeData(locale: string): Promise<HomeData> {
   return {
     locale,
     brand,
-    logo: logo && logoSize(logo),
+    logo,
     tagline: text(seo.description, ts("tagline")),
     hero: {
       media,

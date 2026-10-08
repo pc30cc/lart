@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { logoSchema, logoSize } from "@/lib/logo"
-import { LogoSvgError, parseLogoSvg } from "./logo-svg"
+import { LOGO_FILE_MAX, LogoSvgError, normalizePath, parseLogoSvg } from "./logo-svg"
 
 const codeOf = (svg: string) => {
   try {
@@ -92,6 +92,87 @@ describe("parseLogoSvg", () => {
     const { viewBox, paths } = parseLogoSvg(`<svg viewBox="0 0 200 100"><path fill-rule="evenodd" d="M0 0h1v1z"/></svg>`)
     const logo = logoSchema.parse({ viewBox, paths })
     expect(logoSize(logo)).toEqual({ width: 200, height: 100 })
+  })
+})
+
+describe("parseLogoSvg: strokes, classes and hostile files", () => {
+  it("refuses a stroke that is what shows: around a white shape, on a line", () => {
+    expect(codeOf(`<svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="#fff" stroke="#5B311E" stroke-width="1"/><path d="M4 4h2v2z"/></svg>`)).toBe("stroke")
+    expect(codeOf(`<svg viewBox="0 0 10 10"><style>.a{stroke:#000}</style><line class="a" x1="0" y1="0" x2="9" y2="9"/><path d="M4 4h2v2z"/></svg>`)).toBe("stroke")
+    expect(codeOf(`<svg viewBox="0 0 10 10"><path d="M0 0L9 9" fill="none" stroke="#000" stroke-opacity="0"/><path d="M4 4h2v2z"/></svg>`)).toBeNull()
+  })
+
+  it("keeps a filled shape whose stroke only thickens it", () => {
+    const logo = parseLogoSvg(`<svg viewBox="0 0 10 10"><path d="M4 4h2v2z" fill="#5B311E" stroke="#5B311E" stroke-width="0.2"/></svg>`)
+    expect(logo.paths).toEqual([{ d: "M4 4h2v2z" }])
+  })
+
+  it("applies class rules in the sheet's order, not the attribute's", () => {
+    // .cls-1 comes later in the sheet, so it wins although the element names it first.
+    const logo = parseLogoSvg(
+      `<svg viewBox="0 0 10 10"><style>.cls-2{fill:#fff}.cls-1{fill:#5b311e}</style><path class="cls-1 cls-2" d="M1 1h1v1z"/><rect class="cls-2" width="10" height="10"/></svg>`,
+    )
+    expect(logo.paths).toEqual([{ d: "M1 1h1v1z" }])
+  })
+
+  it("reads styles in CDATA, with comments, and after the shapes", () => {
+    const logo = parseLogoSvg(
+      `<svg viewBox="0 0 10 10"><path class="bg" d="M0 0h10v10z"/><path class="ink" d="M1 1h1v1z"/><style><![CDATA[/* a { */ .bg{fill:#FFF} .ink{fill:#000}]]></style></svg>`,
+    )
+    expect(logo.paths).toEqual([{ d: "M1 1h1v1z" }])
+  })
+
+  it("reads a DOCTYPE with an internal subset, and prefixed svg: elements", () => {
+    const logo = parseLogoSvg(`<?xml version="1.0"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "x.dtd" [ <!ENTITY ns_x "http://x/"> <!ENTITY a "b"> ]>
+<svg:svg xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><svg:g><svg:path d="M1 1h1v1z"/></svg:g></svg:svg>`)
+    expect(logo.paths).toEqual([{ d: "M1 1h1v1z" }])
+  })
+
+  it("reads hostile or broken files in linear time", () => {
+    const big = (unit: string) => unit.repeat(Math.floor((LOGO_FILE_MAX - 100) / unit.length))
+    for (const body of [
+      `<!DOCTYPE${" ".repeat(LOGO_FILE_MAX - 100)}`,
+      big("<a b "),
+      big("<!--"),
+      big("<!"),
+      big("<!x[<"),
+      `<style>${big("/*")}`,
+      `<style>${big(".a{")}`,
+      `<path d="M0 0${big(" 1")}"/>`,
+    ]) {
+      const started = performance.now()
+      try {
+        parseLogoSvg(`<svg viewBox="0 0 10 10">${body}`)
+      } catch {
+        // refused or empty: only the time matters here
+      }
+      expect(performance.now() - started, body.slice(0, 12)).toBeLessThan(1500)
+    }
+  })
+})
+
+describe("normalizePath", () => {
+  it("never joins two numbers when rounding (compressed path data)", () => {
+    expect(normalizePath("M0 0h50.002.5", 2)).toBe("M0 0h50 0.5")
+    expect(normalizePath("M0 0l3.996.25 20 20", 2)).toBe("M0 0l4 0.25 20 20")
+    expect(normalizePath("M0 0l1-0.001 2 3", 2)).toBe("M0 0l1 0 2 3")
+    expect(normalizePath("M0,0 L 1e2,-2.5E-1", null)).toBe("M0 0L100-0.25")
+  })
+
+  it("reads an arc's flags as single digits", () => {
+    expect(normalizePath("M0 0a1 1 0 01.5.5", 2)).toBe("M0 0a1 1 0 0 1 0.5 0.5")
+    expect(normalizePath("M0 0A5 5 0 1 0 55 50", 2)).toBe("M0 0A5 5 0 1 0 55 50")
+  })
+
+  it("keeps implicit repeats and closes", () => {
+    expect(normalizePath("m6 19l0 9 14 0c11 0 16 0 24 2zm1 1h1v1z", 1)).toBe("m6 19l0 9 14 0c11 0 16 0 24 2zm1 1h1v1z")
+  })
+
+  it("refuses path data a browser would stop drawing at", () => {
+    for (const bad of ["L0 0", "M0", "M0 0L1", "M0 0z 1 1", "M0 0a1 1 0 2 1 3 3", "M0 0X1 1", "M0 0L1 x"]) {
+      expect(() => normalizePath(bad, 2), bad).toThrow(LogoSvgError)
+    }
   })
 })
 

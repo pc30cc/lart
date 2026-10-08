@@ -6,14 +6,19 @@
  * nothing of the file but numbers and path commands is ever stored or drawn.
  *
  * One colour: every filled shape is drawn in the text colour. White shapes
- * are left out (a background) unless the whole logo is white; lines drawn
- * with a stroke, text, embedded pictures and `<use>` are refused with what to
- * do instead (outline them in the design app).
+ * are left out (a background) unless the whole logo is white. Lines drawn
+ * with a stroke (a shape with no fill, a `<line>`, a coloured outline around
+ * a white shape), text, embedded pictures and `<use>` are refused with what
+ * to do instead (outline them in the design app); the stroke of a shape that
+ * is drawn by its own fill anyway is left out.
+ *
+ * Everything here runs in time linear in the file's size, whatever it holds
+ * (no regular expression that can backtrack over the whole file).
  */
 import { LOGO_DATA_MAX, LOGO_SHAPES_MAX, type LogoData } from "@/lib/logo"
 
 /** The largest file read (characters). */
-export const LOGO_FILE_MAX = 2_000_000
+export const LOGO_FILE_MAX = 1_000_000
 
 export const logoSvgErrorCodes = ["tooBig", "notSvg", "text", "image", "use", "stroke", "empty", "tooComplex", "invalid"] as const
 export type LogoSvgErrorCode = (typeof logoSvgErrorCodes)[number]
@@ -34,6 +39,7 @@ type Props = {
   fillOpacity: string | null
   stroke: string | null
   strokeWidth: string | null
+  strokeOpacity: string | null
   visibility: string | null
 }
 type Frame = { name: string; ignore: boolean; props: Props; transform: string }
@@ -50,22 +56,94 @@ const REFUSED: Record<string, LogoSvgErrorCode> = {
 const SHAPES = new Set(["path", "rect", "circle", "ellipse", "polygon", "polyline", "line"])
 /** `switch`: Illustrator puts the artwork in one, next to its own data. */
 const GROUPS = new Set(["g", "a", "switch"])
+/** The properties read from attributes, class rules and `style`. */
+const PROPERTIES = ["fill", "fill-rule", "fill-opacity", "stroke", "stroke-width", "stroke-opacity", "visibility", "display", "opacity"]
 
-const TOKEN =
-  /<!--[\s\S]*?-->|<!\[CDATA\[([\s\S]*?)\]\]>|<\?[\s\S]*?\?>|<!DOCTYPE[^[>]*(?:\[[\s\S]*?\])?\s*>|<\/\s*([\w:.-]+)\s*>|<([\w:.-]+)((?:\s+[^\s=/>]+(?:\s*=\s*(?:"[^"]*"|'[^']*'))?)*)\s*(\/?)>|([^<]+)/gi
-const ATTR = /([^\s=/>]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'))?/g
+const ATTR = /([^\s=/<>"']+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'))?/g
 const PATH_DATA = /^[MmLlHhVvCcSsQqTtAaZz\d.,\s+eE-]*$/
 const TRANSFORM = /^[\s,]*(?:(?:matrix|translate|scale|rotate|skewX|skewY)\s*\([-+\d.eE,\s]*\)[\s,]*)+$/
 
+type Token =
+  | { kind: "open"; name: string; attrs: string; selfClosing: boolean }
+  | { kind: "close"; name: string }
+  | { kind: "text"; text: string }
+
+/**
+ * The file's tags and text, in order: comments, processing instructions and
+ * declarations (a DOCTYPE with its internal subset) left out, CDATA as text.
+ * A tag ends at the first ">" outside quotes. Stops at anything left open at
+ * the end of the file.
+ */
+function* tokens(source: string): Generator<Token> {
+  const end = source.length
+  let i = 0
+  while (i < end) {
+    const lt = source.indexOf("<", i)
+    if (lt < 0) {
+      yield { kind: "text", text: source.slice(i) }
+      return
+    }
+    if (lt > i) yield { kind: "text", text: source.slice(i, lt) }
+    i = lt
+    const skipTo = (marker: string, from: number) => {
+      const at = source.indexOf(marker, from)
+      return at < 0 ? -1 : at + marker.length
+    }
+    if (source.startsWith("<!--", i)) {
+      i = skipTo("-->", i + 4)
+    } else if (source.startsWith("<![CDATA[", i)) {
+      const close = source.indexOf("]]>", i + 9)
+      if (close < 0) return
+      yield { kind: "text", text: source.slice(i + 9, close) }
+      i = close + 3
+    } else if (source.startsWith("<?", i)) {
+      i = skipTo("?>", i + 2)
+    } else if (source.startsWith("<!", i)) {
+      // A declaration (DOCTYPE), its internal subset in [ ] (which may hold ">").
+      const close = source.indexOf(">", i)
+      if (close < 0) return
+      const subset = source.slice(i, close).indexOf("[")
+      if (subset < 0) i = close + 1
+      else {
+        const subsetEnd = source.indexOf("]", i + subset)
+        i = subsetEnd < 0 ? -1 : skipTo(">", subsetEnd)
+      }
+    } else {
+      let j = i + 1
+      let quote = ""
+      for (; j < end; j++) {
+        const c = source[j]
+        if (quote) {
+          if (c === quote) quote = ""
+        } else if (c === '"' || c === "'") quote = c
+        else if (c === ">") break
+      }
+      if (j >= end) return
+      const body = source.slice(i + 1, j)
+      i = j + 1
+      if (body.startsWith("/")) {
+        yield { kind: "close", name: body.slice(1).trim().toLowerCase() }
+        continue
+      }
+      const name = /^[\w:.-]+/.exec(body)?.[0]
+      if (!name) continue // a "<" that starts no tag
+      const selfClosing = body.endsWith("/")
+      yield { kind: "open", name: name.toLowerCase(), attrs: body.slice(name.length, selfClosing ? -1 : undefined), selfClosing }
+    }
+    if (i < 0) return
+  }
+}
+
 const decode = (value: string) =>
   value
-    .replace(/&#x([\da-f]+);/gi, (_, hex: string) => String.fromCodePoint(parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (_, dec: string) => String.fromCodePoint(Number(dec)))
+    .replace(/&#x([\da-f]{1,6});/gi, (_, hex: string) => safeChar(parseInt(hex, 16)))
+    .replace(/&#(\d{1,7});/g, (_, dec: string) => safeChar(Number(dec)))
     .replace(/&quot;/g, '"')
     .replace(/&apos;/g, "'")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&amp;/g, "&")
+const safeChar = (code: number) => (code <= 0x10ffff ? String.fromCodePoint(code) : "")
 
 function attributes(source: string): Map<string, string> {
   const attrs = new Map<string, string>()
@@ -83,16 +161,32 @@ function declarations(css: string): Map<string, string> {
   return out
 }
 
-/** The rules of `<style>` sheets for single classes (".cls-1, .cls-2 { fill: #fff }"), as design apps write them. */
-function classRules(css: string, into: Map<string, Map<string, string>>) {
-  for (const m of css.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{([^}]*)\}/g)) {
-    const decls = declarations(m[2])
-    for (const selector of m[1].split(",")) {
+/** CSS without its comments. */
+function uncomment(css: string): string {
+  let out = ""
+  let i = 0
+  for (;;) {
+    const start = css.indexOf("/*", i)
+    if (start < 0) return out + css.slice(i)
+    out += css.slice(i, start)
+    const close = css.indexOf("*/", start + 2)
+    if (close < 0) return out
+    i = close + 2
+  }
+}
+
+/** A `<style>` rule for one class (".cls-1, .cls-2 { fill: #fff }" gives two), in the sheet's order. */
+type ClassRule = { cls: string; decls: Map<string, string> }
+
+/** The rules of `<style>` sheets for single classes, as design apps write them. */
+function classRules(css: string, into: ClassRule[]) {
+  for (const chunk of uncomment(css).split("}")) {
+    const open = chunk.indexOf("{")
+    if (open < 0) continue
+    const decls = declarations(chunk.slice(open + 1))
+    for (const selector of chunk.slice(0, open).split(",")) {
       const cls = /^\s*\.([\w-]+)\s*$/.exec(selector)?.[1]
-      if (!cls) continue
-      const rule = into.get(cls) ?? new Map<string, string>()
-      for (const [k, v] of decls) rule.set(k, v)
-      into.set(cls, rule)
+      if (cls) into.push({ cls, decls })
     }
   }
 }
@@ -156,13 +250,65 @@ function shapePath(name: string, a: Map<string, string>): string | null {
   }
 }
 
-/** Path data with no needless spaces, numbers rounded to `decimals` (not when it has arcs: their flags may run into numbers). */
-function compact(d: string, decimals: number | null): string {
-  let out = d.replace(/\s+/g, " ").replace(/\s*([MmLlHhVvCcSsQqTtAaZz])\s*/g, "$1").replace(/\s*,\s*/g, ",").trim()
-  if (decimals !== null && !/[Aa]/.test(out)) {
-    out = out.replace(/-?\d*\.\d+(?![\deE])/g, (n) => String(Number(Number(n).toFixed(decimals))))
+/** How many numbers each path command takes. */
+const PARAMS: Record<string, number> = { m: 2, l: 2, h: 1, v: 1, c: 6, s: 4, q: 4, t: 2, a: 7, z: 0 }
+const NUMBER = /[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/y
+
+/**
+ * Path data read number by number and written again: rounded to `decimals`
+ * (none: as they are), one space between numbers unless the next one starts
+ * with a minus. An arc's two flags are read as single digits, as browsers do
+ * ("a1 1 0 01.5.5"). Refuses path data a browser would stop drawing at.
+ */
+export function normalizePath(d: string, decimals: number | null): string {
+  // Parts joined at the end: reading the end of a growing string would copy it each time.
+  const out: string[] = []
+  let afterNumber = false
+  let command = ""
+  let i = 0
+  const skip = () => {
+    while (i < d.length && (d[i] === " " || d[i] === "," || d[i] === "\t" || d[i] === "\n" || d[i] === "\r" || d[i] === "\f")) i++
   }
-  return out
+  const write = (text: string) => {
+    out.push(afterNumber && !text.startsWith("-") ? ` ${text}` : text)
+    afterNumber = true
+  }
+  skip()
+  while (i < d.length) {
+    const c = d[i]
+    if (/[a-zA-Z]/.test(c)) {
+      if (!(c.toLowerCase() in PARAMS)) throw new LogoSvgError("invalid")
+      // Path data starts with a move.
+      if (!command && c.toLowerCase() !== "m") throw new LogoSvgError("invalid")
+      command = c
+      out.push(c)
+      afterNumber = false
+      i++
+      skip()
+      if (c.toLowerCase() === "z") continue
+    } else if (!command || command.toLowerCase() === "z") {
+      throw new LogoSvgError("invalid")
+    }
+    const lower = command.toLowerCase()
+    for (let k = 0; k < PARAMS[lower]; k++) {
+      if (k > 0) skip()
+      if (lower === "a" && (k === 3 || k === 4)) {
+        if (d[i] !== "0" && d[i] !== "1") throw new LogoSvgError("invalid")
+        write(d[i])
+        i++
+        continue
+      }
+      NUMBER.lastIndex = i
+      const m = NUMBER.exec(d)
+      if (!m) throw new LogoSvgError("invalid")
+      i = NUMBER.lastIndex
+      const value = Number(m[0])
+      if (!Number.isFinite(value)) throw new LogoSvgError("invalid")
+      write(String(decimals === null ? value : Number(value.toFixed(decimals))))
+    }
+    skip()
+  }
+  return out.join("")
 }
 
 /** The SVG's own coordinates box: its viewBox, else its width and height in px (null when it has neither). */
@@ -182,9 +328,17 @@ export function parseLogoSvg(source: string): ParsedLogo {
   if (source.length > LOGO_FILE_MAX) throw new LogoSvgError("tooBig")
 
   // First pass: the class rules of every <style> sheet (they may come after the shapes).
-  const classes = new Map<string, Map<string, string>>()
-  for (const m of source.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style\s*>/gi)) {
-    classRules(m[1].replace(/<!\[CDATA\[|\]\]>/g, ""), classes)
+  const rules: ClassRule[] = []
+  let inStyle = false
+  let css = ""
+  for (const token of tokens(source)) {
+    if (token.kind === "open" && token.name.replace(/^svg:/, "") === "style" && !token.selfClosing) {
+      inStyle = true
+      css = ""
+    } else if (token.kind === "close" && token.name.replace(/^svg:/, "") === "style" && inStyle) {
+      classRules(css, rules)
+      inStyle = false
+    } else if (token.kind === "text" && inStyle) css += token.text
   }
 
   const stack: Frame[] = []
@@ -193,40 +347,48 @@ export function parseLogoSvg(source: string): ParsedLogo {
   const shapes: { d: string; evenodd: boolean; transform: string; white: boolean }[] = []
   let strokeOnly = false
 
-  const rootProps: Props = { fill: null, fillRule: null, fillOpacity: null, stroke: null, strokeWidth: null, visibility: null }
+  const rootProps: Props = {
+    fill: null,
+    fillRule: null,
+    fillOpacity: null,
+    stroke: null,
+    strokeWidth: null,
+    strokeOpacity: null,
+    visibility: null,
+  }
 
-  for (const m of source.matchAll(TOKEN)) {
-    const [, , closing, opening, attrSource, selfClosing] = m
-    if (closing) {
-      const name = closing.toLowerCase()
-      const at = stack.findLastIndex((f) => f.name === name)
+  for (const token of tokens(source)) {
+    if (token.kind === "text") continue
+    if (token.kind === "close") {
+      const at = stack.findLastIndex((f) => f.name === token.name.replace(/^svg:/, ""))
       if (at >= 0) stack.length = at
       continue
     }
-    if (!opening) continue
 
-    const raw = opening.toLowerCase()
+    const raw = token.name
     const prefix = raw.includes(":") ? raw.slice(0, raw.indexOf(":")) : null
     const name = prefix === "svg" ? raw.slice(4) : raw
-    const attrs = attributes(attrSource ?? "")
+    const attrs = attributes(token.attrs)
     const parent = stack.at(-1)
+    const isRoot = !root
 
-    if (!root) {
+    if (isRoot) {
       if (name !== "svg") throw new LogoSvgError("notSvg")
       root = attrs
       viewBox = ownViewBox(attrs)
-    } else if (!parent?.ignore && !prefix) {
+    } else if (!parent?.ignore && (!prefix || prefix === "svg")) {
       if (REFUSED[name]) throw new LogoSvgError(REFUSED[name])
     }
 
-    // Presentation attributes, then class rules, then the style attribute (CSS order).
+    // Presentation attributes, then class rules in the sheet's order, then the style attribute (CSS order).
     const own = new Map<string, string>()
-    for (const key of ["fill", "fill-rule", "fill-opacity", "stroke", "stroke-width", "visibility", "display", "opacity"]) {
+    for (const key of PROPERTIES) {
       const v = attrs.get(key)
       if (v !== undefined) own.set(key, v)
     }
-    for (const cls of (attrs.get("class") ?? "").split(/\s+/)) {
-      for (const [k, v] of classes.get(cls) ?? []) own.set(k, v)
+    const classes = new Set((attrs.get("class") ?? "").split(/\s+/).filter(Boolean))
+    if (classes.size > 0) {
+      for (const rule of rules) if (classes.has(rule.cls)) for (const [k, v] of rule.decls) own.set(k, v)
     }
     for (const [k, v] of declarations(attrs.get("style") ?? "")) own.set(k, v)
 
@@ -241,36 +403,43 @@ export function parseLogoSvg(source: string): ParsedLogo {
       fillOpacity: pick("fill-opacity", inherited.fillOpacity),
       stroke: pick("stroke", inherited.stroke),
       strokeWidth: pick("stroke-width", inherited.strokeWidth),
+      strokeOpacity: pick("stroke-opacity", inherited.strokeOpacity),
       visibility: pick("visibility", inherited.visibility),
     }
     const hidden =
-      isNone(own.get("display") ?? null) || Number(own.get("opacity") ?? "1") === 0 || props.visibility === "hidden"
+      isNone(own.get("display") ?? null) ||
+      Number(own.get("opacity") ?? "1") === 0 ||
+      props.visibility === "hidden" ||
+      props.visibility === "collapse"
 
     const transform = (attrs.get("transform") ?? "").trim()
     if (transform && !TRANSFORM.test(transform)) throw new LogoSvgError("invalid")
-    const transforms = [parent?.transform ?? "", root === attrs ? "" : transform].filter(Boolean).join(" ")
+    const transforms = [parent?.transform ?? "", isRoot ? "" : transform].filter(Boolean).join(" ")
 
     // Anything else (definitions, styles, metadata, a design app's own elements) is left out with its content.
     const skip =
-      Boolean(parent?.ignore) || hidden || Boolean(prefix) || (root !== attrs && !GROUPS.has(name) && !SHAPES.has(name))
+      Boolean(parent?.ignore) ||
+      hidden ||
+      Boolean(prefix && prefix !== "svg") ||
+      (!isRoot && !GROUPS.has(name) && !SHAPES.has(name))
 
     if (!skip && SHAPES.has(name)) {
       const filled = !isNone(props.fill) && Number(props.fillOpacity ?? "1") !== 0
-      const stroked = !isNone(props.stroke) && props.stroke !== null && Number.parseFloat(props.strokeWidth ?? "1") !== 0
-      if (!filled) {
-        if (stroked) strokeOnly = true
-      } else {
-        const d = shapePath(name, attrs)
-        if (d !== null) {
-          if (!PATH_DATA.test(d)) throw new LogoSvgError("invalid")
-          if (/\d/.test(d)) {
-            shapes.push({ d, evenodd: props.fillRule === "evenodd", transform: transforms, white: isWhite(props.fill) })
-          }
-        }
+      const stroked =
+        props.stroke !== null &&
+        !isNone(props.stroke) &&
+        Number.parseFloat(props.strokeWidth ?? "1") !== 0 &&
+        Number(props.strokeOpacity ?? "1") !== 0
+      // A stroke that is what shows: on a shape with no fill, a line, or around a white (background) fill.
+      if (stroked && (!filled || name === "line" || (isWhite(props.fill) && !isWhite(props.stroke)))) strokeOnly = true
+      const d = filled ? shapePath(name, attrs) : null
+      if (d !== null) {
+        if (!PATH_DATA.test(d)) throw new LogoSvgError("invalid")
+        if (/\d/.test(d)) shapes.push({ d, evenodd: props.fillRule === "evenodd", transform: transforms, white: isWhite(props.fill) })
       }
     }
 
-    if (!selfClosing) stack.push({ name, ignore: skip, props, transform: transforms })
+    if (!token.selfClosing) stack.push({ name, ignore: skip, props, transform: transforms })
   }
 
   if (!root) throw new LogoSvgError("notSvg")
@@ -284,7 +453,7 @@ export function parseLogoSvg(source: string): ParsedLogo {
   const size = viewBox ? Math.max(...viewBox.split(" ").slice(2).map(Number)) : null
   const decimals = size ? Math.min(6, Math.max(1, 4 - Math.floor(Math.log10(size)))) : null
   const paths = kept.map((s) => ({
-    d: compact(s.d, decimals),
+    d: normalizePath(s.d, decimals),
     ...(s.evenodd ? { evenodd: true as const } : {}),
     ...(s.transform ? { transform: s.transform } : {}),
   }))

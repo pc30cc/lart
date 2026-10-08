@@ -1,3 +1,4 @@
+// Types only: the Atelier header (a client component) draws the logo, and lib/logo's schema (zod) stays off the site's bundle.
 import type { LogoData, LogoSize } from "@/lib/logo"
 
 const SYMBOL_ID = "site-logo"
@@ -40,10 +41,22 @@ export function BrandLogo({ logo, className }: { logo: LogoSize; className?: str
   )
 }
 
-/** The logo drawn on its own, without `LogoSymbol` (the settings page's preview). */
+/**
+ * The logo drawn on its own, with its shapes, without `LogoSymbol`: on a page
+ * (see `HomeData.logo`) and the settings page's preview. Decorative, like
+ * `BrandLogo`.
+ */
 export function LogoPicture({ logo, className }: { logo: LogoData; className?: string }) {
+  const [, , width, height] = logo.viewBox.split(" ")
   return (
-    <svg viewBox={logo.viewBox} fill="currentColor" aria-hidden focusable="false" className={className}>
+    <svg
+      viewBox={logo.viewBox}
+      fill="currentColor"
+      aria-hidden
+      focusable="false"
+      className={className}
+      style={{ aspectRatio: `${width} / ${height}` }}
+    >
       {logo.paths.map((p, i) => (
         <path key={i} d={p.d} fillRule={p.evenodd ? "evenodd" : undefined} transform={p.transform} />
       ))}

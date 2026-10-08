@@ -761,7 +761,10 @@ server-renders it puts `suppressHydrationWarning` on the element), `formatTime`,
   the shapes once in the page as `<symbol id="site-logo">`; themes draw it
   with `BrandLogo` (`src/themes/logo.tsx`, `fill: currentColor`, so it takes
   the text colour of where it shows, light or dark), sized by
-  `SiteFrameProps.logo` / `HomeData.logo` (its width and height).
+  `SiteFrameProps.logo` (its width and height). A page draws it from
+  `HomeData.logo` (its shapes) with `LogoPicture` instead: after a logo
+  change, a visitor moving around the site gets new pages inside the layout
+  rendered before it.
 - Limer's own logo is in `public/brand/` (`limer-logo.svg`, and transparent
   PNGs in white and brown for Settings → Watermark). Migration
   `0009_site_logo` sets it as the `logo` setting once, on a database whose
