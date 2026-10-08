@@ -89,8 +89,8 @@ test.describe("activity log", () => {
     // the summary line is cut at 140 characters).
     await page.goto(`/en/admin/audit?entity=workshop&q=${encodeURIComponent(`Studio 2, Kadıköy ${RUN}`)}`)
     await expect(
-      // Each value is wrapped in bidi isolates (lib/format `isolate`).
-      page.getByRole("cell").filter({ hasText: `venue (en): ${isolate(`Moda Art House, Kadıköy ${RUN}`)} → ${isolate("Moda Art House, Studio 2")}` }),
+      // Each value is wrapped in bidi isolates (lib/format `isolate`); the new venue goes on past "Studio 2".
+      page.getByRole("cell").filter({ hasText: `venue (en): ${isolate(`Moda Art House, Kadıköy ${RUN}`)} → \u2068Moda Art House, Studio 2` }),
     ).toHaveCount(1)
     await expect(page.getByRole("cell").filter({ hasText: `venue: ${WORKSHOPS.held.venue.fa}` })).toHaveCount(0)
 
