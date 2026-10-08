@@ -966,12 +966,42 @@ confirm your email" banner (with
 another. Small centred forms use `AuthCard` (`@/components/site/auth-card`).
 Nothing on the public site links to the instructor pages.
 
-The home page (`(site)/page.tsx`: `/`, `/fa`, `/en`) is two sections a theme
-can replace with its own (same props): `HomeHero` (the brand, the SEO
-description setting in the page's language or `site.home.tagline`, "See all
-workshops" only when a workshop is open) and `UpcomingWorkshops` (the next six open workshops,
-`listOpenWorkshops(locale, { limit })`, as `WorkshopCard`s with `h3` titles,
-"All workshops", or the "coming soon" empty state). Its title and
+**Themes and their data.** Pages and the layout read the data and hand the
+active theme (`getActiveTheme()`, Settings → Appearance) plain props; a theme
+only decides how things look and never reads the database. The layout renders
+`theme.Frame` (menu and footer: `getSiteFrame`, `src/features/site/frame.ts`),
+the home page `theme.Home` with `getHomeData(locale)`
+(`src/features/site/home.ts`: the `home` setting, with the bundled texts of
+`messages/<locale>/home.json` where a field is empty; a section is null when
+the admin hid it or it has nothing to show), and every list of workshops
+`theme.WorkshopCard` with the cards of `listOpenWorkshops`.
+`src/themes/types.ts` is the contract, accessibility rules included. Public
+reads live in `src/features/registrations/public.ts` (open workshops, one
+workshop, seats, terms) and `src/features/site/public.ts`:
+`listPublicCategories(locale)` (the categories of the open workshops, in the
+admin's order, with how many; "open" is `openWorkshopsWhere`, the one rule of
+the list, its categories and the sitemap) and `listPastWorkshops(locale,
+{ limit })` (closed, never cancelled, workshops with a cover or gallery
+photos, newest first, each with its cover and first six gallery photos: the
+gallery is what the admins chose to publish). Both are cached per request
+and return public fields only: never an instructor's private fields.
+
+**Craft filter.** `/workshops?category=<categories.slug>` lists one
+category's workshops (`listOpenWorkshops(locale, { category })`; each card
+also carries its `categorySlug`). Above the grid a row of links, All and
+each category with open workshops (only when there are two or more), marks
+the current one with `aria-current="page"`; it uses the design tokens, so
+each theme gives it its own colours. A malformed slug, an unknown one or one
+without open workshops shows the whole list, without an error. A filtered
+view keeps the list's canonical address (`alternates("/workshops")`) and is
+`noindex, follow`; the sitemap lists only `/workshops`.
+
+The home page is `(site)/page.tsx` (`/`, `/fa`, `/en`). The classic theme
+(`src/themes/default`) shows two sections: `HomeHero` (the brand, the
+tagline: the SEO description setting in the page's language or
+`site.home.tagline`, "See all workshops" only when a workshop is open) and
+`UpcomingWorkshops` (the first six of `upcoming` as `WorkshopCard`s with `h3`
+titles, "All workshops", or the "coming soon" empty state). Its title and
 description come from the SEO setting in the page's own language (never
 another language's text), else the brand and `site.home.metaDescription`.
 

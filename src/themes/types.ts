@@ -74,8 +74,10 @@ export type HeroMedia =
 /**
  * Everything the home page shows, in the page's language, with the bundled
  * texts filled in where the admin left a field empty. A section is null when
- * the admin hid it; image URLs are null when none was uploaded (the theme then
- * uses its own photos). Themes show what they have a place for and ignore the rest.
+ * the admin hid it or it has nothing to show (`crafts` without categories,
+ * `past` without finished workshops); image URLs are null when none was
+ * uploaded (the theme then uses its own photos). Themes show what they have a
+ * place for and ignore the rest.
  */
 export type HomeData = {
   locale: string

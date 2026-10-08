@@ -52,6 +52,7 @@ const workshop: WorkshopCard = {
   title: "Candles",
   venue: "Moda",
   category: "Candles",
+  categorySlug: "candles",
   instructorName: "Zeynep",
   coverUrl: null,
   startsAt,
