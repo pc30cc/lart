@@ -44,6 +44,8 @@ describe("sitemap.xml", () => {
       },
     })
     expect(entries.some((e) => /\/(admin|instructor|account)(\/|$)/.test(new URL(e.url).pathname))).toBe(false)
+    // No filtered views of the list (?category=).
+    expect(entries.some((e) => new URL(e.url).search !== "")).toBe(false)
     expect(entries.some((e) => /^\/tr(\/|$)/.test(new URL(e.url).pathname))).toBe(false)
     // No trailing slash on a language's home page.
     expect(entries.some((e) => /\/(fa|en)\/$/.test(e.url))).toBe(false)

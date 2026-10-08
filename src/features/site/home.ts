@@ -18,7 +18,7 @@ type Localized = { fa?: string; tr?: string; en?: string }
  * field is empty, the next workshops, the categories and past workshops.
  */
 export async function getHomeData(locale: string): Promise<HomeData> {
-  const [t, ts, tl, brand, seo, home, upcoming, categories, url] = await Promise.all([
+  const [t, ts, tl, brand, seo, home, upcoming, categories, past, url] = await Promise.all([
     getTranslations({ locale, namespace: "home" }),
     getTranslations({ locale, namespace: "site.home" }),
     getTranslations({ locale, namespace: "registration.list" }),
@@ -27,10 +27,11 @@ export async function getHomeData(locale: string): Promise<HomeData> {
     getSetting("home"),
     listOpenWorkshops(locale, { limit: HOME_WORKSHOPS }),
     listPublicCategories(locale),
+    // Only read when the section is shown (the setting is cached per request).
+    getSetting("home").then((h) => (h.past.show ? listPastWorkshops(locale) : [])),
     publicUrls(),
   ])
   const text = (value: Localized | undefined, fallback: string) => value?.[locale as keyof Localized]?.trim() || fallback
-  const past = home.past.show ? await listPastWorkshops(locale) : []
 
   const images = home.hero.images.map((p) => url(p)).filter((u): u is string => Boolean(u))
   const video = url(home.hero.video)
@@ -68,7 +69,10 @@ export async function getHomeData(locale: string): Promise<HomeData> {
           imageUrl: url(home.story.image),
         }
       : null,
-    crafts: home.crafts.show ? { title: text(home.crafts.title, t("crafts.title")), imageUrl: url(home.crafts.image) } : null,
+    crafts:
+      home.crafts.show && categories.length > 0
+        ? { title: text(home.crafts.title, t("crafts.title")), imageUrl: url(home.crafts.image) }
+        : null,
     past: home.past.show && past.length > 0 ? { title: text(home.past.title, t("past.title")), workshops: past } : null,
     steps: home.steps.show ? { title: text(home.steps.title, t("steps.title")), items: steps, imageUrl: url(home.steps.image) } : null,
     labels: {

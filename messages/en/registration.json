@@ -6,6 +6,8 @@
     "subtitle": "Make something beautiful with your own hands. Choose a workshop and save your place.",
     "emptyTitle": "New workshops are coming soon",
     "emptyText": "Nothing is open for registration right now. Please check back in a little while!",
+    "filterLabel": "Workshops by craft",
+    "all": "All",
     "with": "with {name}"
   },
   "price": {

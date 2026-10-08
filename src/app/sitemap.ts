@@ -13,7 +13,9 @@ import { absoluteUrl } from "@/lib/seo"
  * x-default: the main language), as the pages' own metadata gives them. The
  * main language's addresses have no prefix (docs/DEVELOPMENT.md, "URL
  * rules"). Built on each request, so a workshop appears as soon as it is
- * published. Private areas (admin, instructor, account) are never listed.
+ * published. Private areas (admin, instructor, account) are never listed,
+ * nor the list's craft views (/workshops?category=…: not indexed, their
+ * canonical is the whole list).
  * The proxy does not run here (a file extension): the main language is read
  * directly, never from a request header.
  */

@@ -106,6 +106,7 @@ describe.each(["fa", "en", "tr"])("renders in %s", (locale) => {
               title: "Mum",
               venue: "Moda",
               category: "Mum",
+              categorySlug: "mum",
               instructorName: "Zeynep",
               coverUrl: null,
               startsAt,
