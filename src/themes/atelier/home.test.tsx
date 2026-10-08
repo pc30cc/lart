@@ -23,24 +23,27 @@ const messages = {
 }
 
 const startsAt = new Date(Date.now() + 5 * 86_400_000)
-const workshop = (slug: string, title: string): WorkshopCard => ({
-  id: slug,
-  slug,
-  title,
-  venue: "Moda",
-  category: "Candles",
-  instructorName: "Zeynep",
-  coverUrl: null,
-  startsAt,
-  endsAt: new Date(startsAt.getTime() + 2 * 3_600_000),
-  registrationDeadline: startsAt,
-  price: 150_000,
-  maxCapacity: 10,
-  seatsLeft: 2,
-  ageMin: null,
-  ageMax: null,
-  window: "open",
-})
+// A plain object cast to the card, so it also fits a card type with more fields.
+const workshop = (slug: string, title: string) =>
+  ({
+    id: slug,
+    slug,
+    title,
+    venue: "Moda",
+    category: "Candles",
+    categorySlug: "candles",
+    instructorName: "Zeynep",
+    coverUrl: null,
+    startsAt,
+    endsAt: new Date(startsAt.getTime() + 2 * 3_600_000),
+    registrationDeadline: startsAt,
+    price: 150_000,
+    maxCapacity: 10,
+    seatsLeft: 2,
+    ageMin: null,
+    ageMax: null,
+    window: "open",
+  }) as WorkshopCard
 
 /** A home page with every section, as getHomeData builds it. */
 const full = (): HomeData => ({
