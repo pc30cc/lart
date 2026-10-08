@@ -404,7 +404,7 @@ export const account = pgEnum("ledger_account", [
 export const transactionKind = pgEnum("ledger_transaction_kind", [
   "capital_contribution",
   "capital_withdrawal",
-  "expense", // course or general expense, paid from the wallet or by a partner
+  "expense", // course or general expense, paid from the wallet (or, for a workshop, out of the instructor's advance)
   "registration_payment",
   "registration_refund",
   "instructor_advance",

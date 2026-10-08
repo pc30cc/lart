@@ -73,21 +73,19 @@ export function DateField<T extends FieldValues>({ name, label }: { name: Path<T
 export type PartnerOption = { adminId: string; name: string }
 
 /**
- * Where the money came from or went: the shared wallet, a partner personally
- * or (expenses only) the instructor's advance. Values: "wallet", a partner id, "advance".
+ * A workshop expense paid from the shared wallet, or out of the advance the
+ * instructor holds (offered while it is above zero). Values: "wallet", "advance".
  */
 export function SourceField<T extends FieldValues>({
   name,
   label,
-  partners,
   advance,
   description,
 }: {
   name: Path<T>
   label: string
-  partners: PartnerOption[]
-  /** Advance the instructor still holds; offers "from the advance" when above zero. */
-  advance?: number
+  /** Advance the instructor still holds. */
+  advance: number
   description?: string
 }) {
   const t = useTranslations("money.forms")
@@ -113,14 +111,7 @@ export function SourceField<T extends FieldValues>({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="wallet">{t("sourceWallet")}</SelectItem>
-            {partners.map((p) => (
-              <SelectItem key={p.adminId} value={p.adminId}>
-                {t("sourcePartner", { name: p.name })}
-              </SelectItem>
-            ))}
-            {advance !== undefined && advance > 0 && (
-              <SelectItem value="advance">{t("sourceAdvance", { amount: formatLira(advance, locale) })}</SelectItem>
-            )}
+            {advance > 0 && <SelectItem value="advance">{t("sourceAdvance", { amount: formatLira(advance, locale) })}</SelectItem>}
           </SelectContent>
         </Select>
       )}

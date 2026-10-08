@@ -10,7 +10,8 @@
     "email": "Email",
     "storage": "Storage",
     "watermark": "Watermark",
-    "danger": "Danger zone"
+    "danger": "Danger zone",
+    "money": "Money"
   },
   "toast": {
     "saved": "Settings saved."
@@ -432,6 +433,23 @@
       "passwordNeeded": "Enter your password.",
       "wrongPassword": "The password is not correct.",
       "rateLimited": "Too many tries. Try again in 15 minutes."
+    }
+  },
+  "money": {
+    "spender": {
+      "title": "Paying costs",
+      "description": "Only one partner pays and records costs from the shared wallet: general and workshop expenses, instructors' advances and fees. The other partners can see them.",
+      "label": "Who pays the costs?",
+      "nobody": "Nobody chosen yet"
+    },
+    "withdrawals": {
+      "title": "Partners' withdrawals",
+      "description": "Partners taking money out of the shared wallet for themselves. Closed for now.",
+      "label": "Allow withdrawals from the shared wallet",
+      "hint": "While this is off, no partner can record a withdrawal and the Withdraw button is hidden."
+    },
+    "errors": {
+      "spender": "Choose one of the active partners."
     }
   }
 }

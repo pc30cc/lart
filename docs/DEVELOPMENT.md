@@ -105,6 +105,14 @@ drizzle/                        SQL migrations (generated + custom guards)
 - Every movement of money is a balanced ledger transaction (double entry).
   The database rejects unbalanced transactions and any UPDATE/DELETE of
   ledger rows; a correction is a reversal transaction.
+- Every cost is paid from the shared wallet: a partner never pays one
+  personally (the ledger refuses a `partner_capital` line on an expense,
+  advance or instructor payment). Settings → Money (`money` setting) names
+  the one partner who records costs (`recordExpense`, `recordAdvance` paid,
+  `payInstructor`: `assertSpender`; nobody while none is chosen) and opens
+  or closes withdrawals (closed by default: `recordCapital` refuses one and
+  the Withdraw buttons are hidden). The pages show a locked dialog
+  (`blocked`, `spendBlockText`) to anyone else.
 
 ### Lean code and database
 
@@ -272,6 +280,7 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 | `/admin/settings/home` | admin | private | |
 | `/admin/settings/email` | admin | private | |
 | `/admin/settings/payments` | admin | private | |
+| `/admin/settings/money` | admin | private | |
 | `/admin/settings/storage` | admin | private | |
 | `/admin/settings/watermark` | admin | private | |
 | `/admin/settings/danger` | admin | private | |

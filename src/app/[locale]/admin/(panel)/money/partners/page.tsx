@@ -7,7 +7,7 @@ import { Money } from "@/components/admin/money"
 import { PageHeader } from "@/components/admin/page-header"
 import { PersonAvatar } from "@/components/admin/person-avatar"
 import { StatusBadge } from "@/components/admin/status-badge"
-import { listPartnerAccounts, type PartnerAccount } from "@/features/money/queries"
+import { getMoneyRules, listPartnerAccounts, type PartnerAccount } from "@/features/money/queries"
 import { listPartnerInvites } from "@/features/partners/queries"
 import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
@@ -33,6 +33,7 @@ export default async function PartnersPage() {
     listPartnerAccounts(),
     listPartnerInvites(),
   ])
+  const { withdrawals } = await getMoneyRules()
   const active = data.rows.filter((p) => p.active)
   const options = active.map((p) => ({ adminId: p.id, name: p.name }))
   // New partners join at 0 %; when the others already make 100 % nothing else would point it out.
@@ -49,7 +50,7 @@ export default async function PartnersPage() {
             {options.length > 0 && (
               <>
                 <CapitalDialog direction="contribution" partners={options} trigger={{ variant: "default" }} />
-                <CapitalDialog direction="withdrawal" partners={options} />
+                {withdrawals && <CapitalDialog direction="withdrawal" partners={options} />}
               </>
             )}
           </>
@@ -156,7 +157,6 @@ function PartnerCard({
       <div className="flex-1 p-4 text-sm md:p-5">
         <Row label={t("card.contributions")} value={p.contributions} />
         <Row label={t("card.withdrawals")} value={p.withdrawals} tone="negative" />
-        <Row label={t("card.paidForBusiness")} value={p.paidForBusiness} />
         <Row label={t("card.profitShares")} value={p.profitShares} tone="signed" />
         <Row label={t("card.capital")} value={p.capital} strong />
       </div>

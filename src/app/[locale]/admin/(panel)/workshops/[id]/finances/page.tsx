@@ -14,7 +14,7 @@ import { z } from "zod"
 
 import { Money } from "@/components/admin/money"
 import type { ClosedTotals } from "@/db/schema"
-import { getWorkshopFinances, type WorkshopFinances } from "@/features/money/queries"
+import { getMoneyRules, getWorkshopFinances, spendBlockText, type WorkshopFinances } from "@/features/money/queries"
 import { getWorkshop } from "@/features/workshops/queries"
 import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
@@ -41,15 +41,17 @@ export default async function WorkshopFinancesPage({ params }: PageProps<"/[loca
   await requireAdmin()
   const { id } = await params
   if (!z.uuid().safeParse(id).success) notFound()
-  const [workshop, finances, t, locale] = await Promise.all([
+  const [workshop, finances, t, locale, rules] = await Promise.all([
     getWorkshop(id),
     getWorkshopFinances(id),
     getTranslations("money"),
     getLocale(),
+    getMoneyRules(),
   ])
   if (!workshop || !finances) notFound()
 
-  const partners = finances.partners.map((p) => ({ adminId: p.adminId, name: p.name }))
+  // Why this admin cannot pay the workshop's costs (Settings → Money), or null.
+  const blocked = spendBlockText(rules, t)
   const instructor = localized(workshop.instructor.displayName, locale)
   const title = localized(workshop.title, locale)
   // Books locked: a cancelled workshop keeps its status once closed, so look at `closedAt`.
@@ -65,7 +67,7 @@ export default async function WorkshopFinancesPage({ params }: PageProps<"/[loca
         actions={
           closed ? (
             <>
-              {owed > 0 && <PayInstructorDialog courseId={id} partners={partners} owed={owed} instructor={instructor} />}
+              {owed > 0 && <PayInstructorDialog courseId={id} owed={owed} instructor={instructor} blocked={blocked} />}
               <PrintButton label={t("finances.print")} />
             </>
           ) : undefined
@@ -75,7 +77,7 @@ export default async function WorkshopFinancesPage({ params }: PageProps<"/[loca
       {closed ? (
         <ClosedView finances={finances} totals={finances.closedTotals!} t={t} locale={locale} instructor={instructor} />
       ) : (
-        <LiveView finances={finances} t={t} locale={locale} courseId={id} title={title} partners={partners} />
+        <LiveView finances={finances} t={t} locale={locale} courseId={id} title={title} blocked={blocked} />
       )}
     </>
   )
@@ -98,14 +100,15 @@ function LiveView({
   locale,
   courseId,
   title,
-  partners,
+  blocked,
 }: {
   finances: WorkshopFinances
   t: T
   locale: string
   courseId: string
   title: string
-  partners: { adminId: string; name: string }[]
+  /** Why this admin cannot record the workshop's costs, or null. */
+  blocked: string | null
 }) {
   const { balances, registrations: regs, projection, contract, status } = finances
   const cancelled = status === "cancelled"
@@ -183,7 +186,7 @@ function LiveView({
           <Panel
             title={t("finances.expenses.title")}
             description={t("finances.expenses.description")}
-            actions={<ExpenseDialog courseId={courseId} partners={partners} advance={balances.advance} trigger={{ size: "sm", variant: "outline", className: "px-3" }} />}
+            actions={<ExpenseDialog courseId={courseId} advance={balances.advance} blocked={blocked} trigger={{ size: "sm", variant: "outline", className: "px-3" }} />}
           >
             <EntryList entries={expenses} empty={t("finances.expenses.empty")} />
           </Panel>
@@ -197,7 +200,7 @@ function LiveView({
                   <AdvanceDialog
                     courseId={courseId}
                     direction="paid"
-                    partners={partners}
+                    blocked={blocked}
                     held={balances.advance}
                     suggested={Math.max(0, agreedAdvance - advancePaidSoFar)}
                     trigger={{ size: "sm", variant: "outline", className: "px-3" }}
@@ -207,7 +210,6 @@ function LiveView({
                   <AdvanceDialog
                     courseId={courseId}
                     direction="returned"
-                    partners={partners}
                     held={balances.advance}
                     trigger={{ size: "sm", variant: "outline", className: "px-3" }}
                   />

@@ -24,12 +24,7 @@ export function EntryList({ entries, empty }: { entries: WorkshopEntry[]; empty:
             : e.kind === "instructor_advance"
               ? t(`finances.advance.${e.direction}`)
               : t("kinds.instructor_payment")
-        const source =
-          e.source.type === "partner"
-            ? t("finances.paidBy", { name: e.source.name })
-            : e.source.type === "advance"
-              ? t("finances.fromAdvance")
-              : t("finances.fromWallet")
+        const source = e.source === "advance" ? t("finances.fromAdvance") : t("finances.fromWallet")
         const note = e.kind !== "expense" && e.description ? ` · ${e.description}` : ""
         return (
           <li key={e.id} className={cn("flex items-center gap-3 py-3", e.reversedBy && "opacity-60")}>

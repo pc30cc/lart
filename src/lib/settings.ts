@@ -205,6 +205,16 @@ export const settingSchemas = {
    * server's RESEND_API_KEY / EMAIL_FROM", as before this setting existed.
    * Keys and passwords are stored encrypted (lib/crypto).
    */
+  /**
+   * The partners' money rules (Settings → Money): whether a partner may take
+   * money out of the shared wallet (closed for now), and the one partner who
+   * pays the business's costs from it (expenses, instructors' advances and
+   * fees); null until chosen, and then nobody can record a cost.
+   */
+  money: z.object({
+    withdrawals: z.boolean(),
+    spenderId: z.uuid().nullable(),
+  }),
   email: z.object({
     provider: z.enum(["env", "resend", "smtp"]),
     /** The sender address; the display name is always the brand. Empty: EMAIL_FROM. */
@@ -256,6 +266,7 @@ export const settingDefaults: { [K in SettingKey]: SettingValue<K> } = {
     transfer: { enabled: false, accountHolder: "", bankName: "", iban: "", note: {} },
     online: { enabled: false, note: {} },
   },
+  money: { withdrawals: false, spenderId: null },
   email: {
     provider: "env",
     fromAddress: "",

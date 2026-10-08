@@ -5,8 +5,10 @@ import {
   ArrowUpFromLineIcon,
   BanknoteIcon,
   HandCoinsIcon,
+  LockIcon,
   ReceiptTextIcon,
   Undo2Icon,
+  WalletIcon,
   type LucideIcon,
 } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
@@ -49,6 +51,7 @@ function FormDialog({
   title,
   description,
   trigger,
+  blocked,
   children,
 }: {
   icon: LucideIcon
@@ -56,8 +59,11 @@ function FormDialog({
   title: string
   description: React.ReactNode
   trigger?: TriggerProps
+  /** Why this admin cannot record it (Settings → Money): the dialog says so instead of showing the form. */
+  blocked?: string | null
   children: (close: () => void) => React.ReactNode
 }) {
+  const tc = useTranslations("common")
   const [open, setOpen] = useState(false)
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -72,7 +78,23 @@ function FormDialog({
           <DialogTitle className="text-lg">{title}</DialogTitle>
           <DialogDescription className="text-pretty">{description}</DialogDescription>
         </DialogHeader>
-        {children(() => setOpen(false))}
+        {blocked ? (
+          <>
+            <p role="status" className="bg-muted text-foreground flex gap-2.5 rounded-lg p-3 text-sm text-pretty">
+              <LockIcon className="text-muted-foreground mt-0.5 size-4 shrink-0" aria-hidden />
+              {blocked}
+            </p>
+            <div className="flex justify-end">
+              <DialogClose asChild>
+                <Button type="button" variant="outline" size="lg">
+                  {tc("actions.close")}
+                </Button>
+              </DialogClose>
+            </div>
+          </>
+        ) : (
+          children(() => setOpen(false))
+        )}
       </DialogContent>
     </Dialog>
   )
@@ -105,6 +127,16 @@ function DialogForm<T extends FieldValues, C, O>({
         <SubmitButton pending={pending}>{submitLabel}</SubmitButton>
       </div>
     </Form>
+  )
+}
+
+/** Where the money comes from or goes: always the shared wallet (no partner pays personally). */
+function FromWallet({ text }: { text: string }) {
+  return (
+    <p className="text-muted-foreground flex items-center gap-2 text-sm">
+      <WalletIcon className="size-4 shrink-0" aria-hidden />
+      {text}
+    </p>
   )
 }
 
@@ -185,15 +217,15 @@ const categoryKeys = ["venue", "materials", "catering", "advertising", "transpor
 /** Add an expense of a workshop (`courseId`) or, without it, a general expense of the business. */
 export function ExpenseDialog({
   courseId = null,
-  partners,
   advance,
   trigger,
+  blocked,
 }: {
   courseId?: string | null
-  partners: PartnerOption[]
   /** Advance the instructor still holds (workshop expenses can be paid from it). */
   advance?: number
   trigger?: TriggerProps
+  blocked?: string | null
 }) {
   const t = useTranslations("money.expense")
   const general = courseId === null
@@ -204,20 +236,19 @@ export function ExpenseDialog({
       title={general ? t("generalTitle") : t("title")}
       description={general ? t("generalDescription") : t("description")}
       trigger={trigger}
+      blocked={blocked}
     >
-      {(close) => <ExpenseForm courseId={courseId} partners={partners} advance={advance} onDone={close} />}
+      {(close) => <ExpenseForm courseId={courseId} advance={advance} onDone={close} />}
     </FormDialog>
   )
 }
 
 function ExpenseForm({
   courseId,
-  partners,
   advance,
   onDone,
 }: {
   courseId: string | null
-  partners: PartnerOption[]
   advance?: number
   onDone: () => void
 }) {
@@ -248,13 +279,11 @@ function ExpenseForm({
       </datalist>
       <AmountField<ExpenseValues> label={t("forms.amount")} />
       <DateField<ExpenseValues> name="occurredOn" label={t("forms.date")} />
-      <SourceField<ExpenseValues>
-        name="source"
-        label={t("forms.paidFrom")}
-        partners={partners}
-        advance={courseId ? advance : undefined}
-        description={courseId && advance ? t("forms.advanceHint") : undefined}
-      />
+      {courseId && advance ? (
+        <SourceField<ExpenseValues> name="source" label={t("forms.paidFrom")} advance={advance} description={t("forms.advanceHint")} />
+      ) : (
+        <FromWallet text={t("forms.fromWallet")} />
+      )}
     </DialogForm>
   )
 }
@@ -265,19 +294,19 @@ function ExpenseForm({
 export function AdvanceDialog({
   courseId,
   direction,
-  partners,
   held,
   suggested,
   trigger,
+  blocked,
 }: {
   courseId: string
   direction: "paid" | "returned"
-  partners: PartnerOption[]
   /** Advance the instructor holds now. */
   held: number
   /** Pre-filled amount (e.g. the rest of the advance agreed in the contract). */
   suggested?: number
   trigger?: TriggerProps
+  blocked?: string | null
 }) {
   const t = useTranslations("money.advance")
   const locale = useLocale()
@@ -290,10 +319,9 @@ export function AdvanceDialog({
         direction === "returned" ? t("returned.description", { amount: formatLira(held, locale) }) : t("paid.description")
       }
       trigger={trigger}
+      blocked={blocked}
     >
-      {(close) => (
-        <AdvanceForm courseId={courseId} direction={direction} partners={partners} suggested={suggested} onDone={close} />
-      )}
+      {(close) => <AdvanceForm courseId={courseId} direction={direction} suggested={suggested} onDone={close} />}
     </FormDialog>
   )
 }
@@ -301,13 +329,11 @@ export function AdvanceDialog({
 function AdvanceForm({
   courseId,
   direction,
-  partners,
   suggested,
   onDone,
 }: {
   courseId: string
   direction: "paid" | "returned"
-  partners: PartnerOption[]
   suggested?: number
   onDone: () => void
 }) {
@@ -320,7 +346,6 @@ function AdvanceForm({
       direction,
       amount: suggested && suggested > 0 ? suggested : undefined,
       occurredOn: todayIso(),
-      source: "wallet",
       note: "",
     },
     successMessage: t(`advance.${direction}.done`),
@@ -330,11 +355,7 @@ function AdvanceForm({
     <DialogForm form={form} submit={submit} pending={pending} submitLabel={t("forms.save")}>
       <AmountField<AdvanceValues> label={t("forms.amount")} />
       <DateField<AdvanceValues> name="occurredOn" label={t("forms.date")} />
-      <SourceField<AdvanceValues>
-        name="source"
-        label={direction === "paid" ? t("forms.paidFrom") : t("forms.paidBackTo")}
-        partners={partners}
-      />
+      <FromWallet text={direction === "paid" ? t("forms.fromWallet") : t("forms.toWallet")} />
       <TextField<AdvanceValues> name="note" label={t("forms.note")} description={t("forms.noteHint")} maxLength={200} />
     </DialogForm>
   )
@@ -345,16 +366,16 @@ function AdvanceForm({
 /** Pay the instructor what a closed workshop still owes them. */
 export function PayInstructorDialog({
   courseId,
-  partners,
   owed,
   instructor,
   trigger,
+  blocked,
 }: {
   courseId: string
-  partners: PartnerOption[]
   owed: number
   instructor: string
   trigger?: TriggerProps
+  blocked?: string | null
 }) {
   const t = useTranslations("money.pay")
   const locale = useLocale()
@@ -365,20 +386,19 @@ export function PayInstructorDialog({
       title={t("title")}
       description={t("description", { name: instructor, amount: formatLira(owed, locale) })}
       trigger={trigger ?? { variant: "default" }}
+      blocked={blocked}
     >
-      {(close) => <PayForm courseId={courseId} partners={partners} owed={owed} onDone={close} />}
+      {(close) => <PayForm courseId={courseId} owed={owed} onDone={close} />}
     </FormDialog>
   )
 }
 
 function PayForm({
   courseId,
-  partners,
   owed,
   onDone,
 }: {
   courseId: string
-  partners: PartnerOption[]
   owed: number
   onDone: () => void
 }) {
@@ -386,7 +406,7 @@ function PayForm({
   const { form, submit, pending } = useActionForm({
     schema: instructorPaymentSchema,
     action: payInstructor,
-    defaultValues: { courseId, amount: owed, occurredOn: todayIso(), source: "wallet", note: "" },
+    defaultValues: { courseId, amount: owed, occurredOn: todayIso(), note: "" },
     successMessage: t("pay.done"),
     onSuccess: onDone,
   })
@@ -394,7 +414,7 @@ function PayForm({
     <DialogForm form={form} submit={submit} pending={pending} submitLabel={t("pay.submit")}>
       <AmountField<InstructorPaymentValues> label={t("forms.amount")} />
       <DateField<InstructorPaymentValues> name="occurredOn" label={t("forms.date")} />
-      <SourceField<InstructorPaymentValues> name="source" label={t("forms.paidFrom")} partners={partners} />
+      <FromWallet text={t("forms.fromWallet")} />
       <TextField<InstructorPaymentValues> name="note" label={t("forms.note")} description={t("forms.noteHint")} maxLength={200} />
     </DialogForm>
   )

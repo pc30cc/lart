@@ -15,7 +15,7 @@ import { Money } from "@/components/admin/money"
 import { PageHeader } from "@/components/admin/page-header"
 import { Button } from "@/components/ui/button"
 import type { Entry } from "@/features/money/queries"
-import { getWalletOverview } from "@/features/money/queries"
+import { getMoneyRules, getWalletOverview, spendBlockText } from "@/features/money/queries"
 import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
 import { formatDate, localized } from "@/lib/format"
@@ -31,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function WalletPage() {
   await requireAdmin()
-  const [t, locale, data] = await Promise.all([getTranslations("money"), getLocale(), getWalletOverview()])
+  const [t, locale, data, rules] = await Promise.all([getTranslations("money"), getLocale(), getWalletOverview(), getMoneyRules()])
   const partners = data.partners.map((p) => ({ adminId: p.adminId, name: p.name }))
   const { balances } = data
   const empty = data.recent.length === 0
@@ -45,8 +45,8 @@ export default async function WalletPage() {
           partners.length > 0 && (
             <>
               <CapitalDialog direction="contribution" partners={partners} trigger={{ variant: "default" }} />
-              <CapitalDialog direction="withdrawal" partners={partners} />
-              <ExpenseDialog partners={partners} />
+              {rules.withdrawals && <CapitalDialog direction="withdrawal" partners={partners} />}
+              <ExpenseDialog blocked={spendBlockText(rules, t)} />
             </>
           )
         }

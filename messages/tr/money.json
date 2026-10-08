@@ -54,7 +54,7 @@
     "description": "İşletmenin ortak kasası: içinde ne var, kime ne borçluyuz ve son hareketler.",
     "balance": "Kasadaki para",
     "balanceHint": "Şu anda ortak kasada bulunan nakit.",
-    "negative": "Kasa sıfırın altına düştü. Büyük ihtimalle bir ödemeyi ortaklardan biri kendi cebinden yaptı; bu ödemeyi o ortağın adına kaydedin.",
+    "negative": "Kasa sıfırın altına düştü: içindekinden fazla ödeme kaydedildi. Bir ortak para koyduysa bunu sermaye girişi olarak kaydedin.",
     "advances": "Ön ödemeler",
     "advancesHint": "Atölyeden önce eğitmenlere ödenen tutarlar.",
     "owed": "Eğitmenlere borç",
@@ -87,10 +87,8 @@
     "noteHint": "İsteğe bağlı. Daha sonra hatırlamanıza yardımcı olacak bir şey.",
     "partner": "Ortak",
     "paidFrom": "Nereden ödendi",
-    "paidBackTo": "Nereye iade edildi",
-    "chooseSource": "Kim ödedi?",
+    "chooseSource": "Nereden ödendi?",
     "sourceWallet": "Ortak kasa",
-    "sourcePartner": "{name}, kendi cebinden",
     "sourceAdvance": "Eğitmenin ön ödemesi (kalan: {amount})",
     "advanceHint": "Eğitmen bunu ön ödeme parasıyla aldıysa ön ödemeyi seçin.",
     "category": "Ne için harcandı?",
@@ -103,7 +101,9 @@
       "transport": "Ulaşım",
       "printing": "Baskı"
     },
-    "save": "Kaydet"
+    "save": "Kaydet",
+    "fromWallet": "Ortak kasadan ödenir.",
+    "toWallet": "Ortak kasaya geri döner."
   },
   "capital": {
     "contribution": {
@@ -182,7 +182,6 @@
       "inactive": "Artık aktif değil",
       "contributions": "Koyduğu sermaye",
       "withdrawals": "Çektiği para",
-      "paidForBusiness": "İşletme için kendi cebinden ödediği",
       "profitShares": "Atölye sonuçlarındaki payı",
       "capital": "Sermaye",
       "openShare": "Henüz paylaştırılmamış sonuçtaki payı",
@@ -201,7 +200,7 @@
     },
     "explain": {
       "title": "Bu hesaplar nasıl işler?",
-      "capital": "Bir ortağın sermayesi; kasaya koyduğu para, kendi cebinden ödediği giderler ve kapanan her atölyedeki payıyla artar, çektiği parayla azalır.",
+      "capital": "Bir ortağın sermayesi kasaya koyduğu para ve kapanan her atölyedeki payıyla artar, çektiği parayla azalır. Bütün giderler ortak kasadan ödenir.",
       "open": "Henüz kapanmamış atölyeler (kesinleşenlerin eğitmen ücretleri düşülerek) ve genel giderler henüz ortaklara paylaştırılmadı. Her ortağın bunlardaki payı, bugünkü paylara göre hesaplanır:",
       "openLabel": "Henüz paylaştırılmamış sonuç",
       "settled": "“Bugün hesaplaşılsa”, sermaye ile bu payın toplamıdır: işletme bugün hesaplaşsaydı her ortağın alacağı tutar.",
@@ -286,7 +285,6 @@
     "noAdvanceAgreed": "Sözleşmede ön ödeme yok.",
     "projectedNet": "Beklenen net kâr",
     "projectedHint": "Atölye bu rakamlarla kapatılırsa.",
-    "paidBy": "ödeyen: {name}",
     "fromWallet": "ortak kasadan",
     "fromAdvance": "eğitmenin ön ödemesinden",
     "expenses": {
@@ -338,7 +336,10 @@
     "closingIsFinal": "Kapanış kayıtları kesindir ve geri alınamaz.",
     "alreadyReversed": "Bu kayıt zaten geri alındı.",
     "reverseLaterFirst": "Sonraki kayıtlar buna bağlı. Lütfen önce onları geri alın.",
-    "registrationEntry": "Bir kaydın ödemesi veya iadesi geri alınamaz. Bir ödemeyi geri almak için kaydı atölyenin kayıtlarından iptal edin; ödenmesi gereken iade İadeler listesinde görünür."
+    "registrationEntry": "Bir kaydın ödemesi veya iadesi geri alınamaz. Bir ödemeyi geri almak için kaydı atölyenin kayıtlarından iptal edin; ödenmesi gereken iade İadeler listesinde görünür.",
+    "withdrawalsClosed": "Ortak kasadan para çekme şimdilik kapalı (Ayarlar → Para).",
+    "noSpender": "Masrafları ortak kasadan ödeyecek ortak henüz seçilmedi. Ayarlar → Para bölümünden seçin.",
+    "notSpender": "Masrafları ortak kasadan yalnızca {name} ödeyip kaydedebilir."
   },
   "validation": {
     "amountPositive": "Lütfen sıfırdan büyük bir tutar girin.",
@@ -437,5 +438,9 @@
       "chooseMethod": "Lütfen nasıl geri ödediğinizi seçin.",
       "beforePayment": "İade tarihi, ödemenin yapıldığı günden önce olamaz."
     }
+  },
+  "rules": {
+    "noSpender": "Masrafları ortak kasadan ödeyecek ortak henüz seçilmedi. Ayarlar → Para bölümünden seçin.",
+    "onlySpender": "Masraflar ortak kasadan {name} tarafından ödenir; bunu o kaydeder."
   }
 }

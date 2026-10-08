@@ -54,7 +54,7 @@
     "description": "The shared wallet of the business: what is in it, what is owed, and what happened lately.",
     "balance": "In the wallet",
     "balanceHint": "Cash in the shared wallet right now.",
-    "negative": "The wallet is below zero. A payment was probably made by a partner personally: record it as paid by them.",
+    "negative": "The wallet is below zero: more has been paid out than it held. If a partner put money in, record it as a contribution.",
     "advances": "Advances out",
     "advancesHint": "Paid to instructors ahead of their workshops.",
     "owed": "Owed to instructors",
@@ -87,10 +87,8 @@
     "noteHint": "Optional. Anything that will help you remember it later.",
     "partner": "Partner",
     "paidFrom": "Paid from",
-    "paidBackTo": "Paid back to",
-    "chooseSource": "Choose who paid",
+    "chooseSource": "Paid from where?",
     "sourceWallet": "The shared wallet",
-    "sourcePartner": "{name}, personally",
     "sourceAdvance": "The instructor’s advance ({amount} left)",
     "advanceHint": "Choose the advance if the instructor bought this with the advance money.",
     "category": "What was it for?",
@@ -103,7 +101,9 @@
       "transport": "Transport",
       "printing": "Printing"
     },
-    "save": "Save"
+    "save": "Save",
+    "fromWallet": "Paid from the shared wallet.",
+    "toWallet": "Goes back into the shared wallet."
   },
   "capital": {
     "contribution": {
@@ -182,7 +182,6 @@
       "inactive": "No longer active",
       "contributions": "Put in",
       "withdrawals": "Taken out",
-      "paidForBusiness": "Paid personally for the business",
       "profitShares": "Share of workshop results",
       "capital": "Capital",
       "openShare": "Part of the result not shared out yet",
@@ -201,7 +200,7 @@
     },
     "explain": {
       "title": "How this works",
-      "capital": "A partner’s capital grows with the money they put in, the costs they pay personally and their share of each closed workshop. It goes down with what they take out.",
+      "capital": "A partner’s capital grows with the money they put in and their share of each closed workshop, and goes down with what they take out. Every cost is paid from the shared wallet.",
       "open": "Workshops that are not closed yet (after the fees confirmed ones owe their instructors) and general expenses are not shared out yet. This is each partner’s part of them, by today’s shares:",
       "openLabel": "Result not shared out yet",
       "settled": "“If settled today” is the capital plus that part: what each partner would get if the business settled up today.",
@@ -286,7 +285,6 @@
     "noAdvanceAgreed": "No advance in the contract.",
     "projectedNet": "Expected net profit",
     "projectedHint": "If the workshop closed with these figures.",
-    "paidBy": "paid by {name}",
     "fromWallet": "from the wallet",
     "fromAdvance": "from the instructor’s advance",
     "expenses": {
@@ -338,7 +336,10 @@
     "closingIsFinal": "Closing entries are final and can’t be reversed.",
     "alreadyReversed": "This entry has already been reversed.",
     "reverseLaterFirst": "Later entries depend on this one. Please reverse those first.",
-    "registrationEntry": "A registration’s payment or refund can’t be reversed. To undo a payment, cancel the registration in the workshop’s registrations: the refund it is owed then appears in Refunds."
+    "registrationEntry": "A registration’s payment or refund can’t be reversed. To undo a payment, cancel the registration in the workshop’s registrations: the refund it is owed then appears in Refunds.",
+    "withdrawalsClosed": "Taking money out of the shared wallet is closed for now (Settings → Money).",
+    "noSpender": "No partner has been chosen yet to pay costs from the shared wallet. Choose one in Settings → Money.",
+    "notSpender": "Only {name} can pay and record costs from the shared wallet."
   },
   "validation": {
     "amountPositive": "Please enter an amount above zero.",
@@ -437,5 +438,9 @@
       "chooseMethod": "Please choose how you paid it back.",
       "beforePayment": "The refund date can’t be before the day they paid."
     }
+  },
+  "rules": {
+    "noSpender": "No partner has been chosen yet to pay costs from the shared wallet. Choose one in Settings → Money.",
+    "onlySpender": "Costs are paid from the shared wallet by {name}; they record this."
   }
 }

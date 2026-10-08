@@ -162,7 +162,6 @@ describe("standard postings", () => {
       partnerId: partner.id,
       contributions: 500000,
       withdrawals: 120000,
-      paidForBusiness: 0,
       profitShares: 0,
       capital: 380000,
     })
@@ -175,29 +174,38 @@ describe("standard postings", () => {
     )
   })
 
-  it("records expenses paid from the wallet or by a partner", async () => {
+  it("records expenses paid from the wallet, never by a partner personally", async () => {
     const courseId = await makeCourse(world, alice.id, { status: "published" })
     const general = await inTx((tx) => postExpense(tx, { ...common(), amount: 3000, source: "wallet" }))
     expect(await linesOf(general)).toEqual([
       { account: "wallet", partnerId: null, amount: -3000 },
       { account: "general_expenses", partnerId: null, amount: 3000 },
     ])
-    const byPartner = await inTx((tx) =>
-      postExpense(tx, { ...common(), courseId, amount: 7000, source: { partnerId: bob.id } }),
-    )
-    expect(await linesOf(byPartner)).toEqual([
-      { account: "partner_capital", partnerId: bob.id, amount: -7000 },
-      { account: "course_expenses", partnerId: null, amount: 7000 },
-    ])
-    expect(await walletChange([general, byPartner])).toBe(-3000)
+    const workshop = await inTx((tx) => postExpense(tx, { ...common(), courseId, amount: 7000, source: "wallet" }))
+    expect(await walletChange([general, workshop])).toBe(-10000)
     expect(await courseBalances(db, courseId)).toMatchObject({ courseExpenses: 7000, revenue: 0 })
-    expect((await partnerCapitals()).get(bob.id)?.paidForBusiness).toBeGreaterThanOrEqual(7000)
+    // A cost paid out of a partner's own pocket is not a posting the ledger takes.
+    for (const kind of ["expense", "instructor_advance", "instructor_payment"] as const) {
+      await expect(
+        inTx((tx) =>
+          postTransaction(tx, {
+            ...common(),
+            kind,
+            courseId,
+            lines: [
+              { account: kind === "expense" ? "course_expenses" : kind === "instructor_payment" ? "instructor_payable" : "instructor_advance", amount: 500 },
+              { account: "partner_capital", partnerId: bob.id, amount: -500 },
+            ],
+          }),
+        ),
+      ).rejects.toThrow()
+    }
   })
 
   it("pays, returns and spends an advance, never below zero", async () => {
     const courseId = await makeCourse(world, alice.id, { status: "published" })
-    await inTx((tx) => postAdvance(tx, { ...common(), courseId, amount: 40000, direction: "paid", source: "wallet" }))
-    await inTx((tx) => postAdvance(tx, { ...common(), courseId, amount: 5000, direction: "returned", source: "wallet" }))
+    await inTx((tx) => postAdvance(tx, { ...common(), courseId, amount: 40000, direction: "paid" }))
+    await inTx((tx) => postAdvance(tx, { ...common(), courseId, amount: 5000, direction: "returned" }))
     const spent = await inTx((tx) => postExpense(tx, { ...common(), courseId, amount: 15000, source: "advance" }))
     expect(await linesOf(spent)).toEqual([
       { account: "instructor_advance", partnerId: null, amount: -15000 },
@@ -206,7 +214,7 @@ describe("standard postings", () => {
     expect(await courseBalances(db, courseId)).toMatchObject({ advance: 20000, courseExpenses: 15000 })
 
     expect(
-      await userError(inTx((tx) => postAdvance(tx, { ...common(), courseId, amount: 20001, direction: "returned", source: "wallet" }))),
+      await userError(inTx((tx) => postAdvance(tx, { ...common(), courseId, amount: 20001, direction: "returned" }))),
     ).toBe("money.errors.moreThanAdvance")
     expect(await userError(inTx((tx) => postExpense(tx, { ...common(), courseId, amount: 20001, source: "advance" })))).toBe(
       "money.errors.moreThanAdvance",
@@ -216,14 +224,14 @@ describe("standard postings", () => {
   it("does not pay an advance for a cancelled workshop", async () => {
     const courseId = await makeCourse(world, alice.id, { status: "cancelled" })
     expect(
-      await userError(inTx((tx) => postAdvance(tx, { ...common(), courseId, amount: 100, direction: "paid", source: "wallet" }))),
+      await userError(inTx((tx) => postAdvance(tx, { ...common(), courseId, amount: 100, direction: "paid" }))),
     ).toBe("money.errors.advanceNotNow")
   })
 
   it("never pays an instructor more than is owed", async () => {
     const courseId = await makeCourse(world, alice.id)
     expect(
-      await userError(inTx((tx) => postInstructorPayment(tx, { ...common(), courseId, amount: 1, source: "wallet" }))),
+      await userError(inTx((tx) => postInstructorPayment(tx, { ...common(), courseId, amount: 1 }))),
     ).toBe("money.errors.moreThanOwed")
   })
 
@@ -296,7 +304,7 @@ describe("closed workshops", () => {
     expect(await userError(inTx((tx) => postExpense(tx, { ...common(), courseId, amount: 100, source: "wallet" })))).toBe(
       "money.errors.workshopClosed",
     )
-    await inTx((tx) => postInstructorPayment(tx, { ...common(), courseId, amount: 600, source: "wallet" }))
+    await inTx((tx) => postInstructorPayment(tx, { ...common(), courseId, amount: 600 }))
     expect((await courseBalances(db, courseId)).payable).toBe(400)
   })
 })
@@ -364,10 +372,10 @@ describe("reverseTransaction", () => {
   it("asks to undo later entries first rather than leave a negative advance", async () => {
     const courseId = await makeCourse(world, alice.id, { status: "published" })
     const paid = await inTx((tx) =>
-      postAdvance(tx, { ...common(), courseId, amount: 1000, direction: "paid", source: "wallet" }),
+      postAdvance(tx, { ...common(), courseId, amount: 1000, direction: "paid" }),
     )
     const returned = await inTx((tx) =>
-      postAdvance(tx, { ...common(), courseId, amount: 1000, direction: "returned", source: "wallet" }),
+      postAdvance(tx, { ...common(), courseId, amount: 1000, direction: "returned" }),
     )
     expect(await userError(reverseTransaction(paid, alice.id))).toBe("money.errors.reverseLaterFirst")
     await reverseTransaction(returned, alice.id)

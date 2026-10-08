@@ -423,15 +423,18 @@ and posts the result to the shared wallet.
 ### Shared wallet and accounting
 
 - One **shared wallet** for the whole business.
-- Each partner records their **capital contributions** and the
-  **expenses** they paid for the partnership.
+- Each partner records their **capital contributions**. Taking money out
+  (**withdrawals**) is closed for now (**Settings → Money** opens it).
+- Every cost is paid from the wallet, by **one partner** chosen in
+  Settings → Money: general and workshop expenses, instructors' advances and
+  fees. No partner pays a cost personally.
 - Registration income, refunds and instructor payouts go through the same
   wallet.
 - Professional accounting on a **double-entry ledger**: every transaction
   balances; entries are never edited, only reversed.
 - Reports:
   - wallet balance and transaction history,
-  - each partner's capital, expenses paid and **ownership share**,
+  - each partner's capital and **ownership share**,
   - income and expenses by period, workshop and instructor,
   - profit and loss, and per-partner settlement,
   - CSV / PDF export and an audit trail of who did what.
@@ -634,8 +637,9 @@ Kept minimal; the whole schema is `src/db/schema.ts`.
 | `settings` | key / value: brand name, default language, SEO, theme, CDN, watermark, email texts |
 | `audit_log` | who did what in the super-admin panel |
 
-Course expenses are ledger transactions linked to their workshop (paid from
-the wallet or by a partner), not a table of their own. The database itself
+Course expenses are ledger transactions linked to their workshop (always paid
+from the shared wallet, by the one partner chosen in Settings → Money; no
+partner pays a cost personally), not a table of their own. The database itself
 rejects an unbalanced transaction and any change to ledger or audit rows: a
 correction is a reversal. A workshop is awaiting signature, published,
 confirmed, then closed (held and settled, figures locked), or cancelled; a

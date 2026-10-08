@@ -3,6 +3,7 @@
  * two coming up and full, so no visitor can register), their instructors,
  * students, photos and a whole month of money (capital, rent, materials,
  * payments, closings, instructor payments, a withdrawal).
+ * Costs are recorded by the first partner and paid from the wallet.
  *
  *   pnpm tsx scripts/demo-data.ts seed <photos-dir> <manifest.json>
  *   pnpm tsx scripts/demo-data.ts remove <manifest.json>
@@ -283,11 +284,7 @@ async function seed(photosDir: string, manifestPath: string) {
   }
   await db.transaction((tx) => post(() => L.postExpense(tx, { amount: lira(9_000), source: "wallet", occurredOn: L.today(at(-35, 12)), description: "Atölye kirası (Eylül)", createdBy: admin })))
   await db.transaction((tx) => post(() => L.postExpense(tx, { amount: lira(6_500), source: "wallet", occurredOn: L.today(at(-33, 12)), description: "Masa, sandalye ve raflar", createdBy: admin })))
-  if (partners[1]) {
-    await db.transaction((tx) =>
-      post(() => L.postExpense(tx, { amount: lira(1_200), source: { partnerId: partners[1].adminId }, occurredOn: L.today(at(-20, 12)), description: "Instagram reklamı", createdBy: partners[1].adminId })),
-    )
-  }
+  await db.transaction((tx) => post(() => L.postExpense(tx, { amount: lira(1_200), source: "wallet", occurredOn: L.today(at(-20, 12)), description: "Instagram reklamı", createdBy: admin })))
   await db.transaction((tx) => post(() => L.postExpense(tx, { amount: lira(9_000), source: "wallet", occurredOn: L.today(at(-5, 12)), description: "Atölye kirası (Ekim)", createdBy: admin })))
 
   // ── Workshops ──
@@ -403,7 +400,7 @@ async function seed(photosDir: string, manifestPath: string) {
     }
     if (w.fee.advance) {
       await db.transaction((tx) =>
-        post(() => L.postAdvance(tx, { courseId: course.id, amount: lira(w.fee.advance!), direction: "paid", source: "wallet", occurredOn: L.today(at(-2, 12)), description: "Eğitmen avansı", createdBy: admin })),
+        post(() => L.postAdvance(tx, { courseId: course.id, amount: lira(w.fee.advance!), direction: "paid", occurredOn: L.today(at(-2, 12)), description: "Eğitmen avansı", createdBy: admin })),
       )
     }
     const paying = w.held ? regIds.length : (w.paid ?? 0)
@@ -425,7 +422,7 @@ async function seed(photosDir: string, manifestPath: string) {
       const fee = owed.totals?.instructorFee ?? 0
       if (fee > 0) {
         await db.transaction((tx) =>
-          post(() => L.postInstructorPayment(tx, { courseId: course.id, amount: fee, source: "wallet", occurredOn: L.today(new Date(endsAt.getTime() + 3 * DAY)), description: "Eğitmen ücreti", createdBy: admin })),
+          post(() => L.postInstructorPayment(tx, { courseId: course.id, amount: fee, occurredOn: L.today(new Date(endsAt.getTime() + 3 * DAY)), description: "Eğitmen ücreti", createdBy: admin })),
         )
       }
     }

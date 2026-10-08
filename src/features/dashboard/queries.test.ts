@@ -130,7 +130,7 @@ async function seed(tx: Tx) {
   await income(w.w3, "2025-10-15", 70_000) // before the 12-month window
   await income(w.w5, "2026-09-20", 30_000)
   await income(w.w5, "2026-10-02", 45_000)
-  await postExpense(tx, { ...common, occurredOn: "2026-09-25", courseId: w.w4, amount: 8_000, source: { partnerId: b.id } })
+  await postExpense(tx, { ...common, occurredOn: "2026-09-25", courseId: w.w4, amount: 8_000, source: "wallet" })
   const general = await postExpense(tx, { ...common, occurredOn: "2026-10-03", amount: 5_000, source: "wallet" })
   await reverseTransaction(general, a.id, { tx, occurredOn: "2026-10-04" })
   // A closing entry moves a result to the partners: never counted as income again.
@@ -195,7 +195,7 @@ describe("dashboard queries", () => {
       expect(delta("2026-10-01")).toEqual({ revenue: 45_000, expenses: 0, net: 45_000 }) // the expense was reversed
       expect(delta("2026-08-01")).toEqual({ revenue: 0, expenses: 0, net: 0 })
 
-      expect(d.kpis.wallet - before.kpis.wallet).toBe(500_000 + 1_000 + 70_000 + 30_000 + 45_000)
+      expect(d.kpis.wallet - before.kpis.wallet).toBe(500_000 + 1_000 + 70_000 + 30_000 + 45_000 - 8_000) // W4's expense is paid from the wallet
       expect(d.kpis.revenueThisMonth - before.kpis.revenueThisMonth).toBe(45_000)
       expect(d.kpis.netThisYear - before.kpis.netThisYear).toBe(67_000)
       if (before.kpis.revenueLastMonth === 0) expect(d.kpis.revenueChange).toBe(0.5)
@@ -267,7 +267,7 @@ describe("dashboard queries", () => {
       const people = d.partners.filter((p) => Object.values(partners).includes(p.id))
       expect(people.map((p) => [p.id, p.shareBp, p.capital, p.active])).toEqual([
         [partners.a, 6000, 506_000, true],
-        [partners.b, 4000, 12_000, true],
+        [partners.b, 4000, 4_000, true],
         [partners.c, 0, 1_000, false],
       ])
 

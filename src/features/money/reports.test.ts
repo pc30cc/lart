@@ -41,6 +41,7 @@ describe("csv", () => {
 describe("reports", () => {
   let partner: { id: string; name: string }
   let courseId: string
+  let general: string
   let world: Awaited<ReturnType<typeof makeWorld>>
   let before: Awaited<ReturnType<typeof profitAndLoss>>
   let beforePersian: Awaited<ReturnType<typeof profitAndLoss>>
@@ -58,7 +59,7 @@ describe("reports", () => {
     await inTx(async (tx) => {
       await postRegistrationPayment(tx, { registrationId, occurredOn: "2003-02-10" })
       await postExpense(tx, { ...common, courseId, amount: 3000, occurredOn: "2003-05-05", source: "wallet" })
-      await postExpense(tx, { ...common, amount: 1000, occurredOn: "2003-05-06", source: { partnerId: partner.id } })
+      general = await postExpense(tx, { ...common, amount: 1000, occurredOn: "2003-05-06", source: "wallet" })
       await postTransaction(tx, {
         ...common,
         kind: "course_settlement",
@@ -159,10 +160,9 @@ describe("reports", () => {
     expect(statement.movements.map((m) => [m.occurredOn, m.kind, m.originalKind, m.amount, m.balance])).toEqual([
       ["2003-03-01", "capital_withdrawal", null, -30000, 70000],
       ["2003-03-02", "reversal", "capital_withdrawal", 30000, 100000],
-      ["2003-05-06", "expense", null, 1000, 101000],
-      ["2003-08-01", "course_close", null, 37000, 138000],
+      ["2003-08-01", "course_close", null, 37000, 137000],
     ])
-    expect(statement.closing).toBe(138000)
+    expect(statement.closing).toBe(137000)
   })
 
   it("exports the ledger line by line with the page's filters", async () => {
@@ -182,7 +182,8 @@ describe("reports", () => {
       ["course_close", "partner_capital", -37000],
     ]))
     expect(lines.map((l) => l.occurredOn)).toEqual([...lines.map((l) => l.occurredOn)].sort())
-    const byAccount = await ledgerExport(YEAR, { account: "general_expenses", partner: partner.id })
-    expect(byAccount.map((l) => l.account)).toEqual(["general_expenses", "partner_capital"]) // debit line first
+    // This test's general expense, its debit line first: the cost, then the wallet that paid it.
+    const byAccount = (await ledgerExport(YEAR, { account: "general_expenses" })).filter((l) => l.id === general)
+    expect(byAccount.map((l) => l.account)).toEqual(["general_expenses", "wallet"])
   })
 })

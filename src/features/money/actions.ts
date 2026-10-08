@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache"
 import { db } from "@/db"
 import { admins } from "@/db/schema"
 import { adminAction, UserError } from "@/lib/action"
+import { getSetting } from "@/lib/settings"
 import { closeCourse } from "./closing"
 import {
   postAdvance,
@@ -14,7 +15,6 @@ import {
   postInstructorPayment,
   postWithdrawal,
   reverseTransaction,
-  type Source,
 } from "./ledger"
 import {
   advanceSchema,
@@ -36,10 +36,22 @@ function revalidate() {
   revalidatePath("/[locale]/admin", "layout")
 }
 
-const toSource = (value: string): Source => (value === "wallet" ? "wallet" : { partnerId: value })
+/**
+ * Only the partner chosen in Settings → Money pays the business's costs from
+ * the wallet (expenses, instructors' advances and fees): anyone else is refused,
+ * and so is everyone while nobody is chosen.
+ */
+async function assertSpender(adminId: string) {
+  const { spenderId } = await getSetting("money")
+  if (spenderId === adminId) return
+  if (!spenderId) throw new UserError("money.errors.noSpender")
+  const [spender] = await db.select({ name: admins.name }).from(admins).where(eq(admins.id, spenderId))
+  throw new UserError("money.errors.notSpender", { values: { name: spender?.name ?? "" } })
+}
 
-/** A partner puts money into the wallet, or takes money out. */
+/** A partner puts money into the wallet, or takes money out (only while Settings → Money allows it). */
 export const recordCapital = adminAction(capitalSchema, async ({ direction, partnerId, amount, occurredOn, note }, ctx) => {
+  if (direction === "withdrawal" && !(await getSetting("money")).withdrawals) throw new UserError("money.errors.withdrawalsClosed")
   const id = await db.transaction(async (tx) => {
     const post = direction === "contribution" ? postContribution : postWithdrawal
     const id = await post(tx, { partnerId, amount, occurredOn, description: note, createdBy: ctx.admin.id })
@@ -53,15 +65,16 @@ export const recordCapital = adminAction(capitalSchema, async ({ direction, part
   return { id }
 })
 
-/** An expense of a workshop (`courseId`) or of the business, paid from the wallet, by a partner or out of the advance. */
+/** An expense of a workshop (`courseId`) or of the business, paid from the wallet or out of the advance; recorded by the spender. */
 export const recordExpense = adminAction(expenseSchema, async ({ courseId, category, amount, occurredOn, source }, ctx) => {
+  await assertSpender(ctx.admin.id)
   const id = await db.transaction(async (tx) => {
     const id = await postExpense(tx, {
       courseId,
       amount,
       occurredOn,
       description: category,
-      source: source === "advance" ? "advance" : toSource(source),
+      source,
       createdBy: ctx.admin.id,
     })
     await ctx.audit(
@@ -79,15 +92,15 @@ export const recordExpense = adminAction(expenseSchema, async ({ courseId, categ
   return { id }
 })
 
-/** An advance paid to a workshop's instructor, or returned by them. */
-export const recordAdvance = adminAction(advanceSchema, async ({ courseId, direction, amount, occurredOn, source, note }, ctx) => {
+/** An advance paid to a workshop's instructor from the wallet (by the spender), or returned by them to it. */
+export const recordAdvance = adminAction(advanceSchema, async ({ courseId, direction, amount, occurredOn, note }, ctx) => {
+  if (direction === "paid") await assertSpender(ctx.admin.id)
   const id = await db.transaction(async (tx) => {
     const id = await postAdvance(tx, {
       courseId,
       direction,
       amount,
       occurredOn,
-      source: toSource(source),
       description: note,
       createdBy: ctx.admin.id,
     })
@@ -96,7 +109,7 @@ export const recordAdvance = adminAction(advanceSchema, async ({ courseId, direc
         action: `money.advance_${direction}`,
         entity: "ledger_transaction",
         entityId: id,
-        data: { courseId, amount, occurredOn, source, note },
+        data: { courseId, amount, occurredOn, note },
       },
       tx,
     )
@@ -106,14 +119,14 @@ export const recordAdvance = adminAction(advanceSchema, async ({ courseId, direc
   return { id }
 })
 
-/** Pay the instructor what a closed workshop still owes them (or part of it). */
-export const payInstructor = adminAction(instructorPaymentSchema, async ({ courseId, amount, occurredOn, source, note }, ctx) => {
+/** Pay the instructor what a closed workshop still owes them (or part of it), from the wallet; by the spender. */
+export const payInstructor = adminAction(instructorPaymentSchema, async ({ courseId, amount, occurredOn, note }, ctx) => {
+  await assertSpender(ctx.admin.id)
   const id = await db.transaction(async (tx) => {
     const id = await postInstructorPayment(tx, {
       courseId,
       amount,
       occurredOn,
-      source: toSource(source),
       description: note,
       createdBy: ctx.admin.id,
     })
@@ -122,7 +135,7 @@ export const payInstructor = adminAction(instructorPaymentSchema, async ({ cours
         action: "money.instructor_payment",
         entity: "ledger_transaction",
         entityId: id,
-        data: { courseId, amount, occurredOn, source, note },
+        data: { courseId, amount, occurredOn, note },
       },
       tx,
     )

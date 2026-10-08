@@ -196,7 +196,7 @@ describe("getMyEarnings", () => {
     })
     const common = { occurredOn: today(), description: "", createdBy: adminId }
     await db.transaction(async (tx) => {
-      await postAdvance(tx, { ...common, courseId: course.id, amount: 40_000, direction: "paid", source: "wallet" })
+      await postAdvance(tx, { ...common, courseId: course.id, amount: 40_000, direction: "paid" })
       await postExpense(tx, { ...common, courseId: course.id, amount: 10_000, source: "advance" })
     })
 
@@ -229,10 +229,10 @@ describe("getMyEarnings", () => {
       await tx.update(courses).set({ status: "closed", closedAt: new Date(), closedTotals: totals }).where(eq(courses.id, course.id))
     })
     const mistake = await db.transaction((tx) =>
-      postInstructorPayment(tx, { ...common, courseId: course.id, amount: 70_000, source: "wallet" }),
+      postInstructorPayment(tx, { ...common, courseId: course.id, amount: 70_000 }),
     )
     await reverseTransaction(mistake, adminId)
-    await db.transaction((tx) => postInstructorPayment(tx, { ...common, courseId: course.id, amount: 50_000, source: "wallet" }))
+    await db.transaction((tx) => postInstructorPayment(tx, { ...common, courseId: course.id, amount: 50_000 }))
 
     const after = (await getMyEarnings()).workshops.find((w) => w.id === course.id)
     expect(after).toMatchObject({ fee: 150_000, received: 80_000, owed: 70_000, closed: true })
@@ -259,7 +259,6 @@ describe("getMyEarnings", () => {
         courseId: withAdvance.course.id,
         amount: 25_000,
         direction: "paid",
-        source: "wallet",
       }),
     )
     for (const { course } of [withAdvance, without]) {
@@ -276,9 +275,9 @@ describe("getMyEarnings", () => {
     const { course, contract } = await workshop(other)
     const common = { occurredOn: today(), description: "", createdBy: adminId, courseId: course.id }
     await db.transaction(async (tx) => {
-      await postAdvance(tx, { ...common, amount: 40_000, direction: "paid", source: "wallet" })
+      await postAdvance(tx, { ...common, amount: 40_000, direction: "paid" })
       await postExpense(tx, { ...common, amount: 10_000, source: "advance" })
-      await postAdvance(tx, { ...common, amount: 30_000, direction: "returned", source: "wallet" })
+      await postAdvance(tx, { ...common, amount: 30_000, direction: "returned" })
     })
     // Then the workshop moved to Zeynep, who got an advance of her own.
     await db.update(contracts).set({ status: "void", voidedAt: new Date() }).where(eq(contracts.id, contract.id))
@@ -294,7 +293,7 @@ describe("getMyEarnings", () => {
       sentAt: new Date(Date.now() + 1_000),
     })
     await new Promise((resolve) => setTimeout(resolve, 1_100))
-    await db.transaction((tx) => postAdvance(tx, { ...common, amount: 20_000, direction: "paid", source: "wallet" }))
+    await db.transaction((tx) => postAdvance(tx, { ...common, amount: 20_000, direction: "paid" }))
 
     as(zeynep)
     const row = (await getMyEarnings()).workshops.find((w) => w.id === course.id)

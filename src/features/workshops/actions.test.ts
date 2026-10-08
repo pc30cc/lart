@@ -167,7 +167,7 @@ async function createKept(overrides: Parameters<typeof workshopInput>[2] = {}) {
 /** An advance paid to the workshop's instructor, or returned by them (Money → advance). */
 const moveAdvance = (courseId: string, amount: number, direction: "paid" | "returned") =>
   db.transaction((tx) =>
-    postAdvance(tx, { courseId, amount, direction, source: "wallet", occurredOn: today(), description: "", createdBy: session.admin.id }),
+    postAdvance(tx, { courseId, amount, direction, occurredOn: today(), description: "", createdBy: session.admin.id }),
   )
 
 describe("createWorkshop", () => {

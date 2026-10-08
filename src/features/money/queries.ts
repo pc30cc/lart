@@ -7,6 +7,7 @@ import { db } from "@/db"
 import { admins, contracts, courses, instructors, ledgerLines, ledgerTransactions, type LocalizedText } from "@/db/schema"
 import { requireAdmin } from "@/lib/auth/admin"
 import { splitByShares } from "@/lib/money"
+import { getSetting } from "@/lib/settings"
 import { publicUrls } from "@/lib/storage"
 import { activePartners, prepareClosing, projectedFees, totalOf, workshopsToClose } from "./closing"
 import { accountBalances, booksClosed, openResult, partnerCapitals, registrationKinds, type Account, type TransactionKind } from "./ledger"
@@ -151,10 +152,34 @@ export async function getWalletOverview() {
   return { balances, openResult: open, recent, toClose, withInstructors: instructorsOpen, partners }
 }
 
-/** Active partners for the forms (who paid / who puts money in). */
+/** Active partners for the forms (who puts money in). */
 export async function listActivePartners() {
   await requireAdmin()
   return activePartners(db)
+}
+
+/**
+ * The money rules for this admin (Settings → Money): whether withdrawals are
+ * open, and why they cannot record a cost, if they cannot (null: they are the
+ * partner who pays the costs).
+ */
+export async function getMoneyRules() {
+  const { admin } = await requireAdmin()
+  const { withdrawals, spenderId } = await getSetting("money")
+  const [spender] = spenderId ? await db.select({ name: admins.name }).from(admins).where(eq(admins.id, spenderId)) : []
+  return {
+    withdrawals,
+    spenderName: spender?.name ?? null,
+    /** "none": nobody is chosen yet; "other": someone else pays the costs; null: this admin does. */
+    spendBlock: !spenderId ? ("none" as const) : spenderId === admin.id ? null : ("other" as const),
+  }
+}
+
+/** The text a cost dialog shows instead of its form, or null when this admin can record costs. */
+export function spendBlockText(rules: Awaited<ReturnType<typeof getMoneyRules>>, t: (key: string, values?: Record<string, string>) => string) {
+  if (rules.spendBlock === "none") return t("rules.noSpender")
+  if (rules.spendBlock === "other") return t("rules.onlySpender", { name: rules.spenderName ?? "" })
+  return null
 }
 
 // ─── Partners ─────────────────────────────────────────────────────────────────
@@ -198,7 +223,6 @@ export async function listPartnerAccounts() {
       photoUrl: url(photoPath),
       contributions: c?.contributions ?? 0,
       withdrawals: c?.withdrawals ?? 0,
-      paidForBusiness: c?.paidForBusiness ?? 0,
       profitShares: c?.profitShares ?? 0,
       capital,
       openShare,
@@ -304,7 +328,7 @@ export type WorkshopFinances = NonNullable<Awaited<ReturnType<typeof getWorkshop
 
 /**
  * What a workshop entry means, from its lines: the amount, and where the money
- * came from or went (the wallet, a partner personally, or the instructor's advance).
+ * came from or went (the wallet, or the instructor's advance).
  */
 export function describeEntry(entry: Entry) {
   const main: Account =
@@ -317,12 +341,7 @@ export function describeEntry(entry: Entry) {
     amount,
     /** For advance movements: paid to the instructor, or returned by them. */
     direction: (mainLine?.amount ?? 0) >= 0 ? ("paid" as const) : ("returned" as const),
-    source:
-      other?.account === "partner_capital"
-        ? { type: "partner" as const, name: other.partnerName ?? "" }
-        : other?.account === "instructor_advance"
-          ? { type: "advance" as const, name: "" }
-          : { type: "wallet" as const, name: "" },
+    source: other?.account === "instructor_advance" ? ("advance" as const) : ("wallet" as const),
   }
 }
 

@@ -10,7 +10,8 @@
     "email": "E-posta",
     "storage": "Depolama",
     "watermark": "Filigran",
-    "danger": "Tehlikeli bölge"
+    "danger": "Tehlikeli bölge",
+    "money": "Para"
   },
   "toast": {
     "saved": "Ayarlar kaydedildi."
@@ -432,6 +433,23 @@
       "passwordNeeded": "Şifrenizi girin.",
       "wrongPassword": "Şifre doğru değil.",
       "rateLimited": "Çok fazla deneme. 15 dakika sonra yeniden deneyin."
+    }
+  },
+  "money": {
+    "spender": {
+      "title": "Masrafların ödenmesi",
+      "description": "Masrafları ortak kasadan yalnızca bir ortak öder ve kaydeder: genel ve atölye masrafları, eğitmen avansları ve ücretleri. Diğer ortaklar yalnızca görür.",
+      "label": "Masrafları kim ödüyor?",
+      "nobody": "Henüz kimse seçilmedi"
+    },
+    "withdrawals": {
+      "title": "Ortakların para çekmesi",
+      "description": "Ortakların ortak kasadan kendileri için para çekmesi. Şimdilik kapalı.",
+      "label": "Ortak kasadan para çekmeye izin ver",
+      "hint": "Kapalıyken hiçbir ortak para çekme kaydedemez ve Para çek düğmesi görünmez."
+    },
+    "errors": {
+      "spender": "Etkin ortaklardan birini seçin."
     }
   }
 }

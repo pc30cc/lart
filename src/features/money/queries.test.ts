@@ -32,8 +32,8 @@ beforeAll(async () => {
   const common = { occurredOn: day, createdBy: partner.id }
   await db.transaction(async (tx) => {
     ids.contribution = await postContribution(tx, { ...common, description: "seed money", partnerId: partner.id, amount: 50000 })
-    ids.expense = await postExpense(tx, { ...common, description: `Kil ve sır ${tag}`, courseId, amount: 2500, source: { partnerId: partner.id } })
-    ids.advance = await postAdvance(tx, { ...common, description: "", courseId, amount: 3000, direction: "paid", source: "wallet" })
+    ids.expense = await postExpense(tx, { ...common, description: `Kil ve sır ${tag}`, courseId, amount: 2500, source: "wallet" })
+    ids.advance = await postAdvance(tx, { ...common, description: "", courseId, amount: 3000, direction: "paid" })
   })
   ids.reversal = (await reverseTransaction(ids.expense, partner.id, { occurredOn: day })).id
 })
@@ -52,19 +52,23 @@ const params = (sp: Record<string, string>) =>
 
 describe("money queries", () => {
   it("lists the ledger with filters, lines and reversal links", async () => {
-    const { rows, total } = await listTransactions(params({ partner: partner.id }), { from: day, to: day })
-    expect(total).toBe(3) // contribution, expense and its correction
+    // A partner's own lines: only their contribution (every cost is paid from the wallet).
+    const mine = await listTransactions(params({ partner: partner.id }), { from: day, to: day })
+    expect(mine.total).toBe(1)
+    expect(mine.rows[0]).toMatchObject({ id: ids.contribution, kind: "capital_contribution" })
+    const { rows, total } = await listTransactions(params({ workshop: courseId }), { from: day, to: day })
+    expect(total).toBe(3) // the expense, its correction and the advance
     const expense = rows.find((r) => r.id === ids.expense)!
-    expect(expense).toMatchObject({ kind: "expense", description: `Kil ve sır ${tag}`, reversedBy: ids.reversal, amount: 2500, walletChange: 0 })
+    expect(expense).toMatchObject({ kind: "expense", description: `Kil ve sır ${tag}`, reversedBy: ids.reversal, amount: 2500, walletChange: -2500 })
     expect(expense.lines.map((l) => [l.account, l.partnerName, l.amount])).toEqual([
       ["course_expenses", null, 2500],
-      ["partner_capital", "Queries Partner", -2500],
+      ["wallet", null, -2500],
     ])
     expect(isReversible(expense)).toBe(false)
     const correction = rows.find((r) => r.id === ids.reversal)!
     expect(correction).toMatchObject({ kind: "reversal", originalKind: "expense", reversalOf: ids.expense })
     expect(isReversible(correction)).toBe(false)
-    expect(isReversible(rows.find((r) => r.id === ids.contribution)!)).toBe(true)
+    expect(isReversible(mine.rows[0])).toBe(true)
     // A cancelled workshop stays "cancelled" once its books are closed: closed_at locks it.
     const locked = { reversedBy: null, courseStatus: "cancelled" as const, courseClosedAt: new Date() }
     expect(isReversible({ ...locked, kind: "expense" })).toBe(false)
@@ -90,8 +94,8 @@ describe("money queries", () => {
     expect(f.balances).toMatchObject({ advance: 3000, courseExpenses: 0 })
     expect(f.contract).toMatchObject({ feeType: "fixed", feeAmount: 9000, advanceAmount: 3000 })
     const expense = f.entries.find((e) => e.id === ids.expense)!
-    expect(expense).toMatchObject({ amount: 2500, source: { type: "partner", name: "Queries Partner" } })
-    expect(f.entries.find((e) => e.id === ids.advance)).toMatchObject({ direction: "paid", source: { type: "wallet" }, amount: 3000 })
+    expect(expense).toMatchObject({ amount: 2500, source: "wallet" })
+    expect(f.entries.find((e) => e.id === ids.advance)).toMatchObject({ direction: "paid", source: "wallet", amount: 3000 })
     expect(f.entries.some((e) => e.kind === "reversal")).toBe(false)
     expect(await getWorkshopFinances("00000000-0000-4000-8000-000000000000")).toBeNull()
   })
@@ -101,7 +105,7 @@ describe("money queries", () => {
     expect(overview.recent.length).toBeGreaterThan(0)
     expect(overview.withInstructors.find((r) => r.courseId === courseId)).toMatchObject({ advance: 3000, owed: 0 })
     const { rows } = await listPartnerAccounts()
-    expect(rows.find((r) => r.id === partner.id)).toMatchObject({ contributions: 50000, paidForBusiness: 0, capital: 50000 })
+    expect(rows.find((r) => r.id === partner.id)).toMatchObject({ contributions: 50000, capital: 50000 })
     const options = await getLedgerFilterOptions()
     expect(options.partners.some((p) => p.id === partner.id)).toBe(true)
     expect(options.workshops.some((w) => w.id === courseId)).toBe(true)

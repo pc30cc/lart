@@ -56,10 +56,6 @@ export const entryDate = () =>
     .refine((v) => v <= zonedParts(new Date()).date, { error: "money.validation.notInFuture" })
 
 const note = z.string().trim().max(200)
-/** "wallet", or the id of the partner who paid / received it personally. */
-const source = z.union([z.literal("wallet"), z.uuid({ error: "money.validation.chooseSource" })], {
-  error: "money.validation.chooseSource",
-})
 
 export const capitalSchema = z.object({
   direction: z.enum(["contribution", "withdrawal"]),
@@ -77,8 +73,8 @@ export const expenseSchema = z
     category: z.string().trim().min(1).max(100),
     amount,
     occurredOn: entryDate(),
-    /** "advance": spent by the instructor out of the advance (workshop expenses only). */
-    source: z.union([z.literal("advance"), source], { error: "money.validation.chooseSource" }),
+    /** "wallet", or "advance": spent by the instructor out of the advance (workshop expenses only). */
+    source: z.enum(["wallet", "advance"], { error: "money.validation.chooseSource" }),
   })
   .refine((v) => v.source !== "advance" || v.courseId, { path: ["source"], error: "money.validation.chooseSource" })
 export type ExpenseValues = z.input<typeof expenseSchema>
@@ -88,7 +84,6 @@ export const advanceSchema = z.object({
   direction: z.enum(["paid", "returned"]),
   amount,
   occurredOn: entryDate(),
-  source,
   note,
 })
 export type AdvanceValues = z.input<typeof advanceSchema>
@@ -97,7 +92,6 @@ export const instructorPaymentSchema = z.object({
   courseId: uuid(),
   amount,
   occurredOn: entryDate(),
-  source,
   note,
 })
 export type InstructorPaymentValues = z.input<typeof instructorPaymentSchema>

@@ -30,18 +30,21 @@ import { isIsoDate } from "./schema"
  * | Partner puts money in                       | capital_contribution | wallet                           | partner_capital (p)                       |
  * | Partner takes money out                     | capital_withdrawal   | partner_capital (p)              | wallet                                    |
  * | Expense paid from the wallet                | expense              | course_ or general_expenses      | wallet                                    |
- * | Expense paid personally by a partner        | expense              | course_ or general_expenses      | partner_capital (p)                       |
  * | Expense set off against the advance (6.4)   | expense              | course_expenses                  | instructor_advance                        |
- * | Advance paid to the instructor              | instructor_advance   | instructor_advance               | wallet / partner_capital (p)              |
- * | Advance returned by the instructor          | instructor_advance   | wallet / partner_capital (p)     | instructor_advance                        |
+ * | Advance paid to the instructor              | instructor_advance   | instructor_advance               | wallet                                    |
+ * | Advance returned by the instructor          | instructor_advance   | wallet                           | instructor_advance                        |
  * | Registration paid (phase 2)                 | registration_payment | wallet                           | revenue                                   |
  * | Registration refunded (phase 2)             | registration_refund  | revenue                          | wallet                                    |
  * | Closing (a): settlement                     | course_settlement    | instructor_fees (fee)            | instructor_advance (advance used),        |
  * |                                             |                      |                                  | instructor_payable (the rest)             |
  * | Closing (b): profit or loss to the partners | course_close         | revenue (its balance)            | instructor_fees, course_expenses (theirs) |
  * |                                             |                      | partner_capital (p) for a loss   | partner_capital (p) by share, for a profit|
- * | Instructor paid                             | instructor_payment   | instructor_payable               | wallet / partner_capital (p)              |
+ * | Instructor paid                             | instructor_payment   | instructor_payable               | wallet                                    |
  * | Correction                                  | reversal             | the mirror image of the original transaction                                 |
+ *
+ * Every cost is paid from the shared wallet: a partner never pays one
+ * personally (their capital moves only with contributions, withdrawals and
+ * profit shares).
  *
  * Closing entries (settlement, close) are dated on the day of closing and are
  * final: they are never reversed, and once a workshop is closed (`closed_at`
@@ -64,9 +67,6 @@ export type Posting = {
   createdBy: string | null
   lines: Line[]
 }
-/** Where money came from or went to: the shared wallet, or a partner personally. */
-export type Source = "wallet" | { partnerId: string }
-
 type Exec = Tx | typeof db
 
 /** A broken posting is a programming error, never the user's: shown as the generic message. */
@@ -80,11 +80,11 @@ export class LedgerError extends Error {
 const allowedAccounts: Record<Exclude<TransactionKind, "reversal">, readonly Account[]> = {
   capital_contribution: ["wallet", "partner_capital"],
   capital_withdrawal: ["wallet", "partner_capital"],
-  expense: ["course_expenses", "general_expenses", "wallet", "partner_capital", "instructor_advance"],
+  expense: ["course_expenses", "general_expenses", "wallet", "instructor_advance"],
   registration_payment: ["wallet", "revenue"],
   registration_refund: ["wallet", "revenue"],
-  instructor_advance: ["instructor_advance", "wallet", "partner_capital"],
-  instructor_payment: ["instructor_payable", "wallet", "partner_capital"],
+  instructor_advance: ["instructor_advance", "wallet"],
+  instructor_payment: ["instructor_payable", "wallet"],
   course_settlement: ["instructor_fees", "instructor_advance", "instructor_payable"],
   course_close: ["revenue", "instructor_fees", "course_expenses", "partner_capital"],
 }
@@ -199,9 +199,6 @@ export async function postTransaction(tx: Tx, p: Posting & { reversalOf?: string
   return row.id
 }
 
-const sourceLine = (source: Source, amount: number): Line =>
-  source === "wallet" ? { account: "wallet", amount } : { account: "partner_capital", partnerId: source.partnerId, amount }
-
 type Common = { occurredOn: string; description: string; createdBy: string }
 
 const positive = (amount: number) => {
@@ -238,12 +235,12 @@ export function postWithdrawal(tx: Tx, input: Common & { partnerId: string; amou
 
 /**
  * An expense: of a workshop (`courseId`) or of the business in general.
- * Paid from the wallet, by a partner personally, or (workshop only) out of the
- * instructor's advance, i.e. the instructor spent part of the advance on approved costs.
+ * Paid from the wallet, or (workshop only) out of the instructor's advance,
+ * i.e. the instructor spent part of the advance on approved costs.
  */
 export async function postExpense(
   tx: Tx,
-  input: Common & { courseId?: string | null; amount: number; source: Source | "advance" },
+  input: Common & { courseId?: string | null; amount: number; source: "wallet" | "advance" },
 ) {
   positive(input.amount)
   const { source, courseId = null } = input
@@ -259,16 +256,13 @@ export async function postExpense(
     courseId,
     lines: [
       { account: courseId ? "course_expenses" : "general_expenses", amount: input.amount },
-      source === "advance" ? { account: "instructor_advance", amount: -input.amount } : sourceLine(source, -input.amount),
+      { account: source === "advance" ? "instructor_advance" : "wallet", amount: -input.amount },
     ],
   })
 }
 
-/** An advance paid to the workshop's instructor, or (part of it) returned by them. */
-export async function postAdvance(
-  tx: Tx,
-  input: Common & { courseId: string; amount: number; direction: "paid" | "returned"; source: Source },
-) {
+/** An advance paid to the workshop's instructor from the wallet, or (part of it) returned by them to it. */
+export async function postAdvance(tx: Tx, input: Common & { courseId: string; amount: number; direction: "paid" | "returned" }) {
   positive(input.amount)
   const { status } = await lockCourse(tx, input.courseId)
   const sign = input.direction === "paid" ? 1 : -1
@@ -284,13 +278,13 @@ export async function postAdvance(
     kind: "instructor_advance",
     lines: [
       { account: "instructor_advance", amount: sign * input.amount },
-      sourceLine(input.source, -sign * input.amount),
+      { account: "wallet", amount: -sign * input.amount },
     ],
   })
 }
 
-/** Pay the instructor (part of) what the workshop owes them after closing. */
-export async function postInstructorPayment(tx: Tx, input: Common & { courseId: string; amount: number; source: Source }) {
+/** Pay the instructor (part of) what the workshop owes them after closing, from the wallet. */
+export async function postInstructorPayment(tx: Tx, input: Common & { courseId: string; amount: number }) {
   positive(input.amount)
   await lockCourse(tx, input.courseId)
   const { payable } = await courseBalances(tx, input.courseId)
@@ -300,7 +294,7 @@ export async function postInstructorPayment(tx: Tx, input: Common & { courseId: 
     kind: "instructor_payment",
     lines: [
       { account: "instructor_payable", amount: input.amount },
-      sourceLine(input.source, -input.amount),
+      { account: "wallet", amount: -input.amount },
     ],
   })
 }
@@ -526,11 +520,9 @@ export type PartnerCapital = {
   contributions: number
   /** Money taken out. */
   withdrawals: number
-  /** Expenses, advances and instructor payments paid personally for the business. */
-  paidForBusiness: number
   /** Profit (or, negative, loss) shares from closed workshops. */
   profitShares: number
-  /** The partner's capital account: contributions − withdrawals + paid + profit shares. */
+  /** The partner's capital account: contributions − withdrawals + profit shares. */
   capital: number
 }
 
@@ -560,12 +552,11 @@ export async function partnerCapitals(exec: Exec = db, before?: string): Promise
     if (!row.partnerId) continue
     const p =
       out.get(row.partnerId) ??
-      { partnerId: row.partnerId, contributions: 0, withdrawals: 0, paidForBusiness: 0, profitShares: 0, capital: 0 }
+      { partnerId: row.partnerId, contributions: 0, withdrawals: 0, profitShares: 0, capital: 0 }
     const amount = credit(row.total)
     if (row.kind === "capital_contribution") p.contributions += amount
     else if (row.kind === "capital_withdrawal") p.withdrawals += row.total
     else if (row.kind === "course_close") p.profitShares += amount
-    else p.paidForBusiness += amount
     p.capital += amount
     out.set(row.partnerId, p)
   }
