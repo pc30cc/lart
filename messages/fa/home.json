@@ -41,7 +41,9 @@
     "account": "حساب من",
     "contact": "تماس",
     "home": "صفحهٔ اصلی",
-    "instagram": "اینستاگرام"
+    "instagram": "اینستاگرام",
+    "showEmail": "نمایش نشانی ایمیل",
+    "showPhone": "نمایش شمارهٔ تلفن"
   },
   "atelier": {
     "menu": "منو",

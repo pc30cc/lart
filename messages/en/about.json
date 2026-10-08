@@ -1,0 +1,13 @@
+{
+  "metaTitle": "About us",
+  "kicker": "Our story",
+  "title": "About {brand}",
+  "partnersTitle": "Meet the team",
+  "partnersText": "The people who plan every workshop and welcome you at the table.",
+  "portraitAlt": "Portrait of {name}",
+  "cta": {
+    "title": "Make something with us",
+    "text": "Small groups, everything ready on the table, and a piece of your own to take home.",
+    "button": "See upcoming workshops"
+  }
+}

@@ -49,6 +49,18 @@ export const admins = pgTable("admins", {
   lockedUntil: timestamp("locked_until", { withTimezone: true }),
   /** Profile photo (`partners/<name>/photo-<random>.webp`; older ones `admins/…`): stored like every other file, shown only inside the panel. */
   photoPath: text("photo_path"),
+  /**
+   * The partner on the public About page (/about), filled in by themselves on
+   * My profile: shown only while `aboutShown` (their consent to publish), with
+   * a public portrait (`partners/<name>/portrait-<random>.webp`, never the
+   * panel's photo), their name as each language writes it (else `name`), a
+   * role and a few words about them, in Persian, Turkish and English.
+   */
+  aboutShown: boolean("about_shown").notNull().default(false),
+  aboutName: localized("about_name").notNull().default({}),
+  aboutRole: localized("about_role").notNull().default({}),
+  aboutBio: localized("about_bio").notNull().default({}),
+  portraitPath: text("portrait_path"),
   createdAt: createdAt(),
 }, (t) => [
   check("admins_share_bp_range", sql`${t.shareBp} between 0 and 10000`),

@@ -39,8 +39,14 @@ export type FooterContent = {
   about: string
   /** An Instagram address (https://instagram.com/…) or "" */
   instagram: string
-  email: string
-  phone: string
+  /**
+   * The email address and phone number, concealed (lib/conceal) so spam
+   * harvesters never read them in the page: a theme shows them with
+   * `ProtectedContact` (components/site/protected-contact), never as text.
+   * "" when not set.
+   */
+  emailCode: string
+  phoneCode: string
 }
 
 export type SiteFrameProps = {
@@ -116,6 +122,44 @@ export type HomeData = {
   }
 }
 
+/** A partner on the About page, in the page's language: only partners who chose to be shown. */
+export type AboutPartner = {
+  /** Stable key for lists. */
+  key: string
+  name: string
+  /** "" when they wrote none in this language (never another language's). */
+  role: string
+  /** Their own words in this language, "" when none (a theme leaves the paragraph out). */
+  bio: string
+  portraitUrl: string | null
+}
+
+/**
+ * The About page (/about), in the page's language: the brand's few sentences
+ * (the footer's "About us" text, Settings → Home page, else the bundled one),
+ * the partners who chose to be shown (My profile; none: the page keeps its
+ * intro and call to action), and the story band's photo (Settings → Home page
+ * → Story, else null: the theme's own). Its only h1 is `title`; each partner's
+ * name is an h3 under the `partnersTitle` h2.
+ */
+export type AboutData = {
+  locale: string
+  brand: string
+  kicker: string
+  title: string
+  intro: string
+  partners: AboutPartner[]
+  storyImageUrl: string | null
+  labels: {
+    partnersTitle: string
+    partnersText: string
+    portraitAlt: (name: string) => string
+    ctaTitle: string
+    ctaText: string
+    ctaButton: string
+  }
+}
+
 export type WorkshopCardProps = {
   workshop: WorkshopCard
   /** Load the cover image first (the first cards on screen). */
@@ -130,6 +174,8 @@ export type Theme = {
   Frame: (props: SiteFrameProps) => ReactNode | Promise<ReactNode>
   /** The home page's sections. */
   Home: (props: { data: HomeData }) => ReactNode | Promise<ReactNode>
+  /** The About page (/about): the brand's story and the partners. */
+  About: (props: { data: AboutData }) => ReactNode | Promise<ReactNode>
   /** One workshop in a list (home page and /workshops). */
   WorkshopCard: (props: WorkshopCardProps) => ReactNode | Promise<ReactNode>
   /** The browser's theme colour (mobile address bar) for light and dark. */

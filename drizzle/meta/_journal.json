@@ -71,6 +71,27 @@
       "when": 1791457038431,
       "tag": "0009_site_logo",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791469936499,
+      "tag": "0010_seo_texts",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791470269820,
+      "tag": "0011_partner_about",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791470647948,
+      "tag": "0012_footer_contact",
+      "breakpoints": true
     }
   ]
 }

@@ -69,7 +69,7 @@ export function WorkshopCard({ workshop: w, priority, headingAs: Heading = "h2" 
  * A card without a cover: the title's first letter, large and quiet, on warm
  * paper with a thin inner line, like a print's mount.
  */
-function Monogram({ title }: { title: string }) {
+export function Monogram({ title }: { title: string }) {
   const letter = Array.from(title.trim())[0] ?? ""
   return (
     <div

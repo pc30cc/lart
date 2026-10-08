@@ -3,6 +3,7 @@
     "home": "{brand}: ana sayfa",
     "nav": "Ana menü",
     "workshops": "Atölyeler",
+    "about": "Hakkımızda",
     "logIn": "Giriş yap",
     "logInOrSignUp": "Giriş yap / Üye ol",
     "account": "Hesabınız",
@@ -11,6 +12,7 @@
     "logOut": "Çıkış yap"
   },
   "home": {
+    "metaTitle": "İstanbul’da sanat atölyeleri",
     "metaDescription": "{brand} sanat atölyeleri: yaklaşan atölyelere göz atın, yerinizi ayırtın.",
     "tagline": "Kendi ellerinizle güzel bir şey yapın. Bir atölye seçin ve yerinizi ayırtın.",
     "cta": "Tüm atölyeleri gör",
@@ -32,6 +34,15 @@
   },
   "error": {
     "workshops": "Tüm atölyeleri görün"
+  },
+  "notFound": {
+    "metaTitle": "Sayfa bulunamadı",
+    "eyebrow": "Sayfa bulunamadı",
+    "title": "Bu sayfayı bulamadık",
+    "description": "Bağlantı eski ya da hatalı olabilir veya sayfa taşınmış olabilir. Geri dönmenin birkaç yolu:",
+    "workshopDescription": "Bu atölye sona ermiş ya da adresi değişmiş olabilir. Yaklaşan atölyeler bir tık uzağınızda.",
+    "workshops": "Yaklaşan atölyeler",
+    "home": "Ana sayfaya git"
   },
   "footer": {
     "rights": "© {year} {brand}"

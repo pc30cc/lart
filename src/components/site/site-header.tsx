@@ -3,6 +3,8 @@ import { Suspense } from "react"
 
 import { Link } from "@/i18n/navigation"
 import type { LogoSize } from "@/lib/logo"
+import { cn } from "@/lib/utils"
+import type { NavItem } from "@/themes/types"
 import { BrandLogo } from "@/themes/logo"
 import { AccountMenu } from "./account-menu"
 import { LocaleMenu } from "./locale-menu"
@@ -11,7 +13,7 @@ export type HeaderMember = { name: string; email: string }
 
 /**
  * The classic theme's header (src/themes/default; other themes bring their
- * own): the brand as a wordmark, or its logo (to the home page), a "Workshops" link, the
+ * own): the brand as a wordmark, or its logo (to the home page), the menu's links, the
  * language and the account button. `top` is shown above it, inside the sticky
  * header (the "viewing as" bar while a super admin views as the member).
  */
@@ -20,11 +22,14 @@ export async function SiteHeader({
   logo,
   member,
   top,
+  nav,
 }: {
   brand: string
   logo: LogoSize | null
   member: HeaderMember | null
   top?: React.ReactNode
+  /** The main menu (Workshops, About us, …). */
+  nav: NavItem[]
 }) {
   const t = await getTranslations("site.header")
   const signedIn = Boolean(member)
@@ -50,13 +55,20 @@ export async function SiteHeader({
             {brand}
           </Link>
         )}
-        <nav aria-label={t("nav")} className="shrink-0">
-          <Link
-            href="/workshops"
-            className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 rounded-md px-1 py-2 text-sm font-medium outline-none focus-visible:ring-3"
-          >
-            {t("workshops")}
-          </Link>
+        <nav aria-label={t("nav")} className="flex shrink-0 items-center gap-1 sm:gap-4">
+          {nav.map((item, i) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 rounded-md px-1 py-2 text-sm font-medium outline-none focus-visible:ring-3",
+                // A phone has room for the first link only; the footer lists them all.
+                i > 0 && "max-sm:hidden",
+              )}
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
         <div className="ms-auto flex shrink-0 items-center gap-1 sm:gap-2">
           {/* Both read the query string (to keep it when switching language / come back after logging in). */}

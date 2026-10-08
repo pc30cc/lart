@@ -111,5 +111,24 @@
   },
   "notices": {
     "welcome": "Ekibe hoş geldiniz! Kâr payınız şimdilik %0. Payları Finans → Ortaklar sayfasında birlikte ayarlayabilirsiniz."
+  },
+  "about": {
+    "title": "Hakkımızda sayfasında",
+    "description": "Herkese açık Hakkımızda sayfasında (/about) nasıl göründüğünüz. Yalnızca siz değiştirirsiniz; siz açana kadar hiçbir şey gösterilmez.",
+    "show": "Beni Hakkımızda sayfasında göster",
+    "showHint": "Portreniz, adınız, rolünüz ve yazınız herkese açık sitede, her dilde görünür. İstediğiniz zaman kapatabilirsiniz.",
+    "viewPage": "Hakkımızda sayfasını gör",
+    "portrait": "Portre",
+    "portraitHint": "Herkese açıktır ve paneldeki fotoğrafınızdan ayrıdır. Dikey bir fotoğraf en iyi görünür (4:5 gösterilir).",
+    "name": "Sitedeki adınız",
+    "nameHint": "İsteğe bağlı, her dilde (örneğin adınız Fars harfleriyle). Boş bırakılırsa profilinizdeki ad.",
+    "role": "Rol",
+    "roleHint": "Birkaç kelime, örneğin “Kurucu ortak · Seramik”. Yalnızca doldurduğunuz dillerde gösterilir.",
+    "bio": "Hakkınızda",
+    "bioHint": "Kısa bir tanıtım. Gösterildiğiniz sürece üç dilde de gerekir; böylece her dilin sayfasında kendi sözleriniz olur.",
+    "saved": "Hakkımızda sayfasındaki bilgileriniz kaydedildi.",
+    "errors": {
+      "portrait": "Bu portre kullanılamadı. Lütfen yeniden yükleyin."
+    }
   }
 }

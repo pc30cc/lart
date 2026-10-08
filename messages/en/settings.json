@@ -19,10 +19,10 @@
     "brandDescription": "Shown across the whole site, in emails, terms and contracts: everywhere the text says {token}. Change it here and it changes everywhere.",
     "brand": "Brand name",
     "languageTitle": "Main language",
-    "languageDescription": "The site’s own language: its pages have no language in their address (for example /workshops); the other languages add theirs in front. Emails also use it when someone’s language isn’t known.",
+    "languageDescription": "The site’s own language: its pages have no language in their address (for example /workshops); the other languages add theirs in front. Emails also use it when someone’s language isn’t known. Changing it changes every page’s address, and search engines take weeks to learn the new ones, so choose it once, with care.",
     "defaultLocale": "Language",
     "seoTitle": "Search engines",
-    "seoDescription": "The title and description that Google and social media show for pages that don’t have their own.",
+    "seoDescription": "The home page’s title and description in Google’s results and when a link to it is shared. Write the title in full, with the brand’s name; the other pages have their own title and description.",
     "seoPageTitle": "Title",
     "seoPageTitleHint": "Around 50–60 characters works best.",
     "seoPageDescription": "Description",
@@ -61,7 +61,7 @@
       "smtpPassword": "Password"
     },
     "hints": {
-      "fromAddress": "An address on a domain verified with your provider, e.g. hello@limer.tr.",
+      "fromAddress": "An address on a domain verified with your provider, e.g. hello@example.com.",
       "replyTo": "Optional. Where replies go; empty means the sender address.",
       "resendKey": "Starts with re_. It is stored encrypted and never shown again.",
       "resendKeyServer": "Optional: the server already has a key (RESEND_API_KEY). Enter one here to use another.",
@@ -258,7 +258,8 @@
         "invite_resend": "Partner invitation sent again",
         "invite_cancel": "Partner invitation cancelled",
         "accept_invite": "Partner invitation accepted",
-        "profile_update": "Own profile edited"
+        "profile_update": "Own profile edited",
+        "about_update": "About page entry edited"
       },
       "auth": {
         "login": "Signed in",

@@ -19,12 +19,14 @@ import { Button } from "@/components/ui/button"
 import { PaymentBadge } from "@/features/registrations/components/payment-badge"
 import { getPublicWorkshop, myActiveRegistrations, type PublicWorkshop } from "@/features/registrations/public"
 import { Link } from "@/i18n/navigation"
+import { isRtl } from "@/i18n/locales"
 import { absoluteLocaleUrl, localeHref } from "@/i18n/links"
 import { formatDate, formatDateTime, formatTimeRange } from "@/lib/format"
-import { absoluteUrl, alternates, jsonLdText, ogLocale } from "@/lib/seo"
+import { absoluteUrl, alternates, jsonLdText, openGraphOf } from "@/lib/seo"
 import { getBrand } from "@/lib/settings"
 import { cn } from "@/lib/utils"
 import { AgeLabel, AvailabilityBadge, Price } from "@/components/site/workshop-labels"
+import { pageLocale } from "@/i18n/page-locale"
 
 /** Search engines get a summary of at most this many characters. */
 const DESCRIPTION_MAX = 160
@@ -33,12 +35,15 @@ const clip = (text: string, max: number) =>
   text.length <= max ? text : `${text.slice(0, max - 1).replace(/\s+\S*$/, "")}…`
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/workshops/[slug]">): Promise<Metadata> {
-  const { locale, slug } = await params
+  const { locale: raw, slug } = await params
+  const locale = pageLocale(raw)
   const w = await getPublicWorkshop(slug, locale)
-  if (!w) return {}
+  // Not there: the not-found page and its title (not this page's empty one).
+  if (!w) notFound()
   const [t, brand] = await Promise.all([getTranslations({ locale, namespace: "registration.workshop" }), getBrand(locale)])
+  // Only the intro written in this language: another language's text would describe the page in the wrong one.
   const description = clip(
-    w.intro.replace(/\s+/g, " ") ||
+    w.ownIntro.replace(/\s+/g, " ") ||
       t("metaDescription", { title: w.title, date: formatDate(w.startsAt, locale, "long"), venue: w.venue, brand }),
     DESCRIPTION_MAX,
   )
@@ -54,17 +59,16 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/workshop
       type: "website",
       title: w.title,
       description,
-      url: links.canonical,
       siteName: brand,
-      locale: ogLocale[locale],
-      images: w.coverUrl ? [{ url: absoluteUrl(w.coverUrl), alt: w.title }] : undefined,
+      ...openGraphOf(locale, links.canonical, w.coverUrl ? [{ url: absoluteUrl(w.coverUrl), alt: w.title }] : undefined),
     },
   }
 }
 
 /** A workshop's page: everything about it, and one big "Register" button while places are open. */
 export default async function WorkshopPage({ params }: PageProps<"/[locale]/workshops/[slug]">) {
-  const { locale, slug } = await params
+  const { locale: raw, slug } = await params
+  const locale = pageLocale(raw)
   const w = await getPublicWorkshop(slug, locale)
   if (!w) notFound()
   const [t, brand, mine] = await Promise.all([
@@ -78,14 +82,17 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/work
     "@context": "https://schema.org",
     "@type": "Event",
     name: w.title,
-    ...(w.intro ? { description: w.intro } : {}),
+    ...(w.ownIntro ? { description: w.ownIntro } : {}),
     startDate: w.startsAt.toISOString(),
     endDate: w.endsAt.toISOString(),
     eventStatus: `https://schema.org/${w.window === "cancelled" ? "EventCancelled" : "EventScheduled"}`,
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-    inLanguage: locale,
     url: canonical,
-    location: { "@type": "Place", name: w.venue, address: w.venue },
+    location: {
+      "@type": "Place",
+      name: w.venue,
+      address: { "@type": "PostalAddress", streetAddress: w.venue, addressLocality: "İstanbul", addressCountry: "TR" },
+    },
     ...(w.coverUrl || w.samples.length
       ? { image: [w.coverUrl, ...w.samples.map((s) => s.url)].filter(Boolean).map((u) => absoluteUrl(u!)) }
       : {}),
@@ -151,20 +158,20 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/work
         <div className="space-y-10 lg:col-start-1">
           {w.intro && (
             <Section title={t("about")}>
-              <Paragraphs text={w.intro} />
+              <Paragraphs text={w.intro} lang={w.textLang.intro} />
             </Section>
           )}
           {w.includes && (
             <Section title={t("includes")}>
-              <Paragraphs text={w.includes} />
+              <Paragraphs text={w.includes} lang={w.textLang.includes} />
             </Section>
           )}
-          <Section title={t("bring")}>{w.bring ? <Paragraphs text={w.bring} /> : <p>{t("bringNothing")}</p>}</Section>
+          <Section title={t("bring")}>{w.bring ? <Paragraphs text={w.bring} lang={w.textLang.bring} /> : <p>{t("bringNothing")}</p>}</Section>
           <Section title={t("experience")}>
             {w.experienceRequired ? (
               <>
                 <p>{t("experienceNeeded")}</p>
-                {w.experienceNote && <Paragraphs text={w.experienceNote} />}
+                {w.experienceNote && <Paragraphs text={w.experienceNote} lang={w.textLang.experienceNote} />}
               </>
             ) : (
               <p>{t("noExperience")}</p>
@@ -172,7 +179,7 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/work
           </Section>
           {w.notes && (
             <Section title={t("notes")}>
-              <Paragraphs text={w.notes} />
+              <Paragraphs text={w.notes} lang={w.textLang.notes} />
             </Section>
           )}
           {w.samples.length > 0 && (
@@ -212,8 +219,12 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/work
                 )}
                 <div className="min-w-0 space-y-1">
                   <p className="text-lg font-semibold">{w.instructor.name}</p>
-                  {w.instructor.field && <p className="text-primary text-sm">{w.instructor.field}</p>}
-                  {w.instructor.bio && <Paragraphs text={w.instructor.bio} className="text-muted-foreground pt-1" />}
+                  {w.instructor.field && (
+                    <p className="text-primary text-sm" {...langProps(w.instructor.fieldLang)}>
+                      {w.instructor.field}
+                    </p>
+                  )}
+                  {w.instructor.bio && <Paragraphs text={w.instructor.bio} lang={w.instructor.bioLang} className="text-muted-foreground pt-1" />}
                 </div>
               </div>
             </Section>
@@ -232,7 +243,7 @@ async function Facts({ workshop: w, locale }: { workshop: PublicWorkshop; locale
   const rows: { icon: LucideIcon; label: string; value: React.ReactNode }[] = [
     { icon: CalendarDaysIcon, label: t("date"), value: formatDate(w.startsAt, locale, "full") },
     { icon: ClockIcon, label: t("time"), value: <bdi>{formatTimeRange(w.startsAt, w.endsAt, locale)}</bdi> },
-    { icon: MapPinIcon, label: t("venue"), value: w.venue },
+    { icon: MapPinIcon, label: t("venue"), value: <span {...langProps(w.textLang.venue)}>{w.venue}</span> },
     { icon: UsersRoundIcon, label: t("age"), value: <AgeLabel ageMin={w.ageMin} ageMax={w.ageMax} /> },
   ]
   return (
@@ -388,10 +399,16 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-/** Admin-written text: blank lines start a new paragraph, single line breaks are kept. */
-function Paragraphs({ text, className }: { text: string; className?: string }) {
+/** `lang` and `dir` of a text shown from another language (null: the page's own, nothing to add). */
+const langProps = (lang: string | null) => (lang ? { lang, dir: isRtl(lang) ? "rtl" : "ltr" } : {})
+
+/**
+ * Admin-written text: blank lines start a new paragraph, single line breaks
+ * are kept. `lang`: the language it is in when not the page's (a fallback).
+ */
+function Paragraphs({ text, lang = null, className }: { text: string; lang?: string | null; className?: string }) {
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn("space-y-3", className)} {...langProps(lang)}>
       {text.split(/\n\s*\n/).map((p, i) => (
         <p key={i} className="whitespace-pre-line">
           {p.trim()}

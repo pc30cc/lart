@@ -19,10 +19,10 @@
     "brandDescription": "Sitenin her yerinde, e-postalarda, koşullarda ve sözleşmelerde, yani metinde {token} geçen her yerde gösterilir. Burada değiştirdiğinizde her yerde değişir.",
     "brand": "Marka adı",
     "languageTitle": "Ana dil",
-    "languageDescription": "Sitenin kendi dili: sayfalarının adresinde dil yoktur (örneğin /workshops); diğer diller adresin başına kendi kısaltmasını ekler. Birinin dili bilinmediğinde e-postalar da bu dilde gönderilir.",
+    "languageDescription": "Sitenin kendi dili: sayfalarının adresinde dil yoktur (örneğin /workshops); diğer diller adresin başına kendi kısaltmasını ekler. Birinin dili bilinmediğinde e-postalar da bu dilde gönderilir. Değiştirmek bütün sayfaların adresini değiştirir ve arama motorlarının yeni adresleri öğrenmesi haftalar sürer; bu yüzden bir kez ve dikkatle seçin.",
     "defaultLocale": "Dil",
     "seoTitle": "Arama motorları",
-    "seoDescription": "Kendi başlığı ve açıklaması olmayan sayfalar için Google’ın ve sosyal medyanın gösterdiği başlık ve açıklama.",
+    "seoDescription": "Ana sayfanın Google sonuçlarında ve bağlantı paylaşıldığında görünen başlığı ve açıklaması. Başlığı marka adıyla birlikte tam yazın; diğer sayfaların kendi başlığı ve açıklaması vardır.",
     "seoPageTitle": "Başlık",
     "seoPageTitleHint": "50–60 karakter civarı en iyi sonucu verir.",
     "seoPageDescription": "Açıklama",
@@ -61,7 +61,7 @@
       "smtpPassword": "Şifre"
     },
     "hints": {
-      "fromAddress": "Servisinizde doğrulanmış bir alan adında adres, örn. hello@limer.tr.",
+      "fromAddress": "Servisinizde doğrulanmış bir alan adında adres, örn. hello@example.com.",
       "replyTo": "İsteğe bağlı. Yanıtların gideceği adres; boşsa gönderen adresi.",
       "resendKey": "re_ ile başlar. Şifrelenerek saklanır ve bir daha gösterilmez.",
       "resendKeyServer": "İsteğe bağlı: sunucuda zaten bir anahtar var (RESEND_API_KEY). Başkasını kullanmak için buraya girin.",
@@ -258,7 +258,8 @@
         "invite_resend": "Ortak daveti yeniden gönderildi",
         "invite_cancel": "Ortak daveti iptal edildi",
         "accept_invite": "Ortak daveti kabul edildi",
-        "profile_update": "Kendi profilini düzenledi"
+        "profile_update": "Kendi profilini düzenledi",
+        "about_update": "Hakkımızda sayfası bilgileri düzenlendi"
       },
       "auth": {
         "login": "Giriş yapıldı",

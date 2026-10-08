@@ -1,6 +1,9 @@
 import { MailIcon, PhoneIcon } from "lucide-react"
 import { getTranslations } from "next-intl/server"
 
+import { LanguageLinks } from "@/components/site/language-links"
+import { InstagramGlyph } from "@/components/site/instagram-glyph"
+import { ProtectedContact } from "@/components/site/protected-contact"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Link } from "@/i18n/navigation"
 import { formatYear } from "@/lib/format"
@@ -38,12 +41,10 @@ export async function Footer({
   // This year in the language's calendar (۱۴۰۵ in Persian).
   const year = formatYear(new Date(), locale)
 
-  const contacts = [
-    footer.email && { href: `mailto:${footer.email}`, label: footer.email, icon: <MailIcon />, ltr: true, wrap: true },
-    footer.phone && { href: `tel:${footer.phone.replace(/[^\d+]/g, "")}`, label: footer.phone, icon: <PhoneIcon />, ltr: true, wrap: false },
-    // Only a web address (never a javascript: or other scheme typed into the setting).
-    /^https:\/\/[^\s"]+$/i.test(footer.instagram) && { href: footer.instagram, label: t("instagram"), icon: <InstagramGlyph />, ltr: false, wrap: false },
-  ].filter((c) => !!c)
+  // Only a web address (never a javascript: or other scheme typed into the setting).
+  const instagram = /^https:\/\/[^\s"]+$/i.test(footer.instagram) ? footer.instagram : ""
+  const contactLink =
+    "hover:text-at-cream focus-visible:ring-at-cream/50 text-at-cream/80 inline-flex max-w-full items-center gap-2.5 rounded-sm outline-none focus-visible:ring-3 [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:opacity-70"
 
   return (
     <footer className="bg-at-deep text-at-deep-foreground mt-auto">
@@ -64,24 +65,39 @@ export async function Footer({
               <FooterLink href="/account/login">{th("logInOrSignUp")}</FooterLink>
             )}
           </Column>
-          {contacts.length > 0 && (
+          {(footer.emailCode || footer.phoneCode || instagram) && (
             // On a phone the whole row: an email address in half of it would break mid-domain.
             <Column title={t("contact")} className="col-span-2 md:col-span-1">
-              {contacts.map((c) => (
-                <li key={c.href}>
-                  <a
-                    href={c.href}
-                    {...(c.ltr ? {} : { target: "_blank", rel: "noopener noreferrer" })}
-                    className={cn(
-                      "hover:text-at-cream focus-visible:ring-at-cream/50 text-at-cream/80 inline-flex max-w-full items-center gap-2.5 rounded-sm outline-none focus-visible:ring-3 [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:opacity-70",
-                      c.wrap ? "[overflow-wrap:anywhere]" : "whitespace-nowrap",
-                    )}
-                  >
-                    {c.icon}
-                    <span dir={c.ltr ? "ltr" : undefined}>{c.label}</span>
+              {footer.emailCode && (
+                <li>
+                  <ProtectedContact
+                    kind="email"
+                    code={footer.emailCode}
+                    label={t("showEmail")}
+                    icon={<MailIcon aria-hidden />}
+                    className={cn(contactLink, "[overflow-wrap:anywhere]")}
+                  />
+                </li>
+              )}
+              {footer.phoneCode && (
+                <li>
+                  <ProtectedContact
+                    kind="phone"
+                    code={footer.phoneCode}
+                    label={t("showPhone")}
+                    icon={<PhoneIcon aria-hidden />}
+                    className={cn(contactLink, "whitespace-nowrap")}
+                  />
+                </li>
+              )}
+              {instagram && (
+                <li>
+                  <a href={instagram} target="_blank" rel="noopener noreferrer" className={cn(contactLink, "whitespace-nowrap")}>
+                    <InstagramGlyph />
+                    <span>{t("instagram")}</span>
                   </a>
                 </li>
-              ))}
+              )}
             </Column>
           )}
           <div className="col-span-2 md:col-span-1 md:col-start-4">
@@ -94,9 +110,12 @@ export async function Footer({
       {logo ? <LogoWordmark logo={logo} /> : <Wordmark text={brand} />}
 
       <div className="bg-at-bar text-foreground relative">
-        <div className="at-container flex min-h-16 items-center justify-between gap-4 py-3 text-sm">
+        <div className="at-container flex min-h-16 flex-wrap items-center justify-between gap-x-6 gap-y-2 py-3 text-sm">
           <p>{tf("rights", { brand, year })}</p>
-          <ThemeToggle />
+          <div className="flex items-center gap-5">
+            <LanguageLinks signedIn={member !== null} linkClassName="text-foreground/75 hover:text-foreground" />
+            <ThemeToggle />
+          </div>
         </div>
       </div>
     </footer>
@@ -162,16 +181,5 @@ function FooterLink({ href, children }: { href: string; children: React.ReactNod
         {children}
       </Link>
     </li>
-  )
-}
-
-/** Instagram's camera outline (lucide has no brand icons). */
-function InstagramGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <rect x="3" y="3" width="18" height="18" rx="5" />
-      <circle cx="12" cy="12" r="4" />
-      <circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" stroke="none" />
-    </svg>
   )
 }

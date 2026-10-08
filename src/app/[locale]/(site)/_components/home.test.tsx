@@ -43,7 +43,12 @@ vi.mock("@/lib/settings", async () => {
     getSetting: async (key: keyof typeof settingDefaults) => saved[key] ?? settingDefaults[key],
   }
 })
-vi.mock("@/lib/seo", () => ({ alternates: async () => ({}), ogLocale: {} }))
+vi.mock("@/lib/seo", () => ({
+  alternates: async () => ({ canonical: "http://localhost/en", languages: { "x-default": "http://localhost/" } }),
+  openGraphOf: () => ({}),
+  siteOgImage: () => ({ url: "http://localhost/og.png" }),
+  jsonLdText: (data: object) => JSON.stringify(data),
+}))
 
 const startsAt = new Date(Date.now() + 5 * 86_400_000)
 const workshop: WorkshopCard = {

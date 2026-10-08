@@ -17,6 +17,8 @@ const frames: Record<ImagePurpose, string> = {
   watermark_logo: "aspect-[3/1] w-full max-w-md",
   // As wide as instructor_photo: any narrower and the empty dropzone's text no longer fits (Turkish is clipped).
   admin_photo: "aspect-square w-full max-w-56",
+  // The About page frames it 4:5.
+  partner_portrait: "aspect-[4/5] w-full max-w-56",
   site_image: "aspect-[3/2] w-full",
 }
 

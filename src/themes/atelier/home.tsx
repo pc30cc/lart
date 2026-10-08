@@ -33,16 +33,16 @@ export function Home({ data }: { data: HomeData }) {
 }
 
 /** A stagger for the items of a row of four (`data-reveal` elements). */
-const delay = (i: number): CSSProperties => ({ ["--reveal-delay" as string]: `${(i % 4) * 110}ms` })
+export const delay = (i: number): CSSProperties => ({ ["--reveal-delay" as string]: `${(i % 4) * 110}ms` })
 
 /** A section photo: the admin's upload, else the theme's own (with its description). */
-function useSectionPhoto(url: string | null, own: AtelierPhoto): HeroPhoto {
+export function useSectionPhoto(url: string | null, own: AtelierPhoto): HeroPhoto {
   const t = useTranslations("home.atelier.photos")
   return url ? { src: url, alt: "" } : { src: own.src, alt: t(own.alt), width: own.width, height: own.height, focus: own.focus }
 }
 
 /** A photo filling its (relative) section, behind the content. */
-function Backdrop({ photo }: { photo: HeroPhoto }) {
+export function Backdrop({ photo }: { photo: HeroPhoto }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element -- bundled or CDN photo, any size
     <img

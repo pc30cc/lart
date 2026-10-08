@@ -160,6 +160,20 @@ export function localized(text: LocalizedText | null | undefined, locale: string
   return ""
 }
 
+/**
+ * The language `localized(text, locale)` takes its text from when it is not
+ * `locale` itself (a fallback): "tr" for a Turkish intro on the English page,
+ * for a `lang` attribute around it. Null when the text is in `locale`, or empty.
+ */
+export function fallbackLanguage(text: LocalizedText | null | undefined, locale: string): string | null {
+  if (!text || text[locale as keyof LocalizedText]?.trim()) return null
+  return fallbackOrder.find((l) => text[l]?.trim()) ?? null
+}
+
+/** The text in `locale` only, never another language's: "" when it has none (meta descriptions, JSON-LD). */
+export const ownText = (text: LocalizedText | null | undefined, locale: string): string =>
+  text?.[locale as keyof LocalizedText]?.trim() ?? ""
+
 // ─── Slugs ────────────────────────────────────────────────────────────────────
 
 /** URL slug from Latin text, Turkish-aware: "Mum Yapımı Atölyesi" → "mum-yapimi-atolyesi". */

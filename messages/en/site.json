@@ -3,6 +3,7 @@
     "home": "{brand}: home page",
     "nav": "Main",
     "workshops": "Workshops",
+    "about": "About us",
     "logIn": "Log in",
     "logInOrSignUp": "Log in / Sign up",
     "account": "Your account",
@@ -11,6 +12,7 @@
     "logOut": "Log out"
   },
   "home": {
+    "metaTitle": "Art workshops in Istanbul",
     "metaDescription": "Art and craft workshops at {brand}: see what’s coming up and save your place.",
     "tagline": "Make something beautiful with your own hands. Choose a workshop and save your place.",
     "cta": "See all workshops",
@@ -32,6 +34,15 @@
   },
   "error": {
     "workshops": "See all workshops"
+  },
+  "notFound": {
+    "metaTitle": "Page not found",
+    "eyebrow": "Page not found",
+    "title": "We couldn’t find this page",
+    "description": "The link may be old or mistyped, or the page may have moved. Here are a few ways back.",
+    "workshopDescription": "This workshop may have ended, or its address may have changed. The upcoming ones are a click away.",
+    "workshops": "See upcoming workshops",
+    "home": "Go to the home page"
   },
   "footer": {
     "rights": "© {year} {brand}"

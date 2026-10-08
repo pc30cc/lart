@@ -5,22 +5,32 @@ import { getTranslations } from "next-intl/server"
 import { EmptyState } from "@/components/admin/empty-state"
 import { listOpenWorkshops } from "@/features/registrations/public"
 import { categoryParam, listPublicCategories } from "@/features/site/public"
-import { alternates, ogLocale } from "@/lib/seo"
+import { pageLocale } from "@/i18n/page-locale"
+import { alternates, openGraphOf } from "@/lib/seo"
 import { getBrand } from "@/lib/settings"
 import { getActiveTheme } from "@/themes/registry"
 import { CategoryFilter } from "./_components/category-filter"
 
-/** One address for search engines: a filtered view (?category=) points to the whole list and is not indexed. */
+/**
+ * One address for search engines: a filtered view (?category=) is not
+ * indexed, and has no canonical or language links (Google reads noindex and
+ * a canonical to another page as contradicting each other); its links are followed.
+ */
 export async function generateMetadata({ params, searchParams }: PageProps<"/[locale]/workshops">): Promise<Metadata> {
-  const [{ locale }, query] = await Promise.all([params, searchParams])
-  const [t, brand] = await Promise.all([getTranslations({ locale, namespace: "registration.list" }), getBrand(locale)])
+  const [{ locale: raw }, query] = await Promise.all([params, searchParams])
+  const locale = pageLocale(raw)
+  const [t, brand, links] = await Promise.all([
+    getTranslations({ locale, namespace: "registration.list" }),
+    getBrand(locale),
+    alternates("/workshops", locale),
+  ])
   const description = t("metaDescription", { brand })
+  const filtered = query.category !== undefined
   return {
     title: t("metaTitle"),
     description,
-    alternates: await alternates("/workshops", locale),
-    openGraph: { type: "website", title: `${t("metaTitle")} · ${brand}`, description, siteName: brand, locale: ogLocale[locale] },
-    ...(query.category !== undefined ? { robots: { index: false, follow: true } } : {}),
+    ...(filtered ? { robots: { index: false, follow: true } } : { alternates: links }),
+    openGraph: { type: "website", title: `${t("metaTitle")} · ${brand}`, description, siteName: brand, ...openGraphOf(locale, links.canonical) },
   }
 }
 
@@ -30,7 +40,8 @@ export async function generateMetadata({ params, searchParams }: PageProps<"/[lo
  * category that is unknown or has no open workshop shows the whole list.
  */
 export default async function WorkshopsPage({ params, searchParams }: PageProps<"/[locale]/workshops">) {
-  const [{ locale }, query] = await Promise.all([params, searchParams])
+  const [{ locale: raw }, query] = await Promise.all([params, searchParams])
+  const locale = pageLocale(raw)
   const wanted = categoryParam(query.category)
   const [t, categories, inCategory, { theme }] = await Promise.all([
     getTranslations("registration.list"),

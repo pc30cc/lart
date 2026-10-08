@@ -96,6 +96,7 @@ async function encode(image: Sharp, format: "webp" | "png"): Promise<ProcessedIm
  * Process an upload for its purpose:
  * - instructor_photo: square centre crop, 800 × 800 at most
  * - admin_photo: square centre crop, 512 × 512 at most (a partner's avatar in the panel)
+ * - partner_portrait: at most 1600 on the longest side, not cropped (the About page frames it)
  * - course_cover: at most 2000 wide
  * - course_sample: at most 1600 on the longest side
  * - gallery_photo: at most 2400 on the longest side, watermarked when a logo is given
@@ -119,6 +120,8 @@ export async function processImage(
         const side = Math.min(512, width, height)
         return encode(image.resize(side, side, { fit: "cover", position: "centre" }), "webp")
       }
+      case "partner_portrait":
+        return encode(image.resize(1600, 1600, { fit: "inside", withoutEnlargement: true }), "webp")
       case "course_cover":
         return encode(image.resize({ width: 2000, withoutEnlargement: true }), "webp")
       case "site_image":

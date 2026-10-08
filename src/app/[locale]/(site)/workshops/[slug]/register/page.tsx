@@ -24,11 +24,13 @@ import { getMember } from "@/lib/auth/member"
 import { formatDate, formatTimeRange, isolate } from "@/lib/format"
 import { getBrand, getSetting } from "@/lib/settings"
 import { Price } from "@/components/site/workshop-labels"
+import { pageLocale } from "@/i18n/page-locale"
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/workshops/[slug]/register">): Promise<Metadata> {
-  const { locale, slug } = await params
+  const { locale: raw, slug } = await params
+  const locale = pageLocale(raw)
   const w = await getPublicWorkshop(slug, locale)
-  if (!w) return {}
+  if (!w) notFound()
   const t = await getTranslations({ locale, namespace: "registration.register" })
   return { title: t("metaTitle", { title: w.title }), robots: { index: false, follow: false } }
 }
@@ -39,7 +41,8 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/workshop
  * again". Not open any more: says so. Otherwise the form.
  */
 export default async function RegisterPage({ params }: PageProps<"/[locale]/workshops/[slug]/register">) {
-  const { locale, slug } = await params
+  const { locale: raw, slug } = await params
+  const locale = pageLocale(raw)
   const w = await getPublicWorkshop(slug, locale)
   if (!w) notFound()
   const [t, session] = await Promise.all([getTranslations("registration.register"), getMember()])

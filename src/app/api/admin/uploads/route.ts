@@ -47,7 +47,7 @@ const fail = (code: UploadErrorCode) => Response.json({ error: code }, { status:
  * server takes it from the database whenever the record exists: the workshop's
  * slug (`courseId`: covers, sample and gallery photos, videos), the
  * instructor's English or Turkish name (`instructorId`), the signed-in
- * partner's name if it has Latin letters, else their email (their photo). For a workshop or instructor not
+ * partner's name if it has Latin letters, else their email (their photo and portrait). For a workshop or instructor not
  * saved yet, the form's `folder` hint (its slug or name), only ever used as a
  * sanitized name, else "new". The home page's photos and video always go to
  * site/ (no name). Null: an unknown id, or a field the purpose does not take.
@@ -57,7 +57,7 @@ async function folderOf(purpose: UploadPurpose, fields: Fields, admin: AdminSess
   if (purpose === "site_image" || purpose === "site_video") {
     return courseId || instructorId || folder !== undefined ? null : ""
   }
-  if (purpose === "admin_photo" || purpose === "watermark_logo") {
+  if (purpose === "admin_photo" || purpose === "partner_portrait" || purpose === "watermark_logo") {
     if (courseId || instructorId || folder !== undefined) return null
     // The name only when it has Latin letters ("مینا 2" would give "2"), else the email's local part.
     const fromName = folderName([admin.name], "")

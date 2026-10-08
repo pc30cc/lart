@@ -5,9 +5,10 @@ import { getLocale, getTranslations } from "next-intl/server"
 import { FormSection } from "@/components/admin/form/form"
 import { PageHeader } from "@/components/admin/page-header"
 import { Button } from "@/components/ui/button"
-import { getMyProfile } from "@/features/partners/queries"
+import { getMyAbout, getMyProfile } from "@/features/partners/queries"
 import { Link } from "@/i18n/navigation"
 import { formatPercent } from "@/lib/format"
+import { AboutForm } from "./_components/about-form"
 import { PasswordButton } from "./_components/password-button"
 import { ProfileForm } from "./_components/profile-form"
 
@@ -18,16 +19,25 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /**
  * My profile (from the user menu): each partner edits their own photo, name
- * and email, sees their profit share (changed together under Money → Partners)
- * and can change their password.
+ * and email, their entry on the public About page, sees their profit share
+ * (changed together under Money → Partners) and can change their password.
  */
 export default async function ProfilePage() {
-  const [t, locale, profile] = await Promise.all([getTranslations("partners.profile"), getLocale(), getMyProfile()])
+  const [t, locale, profile, about] = await Promise.all([
+    getTranslations("partners.profile"),
+    getLocale(),
+    getMyProfile(),
+    getMyAbout(),
+  ])
 
   return (
     <>
       <PageHeader title={t("title")} description={t("description")} />
       <ProfileForm profile={profile} />
+
+      <div className="mt-10">
+        <AboutForm about={about} />
+      </div>
 
       <div className="mt-10 space-y-8">
         <FormSection title={t("share.title")} description={t("share.description")}>

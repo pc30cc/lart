@@ -41,7 +41,9 @@
     "account": "Hesabım",
     "contact": "İletişim",
     "home": "Ana sayfa",
-    "instagram": "Instagram"
+    "instagram": "Instagram",
+    "showEmail": "E-posta adresini göster",
+    "showPhone": "Telefon numarasını göster"
   },
   "atelier": {
     "menu": "Menü",

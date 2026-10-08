@@ -9,6 +9,7 @@ import { db, type Tx } from "@/db"
 import { adminInvites, admins, auditLog, emailTokens, sessions } from "@/db/schema"
 import { absoluteLocaleUrl, localeHref } from "@/i18n/links"
 import { adminAction, publicAction, UserError } from "@/lib/action"
+import { changes } from "@/lib/audit"
 import { verifyPassword } from "@/lib/auth/password"
 import { createRateLimiter } from "@/lib/auth/rate-limit"
 import { endSession, startSession } from "@/lib/auth/session"
@@ -26,6 +27,7 @@ import {
   renewPartnerInvite,
 } from "./invites"
 import {
+  aboutProfileSchema,
   acceptPartnerInviteSchema,
   partnerInviteIdSchema,
   partnerInviteSchema,
@@ -125,10 +127,11 @@ function friendly(err: unknown): never {
 }
 
 /**
- * Whether this admin uploaded the file as their photo (the upload route's
- * audit entry says so). The entry outlives the file, so see `stillStored` too.
+ * Whether this admin uploaded the file for `purpose` (their photo, or their
+ * portrait: the upload route's audit entry says so). The entry outlives the
+ * file, so see `stillStored` too.
  */
-async function uploadedBy(tx: Tx, path: string, adminId: string): Promise<boolean> {
+async function uploadedBy(tx: Tx, path: string, adminId: string, purpose: "admin_photo" | "partner_portrait" = "admin_photo"): Promise<boolean> {
   const [row] = await tx
     .select({ id: auditLog.id })
     .from(auditLog)
@@ -138,7 +141,7 @@ async function uploadedBy(tx: Tx, path: string, adminId: string): Promise<boolea
         eq(auditLog.entity, "media"),
         eq(auditLog.entityId, path),
         eq(auditLog.adminId, adminId),
-        sql`${auditLog.data} ->> 'purpose' = 'admin_photo'`,
+        sql`${auditLog.data} ->> 'purpose' = ${purpose}`,
       ),
     )
     .limit(1)
@@ -248,4 +251,70 @@ export const updateMyProfile = adminAction(profileSchema, async ({ currentPasswo
   // The header's name and photo, and the partners page.
   revalidatePath("/[locale]/admin", "layout")
   return { emailChanged }
+})
+
+/** Names of the About page's fields in the audit log. */
+const ABOUT_FIELDS = { aboutShown: "shown", aboutName: "name", aboutRole: "role", aboutBio: "bio", portraitPath: "portrait" } as const
+
+/**
+ * Save my entry on the public About page: whether I am shown, my portrait, my
+ * name, role and words about me in each language. A new portrait must be one
+ * I uploaded (purpose `partner_portrait`) and still be stored; the old one is
+ * removed after the save. Only my own entry: being on a public page is each
+ * partner's own choice. Audited as `admin.about_update` with the changed
+ * fields (and whether I am shown, and my role), not the long texts.
+ */
+export const updateMyAbout = adminAction(aboutProfileSchema, async (after, ctx) => {
+  const id = ctx.admin.id
+  const oldPortrait = await db
+    .transaction(async (tx) => {
+      const [before] = await tx
+        .select({
+          aboutShown: admins.aboutShown,
+          aboutName: admins.aboutName,
+          aboutRole: admins.aboutRole,
+          aboutBio: admins.aboutBio,
+          portraitPath: admins.portraitPath,
+        })
+        .from(admins)
+        .where(eq(admins.id, id))
+        .for("update")
+      if (!before) throw new UserError("common.errors.notFound")
+      if (
+        after.portraitPath &&
+        after.portraitPath !== before.portraitPath &&
+        !((await uploadedBy(tx, after.portraitPath, id, "partner_portrait")) && (await stillStored(after.portraitPath)))
+      ) {
+        throw new UserError("partners.about.errors.portrait", { field: "portraitPath" })
+      }
+
+      const diff = changes(before, after)
+      const changed = (Object.keys(ABOUT_FIELDS) as (keyof typeof ABOUT_FIELDS)[]).filter((k) => k in diff)
+      if (!changed.length) return null
+
+      await tx.update(admins).set(after).where(eq(admins.id, id))
+      await ctx.audit(
+        {
+          action: "admin.about_update",
+          entity: "admin",
+          entityId: id,
+          data: {
+            fields: changed.map((k) => ABOUT_FIELDS[k]),
+            ...(diff.aboutShown ? { shown: diff.aboutShown } : {}),
+            ...(diff.aboutRole ? { role: diff.aboutRole } : {}),
+          },
+        },
+        tx,
+      )
+      return before.portraitPath !== after.portraitPath ? before.portraitPath : null
+    })
+
+  if (oldPortrait) {
+    await remove(oldPortrait).catch((err) =>
+      console.error("[partners] could not remove the old portrait", errorForLog(err)),
+    )
+  }
+  // My profile, and the public About page in every language.
+  revalidatePath("/[locale]/admin", "layout")
+  revalidatePath("/[locale]/about", "page")
 })

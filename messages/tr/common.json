@@ -80,9 +80,17 @@
     "pagination": "Sayfalar"
   },
   "notFound": {
+    "metaTitle": "Sayfa bulunamadı",
     "title": "Bu sayfa burada değil",
     "description": "Bağlantı eski olabilir ya da sayfa taşınmış olabilir.",
     "home": "Ana sayfaya git"
+  },
+  "panelNotFound": {
+    "metaTitle": "Bulunamadı",
+    "title": "Bu sayfa yok",
+    "description": "Kaldırılmış olabilir ya da bağlantı hatalı olabilir.",
+    "dashboard": "Panoya dön",
+    "instructorHome": "Panele dön"
   },
   "ui": {
     "menu": "Menü",

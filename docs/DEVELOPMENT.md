@@ -43,11 +43,13 @@ Next.js 16 differs from older versions: read the relevant guide in
 ```
 src/
   app/
-    sitemap.ts, robots.ts       /sitemap.xml (home, workshops list + open workshop pages, fa/tr/en with hreflang), /robots.txt (disallows only /admin, /<l>/admin and /api)
+    sitemap.ts, robots.ts       /sitemap.xml (home, workshops list + open workshop pages, /about while a partner is on it, fa/tr/en with hreflang), /robots.txt (disallows only /admin, /<l>/admin and /api)
+    og.png/route.tsx            /og.png: the site's share picture (its logo on paper, 1200×630) for pages without their own
     [locale]/                   every page (URL rules: the main language has no prefix, the proxy rewrites it here)
       (site)/                   the public site: the active theme's Frame (src/themes) around the page, the "confirm your email" banner and the notice toast
         page.tsx                the home page (/, /fa, /en): the active theme's Home with getHomeData
         workshops/              list, /[slug] page, /[slug]/register
+        about/                  the About page (/about): the active theme's About with getAboutData (the partners who chose to be on it)
         account/                My workshops (page.tsx), registrations/[id], signup, login, verify, forgot, reset
       instructor/(auth)/        instructor sign in, sign up, invite, forgot, reset, verify (no panel chrome)
       instructor/(panel)/       the instructor panel: home, contracts, workshops, earnings, profile
@@ -188,7 +190,7 @@ Paths are written without a language, starting with `/` (they may carry a
 | Components (client and server) | `Link` (`href="/workshops"`, or `{ pathname, query }`), `useRouter()` (`push`, `replace`, `prefetch`; `{ locale }` switches the language), `usePathname()` (without the language), all from `@/i18n/navigation`; the main language comes from `MainLocaleProvider` in `[locale]/layout.tsx` |
 | Server code: pages, actions, emails, the jobs script | `await localeHref(locale, path)`, `await absoluteLocaleUrl(locale, path)` (on `APP_URL`: emails, links to copy), `mainLocale()` (once per render) from `@/i18n/links`; `await localeRedirect(path, locale?)` from `@/i18n/redirect` |
 | Pure code: the proxy, client helpers, tests, e2e | `localePath(locale, path, main)`, `splitLocale`, `stripLocale` from `@/i18n/paths` |
-| SEO | `alternates(path, locale)` (canonical; hreflang fa, tr, en; x-default = the main language's address), `absoluteUrl`, `ogLocale`, `jsonLdText` from `@/lib/seo` |
+| SEO | `alternates(path, locale)` (canonical; hreflang fa, tr, en; x-default = the main language's address), `openGraphOf(locale, url, images?)` (og:url, og:locale and its alternates, the site's picture `/og.png` when a page has none; spread into each page's `openGraph`, which replaces the layout's whole), `absoluteUrl`, `ogLocale`, `jsonLdText` from `@/lib/seo`; a public page's `[locale]` through `pageLocale()` (`@/i18n/page-locale`) |
 | "Where to go after signing in" | `safeNext(next, "member" \| "instructor" \| "admin", fallback, main)` (`@/lib/auth/safe-next`; on the server `main` is `await mainLocale()`): checks the path, without its language, against `ROUTES` and returns it at its address today (`/tr/workshops` → `/workshops` when tr is the main language, `/FA/x` → `/fa/x`), so a sign-in never ends on an old address |
 
 Language choices are not URL decisions: the language of an email to the
@@ -219,6 +221,7 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 | `/workshops` | site | public | |
 | `/workshops/[slug]` | site | public | |
 | `/workshops/[slug]/register` | site | public | |
+| `/about` | site | public | |
 | `/[...rest]` | site | public | not-found page |
 | `/account` | account | private | |
 | `/account/login` | account | open | |
@@ -240,6 +243,7 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 | `/instructor/workshops/[id]` | instructor | private | |
 | `/instructor/earnings` | instructor | private | |
 | `/instructor/profile` | instructor | private | |
+| `/instructor/[...rest]` | instructor | private | not-found page |
 | `/admin/login` | admin | open | |
 | `/admin/forgot` | admin | open | |
 | `/admin/reset` | admin | open | |
@@ -282,12 +286,13 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 | `/admin/workshops/[id]/gallery` | admin | private | |
 | `/admin/workshops/[id]/registrations` | admin | private | |
 | `/admin/workshops/[id]/registrations/export` | admin | private | route handler (CSV) |
+| `/admin/[...rest]` | admin | private | not-found page |
 <!-- routes:end -->
 
 Never localized (`UNLOCALIZED_HANDLERS`): `/api/admin/media/watermark-preview`,
 `/api/admin/money/export/[report]`, `/api/admin/uploads`,
-`/api/instructor/uploads`, `/media/[...path]`, and the metadata routes
-`/sitemap.xml` and `/robots.txt`.
+`/api/instructor/uploads`, `/media/[...path]`, `/og.png` (the site's share
+picture), and the metadata routes `/sitemap.xml` and `/robots.txt`.
 
 ### Redirects
 
@@ -344,6 +349,7 @@ no private storage. The database stores only the storage path, e.g.
   | `gallery_video` | MP4 / MOV / WebM as they are, sent in 8 MB parts | `workshops/<slug>/videos/<random>.<ext>` |
   | `instructor_photo` | square 800 | `instructors/<name>/photo-<random>.webp` |
   | `admin_photo` | a partner's photo, square 512 | `partners/<name>/photo-<random>.webp` |
+  | `partner_portrait` | a partner's public portrait (About page), 1600, not cropped | `partners/<name>/portrait-<random>.webp` |
   | `watermark_logo` | PNG | `brand/watermark-logo-<random>.png` |
   | `site_image` | the home page's photos: 2560 wide, never watermarked | `site/img-<random>.webp` |
   | `site_video` | the home page's video: MP4 or WebM only (a MOV does not play by itself in Chromium or Firefox), up to 80 MB, sent in 8 MB parts | `site/video-<random>.<ext>` |
@@ -947,6 +953,18 @@ rules; `actions.ts`; `queries.ts`; `schema.ts`: the form schemas, client-safe).
   `photoPath` (read it as `photoPath ?? null`); its URL is the normal public
   one (`publicUrls()`), and the partners and dashboard queries return
   `photoUrl`.
+- **On the About page** (My profile, `updateMyAbout`, `getMyAbout`; columns
+  `about_shown`, `about_name`, `about_role`, `about_bio`, `portrait_path` on
+  `admins`): each partner chooses to be on the public About page (/about)
+  and writes their name (optional, per language), role and a few words in
+  fa, tr and en (the words are needed in all three while shown; a hidden
+  entry may be a draft), with a public portrait (`partner_portrait`, checked
+  like the photo: uploaded by them, still stored; the old file removed),
+  never the panel's photo. Only their own entry. Audited as
+  `admin.about_update` with the changed fields (and shown, role).
+  `listAboutPartners(locale)` gives the page each text in its own language
+  only (never another's); with nobody on it the page is `noindex` and out of
+  the sitemap.
 - **Pages and components**: Money → Partners has "Invite a partner"
   (`money/partners/_components/invite-dialog.tsx`; disabled with a note when
   every place is taken, which asks to cancel an invitation only while a
@@ -1077,6 +1095,22 @@ Member names (sign-up and "My details") use `personName()`
 addresses or `@ / \ : < >`. The name is the greeting of the emails we send,
 so it must not carry someone's own link or phone number to any address.
 
+Not found: an unknown address under a language is the catch-all
+`(site)/[...rest]`, so the public site's not-found page (`(site)/not-found.tsx`,
+`components/site/not-found-view.tsx`: a large 404 in the language's digits,
+the ways back, a workshop's own words under `/workshops/…`, "My workshops"
+under `/account`) shows inside the theme's frame; the panels have their own
+(`admin/(panel)` and `instructor/(panel)`: `[...rest]` and `not-found.tsx`,
+inside the sidebar, back to the panel's start). `[locale]/not-found.tsx` is
+the plain fallback, `src/app/not-found.tsx` the last one (an address with a
+dot, which the proxy leaves alone). A not-found page sets its title and
+`noindex, follow`, never a canonical or language links; catch-alls and
+missing records call `notFound()` in `generateMetadata` too, so the title is
+the not-found page's. Next renders a not-found boundary with every page below
+it, so they read nothing of their own. Never put a `loading.tsx` or a
+`<Suspense>` around a page above a `notFound()`: the response would stream
+with status 200 (a soft 404).
+
 Errors: the `(site)` and `instructor/(auth)` groups have their own
 `error.tsx`, both built on `src/components/site/page-error.tsx` (a friendly
 message, "Try again" = `retry()`, one way on). A failure in those groups'
@@ -1136,8 +1170,9 @@ each category with open workshops (only when there are two or more), marks
 the current one with `aria-current="page"`; it uses the design tokens, so
 each theme gives it its own colours. A malformed slug, an unknown one or one
 without open workshops shows the whole list, without an error. A filtered
-view keeps the list's canonical address (`alternates("/workshops")`) and is
-`noindex, follow`; the sitemap lists only `/workshops`.
+view is `noindex, follow` with no canonical or language links (Google reads
+a noindex next to a canonical to another page as contradicting itself); the
+sitemap lists only `/workshops`.
 
 The home page is `(site)/page.tsx` (`/`, `/fa`, `/en`). The classic theme
 (`src/themes/default`) shows two sections: `HomeHero` (the brand, the
@@ -1146,7 +1181,31 @@ tagline: the SEO description setting in the page's language or
 `UpcomingWorkshops` (the first six of `upcoming` as `WorkshopCard`s with `h3`
 titles, "All workshops", or the "coming soon" empty state). Its title and
 description come from the SEO setting in the page's own language (never
-another language's text), else the brand and `site.home.metaDescription`.
+another language's text), else `site.home.metaTitle · brand` and
+`site.home.metaDescription`; the title is used as it is, so it carries the
+brand (`drizzle/0010_seo_texts.sql` set Limer's). The page also carries the
+site's JSON-LD (`Organization` at the main language's address, with its
+Instagram as `sameAs`, and this language's `WebSite`).
+
+**Languages and search engines.** Each language has its own address, the
+canonical is always the page's own language, and hreflang (fa, tr, en,
+x-default = the main language) is in the HTML and the sitemap. The footers
+of both themes link the same page in the other languages
+(`components/site/language-links.tsx`, plain `<a hreflang>`; the header's
+menu is a button crawlers cannot follow). A text shown from another language
+because this one has none (a workshop's intro, venue, an instructor's bio:
+`fallbackLanguage`, `textLang`) is marked with its `lang` and `dir`, and meta
+descriptions and JSON-LD use only the page's own language (`ownText`,
+`ownIntro`), never a fallback. Changing the main language moves every
+address (the setting's hint says so).
+
+**Contact details.** The footer's email and phone (Settings → Home page) are
+never in a page's HTML or data as text: `getSiteFrame` conceals them
+(`lib/conceal`, letters only) and `ProtectedContact` writes the `mailto:` /
+`tel:` link in the browser on the first sign of a person (scroll, pointer,
+touch, key, focus), or when its stand-in button ("Show email address") is
+pressed. Keep real addresses out of the messages too: all of them reach the
+browser (examples use example.com).
 
 The proxy sends `X-Robots-Tag: noindex` for `/admin/**`, `/instructor/**`,
 `/account/**` (with or without a language prefix) and
@@ -1168,7 +1227,9 @@ Appearance): `default` (shown as "Classic", the original look) and
 props; a theme only decides how things look. The contract is
 `src/themes/types.ts`: a `Theme` has a `Frame` (header, the page in one
 `<main>`, footer), a `Home` (the home page's sections from `HomeData`,
-`src/features/site/home.ts`; a hidden section is `null`), a `WorkshopCard`
+`src/features/site/home.ts`; a hidden section is `null`), an `About` (the
+About page from `AboutData`, `src/features/site/about.ts`: the footer's
+"About us" text and the partners who chose to be on it), a `WorkshopCard`
 (home page and `/workshops`), its `themeColor` and its default `fonts`. Its
 header lists what every theme keeps: one `h1` on the home page, the brand;
 the brand as the first link of the first `<header>`; a header at most 80px

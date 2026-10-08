@@ -12,6 +12,7 @@ export const imagePurposes = [
   "gallery_photo",
   "watermark_logo",
   "admin_photo",
+  "partner_portrait",
   "site_image",
 ] as const
 export type ImagePurpose = (typeof imagePurposes)[number]

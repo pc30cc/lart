@@ -54,3 +54,26 @@ export async function getMyProfile() {
 }
 
 export type MyProfile = Awaited<ReturnType<typeof getMyProfile>>
+
+/** My entry on the public About page (My profile → "On the About page"). */
+export async function getMyAbout() {
+  const { admin } = await requireAdmin()
+  const [[row], url] = await Promise.all([
+    db
+      .select({
+        name: admins.name,
+        aboutShown: admins.aboutShown,
+        aboutName: admins.aboutName,
+        aboutRole: admins.aboutRole,
+        aboutBio: admins.aboutBio,
+        portraitPath: admins.portraitPath,
+      })
+      .from(admins)
+      .where(eq(admins.id, admin.id))
+      .limit(1),
+    publicUrls(),
+  ])
+  return { ...row, portraitUrl: url(row.portraitPath) }
+}
+
+export type MyAbout = Awaited<ReturnType<typeof getMyAbout>>

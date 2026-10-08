@@ -5,7 +5,7 @@
  */
 import { z } from "zod"
 
-import { uuid } from "@/components/admin/form/schemas"
+import { localizedText, uuid } from "@/components/admin/form/schemas"
 import { locales } from "@/i18n/routing"
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from "@/lib/auth/schemas"
 import { isSafePath } from "@/lib/storage/shared"
@@ -69,9 +69,45 @@ export const profileSchema = z.object({
     .transform((v) => v || undefined),
 })
 
+/** A path the `partner_portrait` upload can have produced: `partners/<name>/portrait-<random>.webp`. */
+export const isPartnerPortraitPath = (path: unknown): path is string =>
+  isSafePath(path) && path.startsWith(ADMIN_PHOTO_PREFIX) && /\/portrait-[A-Za-z0-9_-]+\.webp$/.test(path)
+
+export const ABOUT_NAME_MAX = 80
+export const ABOUT_ROLE_MAX = 80
+export const ABOUT_BIO_MAX = 1500
+
+/**
+ * My profile → "On the About page": whether I am shown on the public About
+ * page (my consent), my portrait (the `partner_portrait` upload, or null),
+ * my name as each language writes it (optional: else my name), my role and
+ * a few words about me. While shown, the words are needed in every language:
+ * each language's page has its own, never another's. A hidden entry may be a
+ * draft.
+ */
+export const aboutProfileSchema = z
+  .object({
+    aboutShown: z.boolean(),
+    aboutName: localizedText({ max: ABOUT_NAME_MAX }),
+    aboutRole: localizedText({ max: ABOUT_ROLE_MAX }),
+    aboutBio: localizedText({ max: ABOUT_BIO_MAX }),
+    portraitPath: z
+      .string()
+      .nullish()
+      .transform((v) => v || null)
+      .refine((v) => v === null || isPartnerPortraitPath(v), { error: "partners.about.errors.portrait" }),
+  })
+  .superRefine((v, ctx) => {
+    if (!v.aboutShown) return
+    for (const l of locales) {
+      if (!v.aboutBio[l]) ctx.addIssue({ code: "custom", path: ["aboutBio", l], message: "common.validation.required" })
+    }
+  })
+
 export type PartnerInviteValues = z.input<typeof partnerInviteSchema>
 export type AcceptPartnerInviteValues = z.input<typeof acceptPartnerInviteSchema>
 export type ProfileValues = z.input<typeof profileSchema>
+export type AboutProfileValues = z.input<typeof aboutProfileSchema>
 
 /**
  * One-time notices an admin action leaves for the next page as `?notice=…`

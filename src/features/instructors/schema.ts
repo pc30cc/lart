@@ -2,7 +2,7 @@ import { z } from "zod"
 
 import { localizedText, uuid } from "@/components/admin/form/schemas"
 import type { LocalizedText } from "@/db/schema"
-import { localized, normalizeDigits } from "@/lib/format"
+import { fallbackLanguage, localized, normalizeDigits } from "@/lib/format"
 import { isSafePath } from "@/lib/storage/shared"
 
 /**
@@ -58,6 +58,13 @@ export function profileText(text: LocalizedText | null | undefined, locale: stri
   if (!text) return ""
   const own = locale === "fa" ? text.fa?.trim() || text.en?.trim() : text[locale as keyof LocalizedText]?.trim()
   return own || localized(text, locale)
+}
+
+/** The language `profileText` takes its text from when it is not `locale` (English on the Persian site…), else null. */
+export function profileLanguage(text: LocalizedText | null | undefined, locale: string): string | null {
+  if (!text || text[locale as keyof LocalizedText]?.trim()) return null
+  if (locale === "fa" && text.en?.trim()) return "en"
+  return fallbackLanguage(text, locale)
 }
 
 const displayNames = new Map<string, Intl.DisplayNames>()

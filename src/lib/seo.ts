@@ -8,8 +8,26 @@ import { env } from "@/lib/env"
 /** An absolute link on the site (canonical URLs, Open Graph, JSON-LD, sitemap). */
 export const absoluteUrl = (path: string) => new URL(path, env.APP_URL).href
 
-/** Open Graph locale of each language. */
-export const ogLocale: Record<string, string> = { fa: "fa_IR", tr: "tr_TR", en: "en_US" }
+/** Open Graph locale of each language (the site's English is British). */
+export const ogLocale: Record<string, string> = { fa: "fa_IR", tr: "tr_TR", en: "en_GB" }
+
+/** The site's share picture (src/app/og.png: its logo), for pages without one of their own. */
+export const siteOgImage = () => ({ url: absoluteUrl("/og.png"), width: 1200, height: 630 })
+
+/**
+ * The Open Graph fields every public page has: its address, its language and
+ * the other languages it exists in, and a picture (the site's when `images`
+ * is empty). A page's `openGraph` replaces its layout's whole, so each page
+ * spreads these into its own.
+ */
+export function openGraphOf(locale: string, url: string, images?: { url: string; alt?: string; width?: number; height?: number }[]) {
+  return {
+    url,
+    locale: ogLocale[locale],
+    alternateLocale: locales.filter((l) => l !== locale).map((l) => ogLocale[l]),
+    images: images?.length ? images : [siteOgImage()],
+  }
+}
 
 /**
  * Canonical URL and hreflang alternates of a page that exists in every

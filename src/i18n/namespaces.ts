@@ -25,4 +25,5 @@ export const namespaces = [
   "home",
   "appearance",
   "homeEditor",
+  "about",
 ] as const

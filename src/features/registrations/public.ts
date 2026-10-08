@@ -4,12 +4,12 @@ import { cache } from "react"
 
 import { db, type Tx } from "@/db"
 import { categories, courses, instructors, media, registrations, templates } from "@/db/schema"
-import { profileText } from "@/features/instructors/schema"
+import { profileLanguage, profileText } from "@/features/instructors/schema"
 import { fillTemplate } from "@/features/templates/placeholders"
 import { getMember } from "@/lib/auth/member"
 import { sha256 } from "@/lib/crypto"
 import { errorForLog } from "@/lib/errors"
-import { localized } from "@/lib/format"
+import { fallbackLanguage, localized, ownText } from "@/lib/format"
 import { getBrand } from "@/lib/settings"
 import { getStorage, type Storage } from "@/lib/storage"
 import { activeStatuses, registrationWindow, safePaymentUrl, seatLimit } from "./schema"
@@ -217,6 +217,7 @@ export const getPublicWorkshop = cache(async (slug: string, locale: string) => {
   ])
   const left = seatsLeft(seatLimit(row), taken)
   const text = (value: Parameters<typeof localized>[0]) => localized(value, locale)
+  const lang = (value: Parameters<typeof localized>[0]) => fallbackLanguage(value, locale)
 
   return {
     id: row.id,
@@ -224,6 +225,20 @@ export const getPublicWorkshop = cache(async (slug: string, locale: string) => {
     status: row.status,
     title: text(row.title),
     intro: text(row.intro),
+    /** The intro in the page's language only (meta and JSON-LD descriptions never borrow another language's). */
+    ownIntro: ownText(row.intro, locale),
+    /**
+     * The language of each text shown from another language (it has none in
+     * this one), for a `lang` attribute around it; null: the page's own.
+     */
+    textLang: {
+      intro: lang(row.intro),
+      includes: lang(row.includes),
+      bring: lang(row.bring),
+      notes: lang(row.notes),
+      experienceNote: lang(row.experienceNote),
+      venue: lang(row.venue),
+    },
     includes: text(row.includes),
     /** Empty: nothing needed. */
     bring: text(row.bring),
@@ -252,6 +267,8 @@ export const getPublicWorkshop = cache(async (slug: string, locale: string) => {
       name: profileText(row.instructor.displayName, locale),
       field: profileText(row.instructor.teachingField, locale),
       bio: profileText(row.instructor.bio, locale),
+      fieldLang: profileLanguage(row.instructor.teachingField, locale),
+      bioLang: profileLanguage(row.instructor.bio, locale),
       photoUrl: urlOf(files, row.instructor.photoPath),
     },
     window: registrationWindow({ ...row, seatsLeft: left }),

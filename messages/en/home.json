@@ -41,7 +41,9 @@
     "account": "My account",
     "contact": "Contact",
     "home": "Home",
-    "instagram": "Instagram"
+    "instagram": "Instagram",
+    "showEmail": "Show email address",
+    "showPhone": "Show phone number"
   },
   "atelier": {
     "menu": "Menu",

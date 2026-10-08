@@ -1,5 +1,6 @@
 import { themeDefaultFonts } from "../ids"
 import type { SiteFrameProps, Theme } from "../types"
+import { About } from "./about"
 import { Footer } from "./footer"
 import { Header } from "./header"
 import { Home } from "./home"
@@ -28,6 +29,7 @@ export const atelierTheme: Theme = {
   id: "atelier",
   Frame,
   Home,
+  About,
   WorkshopCard,
   themeColor: { light: "#F2E9E5", dark: "#24160F" },
   fonts: themeDefaultFonts.atelier,

@@ -29,6 +29,8 @@ const layouts: Record<UploadPurpose, (name: string) => [dir: string, prefix: str
   gallery_video: (name) => [`workshops/${name}/videos`, ""],
   instructor_photo: (name) => [`instructors/${name}`, "photo-"],
   admin_photo: (name) => [`partners/${name}`, "photo-"],
+  // The partner's public photo on the About page (never the panel's avatar).
+  partner_portrait: (name) => [`partners/${name}`, "portrait-"],
   watermark_logo: () => ["brand", "watermark-logo-"],
   // The home page's photos and video (Settings → Home page).
   site_image: () => ["site", "img-"],

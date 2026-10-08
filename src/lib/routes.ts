@@ -25,6 +25,7 @@ const table: [path: string, area: Area, access: Access, kind?: RouteKind][] = [
   ["/workshops", "site", "public"],
   ["/workshops/[slug]", "site", "public"],
   ["/workshops/[slug]/register", "site", "public"],
+  ["/about", "site", "public"],
   ["/[...rest]", "site", "public", "not-found"],
   // Students
   ["/account", "account", "private"],
@@ -48,6 +49,7 @@ const table: [path: string, area: Area, access: Access, kind?: RouteKind][] = [
   ["/instructor/workshops/[id]", "instructor", "private"],
   ["/instructor/earnings", "instructor", "private"],
   ["/instructor/profile", "instructor", "private"],
+  ["/instructor/[...rest]", "instructor", "private", "not-found"],
   // Super admins
   ["/admin/login", "admin", "open"],
   ["/admin/forgot", "admin", "open"],
@@ -91,6 +93,7 @@ const table: [path: string, area: Area, access: Access, kind?: RouteKind][] = [
   ["/admin/workshops/[id]/gallery", "admin", "private"],
   ["/admin/workshops/[id]/registrations", "admin", "private"],
   ["/admin/workshops/[id]/registrations/export", "admin", "private", "handler"],
+  ["/admin/[...rest]", "admin", "private", "not-found"],
 ]
 
 export const ROUTES: readonly RouteEntry[] = table.map(([path, area, access, kind = "page"]) => ({ path, area, access, kind }))
@@ -102,6 +105,8 @@ export const UNLOCALIZED_HANDLERS: readonly string[] = [
   "/api/admin/uploads",
   "/api/instructor/uploads",
   "/media/[...path]",
+  // The site's share picture (Open Graph): its dot keeps the proxy away.
+  "/og.png",
 ]
 
 /** The names an area's open (sign-in) pages may have, the same in every area. */

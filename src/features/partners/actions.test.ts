@@ -17,6 +17,7 @@ import {
   cancelPartnerInvite,
   invitePartner,
   resendPartnerInvite,
+  updateMyAbout,
   updateMyProfile,
 } from "./actions"
 import { partnerInviteDetails } from "./invites"
@@ -439,5 +440,93 @@ describe("updateMyProfile", () => {
     })
     expect(remove).toHaveBeenCalledOnce()
     expect(await adminRow(me)).toMatchObject({ name: "Mina Partner", photoPath: second })
+  })
+})
+
+describe("updateMyAbout", () => {
+  const empty = { fa: "", tr: "", en: "" }
+  const draft = () => ({ aboutShown: false, aboutName: empty, aboutRole: empty, aboutBio: empty, portraitPath: null as string | null })
+  const words = { fa: "سلام، من مینا هستم.", tr: "Merhaba, ben Mina.", en: "Hello, I am Mina." }
+  const portrait = () => `partners/mina-partner/portrait-${randomUUID().replace(/-/g, "").slice(0, 22)}.webp`
+  async function uploaded(path: string, adminId: string, purpose = "partner_portrait") {
+    stored.add(path)
+    await db
+      .insert(auditLog)
+      .values({ adminId, action: "media.upload", entity: "media", entityId: path, data: { purpose, width: 1280, height: 1600 } })
+  }
+
+  it("saves a hidden draft in any language, and needs my words in all three once I am shown", async () => {
+    const me = session.admin.id
+    expect(await updateMyAbout({ ...draft(), aboutBio: { ...empty, tr: "Yarım kalan bir yazı" } })).toMatchObject({ ok: true })
+    expect(await adminRow(me)).toMatchObject({ aboutShown: false, aboutBio: { tr: "Yarım kalan bir yazı" } })
+
+    expect(await updateMyAbout({ ...draft(), aboutShown: true, aboutBio: { ...empty, tr: "Yalnızca Türkçe" } })).toMatchObject({
+      ok: false,
+      fieldErrors: { "aboutBio.fa": expect.any(String), "aboutBio.en": expect.any(String) },
+    })
+    expect((await adminRow(me)).aboutShown).toBe(false)
+
+    const result = await updateMyAbout({
+      aboutShown: true,
+      aboutName: { ...empty, fa: "مینا" },
+      aboutRole: { fa: "هم‌بنیان‌گذار", tr: "Kurucu ortak", en: "" },
+      aboutBio: words,
+      portraitPath: null,
+    })
+    expect(result).toMatchObject({ ok: true })
+    expect(await adminRow(me)).toMatchObject({
+      aboutShown: true,
+      aboutName: { fa: "مینا" },
+      aboutRole: { fa: "هم‌بنیان‌گذار", tr: "Kurucu ortak" },
+      aboutBio: words,
+    })
+    // The About page in every language shows it at once.
+    expect(revalidatePath).toHaveBeenCalledWith("/[locale]/about", "page")
+    const entries = await auditOf(me, "admin.about_update")
+    expect(entries.map((e) => e.data)).toEqual([
+      { fields: ["bio"] },
+      {
+        fields: ["shown", "name", "role", "bio"],
+        shown: { from: false, to: true },
+        role: { from: {}, to: { fa: "هم‌بنیان‌گذار", tr: "Kurucu ortak" } },
+      },
+    ])
+    // Nothing changed: nothing written.
+    expect(
+      await updateMyAbout({ aboutShown: true, aboutName: { ...empty, fa: "مینا" }, aboutRole: { fa: "هم‌بنیان‌گذار", tr: "Kurucu ortak", en: "" }, aboutBio: words, portraitPath: null }),
+    ).toMatchObject({ ok: true })
+    expect(await auditOf(me, "admin.about_update")).toHaveLength(2)
+  })
+
+  it("only takes a portrait I uploaded as my portrait, and removes the old file from storage", async () => {
+    const me = session.admin.id
+    const [someone] = await db
+      .insert(admins)
+      .values({ email: address("someone"), name: "Someone Else", passwordHash: "x", active: false })
+      .returning()
+    created.push(someone.id)
+    const someoneElses = portrait()
+    await uploaded(someoneElses, someone.id)
+    const myPanelPhoto = portrait()
+    await uploaded(myPanelPhoto, me, "admin_photo")
+    for (const path of [someoneElses, myPanelPhoto, portrait(), "partners/mina/photo-abc.webp", "partners/../brand/portrait-x.webp"]) {
+      expect(await updateMyAbout({ ...draft(), portraitPath: path }), path).toMatchObject({
+        ok: false,
+        fieldErrors: { portraitPath: "This portrait couldn’t be used. Please upload it again." },
+      })
+    }
+
+    const first = portrait()
+    const second = portrait()
+    await uploaded(first, me)
+    await uploaded(second, me)
+    expect(await updateMyAbout({ ...draft(), portraitPath: first })).toMatchObject({ ok: true })
+    expect(remove).not.toHaveBeenCalled()
+    expect(await updateMyAbout({ ...draft(), portraitPath: second })).toMatchObject({ ok: true })
+    expect(remove).toHaveBeenCalledExactlyOnceWith(first)
+    expect((await adminRow(me)).portraitPath).toBe(second)
+    expect(await updateMyAbout(draft())).toMatchObject({ ok: true })
+    expect(remove).toHaveBeenLastCalledWith(second)
+    expect((await adminRow(me)).portraitPath).toBeNull()
   })
 })

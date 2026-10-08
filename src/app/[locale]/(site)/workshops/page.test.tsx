@@ -45,7 +45,7 @@ vi.mock("@/themes/registry", () => ({
   getActiveTheme: async () => ({ theme: { WorkshopCard: ({ workshop }: { workshop: WorkshopCard }) => <article>{workshop.title}</article> } }),
 }))
 vi.mock("@/lib/settings", () => ({ getBrand: async () => "Limer" }))
-vi.mock("@/lib/seo", () => ({ alternates: async (path: string) => ({ canonical: `http://localhost${path}` }), ogLocale: {} }))
+vi.mock("@/lib/seo", () => ({ alternates: async (path: string) => ({ canonical: `http://localhost${path}` }), openGraphOf: () => ({}) }))
 
 const { listOpenWorkshops } = vi.mocked(await import("@/features/registrations/public"))
 
@@ -148,8 +148,9 @@ describe("/workshops", () => {
     expect(plain.alternates?.canonical).toBe("http://localhost/workshops")
     expect(plain.robots).toBeUndefined()
 
+    // No canonical next to noindex: Google reads the two as contradicting each other.
     const filtered = await generateMetadata(props({ category: "candles" }))
-    expect(filtered.alternates?.canonical).toBe("http://localhost/workshops")
+    expect(filtered.alternates).toBeUndefined()
     expect(filtered.robots).toEqual({ index: false, follow: true })
   })
 })
