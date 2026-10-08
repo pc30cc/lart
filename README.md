@@ -90,11 +90,19 @@ languages. Premium, mobile-first, with polished navigation.
 All fonts are **self-hosted** (served from the site / CDN, never from Google
 Fonts or any third party), subset and preloaded for speed.
 
+The panels always use these:
+
 | Language | Font | Notes |
 | --- | --- | --- |
 | Persian | **IRANSans** | Persian digits, RTL; font files taken from the owner's other repositories |
 | Turkish | **Inter** | full Turkish set (ç ğ ı İ ö ş ü), excellent on screen |
 | English | **Inter** | same family as Turkish for a consistent look |
+
+The public site's fonts are chosen **per theme** in Settings → Appearance:
+a heading font and a text font, each with its weight, for Turkish & English
+and for Persian, from a short list of self-hosted fonts. Each theme starts
+with its own fonts (Atelier: Cormorant Garamond and Montserrat, Noto Naskh
+Arabic and IRANSans), and "Use the template's own fonts" goes back to them.
 
 ### Swappable landing theme
 
@@ -109,7 +117,8 @@ example when a new design reference is given:
 - Every home-page section (hero, latest workshops, instructors, past
   workshops, ...) has a fixed data contract, so a new theme just implements
   the same sections in a new style.
-- The active theme is chosen in the super-admin settings.
+- The active theme is chosen in the super-admin settings (Settings →
+  Appearance), with a picture of each theme.
 - The instructor and super-admin panels keep their own design and are not
   affected by a theme change.
 

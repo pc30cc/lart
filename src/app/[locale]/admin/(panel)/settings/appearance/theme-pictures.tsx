@@ -36,7 +36,7 @@ function ClassicPicture({ brand, heading, persian }: PictureProps) {
         <span className="bg-muted ms-auto size-[3.6cqw] rounded-full" />
         <span className="bg-muted h-[3.6cqw] w-[9cqw] rounded-full" />
       </div>
-      <div className="from-primary/8 border-b bg-linear-to-b to-transparent px-[4cqw] py-[4.5cqw]">
+      <div className="from-primary/8 border-b bg-linear-to-b to-transparent px-[4cqw] py-[4cqw]">
         <div style={font(heading)} className={cn("text-[7cqw] leading-none", !persian && "tracking-wide")}>
           {brand}
         </div>
@@ -47,7 +47,7 @@ function ClassicPicture({ brand, heading, persian }: PictureProps) {
       <div className="grid grid-cols-3 gap-[2.5cqw] px-[4cqw] py-[3.5cqw]">
         {[0, 1, 2].map((i) => (
           <div key={i} className="bg-card overflow-hidden rounded-[1.5cqw] border">
-            <div className="from-primary/15 to-muted h-[11cqw] bg-linear-to-br" />
+            <div className="from-primary/15 to-muted h-[10cqw] bg-linear-to-br" />
             <div className="bg-foreground/20 m-[1.6cqw] h-[1cqw] w-2/3 rounded-full" />
           </div>
         ))}
@@ -86,7 +86,7 @@ function AtelierPicture({ brand, heading, persian }: PictureProps) {
         </div>
         <div className="mt-[2.5cqw] grid grid-cols-4 gap-[2.5cqw]">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="aspect-square bg-[#C5AA8E]/45 p-[0.8cqw] ring-1 ring-[#C5AA8E]">
+            <div key={i} className="h-[12cqw] bg-[#C5AA8E]/45 p-[0.8cqw] ring-1 ring-[#C5AA8E]">
               <div className="size-full bg-linear-to-br from-[#C5AA8E] to-[#8B4A2E]/50" />
             </div>
           ))}

@@ -84,7 +84,7 @@ export function AppearanceSettingsForm({
                 setFonts(saved.fonts[id])
               }}
               describedBy={field["aria-describedby"]}
-              className="sm:grid-cols-2"
+              className="sm:grid-cols-2 lg:grid-cols-3"
               choices={themeIds.map((id) => {
                 const style = siteFontStyles(id === theme ? fonts : saved.fonts[id])[persian ? "persian" : "latin"]
                 return {
@@ -155,7 +155,7 @@ function FontRow({ script, part, label }: (typeof rows)[number]) {
       <div id={labelId} className="text-sm font-medium">
         {t(`rows.${label}`)}
       </div>
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,9.5rem)] items-start gap-2">
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,8rem)] items-start gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,9.5rem)]">
         <FormField<Values> name={`fonts.${script}.${part}.id`}>
           {(field) => (
             <Select

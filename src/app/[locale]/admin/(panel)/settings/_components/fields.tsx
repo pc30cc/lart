@@ -41,7 +41,7 @@ export function ChoiceCards<V extends string>({
       {choices.map((choice) => (
         <FieldLabel key={choice.value} htmlFor={`${id}-${choice.value}`} className="cursor-pointer">
           {choice.preview && (
-            <div aria-hidden className="p-2.5 pb-0">
+            <div aria-hidden className="w-full p-2.5 pb-0">
               {choice.preview}
             </div>
           )}
