@@ -13,22 +13,36 @@ import type { AboutData, AboutPartner } from "../types"
  */
 export function About({ data }: { data: AboutData }) {
   const { partners, labels } = data
+  const story = data.page === "story"
   return (
     <>
       <section className="from-primary/8 border-b bg-linear-to-b to-transparent">
-        <div className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 mx-auto w-full max-w-6xl px-4 py-14 motion-safe:duration-500 sm:py-20">
+        <div
+          className={cn(
+            "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 mx-auto w-full max-w-6xl px-4 motion-safe:duration-500",
+            story ? "py-10 sm:py-12" : "py-14 sm:py-20",
+          )}
+        >
           <p className="text-primary text-sm font-medium tracking-wide">{data.kicker}</p>
-          <h1 className="mt-3 font-serif text-4xl [font-weight:var(--site-font-heading-weight)] tracking-wide text-balance sm:text-6xl rtl:tracking-normal">
+          <h1
+            className={cn(
+              "mt-3 font-serif [font-weight:var(--site-font-heading-weight)] tracking-wide text-balance rtl:tracking-normal",
+              story ? "text-3xl sm:text-4xl" : "text-4xl sm:text-6xl",
+            )}
+          >
             {data.title}
           </h1>
-          <Paragraphs text={data.intro} className="text-muted-foreground mt-6 max-w-2xl text-lg leading-relaxed text-pretty sm:text-xl" />
+          <Paragraphs
+            text={data.intro}
+            className={cn("text-muted-foreground max-w-2xl leading-relaxed text-pretty", story ? "mt-3 text-base sm:text-lg" : "mt-6 text-lg sm:text-xl")}
+          />
         </div>
       </section>
 
       {partners.length > 0 && (
-        <section aria-labelledby="about-team" className="mx-auto w-full max-w-6xl px-4 py-14 sm:py-20">
+        <section aria-labelledby="about-team" className={cn("mx-auto w-full max-w-6xl px-4", story ? "py-10 sm:py-14" : "py-14 sm:py-20")}>
           <div className="max-w-2xl">
-            <h2 id="about-team" className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            <h2 id="about-team" className={cn("font-semibold tracking-tight", story ? "text-lg sm:text-xl" : "text-2xl sm:text-3xl")}>
               {labels.partnersTitle}
             </h2>
           </div>

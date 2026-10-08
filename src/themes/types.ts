@@ -146,6 +146,8 @@ export type AboutPartner = {
  * name is an h3 under the `partnersTitle` h2.
  */
 export type AboutData = {
+  /** Which page: About us (/about, the brand's words) or Our story (/story, the partners). */
+  page: "about" | "story"
   locale: string
   brand: string
   kicker: string
