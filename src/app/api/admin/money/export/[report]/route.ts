@@ -14,7 +14,6 @@ import {
   profitAndLoss,
   workshopResults,
 } from "@/features/money/reports"
-import { periodLabel } from "@/features/money/period-label"
 import { accounts, parseReportParams, transactionKinds } from "@/features/money/schema"
 import { calendarOf, localized, zonedParts } from "@/lib/format"
 
@@ -24,9 +23,10 @@ type Translate = Awaited<ReturnType<typeof getTranslations>>
 /**
  * CSV export of the money reports and the ledger. Super admins only; every
  * export is written to the audit log. Query: the same params as the reports
- * page (?from=&to=&group=&partner=) plus ?locale= for the column titles,
- * periods and dates (its calendar: Persian writes Solar Hijri dates and
- * months), and for the ledger its filters (?kind=&account=&partner=&workshop=).
+ * page (?from=&to=&group=&partner=) plus ?locale= for the column titles and
+ * the dates (its calendar: Persian writes Solar Hijri dates, `csvDate`; the
+ * periods of profit and loss follow it too, each by its first day), and for
+ * the ledger its filters (?kind=&account=&partner=&workshop=).
  */
 export async function GET(request: Request, ctx: RouteContext<"/api/admin/money/export/[report]">) {
   const session = await requireAdminApi(request)
@@ -82,11 +82,11 @@ async function build(
 
   switch (report) {
     case "pnl": {
+      // Each period by its first day, in the language's calendar (Persian: "1405/07/01" is Mehr 1405), so the column sorts.
       const { periods, total } = await profitAndLoss(params, calendarOf(locale))
-      const period = (start: string) => periodLabel(start, params.group, locale, (values) => t("money.reports.quarter", values))
       return [
         [c("period"), ...figures.map(c)],
-        ...periods.map((p) => [period(p.period), ...figures.map((k) => lira(p[k]))]),
+        ...periods.map((p) => [day(p.period), ...figures.map((k) => lira(p[k]))]),
         [c("total"), ...figures.map((k) => lira(total[k]))],
       ]
     }

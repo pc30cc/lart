@@ -94,10 +94,16 @@ describe("GET /api/admin/money/export/[report]", () => {
     // 3 Feb 2004 is 14 Bahman 1382; Latin digits, year first, so the column sorts.
     expect(statement.slice(2).map((line) => line.split(",")[0])).toEqual(["1382/10/11", "1382/11/14", "1383/10/11"])
     const pnl = await csvLines(await call("pnl", "from=2004-01-01&to=2004-12-31&group=month&locale=fa"))
-    // Thirteen Jalali months touch 2004: Dey 1382 (from 22 Dec 2003) to Dey 1383 (from 21 Dec 2004).
+    // Thirteen Jalali months touch 2004, each by its first day: Dey 1382 (from 22 Dec 2003) to Dey 1383 (from 21 Dec 2004).
     const periods = pnl.slice(1, -1).map((line) => line.split(",")[0])
     expect(periods).toHaveLength(13)
-    expect([periods[0], periods[1], periods[12]]).toEqual(["دی ۱۳۸۲", "بهمن ۱۳۸۲", "دی ۱۳۸۳"])
+    expect([periods[0], periods[1], periods[12]]).toEqual(["1382/10/01", "1382/11/01", "1383/10/01"])
+    const seasons = await csvLines(await call("pnl", "from=2004-01-01&to=2004-12-31&group=quarter&locale=fa"))
+    // Winter 1382 (from 1 Dey), then spring, summer, autumn and winter of 1383 (Nowruz: 20 Mar 2004).
+    expect(seasons.slice(1, -1).map((line) => line.split(",")[0])).toEqual(["1382/10/01", "1383/01/01", "1383/04/01", "1383/07/01", "1383/10/01"])
+    // Turkish and English keep ISO days and Gregorian quarters.
+    const quarters = await csvLines(await call("pnl", "from=2004-01-01&to=2004-12-31&group=quarter&locale=en"))
+    expect(quarters.slice(1, -1).map((line) => line.split(",")[0])).toEqual(["2004-01-01", "2004-04-01", "2004-07-01", "2004-10-01"])
   })
 
   it("exports the ledger line by line, filtered", async () => {

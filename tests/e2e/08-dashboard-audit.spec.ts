@@ -1,3 +1,4 @@
+import { isolate } from "../../src/lib/format"
 import { formatLira } from "../../src/lib/money"
 import { ADMIN, expect, RUN, settle, test } from "./helpers/app"
 import { INSTRUCTORS, WORKSHOPS } from "./helpers/data"
@@ -88,7 +89,8 @@ test.describe("activity log", () => {
     // the summary line is cut at 140 characters).
     await page.goto(`/en/admin/audit?entity=workshop&q=${encodeURIComponent(`Studio 2, Kadıköy ${RUN}`)}`)
     await expect(
-      page.getByRole("cell").filter({ hasText: `venue (en): Moda Art House, Kadıköy ${RUN} → Moda Art House, Studio 2` }),
+      // Each value is wrapped in bidi isolates (lib/format `isolate`).
+      page.getByRole("cell").filter({ hasText: `venue (en): ${isolate(`Moda Art House, Kadıköy ${RUN}`)} → ${isolate("Moda Art House, Studio 2")}` }),
     ).toHaveCount(1)
     await expect(page.getByRole("cell").filter({ hasText: `venue: ${WORKSHOPS.held.venue.fa}` })).toHaveCount(0)
 

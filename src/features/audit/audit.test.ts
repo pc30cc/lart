@@ -23,18 +23,21 @@ vi.mock("next-intl/server", async () => {
   }
 })
 
+/** The summary's text without the bidi isolates around each value (checked on their own below). */
+const summary = (data: unknown, locale: string) => auditSummary(data, locale).replace(/[\u2068\u2069]/g, "")
+
 const labels = async (locale: "fa" | "tr" | "en") => (await import(`../../../messages/${locale}/settings.json`)).default.audit
 
 describe("audit data formatting", () => {
   it("summarises changes, localized texts and long values on one line", () => {
-    expect(auditSummary(null, "en")).toBe("")
-    expect(auditSummary({ slug: { from: "candles", to: "candle-making" }, sort: { from: 1, to: 2 } }, "en")).toBe(
+    expect(summary(null, "en")).toBe("")
+    expect(summary({ slug: { from: "candles", to: "candle-making" }, sort: { from: 1, to: 2 } }, "en")).toBe(
       "slug: candles → candle-making · sort: 1 → 2",
     )
-    expect(auditSummary({ name: { fa: "شمع", tr: "Mum" }, logoPath: { from: null, to: "brand/x.png" } }, "en")).toBe(
+    expect(summary({ name: { fa: "شمع", tr: "Mum" }, logoPath: { from: null, to: "brand/x.png" } }, "en")).toBe(
       "name: شمع · logoPath: — → brand/x.png",
     )
-    expect(auditSummary({ keysReplaced: ["publicZoneKey", "privateZoneKey"] }, "en")).toBe(
+    expect(summary({ keysReplaced: ["publicZoneKey", "privateZoneKey"] }, "en")).toBe(
       "keysReplaced: publicZoneKey, privateZoneKey",
     )
     const long = auditSummary({ body: { from: { en: "x".repeat(500) }, to: { en: "y".repeat(500) } }, more: "z".repeat(500) }, "en")
@@ -44,41 +47,48 @@ describe("audit data formatting", () => {
 
   it("writes stored dates in the page's language and calendar, in Istanbul time", () => {
     const data = { occurredOn: "2026-10-08", startsAt: { from: "2026-10-14T15:00:00.000Z", to: "2026-10-21T15:00:00.000Z" } }
-    expect(auditSummary(data, "en")).toBe("occurredOn: 8 Oct 2026 · startsAt: 14 Oct 2026, 18:00 → 21 Oct 2026, 18:00")
-    expect(auditSummary(data, "tr")).toBe("occurredOn: 8 Eki 2026 · startsAt: 14 Eki 2026 18:00 → 21 Eki 2026 18:00")
-    expect(auditSummary(data, "fa")).toBe("occurredOn: ۱۶ مهر ۱۴۰۵ · startsAt: ۲۲ مهر ۱۴۰۵، ۱۸:۰۰ → ۲۹ مهر ۱۴۰۵، ۱۸:۰۰")
-    // Not a date: left as it is.
-    expect(auditSummary({ slug: "2026-10-08-candles", code: "2026-13-45" }, "fa")).toBe("slug: 2026-10-08-candles · code: 2026-13-45")
+    expect(summary(data, "en")).toBe("occurredOn: 8 Oct 2026 · startsAt: 14 Oct 2026, 18:00 → 21 Oct 2026, 18:00")
+    expect(summary(data, "tr")).toBe("occurredOn: 8 Eki 2026 · startsAt: 14 Eki 2026 18:00 → 21 Eki 2026 18:00")
+    expect(summary(data, "fa")).toBe("occurredOn: ۱۶ مهر ۱۴۰۵ · startsAt: ۲۲ مهر ۱۴۰۵، ۱۸:۰۰ → ۲۹ مهر ۱۴۰۵، ۱۸:۰۰")
+    // Not a date (an impossible day is not rolled over to another): left as it is.
+    expect(summary({ slug: "2026-10-08-candles", code: "2026-13-45", day: "2026-02-30", at: "2026-04-31T10:00:00Z" }, "fa")).toBe(
+      "slug: 2026-10-08-candles · code: 2026-13-45 · day: 2026-02-30 · at: 2026-04-31T10:00:00Z",
+    )
+    // Each value is isolated, so a Persian date keeps its order in a line that starts with a Latin key.
+    expect(auditSummary({ startsAt: { from: "2026-10-14T15:00:00.000Z", to: "2026-10-21T15:00:00.000Z" } }, "fa")).toBe(
+      "startsAt: \u2068۲۲ مهر ۱۴۰۵، ۱۸:۰۰\u2069 → \u2068۲۹ مهر ۱۴۰۵، ۱۸:۰۰\u2069",
+    )
+    expect(auditSummary({ venue: { from: { fa: "مودا" }, to: { fa: "کادیکوی" } } }, "fa")).toBe("venue (fa): \u2068مودا\u2069 → \u2068کادیکوی\u2069")
   })
 
   it("shows a localized change in the language that changed, preferring the page's language", () => {
     const venue = { fa: "خانهٔ هنر مودا", tr: "Moda Sanat Evi", en: "Moda Art House" }
     // Only the English text changed (the e2e edit): shown in English, not as the unchanged Persian text.
     const english = { venue: { from: venue, to: { ...venue, en: "Moda Art House, Studio 2" } } }
-    expect(auditSummary(english, "en")).toBe("venue (en): Moda Art House → Moda Art House, Studio 2")
-    expect(auditSummary(english, "fa")).toBe("venue (en): Moda Art House → Moda Art House, Studio 2")
+    expect(summary(english, "en")).toBe("venue (en): Moda Art House → Moda Art House, Studio 2")
+    expect(summary(english, "fa")).toBe("venue (en): Moda Art House → Moda Art House, Studio 2")
     // A Turkish-only change, read in any language.
     const turkish = { venue: { from: { tr: "Moda Sanat Evi" }, to: { tr: "Kadıköy Atölye" } } }
-    for (const locale of ["fa", "tr", "en"]) expect(auditSummary(turkish, locale)).toBe("venue (tr): Moda Sanat Evi → Kadıköy Atölye")
+    for (const locale of ["fa", "tr", "en"]) expect(summary(turkish, locale)).toBe("venue (tr): Moda Sanat Evi → Kadıköy Atölye")
     // Several languages changed: the page's language first, else the first one that changed.
     const both = { title: { from: { fa: "شمع", tr: "Mum", en: "Candle" }, to: { fa: "شمع", tr: "Mum yapımı", en: "Candle making" } } }
-    expect(auditSummary(both, "en")).toBe("title (en): Candle → Candle making")
-    expect(auditSummary(both, "fa")).toBe("title (tr): Mum → Mum yapımı")
+    expect(summary(both, "en")).toBe("title (en): Candle → Candle making")
+    expect(summary(both, "fa")).toBe("title (tr): Mum → Mum yapımı")
     // A translation filled in, a translation removed, an optional text added.
-    expect(auditSummary({ venue: { from: { tr: "Moda" }, to: { tr: "Moda", en: "Moda (EN)" } } }, "tr")).toBe("venue (en): — → Moda (EN)")
-    expect(auditSummary({ venue: { from: { tr: "Moda", fa: "مودا" }, to: { tr: "Moda" } } }, "en")).toBe("venue (fa): مودا → —")
-    expect(auditSummary({ intro: { from: null, to: { tr: "Yeni" } } }, "en")).toBe("intro (tr): — → Yeni")
+    expect(summary({ venue: { from: { tr: "Moda" }, to: { tr: "Moda", en: "Moda (EN)" } } }, "tr")).toBe("venue (en): — → Moda (EN)")
+    expect(summary({ venue: { from: { tr: "Moda", fa: "مودا" }, to: { tr: "Moda" } } }, "en")).toBe("venue (fa): مودا → —")
+    expect(summary({ intro: { from: null, to: { tr: "Yeni" } } }, "en")).toBe("intro (tr): — → Yeni")
     // A localized value that is not a change shows the page's language when it has one.
-    expect(auditSummary({ title: { fa: "شمع", tr: "Mum", en: "Candle" } }, "tr")).toBe("title: Mum")
+    expect(summary({ title: { fa: "شمع", tr: "Mum", en: "Candle" } }, "tr")).toBe("title: Mum")
   })
 
   it("shows amounts in lira, not in kuruş", () => {
-    expect(auditSummary({ amount: 20000, category: "Printing" }, "en")).toBe("amount: ₺200 · category: Printing")
-    expect(auditSummary({ price: { from: 150000, to: 180050 } }, "tr")).toBe("price: ₺1.500 → ₺1.800,50")
-    expect(auditSummary({ revenue: 450000, expenses: 140000, participants: 12, feeAmount: { from: null, to: 5000 } }, "en")).toBe(
+    expect(summary({ amount: 20000, category: "Printing" }, "en")).toBe("amount: ₺200 · category: Printing")
+    expect(summary({ price: { from: 150000, to: 180050 } }, "tr")).toBe("price: ₺1.500 → ₺1.800,50")
+    expect(summary({ revenue: 450000, expenses: 140000, participants: 12, feeAmount: { from: null, to: 5000 } }, "en")).toBe(
       "revenue: ₺4,500 · expenses: ₺1,400 · participants: 12 · feeAmount: — → ₺50",
     )
-    expect(auditSummary({ amount: 20000 }, "fa")).toContain("₺۲۰۰")
+    expect(summary({ amount: 20000 }, "fa")).toContain("₺۲۰۰")
   })
 
   it("keeps the details readable and bounded", () => {
@@ -163,7 +173,7 @@ describe("listAudit", () => {
     expect(ids(byEntity)).toEqual(["three", "two", "one"])
     expect(byEntity.total).toBe(3)
     expect(byEntity.rows[0]).toMatchObject({ adminName: `Bora ${run}`, summary: "", detail: "" })
-    expect(byEntity.rows[2]).toMatchObject({ summary: "note: 100% done" })
+    expect(byEntity.rows[2]).toMatchObject({ summary: "note: \u2068100% done\u2069" })
     expect(byEntity.rows[2]).not.toHaveProperty("data")
 
     expect(ids(await list({ entity, admin: adminA }))).toEqual(["two", "one"])

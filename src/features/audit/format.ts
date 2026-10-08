@@ -3,7 +3,7 @@
  * one-line summary and a readable, size-limited JSON for the details popover.
  */
 
-import { formatDate, formatDateTime } from "@/lib/format"
+import { formatDate, formatDateTime, isolate } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 
 const SUMMARY_MAX = 140
@@ -39,7 +39,12 @@ const isLocalizedOrNone = (v: unknown): v is Partial<Record<Locale, unknown>> | 
 const textOf = (v: unknown) => (typeof v === "string" ? v.trim() : "")
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/
-const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})$/
+const ISO_INSTANT = /^(\d{4}-\d{2}-\d{2})T([01]\d|2[0-3]):[0-5]\d(:[0-5]\d(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})$/
+/** A real calendar day: "2026-02-30" is not one (Date.parse would roll it over to 2 March). */
+function isDay(day: string): boolean {
+  const date = new Date(`${day}T00:00:00Z`)
+  return ISO_DAY.test(day) && !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === day
+}
 
 /**
  * A stored date as the page's language writes it, in its calendar and in
@@ -48,9 +53,9 @@ const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}
  */
 function asDate(value: string, locale: string): string | null {
   // A day is shown from its noon in Istanbul, so no time zone moves it.
-  const instant = ISO_DAY.test(value) ? `${value}T09:00:00Z` : ISO_INSTANT.test(value) ? value : null
-  if (!instant || Number.isNaN(Date.parse(instant))) return null
-  return instant === value ? formatDateTime(instant, locale, "medium") : formatDate(instant, locale, "medium")
+  if (isDay(value)) return formatDate(`${value}T09:00:00Z`, locale, "medium")
+  const instant = ISO_INSTANT.exec(value)
+  return instant && isDay(instant[1]) ? formatDateTime(value, locale, "medium") : null
 }
 
 /** A short text for any JSON value. Localized texts show the page's language, else the first one filled in; dates its calendar. */
@@ -66,9 +71,14 @@ function short(value: unknown, locale?: string): string {
   return "…"
 }
 
-/** The value of `key` in the summary: amounts in kuruş as lira, anything else as `short`. */
+/**
+ * The value of `key` in the summary: amounts in kuruş as lira, anything else
+ * as `short`. Isolated (lib/format `isolate`): in a line that starts with a
+ * Latin key, a Persian date or text keeps its own order ("۲۲ مهر ۱۴۰۵ → ۲۹ مهر ۱۴۰۵",
+ * not its day pulled to the key and the arrow's sides swapped).
+ */
 const shown = (key: string, value: unknown, locale: string) =>
-  MONEY_KEYS.has(key) && typeof value === "number" && Number.isSafeInteger(value) ? formatLira(value, locale) : short(value, locale)
+  isolate(MONEY_KEYS.has(key) && typeof value === "number" && Number.isSafeInteger(value) ? formatLira(value, locale) : short(value, locale))
 
 /**
  * A change of a localized text, in the language that changed: the page's
@@ -80,7 +90,7 @@ function localizedChange(key: string, from: unknown, to: unknown, locale: string
   const changed = LOCALES.filter((l) => textOf(from?.[l]) !== textOf(to?.[l]))
   if (!changed.length) return null
   const lang = changed.find((l) => l === locale) ?? changed[0]
-  return `${key} (${lang}): ${short(from?.[lang])} → ${short(to?.[lang])}`
+  return `${key} (${lang}): ${isolate(short(from?.[lang]))} → ${isolate(short(to?.[lang]))}`
 }
 
 /** "slug: candles → candle-making · venue (tr): Moda → Kadıköy · price: ₺1,500 → ₺1,800" */

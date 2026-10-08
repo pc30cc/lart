@@ -715,7 +715,10 @@ the days into periods in TypeScript (dashboard `monthly`, money
 the reports name it "بهار ۱۴۰۵"). The date picker (`components/ui/calendar`)
 shows Jalali months for Persian with weeks from Saturday, and returns ordinary
 Dates. CSV exports write Persian dates as "1405/07/16" (`csvDate`: year first,
-Latin digits, so the column sorts) and ISO days otherwise. A signed contract
+Latin digits, so the column sorts) and ISO days otherwise; a profit-and-loss
+period by its first day ("1405/07/01" is Mehr 1405). The activity log's
+summaries show stored dates the same way as the page, each value in bidi
+isolates (`isolate`) so a Persian date keeps its order after a Latin key. A signed contract
 keeps the exact text signed, with the dates as they were written then.
 `localized(text, locale)` picks a `LocalizedText` with a tr → en → fa fallback.
 `slugify` (Turkish-aware), `zonedToIso(date, time)` / `zonedParts(iso)`,
