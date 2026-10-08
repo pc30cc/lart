@@ -88,6 +88,7 @@
   --font-app: var(--site-font-body);
   --font-serif: var(--site-font-heading);
   font-family: var(--site-font-body);
+  font-weight: var(--site-font-body-weight);
   font-feature-settings: var(--site-font-features);
 }
 
