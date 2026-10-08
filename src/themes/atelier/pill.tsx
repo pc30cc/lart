@@ -16,7 +16,7 @@ export function PillLink({
   return <Link className={cn(pillClass(tone, size), className)} {...props} />
 }
 
-export function pillClass(tone: "light" | "outline" | "solid", size: "sm" | "md" = "md") {
+function pillClass(tone: "light" | "outline" | "solid", size: "sm" | "md" = "md") {
   return cn(
     "at-caps inline-flex shrink-0 items-center justify-center gap-2 rounded-full font-semibold whitespace-nowrap outline-none transition-[background-color,color,border-color,box-shadow] duration-300",
     "focus-visible:ring-3 focus-visible:ring-offset-2",
