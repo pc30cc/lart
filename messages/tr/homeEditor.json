@@ -1,3 +1,78 @@
 {
-  "title": "Ana sayfa"
+  "intro": "Ana sayfanızda nelerin görüneceğini seçin. Boş bıraktığınız her alanda temanın kendi metni ya da fotoğrafı görünür; yalnızca değiştirmek istediklerinizi doldurmanız yeter. Boş bir alandaki soluk yazı, sitenin orada gösterdiği metindir.",
+  "classicNote": "Sitenizin şu anki teması yalnızca karşılama cümlesini ve atölyeleri gösteriyor. Bu sayfadaki bölümler, bu bölümleri olan bir temayla görünür.",
+  "chooseTheme": "Tema seç",
+  "show": "Ana sayfada göster",
+  "hidden": "Bu bölüm gizli: ziyaretçiler görmez.",
+  "photoHint": "Temanın kendi fotoğrafı için boş bırakın.",
+  "unsaved": "Henüz kaydedilmemiş değişiklikleriniz var.",
+  "hero": {
+    "title": "Sayfanın üstü",
+    "description": "Ziyaretçilerin ilk gördüğü yer: başlığınız ve atölyelere giden bir düğmeyle büyük bir fotoğraf ya da video.",
+    "background": "Arka plan",
+    "media": {
+      "theme": { "title": "Temanın fotoğrafları", "hint": "Temayla birlikte gelen hazır fotoğraflar." },
+      "images": { "title": "Kendi fotoğraflarım", "hint": "Sırayla gösterilen en fazla {max, number} fotoğraf." },
+      "video": { "title": "Bir video", "hint": "Sessizce, tekrar tekrar oynayan kısa bir video." }
+    },
+    "photos": "Fotoğraflarınız",
+    "photosHint": "Yatay fotoğraflar en güzel görünür. İlk fotoğraf ilk sırada gösterilir; sırayı değiştirmek için sürükleyin ya da okları kullanın.",
+    "video": "Video",
+    "videoHint": "{min, number}–{max, number} saniyelik kısa bir video en hızlı açılır. iPhone’un MOV videosunu önce MP4 olarak kaydedin.",
+    "poster": "Kapak fotoğrafı",
+    "posterHint": "Video yüklenirken görünür. İsteğe bağlı.",
+    "heading": "Başlık",
+    "subtitle": "Başlığın altındaki cümle",
+    "button": "Düğme yazısı",
+    "buttonHint": "Düğme atölye listesini açar."
+  },
+  "story": {
+    "title": "Hikâyemiz",
+    "description": "Hakkınızda birkaç sıcak cümle ve yaklaşan atölyelere giden bir düğmeyle bir fotoğraf.",
+    "heading": "Başlık",
+    "text": "Metin",
+    "textHint": "Birkaç cümle, en fazla {max, number} karakter.",
+    "button": "Düğme yazısı",
+    "photo": "Fotoğraf"
+  },
+  "crafts": {
+    "title": "Zanaata göre keşfet",
+    "description": "Her atölye türü için bir düğmeyle bir fotoğraf (mum, seramik…). Açık atölye olduğunda görünür.",
+    "heading": "Başlık",
+    "photo": "Fotoğraf"
+  },
+  "past": {
+    "title": "Geçmiş atölyeler",
+    "description": "Biten atölyelerden fotoğraflar. Böyle atölyeler olduğunda görünür.",
+    "heading": "Başlık"
+  },
+  "steps": {
+    "title": "Nasıl katılırım?",
+    "description": "Bir fotoğrafın üzerinde, bir atölyeye nasıl katılınacağını anlatan en fazla {max, number} kısa adım.",
+    "heading": "Başlık",
+    "step": "{n, number}. adım",
+    "stepTitle": "Adımın başlığı",
+    "stepText": "Adımın metni",
+    "add": "Adım ekle",
+    "remove": "{n, number}. adımı kaldır",
+    "photo": "Fotoğraf"
+  },
+  "footer": {
+    "title": "Sayfa altı",
+    "description": "Her sayfanın en altı: hakkınızda birkaç söz ve size nasıl ulaşılacağı. Boş bırakılan iletişim alanları gösterilmez.",
+    "about": "Hakkınızda",
+    "instagram": "Instagram adresi",
+    "instagramHint": "Instagram profilinizden kopyalayın, örneğin https://instagram.com/adiniz",
+    "email": "E-posta",
+    "phone": "Telefon",
+    "phoneHint": "Ülke koduyla, örneğin +90 555 123 45 67"
+  },
+  "errors": {
+    "photo": "Lütfen bu fotoğrafı yeniden yükleyin.",
+    "video": "Lütfen videoyu yeniden yükleyin.",
+    "photosNeeded": "En az bir fotoğraf ekleyin ya da başka bir arka plan seçin.",
+    "videoNeeded": "Bir video ekleyin ya da başka bir arka plan seçin.",
+    "instagram": "Lütfen Instagram sayfanızın adresini yapıştırın, örneğin https://instagram.com/adiniz",
+    "phone": "Lütfen telefon numarasını yalnızca rakamlarla yazın, örneğin +90 555 123 45 67"
+  }
 }
