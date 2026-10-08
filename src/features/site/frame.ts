@@ -29,6 +29,11 @@ export async function getSiteFrame(
       { href: "/about", label: th("about") },
     ],
     footer: {
+      links: [
+        { href: "/workshops", label: th("workshops") },
+        { href: "/about", label: th("about") },
+        { href: "/story", label: th("story") },
+      ],
       about,
       instagram: home.footer.instagram,
       // Never as text in the page: spam harvesters read it (themes/types `FooterContent`).

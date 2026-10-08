@@ -35,6 +35,8 @@ export type NavItem = { href: string; label: string }
 
 /** The footer's editable content (Settings → Home page); empty strings are left out by themes. */
 export type FooterContent = {
+  /** The footer's links (Workshops, About us, Our story), in order. */
+  links: NavItem[]
   /** A few sentences about the brand (bundled text when not set). */
   about: string
   /** An Instagram address (https://instagram.com/…) or "" */
@@ -59,7 +61,7 @@ export type SiteFrameProps = {
   top: ReactNode
   /** The "Please confirm your email" banner, else null. */
   banner: ReactNode
-  /** The main menu (Workshops, …), in order. */
+  /** The main menu (Workshops, …), in order (the footer's links are `footer.links`). */
   nav: NavItem[]
   footer: FooterContent
   children: ReactNode
@@ -122,7 +124,7 @@ export type HomeData = {
   }
 }
 
-/** A partner on the About page, in the page's language: only partners who chose to be shown. */
+/** A partner on the Our story page, in the page's language: only partners who chose to be shown. */
 export type AboutPartner = {
   /** Stable key for lists. */
   key: string
@@ -135,10 +137,11 @@ export type AboutPartner = {
 }
 
 /**
- * The About page (/about), in the page's language: the brand's few sentences
- * (the footer's "About us" text, Settings → Home page, else the bundled one),
- * the partners who chose to be shown (My profile; none: the page keeps its
- * intro and call to action), and the story band's photo (Settings → Home page
+ * The About page (/about) or the Our story page (/story), in the page's
+ * language. About: the brand's few sentences (the footer's "About us" text,
+ * Settings → Home page, else the bundled one) and no partners. Our story: a
+ * short intro and the partners who chose to be shown (My profile; none: the
+ * page keeps its intro and call to action). Both: the story band's photo (Settings → Home page
  * → Story, else null: the theme's own). Its only h1 is `title`; each partner's
  * name is an h3 under the `partnersTitle` h2.
  */
@@ -152,7 +155,6 @@ export type AboutData = {
   storyImageUrl: string | null
   labels: {
     partnersTitle: string
-    partnersText: string
     portraitAlt: (name: string) => string
     ctaTitle: string
     ctaText: string
@@ -174,7 +176,7 @@ export type Theme = {
   Frame: (props: SiteFrameProps) => ReactNode | Promise<ReactNode>
   /** The home page's sections. */
   Home: (props: { data: HomeData }) => ReactNode | Promise<ReactNode>
-  /** The About page (/about): the brand's story and the partners. */
+  /** The About page (/about, the brand's words) and the Our story page (/story, the partners). */
   About: (props: { data: AboutData }) => ReactNode | Promise<ReactNode>
   /** One workshop in a list (home page and /workshops). */
   WorkshopCard: (props: WorkshopCardProps) => ReactNode | Promise<ReactNode>

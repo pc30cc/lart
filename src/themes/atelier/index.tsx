@@ -20,7 +20,7 @@ function Frame({ locale, brand, logo, member, top, banner, nav, footer, children
       {/* The hero starts under the banner instead of under the header (theme.css). */}
       {banner && <div data-at-banner>{banner}</div>}
       <main className="flex flex-1 flex-col">{children}</main>
-      <Footer brand={brand} logo={logo} locale={locale} member={member} nav={nav} footer={footer} />
+      <Footer brand={brand} logo={logo} locale={locale} member={member} footer={footer} />
     </>
   )
 }

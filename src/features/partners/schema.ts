@@ -78,7 +78,7 @@ export const ABOUT_ROLE_MAX = 80
 export const ABOUT_BIO_MAX = 1500
 
 /**
- * My profile → "On the About page": whether I am shown on the public About
+ * My profile → "On the Our story page": whether I am shown on the public Our story
  * page (my consent), my portrait (the `partner_portrait` upload, or null),
  * my name as each language writes it (optional: else my name), my role and
  * a few words about me. While shown, the words are needed in every language:

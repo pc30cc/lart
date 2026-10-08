@@ -12,7 +12,7 @@ import type { AboutData, AboutPartner } from "@/themes/types"
 import { getSiteFrame } from "./frame"
 
 /**
- * The partners on the public About page, in `locale`: active partners who
+ * The partners on the public Our story page (/story), in `locale`: active partners who
  * chose to be shown (My profile), oldest first. Public fields only (never an
  * email), and each text in this language only (the name falls back to their
  * profile's name: a name reads the same in every language).
@@ -43,8 +43,8 @@ export const listAboutPartners = cache(async (locale: string): Promise<AboutPart
   }))
 })
 
-/** Whether the About page has anyone on it (else it is not indexed nor in the sitemap: it would only repeat the footer). */
-export async function aboutHasPartners(): Promise<boolean> {
+/** Whether the Our story page has anyone on it (else it is not indexed nor in the sitemap: it would be nearly empty). */
+export async function storyHasPartners(): Promise<boolean> {
   const [row] = await db
     .select({ id: admins.id })
     .from(admins)
@@ -53,27 +53,30 @@ export async function aboutHasPartners(): Promise<boolean> {
   return Boolean(row)
 }
 
-/** Everything the About page shows, in `locale` (themes/types `AboutData`). */
-export async function getAboutData(locale: string): Promise<AboutData> {
+/**
+ * Everything a page shows, in `locale` (themes/types `AboutData`): the About
+ * page (/about) is the brand's own words (the footer's "About us" text) and
+ * nobody else; the Our story page (/story) is the partners who chose to be on it.
+ */
+export async function getAboutData(locale: string, page: "about" | "story"): Promise<AboutData> {
   const [t, brand, frame, partners, home, url] = await Promise.all([
     getTranslations({ locale, namespace: "about" }),
     getBrand(locale),
     getSiteFrame(locale),
-    listAboutPartners(locale),
+    page === "story" ? listAboutPartners(locale) : [],
     getSetting("home"),
     publicUrls(),
   ])
   return {
     locale,
     brand,
-    kicker: t("kicker"),
-    title: t("title", { brand }),
-    intro: frame.footer.about,
+    ...(page === "story"
+      ? { kicker: brand, title: t("story.title"), intro: t("story.intro", { brand }) }
+      : { kicker: t("kicker"), title: t("title", { brand }), intro: frame.footer.about }),
     partners,
     storyImageUrl: url(home.story.image),
     labels: {
       partnersTitle: t("partnersTitle"),
-      partnersText: t("partnersText"),
       portraitAlt: (name) => t("portraitAlt", { name }),
       ctaTitle: t("cta.title"),
       ctaText: t("cta.text"),

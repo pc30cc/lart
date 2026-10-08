@@ -253,11 +253,11 @@ export const updateMyProfile = adminAction(profileSchema, async ({ currentPasswo
   return { emailChanged }
 })
 
-/** Names of the About page's fields in the audit log. */
+/** Names of the Our story page's fields in the audit log. */
 const ABOUT_FIELDS = { aboutShown: "shown", aboutName: "name", aboutRole: "role", aboutBio: "bio", portraitPath: "portrait" } as const
 
 /**
- * Save my entry on the public About page: whether I am shown, my portrait, my
+ * Save my entry on the public Our story page: whether I am shown, my portrait, my
  * name, role and words about me in each language. A new portrait must be one
  * I uploaded (purpose `partner_portrait`) and still be stored; the old one is
  * removed after the save. Only my own entry: being on a public page is each
@@ -314,7 +314,7 @@ export const updateMyAbout = adminAction(aboutProfileSchema, async (after, ctx) 
       console.error("[partners] could not remove the old portrait", errorForLog(err)),
     )
   }
-  // My profile, and the public About page in every language.
+  // My profile, and the public Our story page in every language.
   revalidatePath("/[locale]/admin", "layout")
-  revalidatePath("/[locale]/about", "page")
+  revalidatePath("/[locale]/story", "page")
 })

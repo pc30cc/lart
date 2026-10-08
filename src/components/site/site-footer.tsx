@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Link } from "@/i18n/navigation"
 import { formatYear } from "@/lib/format"
-import type { FooterContent, NavItem } from "@/themes/types"
+import type { FooterContent } from "@/themes/types"
 import { InstagramGlyph } from "./instagram-glyph"
 import { LanguageLinks } from "./language-links"
 import { ProtectedContact } from "./protected-contact"
@@ -19,13 +19,11 @@ export async function SiteFooter({
   brand,
   locale,
   signedIn,
-  nav,
   footer,
 }: {
   brand: string
   locale: string
   signedIn: boolean
-  nav: NavItem[]
   footer: FooterContent
 }) {
   const [t, tf] = await Promise.all([getTranslations("site.footer"), getTranslations("home.footer")])
@@ -40,7 +38,7 @@ export async function SiteFooter({
       <div className="text-muted-foreground mx-auto flex max-w-6xl flex-wrap items-start justify-between gap-x-8 gap-y-4 px-4 pt-6 text-sm">
         {/* Its own name: the header's menu is "Main". */}
         <nav aria-label={tf("explore")} className="flex flex-wrap gap-x-6 gap-y-2 font-medium">
-          {nav.map((item) => (
+          {footer.links.map((item) => (
             <Link key={item.href} href={item.href} className="hover:text-foreground focus-visible:ring-ring/50 rounded-sm outline-none focus-visible:ring-3">
               {item.label}
             </Link>

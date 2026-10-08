@@ -26,6 +26,7 @@ const table: [path: string, area: Area, access: Access, kind?: RouteKind][] = [
   ["/workshops/[slug]", "site", "public"],
   ["/workshops/[slug]/register", "site", "public"],
   ["/about", "site", "public"],
+  ["/story", "site", "public"],
   ["/[...rest]", "site", "public", "not-found"],
   // Students
   ["/account", "account", "private"],

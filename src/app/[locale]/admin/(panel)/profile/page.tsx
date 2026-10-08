@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /**
  * My profile (from the user menu): each partner edits their own photo, name
- * and email, their entry on the public About page, sees their profit share
+ * and email, their entry on the public Our story page, sees their profit share
  * (changed together under Money → Partners) and can change their password.
  */
 export default async function ProfilePage() {

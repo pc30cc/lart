@@ -47,7 +47,6 @@ export function About({ data }: { data: AboutData }) {
             <h2 id="at-about-team" className="text-[26px] leading-tight sm:text-[34px] lg:text-[40px] rtl:text-[26px] sm:rtl:text-[32px]">
               {labels.partnersTitle}
             </h2>
-            <p className="text-muted-foreground mt-3 text-base text-pretty sm:text-lg">{labels.partnersText}</p>
           </div>
           <ol className="mt-14 space-y-20 sm:mt-20 sm:space-y-28 lg:space-y-32">
             {partners.map((p, i) => (

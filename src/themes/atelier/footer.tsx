@@ -9,7 +9,7 @@ import { Link } from "@/i18n/navigation"
 import { formatYear } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { BrandLogo } from "../logo"
-import type { FooterContent, HeaderMember, LogoSize, NavItem } from "../types"
+import type { FooterContent, HeaderMember, LogoSize } from "../types"
 import { Wordmark } from "./wordmark"
 
 /**
@@ -23,14 +23,12 @@ export async function Footer({
   logo,
   locale,
   member,
-  nav,
   footer,
 }: {
   brand: string
   logo: LogoSize | null
   locale: string
   member: HeaderMember | null
-  nav: NavItem[]
   footer: FooterContent
 }) {
   const [t, th, tf] = await Promise.all([
@@ -52,7 +50,7 @@ export async function Footer({
         <div className="grid grid-cols-2 gap-x-6 gap-y-12 md:grid-cols-[repeat(3,minmax(0,1fr))_minmax(0,1.7fr)] lg:gap-x-12">
           <Column title={t("explore")}>
             <FooterLink href="/">{t("home")}</FooterLink>
-            {nav.map((item) => (
+            {footer.links.map((item) => (
               <FooterLink key={item.href} href={item.href}>
                 {item.label}
               </FooterLink>

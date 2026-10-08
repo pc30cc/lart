@@ -152,7 +152,7 @@ describe("POST /api/admin/uploads", () => {
     expect(body.path).toMatch(/^partners\/mina-k\/photo-[\w-]{22}\.webp$/)
   })
 
-  it("never names a partner's public portrait after their email (the About page shows its address)", async () => {
+  it("never names a partner's public portrait after their email (the Our story page shows its address)", async () => {
     Object.assign(state, { name: "مینا کریمی", email: "mina.k@example.com" })
     const persian = await (await upload(await formWith("partner_portrait", await jpegBlob()))).json()
     expect(persian.path).toMatch(/^partners\/partner\/portrait-[\w-]{22}\.webp$/)

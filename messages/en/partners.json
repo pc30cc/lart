@@ -113,11 +113,11 @@
     "welcome": "Welcome to the team! Your profit share starts at 0%. Together you can set the shares under Money → Partners."
   },
   "about": {
-    "title": "On the About page",
-    "description": "How you appear on the public About page (/about). Only you change it, and nothing is shown until you switch it on.",
-    "show": "Show me on the About page",
+    "title": "On the Our story page",
+    "description": "How you appear on the public Our story page (/story). Only you change it, and nothing is shown until you switch it on.",
+    "show": "Show me on the Our story page",
     "showHint": "Your portrait, name, role and words appear on the public site, in each language. You can switch it off at any time.",
-    "viewPage": "See the About page",
+    "viewPage": "See the Our story page",
     "portrait": "Portrait",
     "portraitHint": "Public, and separate from your photo in the panel. An upright photo looks best (shown 4:5).",
     "name": "Name on the site",
@@ -126,7 +126,7 @@
     "roleHint": "A few words, for example “Co-founder · Ceramics”. Shown only in the languages you fill in.",
     "bio": "About you",
     "bioHint": "A short introduction. Needed in all three languages while you are shown, so each language’s page has your own words.",
-    "saved": "Your About page entry has been saved.",
+    "saved": "Your Our story page entry has been saved.",
     "errors": {
       "portrait": "This portrait couldn’t be used. Please upload it again."
     }

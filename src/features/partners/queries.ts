@@ -55,7 +55,7 @@ export async function getMyProfile() {
 
 export type MyProfile = Awaited<ReturnType<typeof getMyProfile>>
 
-/** My entry on the public About page (My profile → "On the About page"). */
+/** My entry on the public Our story page (My profile → "On the Our story page"). */
 export async function getMyAbout() {
   const { admin } = await requireAdmin()
   const [[row], url] = await Promise.all([

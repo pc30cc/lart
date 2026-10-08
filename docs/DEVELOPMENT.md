@@ -43,13 +43,14 @@ Next.js 16 differs from older versions: read the relevant guide in
 ```
 src/
   app/
-    sitemap.ts, robots.ts       /sitemap.xml (home, workshops list + open workshop pages, /about while a partner is on it, fa/tr/en with hreflang), /robots.txt (disallows only /admin, /<l>/admin and /api)
+    sitemap.ts, robots.ts       /sitemap.xml (home, workshops list + open workshop pages, /about, /story while a partner is on it, fa/tr/en with hreflang), /robots.txt (disallows only /admin, /<l>/admin and /api)
     og.png/route.tsx            /og.png: the site's share picture (its logo on paper, 1200×630) for pages without their own
     [locale]/                   every page (URL rules: the main language has no prefix, the proxy rewrites it here)
       (site)/                   the public site: the active theme's Frame (src/themes) around the page, the "confirm your email" banner and the notice toast
         page.tsx                the home page (/, /fa, /en): the active theme's Home with getHomeData
         workshops/              list, /[slug] page, /[slug]/register
-        about/                  the About page (/about): the active theme's About with getAboutData (the partners who chose to be on it)
+        about/                  the About page (/about): the active theme's About with getAboutData(locale, "about") (the brand's own words, no partners)
+        story/                  the Our story page (/story): the same theme's About with getAboutData(locale, "story") (the partners who chose to be on it)
         account/                My workshops (page.tsx), registrations/[id], signup, login, verify, forgot, reset
       instructor/(auth)/        instructor sign in, sign up, invite, forgot, reset, verify (no panel chrome)
       instructor/(panel)/       the instructor panel: home, contracts, workshops, earnings, profile
@@ -222,6 +223,7 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 | `/workshops/[slug]` | site | public | |
 | `/workshops/[slug]/register` | site | public | |
 | `/about` | site | public | |
+| `/story` | site | public | |
 | `/[...rest]` | site | public | not-found page |
 | `/account` | account | private | |
 | `/account/login` | account | open | |
@@ -349,7 +351,7 @@ no private storage. The database stores only the storage path, e.g.
   | `gallery_video` | MP4 / MOV / WebM as they are, sent in 8 MB parts | `workshops/<slug>/videos/<random>.<ext>` |
   | `instructor_photo` | square 800 | `instructors/<name>/photo-<random>.webp` |
   | `admin_photo` | a partner's photo, square 512 | `partners/<name>/photo-<random>.webp` |
-  | `partner_portrait` | a partner's public portrait (About page), 1600, not cropped | `partners/<name>/portrait-<random>.webp` |
+  | `partner_portrait` | a partner's public portrait (Our story page), 1600, not cropped | `partners/<name>/portrait-<random>.webp` |
   | `watermark_logo` | PNG | `brand/watermark-logo-<random>.png` |
   | `site_image` | the home page's photos: 2560 wide, never watermarked | `site/img-<random>.webp` |
   | `site_video` | the home page's video: MP4 or WebM only (a MOV does not play by itself in Chromium or Firefox), up to 80 MB, sent in 8 MB parts | `site/video-<random>.<ext>` |
@@ -953,9 +955,9 @@ rules; `actions.ts`; `queries.ts`; `schema.ts`: the form schemas, client-safe).
   `photoPath` (read it as `photoPath ?? null`); its URL is the normal public
   one (`publicUrls()`), and the partners and dashboard queries return
   `photoUrl`.
-- **On the About page** (My profile, `updateMyAbout`, `getMyAbout`; columns
+- **On the Our story page** (My profile, `updateMyAbout`, `getMyAbout`; columns
   `about_shown`, `about_name`, `about_role`, `about_bio`, `portrait_path` on
-  `admins`): each partner chooses to be on the public About page (/about)
+  `admins`): each partner chooses to be on the public Our story page (/story)
   and writes their name (optional, per language), role and a few words in
   fa, tr and en (the words are needed in all three while shown; a hidden
   entry may be a draft), with a public portrait (`partner_portrait`, checked
@@ -964,7 +966,8 @@ rules; `actions.ts`; `queries.ts`; `schema.ts`: the form schemas, client-safe).
   `admin.about_update` with the changed fields (and shown, role).
   `listAboutPartners(locale)` gives the page each text in its own language
   only (never another's); with nobody on it the page is `noindex` and out of
-  the sitemap.
+  the sitemap. The About page (/about) is separate: only the brand's own
+  words (the footer's "About us" text), always indexed.
 - **Pages and components**: Money → Partners has "Invite a partner"
   (`money/partners/_components/invite-dialog.tsx`; disabled with a note when
   every place is taken, which asks to cancel an invitation only while a
@@ -1149,7 +1152,9 @@ on the public site links to the instructor pages.
 **Themes and their data.** Pages and the layout read the data and hand the
 active theme (`getActiveTheme()`, Settings → Appearance) plain props; a theme
 only decides how things look and never reads the database. The layout renders
-`theme.Frame` (menu and footer: `getSiteFrame`, `src/features/site/frame.ts`),
+`theme.Frame` (menu and footer: `getSiteFrame`, `src/features/site/frame.ts`;
+the header's menu is `nav`, the footer's links `footer.links`: Workshops,
+About us, Our story),
 the home page `theme.Home` with `getHomeData(locale)`
 (`src/features/site/home.ts`: the `home` setting, with the bundled texts of
 `messages/<locale>/home.json` where a field is empty; a section is null when
@@ -1232,8 +1237,9 @@ props; a theme only decides how things look. The contract is
 `src/themes/types.ts`: a `Theme` has a `Frame` (header, the page in one
 `<main>`, footer), a `Home` (the home page's sections from `HomeData`,
 `src/features/site/home.ts`; a hidden section is `null`), an `About` (the
-About page from `AboutData`, `src/features/site/about.ts`: the footer's
-"About us" text and the partners who chose to be on it), a `WorkshopCard`
+About page and the Our story page from `AboutData`,
+`src/features/site/about.ts`: on /about the footer's "About us" text and no
+partners, on /story a short intro and the partners who chose to be on it), a `WorkshopCard`
 (home page and `/workshops`), its `themeColor` and its default `fonts`. Its
 header lists what every theme keeps: one `h1` on the home page, the brand;
 the brand as the first link of the first `<header>`; a header at most 80px

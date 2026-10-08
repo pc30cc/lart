@@ -1,9 +1,13 @@
 {
   "metaTitle": "About us",
-  "kicker": "Our story",
+  "kicker": "About us",
   "title": "About {brand}",
+  "story": {
+    "metaTitle": "Our story",
+    "title": "Our story",
+    "intro": "The people behind {brand}: the ones who plan every workshop and welcome you at the table."
+  },
   "partnersTitle": "Meet the team",
-  "partnersText": "The people who plan every workshop and welcome you at the table.",
   "portraitAlt": "Portrait of {name}",
   "cta": {
     "title": "Make something with us",

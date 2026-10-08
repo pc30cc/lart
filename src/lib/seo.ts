@@ -47,3 +47,9 @@ export async function alternates(path: string, locale: string) {
 
 /** A JSON-LD object as the text of a <script> tag, with "<" escaped (no way to close the tag). */
 export const jsonLdText = (data: object) => JSON.stringify(data).replace(/</g, "\\u003c")
+
+/** Text as a page's description: one line, at most `max` characters, cut at a word with "…". */
+export function clipDescription(text: string, max = 160) {
+  const line = text.replace(/\s+/g, " ").trim()
+  return line.length <= max ? line : `${line.slice(0, max - 1).replace(/\s+\S*$/, "")}…`
+}

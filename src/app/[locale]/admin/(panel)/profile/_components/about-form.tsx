@@ -26,7 +26,7 @@ import { locales } from "@/i18n/routing"
 const all = (text: LocalizedText) => ({ fa: text.fa ?? "", tr: text.tr ?? "", en: text.en ?? "" })
 
 /**
- * My entry on the public About page: whether I am shown, a portrait (public,
+ * My entry on the public Our story page: whether I am shown, a portrait (public,
  * separate from the panel's photo), my name, role and a few words about me in
  * Persian, Turkish and English. While shown, the words are needed in all
  * three; a hidden entry can be saved half-written.
@@ -73,7 +73,7 @@ export function AboutForm({ about }: { about: MyAbout }) {
           )}
         </FormField>
         <Link
-          href="/about"
+          href="/story"
           target="_blank"
           rel="noopener"
           className="text-primary inline-flex items-center gap-1.5 text-sm font-medium underline-offset-4 hover:underline"

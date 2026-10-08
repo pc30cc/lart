@@ -480,8 +480,8 @@ describe("updateMyAbout", () => {
       aboutRole: { fa: "هم‌بنیان‌گذار", tr: "Kurucu ortak" },
       aboutBio: words,
     })
-    // The About page in every language shows it at once.
-    expect(revalidatePath).toHaveBeenCalledWith("/[locale]/about", "page")
+    // The Our story page in every language shows it at once.
+    expect(revalidatePath).toHaveBeenCalledWith("/[locale]/story", "page")
     const entries = await auditOf(me, "admin.about_update")
     expect(entries.map((e) => e.data)).toEqual([
       { fields: ["bio"] },

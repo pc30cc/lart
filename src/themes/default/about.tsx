@@ -31,7 +31,6 @@ export function About({ data }: { data: AboutData }) {
             <h2 id="about-team" className="text-2xl font-semibold tracking-tight sm:text-3xl">
               {labels.partnersTitle}
             </h2>
-            <p className="text-muted-foreground mt-2 text-base text-pretty sm:text-lg">{labels.partnersText}</p>
           </div>
           <ul
             className={cn(

@@ -50,7 +50,7 @@ export const admins = pgTable("admins", {
   /** Profile photo (`partners/<name>/photo-<random>.webp`; older ones `admins/…`): stored like every other file, shown only inside the panel. */
   photoPath: text("photo_path"),
   /**
-   * The partner on the public About page (/about), filled in by themselves on
+   * The partner on the public Our story page (/story), filled in by themselves on
    * My profile: shown only while `aboutShown` (their consent to publish), with
    * a public portrait (`partners/<name>/portrait-<random>.webp`, never the
    * panel's photo), their name as each language writes it (else `name`), a

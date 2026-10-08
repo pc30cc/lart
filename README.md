@@ -298,8 +298,9 @@ with students or instructors.
   in the user menu): name, email (needs the current password) and photo.
   The photo (only partners see it) shows in the user menu, on the partners'
   cards and shares, and on the dashboard; without one, the initials. On the
-  same page each partner can choose to appear on the public **About us**
-  page (/about), with a public portrait (separate from the panel's photo),
+  same page each partner can choose to appear on the public **Our story**
+  page (/story; the **About us** page, /about, keeps only the brand's own
+  words, and the footer links both), with a public portrait (separate from the panel's photo),
   their role and a few words in Persian, Turkish and English.
 
 ### Dashboard

@@ -1,9 +1,13 @@
 {
   "metaTitle": "Hakkımızda",
-  "kicker": "Hikâyemiz",
+  "kicker": "Hakkımızda",
   "title": "{brand} hakkında",
+  "story": {
+    "metaTitle": "Hikâyemiz",
+    "title": "Hikâyemiz",
+    "intro": "{brand} ekibi: her atölyeyi planlayan ve sizi masada karşılayan insanlar."
+  },
   "partnersTitle": "Ekibimizle tanışın",
-  "partnersText": "Her atölyeyi planlayan ve sizi masada karşılayan insanlar.",
   "portraitAlt": "{name} portresi",
   "cta": {
     "title": "Bizimle bir şeyler üretin",

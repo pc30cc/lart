@@ -20,7 +20,7 @@ function Frame({ locale, brand, logo, member, top, banner, nav, footer, children
       <SiteHeader brand={brand} logo={logo} member={member} top={top} nav={nav} />
       {banner}
       <main className="flex flex-1 flex-col">{children}</main>
-      <SiteFooter brand={brand} locale={locale} signedIn={member !== null} nav={nav} footer={footer} />
+      <SiteFooter brand={brand} locale={locale} signedIn={member !== null} footer={footer} />
     </>
   )
 }
