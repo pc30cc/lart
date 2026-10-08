@@ -142,10 +142,12 @@ export type AboutPartner = {
  * Settings → Home page, else the bundled one) and no partners. Our story: a
  * short intro and the partners who chose to be shown (My profile; none: the
  * page keeps its intro and call to action). Both: the story band's photo (Settings → Home page
- * → Story, else null: the theme's own). Its only h1 is `title`; each partner's
- * name is an h3 under the `partnersTitle` h2.
+ * → Story, else null: the theme's own). Its only h1 is `title`; on /story the
+ * partners are a list named `partnersTitle`, each partner's name an h2.
  */
 export type AboutData = {
+  /** Which page: "about" (the brand's words, a large opening) or "story" (a short opening, then the partners). */
+  page: "about" | "story"
   locale: string
   brand: string
   kicker: string

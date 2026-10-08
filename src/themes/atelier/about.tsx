@@ -8,13 +8,13 @@ import { RevealObserver } from "./reveal"
 import { Monogram } from "./workshop-card"
 
 /**
- * Atelier's About page: a quiet, centred opening (the kicker between two
- * rules, the title, the brand's story), each partner as a framed portrait
- * print beside their words, the sides changing from one partner to the next,
- * and the story band's photo closing the page with the way to the workshops.
+ * Atelier's About page (/about): a quiet, centred opening (the kicker between
+ * two rules, the title, the brand's words) and the story band's photo closing
+ * the page with the way to the workshops. The Our story page (/story) is
+ * `Story`.
  */
 export function About({ data }: { data: AboutData }) {
-  const { partners, labels } = data
+  if (data.page === "story") return <Story data={data} />
   return (
     <>
       <section className="at-container pt-16 pb-14 text-center sm:pt-24 sm:pb-20 lg:pt-28">
@@ -40,21 +40,49 @@ export function About({ data }: { data: AboutData }) {
         </div>
         <span aria-hidden className="bg-at-beige/70 mx-auto mt-12 block h-16 w-px sm:mt-16 sm:h-20" />
       </section>
+      <Closing data={data} />
+      <RevealObserver />
+    </>
+  )
+}
+
+/**
+ * The Our story page: a short opening (the brand over the title on one side,
+ * the line about the team on the other, a rule under both), so the partners
+ * start in the first screen: framed portraits side by side, each with its
+ * number, name, role and words; one partner as portrait beside words.
+ */
+function Story({ data }: { data: AboutData }) {
+  const { partners, labels } = data
+  return (
+    <>
+      <section className="at-container pt-12 sm:pt-16 lg:pt-20">
+        <div className="border-at-beige/60 grid gap-5 border-b pb-10 sm:pb-12 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:items-end md:gap-16">
+          <div data-reveal data-reveal-fade>
+            <p className="at-caps text-primary text-xs sm:text-[13px] rtl:text-sm">{data.kicker}</p>
+            <h1 className="at-heading mt-3 text-[40px] leading-[1.04] text-balance sm:text-[52px] lg:text-[60px] rtl:text-[34px] rtl:leading-[1.45] sm:rtl:text-[44px] lg:rtl:text-[50px]">
+              {data.title}
+            </h1>
+          </div>
+          <p data-reveal style={delay(1)} className="text-muted-foreground max-w-[34rem] text-base leading-relaxed text-pretty sm:text-lg md:pb-2">
+            {data.intro}
+          </p>
+        </div>
+      </section>
 
       {partners.length > 0 && (
-        <section aria-labelledby="at-about-team" className="at-container pb-20 sm:pb-28">
-          <div className="mx-auto max-w-[40rem] text-center" data-reveal data-reveal-fade>
-            <h2 id="at-about-team" className="text-[26px] leading-tight sm:text-[34px] lg:text-[40px] rtl:text-[26px] sm:rtl:text-[32px]">
-              {labels.partnersTitle}
-            </h2>
-          </div>
-          <ol className="mt-14 space-y-20 sm:mt-20 sm:space-y-28 lg:space-y-32">
-            {partners.map((p, i) => (
-              <li key={p.key}>
-                <Partner partner={p} index={i} locale={data.locale} alt={labels.portraitAlt(p.name)} />
-              </li>
-            ))}
-          </ol>
+        <section aria-label={labels.partnersTitle} className="at-container pt-12 pb-20 sm:pt-16 sm:pb-28">
+          {partners.length === 1 ? (
+            <Partner partner={partners[0]} index={0} locale={data.locale} alt={labels.portraitAlt(partners[0].name)} />
+          ) : (
+            <ul className={cn("grid gap-x-10 gap-y-16 sm:grid-cols-2 lg:gap-x-16", partners.length >= 3 && "lg:grid-cols-3")}>
+              {partners.map((p, i) => (
+                <li key={p.key} data-reveal style={delay(i)}>
+                  <PartnerCard partner={p} index={i} locale={data.locale} alt={labels.portraitAlt(p.name)} />
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       )}
 
@@ -64,40 +92,71 @@ export function About({ data }: { data: AboutData }) {
   )
 }
 
-/** One partner: the framed portrait on one side, the number, name, role and words on the other (every second partner the other way round). */
+/** The framed portrait print (else the monogram). */
+function Portrait({ partner: p, alt, first }: { partner: AboutPartner; alt: string; first: boolean }) {
+  return (
+    <div className="bg-at-frame aspect-[4/5] p-1.5 shadow-[0_28px_56px_-30px_rgb(91_49_30/0.6)] sm:p-2">
+      <div className="bg-muted relative size-full overflow-hidden">
+        {p.portraitUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- CDN URL, any host
+          <img
+            src={p.portraitUrl}
+            alt={alt}
+            width={800}
+            height={1000}
+            loading={first ? "eager" : "lazy"}
+            fetchPriority={first ? "high" : undefined}
+            decoding="async"
+            style={{ objectPosition: "50% 30%" }}
+            className="size-full object-cover"
+          />
+        ) : (
+          <Monogram title={p.name} />
+        )}
+      </div>
+    </div>
+  )
+}
+
+/** A partner side by side with the others: portrait, then number and name on one line, role, and their words under a rule. */
+function PartnerCard({ partner: p, index, locale, alt }: { partner: AboutPartner; index: number; locale: string; alt: string }) {
+  return (
+    <article>
+      <Portrait partner={p} alt={alt} first={index < 2} />
+      <div className="mt-7 flex items-baseline gap-4">
+        <span aria-hidden className="at-heading text-primary text-xl leading-none sm:text-2xl">
+          {formatNumber(index + 1, locale, { minimumIntegerDigits: 2 })}
+        </span>
+        <h2 className="text-[28px] leading-[1.1] text-balance sm:text-[34px] rtl:text-[26px] rtl:leading-[1.5] sm:rtl:text-[30px]">{p.name}</h2>
+      </div>
+      {p.role && <p className="at-caps text-muted-foreground mt-2 text-xs sm:text-[13px] rtl:text-sm">{p.role}</p>}
+      {p.bio && (
+        <div className="border-at-beige/60 mt-5 space-y-3 border-t pt-5 text-base leading-relaxed text-pretty sm:text-[17px]">
+          {paragraphs(p.bio).map((para, i) => (
+            <p key={i} className="whitespace-pre-line">
+              {para}
+            </p>
+          ))}
+        </div>
+      )}
+    </article>
+  )
+}
+
+/** The only partner: the framed portrait on one side, the number, name, role and words on the other. */
 function Partner({ partner: p, index, locale, alt }: { partner: AboutPartner; index: number; locale: string; alt: string }) {
-  const flipped = index % 2 === 1
   return (
     <article className="grid items-center gap-10 md:grid-cols-2 md:gap-14 lg:gap-24">
-      <figure data-reveal className={cn("mx-auto w-full max-w-[26rem]", flipped && "md:order-2")}>
-        <div className="bg-at-frame aspect-[4/5] p-1.5 shadow-[0_28px_56px_-30px_rgb(91_49_30/0.6)] sm:p-2">
-          <div className="bg-muted relative size-full overflow-hidden">
-            {p.portraitUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element -- CDN URL, any host
-              <img
-                src={p.portraitUrl}
-                alt={alt}
-                width={800}
-                height={1000}
-                loading={index === 0 ? "eager" : "lazy"}
-                fetchPriority={index === 0 ? "high" : undefined}
-                decoding="async"
-                style={{ objectPosition: "50% 30%" }}
-                className="size-full object-cover"
-              />
-            ) : (
-              <Monogram title={p.name} />
-            )}
-          </div>
-        </div>
+      <figure data-reveal className="mx-auto w-full max-w-[26rem]">
+        <Portrait partner={p} alt={alt} first />
       </figure>
-      <div data-reveal style={delay(1)} className={cn("min-w-0 text-center md:text-start", flipped && "md:order-1")}>
+      <div data-reveal style={delay(1)} className="min-w-0 text-center md:text-start">
         <span aria-hidden className="at-heading text-primary text-[32px] leading-none sm:text-[40px]">
           {formatNumber(index + 1, locale, { minimumIntegerDigits: 2 })}
         </span>
-        <h3 className="mt-4 text-[32px] leading-[1.08] text-balance sm:mt-6 sm:text-[44px] rtl:text-[30px] rtl:leading-[1.5] sm:rtl:text-[38px]">
+        <h2 className="mt-4 text-[32px] leading-[1.08] text-balance sm:mt-6 sm:text-[44px] rtl:text-[30px] rtl:leading-[1.5] sm:rtl:text-[38px]">
           {p.name}
-        </h3>
+        </h2>
         {p.role && <p className="at-caps text-muted-foreground mt-3 text-xs sm:text-[13px] rtl:text-sm">{p.role}</p>}
         {p.bio && (
           <div className="border-at-beige/60 mt-6 space-y-4 border-t pt-6 text-[17px] leading-relaxed text-pretty sm:mt-8 sm:pt-8">

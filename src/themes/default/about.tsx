@@ -6,35 +6,46 @@ import { cn } from "@/lib/utils"
 import type { AboutData, AboutPartner } from "../types"
 
 /**
- * The classic theme's About page: the brand's story under the same warm band
- * as the home page's top, the partners as tall portrait cards side by side,
- * and a quiet way to the workshops. Without partners on the page, the story
- * and the way to the workshops stay.
+ * The classic theme's About page (/about): the brand's words under the same
+ * warm band as the home page's top, and a quiet way to the workshops. On the
+ * Our story page (/story) the band is short, so the partners (tall portrait
+ * cards side by side) start in the first screen.
  */
 export function About({ data }: { data: AboutData }) {
   const { partners, labels } = data
+  const story = data.page === "story"
   return (
     <>
       <section className="from-primary/8 border-b bg-linear-to-b to-transparent">
-        <div className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 mx-auto w-full max-w-6xl px-4 py-14 motion-safe:duration-500 sm:py-20">
-          <p className="text-primary text-sm font-medium tracking-wide">{data.kicker}</p>
-          <h1 className="mt-3 font-serif text-4xl [font-weight:var(--site-font-heading-weight)] tracking-wide text-balance sm:text-6xl rtl:tracking-normal">
-            {data.title}
-          </h1>
-          <Paragraphs text={data.intro} className="text-muted-foreground mt-6 max-w-2xl text-lg leading-relaxed text-pretty sm:text-xl" />
+        <div
+          className={cn(
+            "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 mx-auto w-full max-w-6xl px-4 motion-safe:duration-500",
+            story ? "grid gap-4 py-10 sm:py-12 md:grid-cols-2 md:items-end md:gap-12" : "py-14 sm:py-20",
+          )}
+        >
+          <div>
+            <p className="text-primary text-sm font-medium tracking-wide">{data.kicker}</p>
+            <h1
+              className={cn(
+                "mt-3 font-serif [font-weight:var(--site-font-heading-weight)] tracking-wide text-balance rtl:tracking-normal",
+                story ? "text-3xl sm:text-5xl" : "text-4xl sm:text-6xl",
+              )}
+            >
+              {data.title}
+            </h1>
+          </div>
+          <Paragraphs
+            text={data.intro}
+            className={cn("text-muted-foreground max-w-2xl leading-relaxed text-pretty", story ? "text-base sm:text-lg" : "mt-6 text-lg sm:text-xl")}
+          />
         </div>
       </section>
 
       {partners.length > 0 && (
-        <section aria-labelledby="about-team" className="mx-auto w-full max-w-6xl px-4 py-14 sm:py-20">
-          <div className="max-w-2xl">
-            <h2 id="about-team" className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              {labels.partnersTitle}
-            </h2>
-          </div>
+        <section aria-label={labels.partnersTitle} className="mx-auto w-full max-w-6xl px-4 py-10 sm:py-14">
           <ul
             className={cn(
-              "mt-10 grid gap-6 sm:mt-12 sm:gap-8",
+              "grid gap-6 sm:gap-8",
               partners.length === 1 ? "max-w-xl" : "sm:grid-cols-2",
               partners.length >= 3 && "lg:grid-cols-3",
             )}
@@ -93,9 +104,9 @@ function PartnerCard({ partner: p, alt, priority }: { partner: AboutPartner; alt
         )}
       </div>
       <div className="flex flex-1 flex-col p-6 sm:p-8">
-        <h3 className="font-serif text-2xl [font-weight:var(--site-font-heading-weight)] tracking-wide text-balance sm:text-3xl rtl:tracking-normal">
+        <h2 className="font-serif text-2xl [font-weight:var(--site-font-heading-weight)] tracking-wide text-balance sm:text-3xl rtl:tracking-normal">
           {p.name}
-        </h3>
+        </h2>
         {p.role && <p className="text-primary mt-1.5 text-sm font-medium">{p.role}</p>}
         {p.bio && <Paragraphs text={p.bio} className="text-muted-foreground mt-4 text-base leading-relaxed text-pretty" />}
       </div>
