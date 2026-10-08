@@ -43,5 +43,19 @@
     "contact": "Contact",
     "home": "Home",
     "instagram": "Instagram"
+  },
+  "atelier": {
+    "menu": "Menu",
+    "closeMenu": "Close the menu",
+    "photos": {
+      "candlesPouring": "Women pouring candles around a wooden table",
+      "candlesTable": "Friends laughing as they make candles together",
+      "candlesFriends": "Women pouring fresh candles into jars in a sunlit room",
+      "pottery": "Women at the potter’s wheel in a ceramics workshop",
+      "macrame": "Hands tying macramé knots",
+      "painting": "Women painting side by side at a workshop",
+      "studio": "A bright workshop hall with wooden tables, all set up",
+      "closeUp": "A close-up of hands making something beautiful"
+    }
   }
 }

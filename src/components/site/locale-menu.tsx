@@ -34,9 +34,10 @@ export function LocaleChoices({ value, onChange }: { value: string; onChange: (l
 
 /**
  * FA / TR / EN in the site header (on a phone the icon only, so the brand
- * keeps its room). A signed-in member's emails follow the choice.
+ * keeps its room). A signed-in member's emails follow the choice. A theme may
+ * restyle the button (`className`).
  */
-export function LocaleMenu({ signedIn }: { signedIn: boolean }) {
+export function LocaleMenu({ signedIn, className }: { signedIn: boolean; className?: string }) {
   const t = useTranslations("common")
   const locale = useLocale()
   const { switchTo, pending } = useSwitchLocale(signedIn)
@@ -46,7 +47,7 @@ export function LocaleMenu({ signedIn }: { signedIn: boolean }) {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className={cn("h-10 gap-1.5 px-2.5 font-normal max-sm:w-10 max-sm:px-0", pending && "opacity-60")}
+          className={cn("h-10 gap-1.5 px-2.5 font-normal max-sm:w-10 max-sm:px-0", pending && "opacity-60", className)}
           aria-label={t("language")}
         >
           <LanguagesIcon className="size-4.5" />
