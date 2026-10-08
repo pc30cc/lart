@@ -19,16 +19,17 @@ import {
   HOME_STEPS_MAX,
   HOME_TEXT_MAX,
   heroMediaChoices,
+  homeFormSchema,
   homeSettingsSchema,
   type HeroMediaChoice,
   type HomeDefaults,
-  type HomeSettingsInput,
+  type HomeFormInput,
   type HomeSettingsValues,
 } from "@/features/site/home-schema"
 import { Link } from "@/i18n/navigation"
 import { ChoiceCards } from "../_components/fields"
 
-type Values = HomeSettingsInput
+type Values = HomeFormInput
 type Section = "story" | "crafts" | "past" | "steps"
 /** A file's URL, also for files uploaded since the page was loaded. */
 type Urls = { urlOf: (path: string | null | undefined) => string | null; remember: (path: string, url: string) => void }
@@ -40,9 +41,13 @@ const CLIP_SECONDS = { min: 10, max: 30 }
 const all = (text: LocalizedText | undefined) => ({ fa: text?.fa ?? "", tr: text?.tr ?? "", en: text?.en ?? "" })
 const emptyStep = () => ({ title: all({}), text: all({}) })
 
-/** The form's values from the saved setting: every language present, and four steps when none are saved. */
-function initialValues(home: HomeSettingsValues): Values {
+/**
+ * The form's values from the saved setting and its version: every language
+ * present, and four steps when none are saved.
+ */
+function initialValues(home: HomeSettingsValues, version: string): Values {
   return {
+    version,
     hero: { ...home.hero, title: all(home.hero.title), subtitle: all(home.hero.subtitle), button: all(home.hero.button) },
     story: { ...home.story, title: all(home.story.title), text: all(home.story.text), button: all(home.story.button) },
     crafts: { ...home.crafts, title: all(home.crafts.title) },
@@ -66,11 +71,14 @@ function initialValues(home: HomeSettingsValues): Values {
  */
 export function HomeSettingsForm({
   saved,
+  version,
   urls,
   defaults,
   classic,
 }: {
   saved: HomeSettingsValues
+  /** The saved setting's version, sent back with the form (a save made since then refuses this one). */
+  version: string
   /** URLs of the saved files. */
   urls: Record<string, string | null>
   defaults: HomeDefaults
@@ -87,12 +95,12 @@ export function HomeSettingsForm({
   }
 
   const { form, submit, pending } = useActionForm({
-    schema: homeSettingsSchema,
+    schema: homeFormSchema,
     action: saveHomeSettings,
-    defaultValues: initialValues(saved),
+    defaultValues: initialValues(saved, version),
     successMessage: ts("toast.saved"),
-    // What was saved, as the server stores it (e.g. an Instagram link without "?igsh=…").
-    onSuccess: () => form.reset(initialValues(homeSettingsSchema.parse(form.getValues()))),
+    // What was saved, as the server stores it (e.g. an Instagram link without "?igsh=…"), and its new version.
+    onSuccess: (data) => form.reset(initialValues(homeSettingsSchema.parse(form.getValues()), data.version)),
   })
   const background = useWatch({ control: form.control, name: "hero.media" }) as HeroMediaChoice
   const dirty = form.formState.isDirty

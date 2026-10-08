@@ -2,8 +2,7 @@
   "hero": {
     "title": "Make something beautiful with your own hands",
     "subtitle": "Candles, ceramics, macramé and more: small, warm workshops where we learn and create together.",
-    "button": "Explore workshops",
-    "imageAlt": "Women creating together at a workshop"
+    "button": "Explore workshops"
   },
   "story": {
     "title": "A place to create together",
@@ -47,6 +46,8 @@
   "atelier": {
     "menu": "Menu",
     "closeMenu": "Close the menu",
+    "pauseMotion": "Pause the background motion",
+    "playMotion": "Resume the background motion",
     "photos": {
       "candlesPouring": "Women pouring candles around a wooden table",
       "candlesTable": "Friends laughing as they make candles together",

@@ -5,7 +5,9 @@ import { cn } from "@/lib/utils"
 
 /**
  * Atelier's pill button, as a link. `light`: cream on a photo; `outline`: a
- * thin line on the page; `solid`: the brick primary.
+ * thin line on the page; `solid`: the brick primary. A long label (the admin
+ * types the hero's and the story's, and the categories' names) wraps onto a
+ * second line instead of running out of a phone's screen.
  */
 export function PillLink({
   tone = "light",
@@ -18,11 +20,11 @@ export function PillLink({
 
 function pillClass(tone: "light" | "outline" | "solid", size: "sm" | "md" = "md") {
   return cn(
-    "at-caps inline-flex shrink-0 items-center justify-center gap-2 rounded-full font-semibold whitespace-nowrap outline-none transition-[background-color,color,border-color,box-shadow] duration-300",
+    "at-caps inline-flex max-w-full shrink-0 items-center justify-center gap-2 rounded-full text-center font-semibold text-balance outline-none transition-[background-color,color,border-color,box-shadow] duration-300",
     "focus-visible:ring-3 focus-visible:ring-offset-2",
     size === "md"
-      ? "h-12 px-7 text-[13px] sm:h-[52px] sm:px-8 sm:text-sm rtl:text-[15px]"
-      : "h-10 px-5 text-xs sm:text-[13px] rtl:text-sm",
+      ? "min-h-12 px-7 py-3 text-[13px] leading-snug sm:min-h-[52px] sm:px-8 sm:text-sm rtl:text-[15px]"
+      : "min-h-10 px-5 py-2 text-xs leading-snug sm:text-[13px] rtl:text-sm",
     tone === "light" &&
       "bg-at-paper text-at-brown shadow-[0_8px_24px_-12px_rgb(0_0_0/0.45)] hover:bg-at-cream hover:shadow-[0_10px_28px_-12px_rgb(0_0_0/0.55)] focus-visible:ring-at-paper/60 focus-visible:ring-offset-black/30",
     tone === "outline" &&

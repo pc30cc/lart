@@ -67,6 +67,17 @@ export const remove = async (path: string) => (await getStorage()).remove(path)
 export const publicUrl = async (path: string) => (await getStorage()).publicUrl(path)
 
 /**
+ * Whether a file is still in storage (its body is not downloaded). A storage
+ * error counts as missing. A form left open may hold the path of a file that
+ * a later save has already removed: check a path before storing it.
+ */
+export async function exists(path: string): Promise<boolean> {
+  const file = await read(path).catch(() => null)
+  await file?.body.cancel().catch(() => {})
+  return file !== null
+}
+
+/**
  * For pages: `url(path)` gives a file's public URL, or null without a path
  * or when the "cdn" setting cannot be used (logged once), so the page shows
  * no image (initials, a placeholder) instead of failing.

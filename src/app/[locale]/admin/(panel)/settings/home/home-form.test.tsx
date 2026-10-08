@@ -57,7 +57,7 @@ describe.each(["fa", "tr", "en"])("the home page editor in %s", (locale) => {
     )
 
   it("shows the saved content, the photos, and the theme's texts as placeholders in every language", async () => {
-    const html = await render(<HomeSettingsForm saved={saved} urls={{ [photo]: "/media/x.webp" }} defaults={defaults} classic />)
+    const html = await render(<HomeSettingsForm saved={saved} version="1791460000000000" urls={{ [photo]: "/media/x.webp" }} defaults={defaults} classic />)
     expect(html).toContain('value="Birlikte üretelim"')
     expect(html).toContain('src="/media/x.webp"')
     expect(html).toContain('value="https://instagram.com/limer.tr"')
@@ -71,7 +71,7 @@ describe.each(["fa", "tr", "en"])("the home page editor in %s", (locale) => {
 
   it("shows the video and its cover photo when the background is a video", async () => {
     const video = { ...saved, hero: { ...saved.hero, media: "video" as const, video: "site/video-AbC_-123AbC_-123AbC_-1.mp4" } }
-    const html = await render(<HomeSettingsForm saved={video} urls={{ [video.hero.video]: "/media/v.mp4" }} defaults={defaults} classic={false} />)
+    const html = await render(<HomeSettingsForm saved={video} version="" urls={{ [video.hero.video]: "/media/v.mp4" }} defaults={defaults} classic={false} />)
     expect(html).toContain('src="/media/v.mp4"')
     expect(html).not.toContain('href="/admin/settings/appearance"')
   })

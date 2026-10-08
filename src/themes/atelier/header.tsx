@@ -54,15 +54,20 @@ export function Header({
   }, [onHero])
 
   const clear = onHero && !scrolled
+  // Over the hero a brick focus ring would vanish into the dark photo: cream instead.
+  const ring = clear && "focus-visible:ring-at-cream/70"
 
   return (
     <header
       data-clear={clear || undefined}
       className={cn(
         "sticky top-0 z-40 border-b transition-[background-color,color,border-color,box-shadow] duration-500 ease-out",
+        // A soft dark shade behind the see-through bar, moving with it and fading out below it,
+        // so its cream text keeps 4.5:1 even over a light photo (and fading away when it turns solid).
+        "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:-z-10 before:h-[calc(100%+3rem)] before:bg-linear-to-b before:from-[rgb(24_12_6/0.6)] before:via-[rgb(24_12_6/0.38)] before:to-transparent before:transition-opacity before:duration-500",
         clear
           ? "text-at-cream border-transparent bg-transparent"
-          : "bg-background/96 supports-backdrop-filter:bg-background/88 text-foreground border-border/80 shadow-[0_10px_30px_-24px_rgb(91_49_30/0.45)] backdrop-blur-md",
+          : "bg-background/96 supports-backdrop-filter:bg-background/88 text-foreground border-border/80 shadow-[0_10px_30px_-24px_rgb(91_49_30/0.45)] backdrop-blur-md before:opacity-0",
       )}
     >
       {top}
@@ -70,7 +75,10 @@ export function Header({
         <Link
           href="/"
           aria-label={t("home", { brand })}
-          className="at-heading focus-visible:ring-ring/50 min-w-0 truncate rounded-md text-xl leading-none outline-none focus-visible:ring-3 sm:text-2xl ltr:tracking-[0.22em]! rtl:text-[26px]"
+          className={cn(
+            "at-heading focus-visible:ring-ring/50 min-w-0 truncate rounded-md text-xl leading-none outline-none focus-visible:ring-3 sm:text-2xl ltr:tracking-[0.22em]! rtl:text-[26px]",
+            ring,
+          )}
         >
           {brand}
         </Link>
@@ -86,6 +94,7 @@ export function Header({
                 className={cn(
                   "at-caps focus-visible:ring-ring/50 relative rounded-md px-3 py-2.5 text-[13px] font-medium outline-none focus-visible:ring-3 rtl:text-[15px]",
                   "after:absolute after:inset-x-3 after:bottom-1 after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 hover:after:scale-x-100 aria-[current=page]:after:scale-x-100 rtl:after:origin-right",
+                  ring,
                 )}
               >
                 {item.label}
@@ -102,7 +111,7 @@ export function Header({
               className={cn(
                 "rounded-full border px-4",
                 clear
-                  ? "border-at-cream/45 text-at-cream hover:bg-at-cream/12 hover:text-at-cream"
+                  ? "border-at-cream/45 text-at-cream hover:bg-at-cream/12 hover:text-at-cream focus-visible:border-at-cream focus-visible:ring-at-cream/70"
                   : "border-foreground/20 hover:border-foreground/40",
               )}
             />
@@ -112,7 +121,7 @@ export function Header({
                 "h-10 px-5 font-semibold",
                 member ? "ps-1.5 pe-4" : "at-caps text-xs rtl:text-sm",
                 clear
-                  ? "bg-at-paper text-at-brown hover:bg-at-cream hover:text-at-brown dark:bg-at-paper dark:hover:bg-at-cream border-transparent"
+                  ? "bg-at-paper text-at-brown hover:bg-at-cream hover:text-at-brown dark:bg-at-paper dark:hover:bg-at-cream focus-visible:ring-at-cream/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black/30 border-transparent"
                   : member
                     ? "border-foreground/20 bg-transparent hover:border-foreground/40"
                     : "bg-foreground text-background hover:bg-foreground/88",
@@ -152,7 +161,7 @@ function MobileMenu({ brand, member, nav, clear }: { brand: string; member: Head
       <Dialog.Trigger
         className={cn(
           "focus-visible:ring-ring/50 ms-auto flex size-11 shrink-0 items-center justify-center rounded-full border outline-none transition-colors focus-visible:ring-3 md:hidden",
-          clear ? "border-at-cream/45 hover:bg-at-cream/12" : "border-foreground/20 hover:bg-muted",
+          clear ? "border-at-cream/45 hover:bg-at-cream/12 focus-visible:ring-at-cream/70" : "border-foreground/20 hover:bg-muted",
         )}
         aria-label={tm("menu")}
       >

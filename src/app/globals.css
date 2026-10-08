@@ -92,6 +92,15 @@
   font-feature-settings: var(--site-font-features);
 }
 
+/*
+ * <html> of a Persian site page: outrank the panels' `:root:lang(fa)` font, so
+ * <body> and what is rendered at its end (menus, dialogs, toasts) get the
+ * chosen Persian text font too, not IRANSans.
+ */
+html[data-site-theme]:lang(fa) {
+  --font-app: var(--site-font-body);
+}
+
 html[data-site-theme] body {
   font-feature-settings: var(--site-font-features);
 }

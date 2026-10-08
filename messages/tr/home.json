@@ -2,8 +2,7 @@
   "hero": {
     "title": "Kendi ellerinle güzel bir şey yarat",
     "subtitle": "Mum, seramik, makrome ve daha fazlası: samimi atölyelerde birlikte öğreniyor, birlikte üretiyoruz.",
-    "button": "Atölyeleri keşfet",
-    "imageAlt": "Bir atölyede birlikte üreten kadınlar"
+    "button": "Atölyeleri keşfet"
   },
   "story": {
     "title": "Birlikte üretmek için bir alan",
@@ -47,6 +46,8 @@
   "atelier": {
     "menu": "Menü",
     "closeMenu": "Menüyü kapat",
+    "pauseMotion": "Arka plandaki hareketi durdur",
+    "playMotion": "Arka plandaki hareketi sürdür",
     "photos": {
       "candlesPouring": "Ahşap bir masanın etrafında mum döken kadınlar",
       "candlesTable": "Gülerek birlikte mum yapan arkadaşlar",

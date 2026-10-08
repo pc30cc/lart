@@ -8,10 +8,13 @@ course finances, a shared partner wallet and full accounting.
 
 > **Status:** phase 1 (the super-admin panel) is built and tested; phase 2
 > (instructor panel, student accounts, registration with payments recorded by
-> admins, refunds and reminders) is built, on a minimal site frame with a
-> first home page (the brand, the SEO description and the next workshops).
-> Next: the public site on the theme system (phase 3). How to run it:
-> [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+> admins, refunds and reminders) is built. Phase 3 has begun: the public site
+> runs on the theme system, with Classic (the original look) and Atelier
+> (after the throttlehaus.ca reference), the theme and its fonts chosen in
+> Settings → Appearance, the home page's content in Settings → Home page, and
+> a craft filter on the workshops list. Next: the rest of phase 3
+> (instructors, past workshops, about, FAQ and contact pages, editable
+> menus). How to run it: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ## Contents
 

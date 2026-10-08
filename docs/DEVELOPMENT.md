@@ -45,8 +45,8 @@ src/
   app/
     sitemap.ts, robots.ts       /sitemap.xml (home, workshops list + open workshop pages, fa/tr/en with hreflang), /robots.txt (disallows only /admin, /<l>/admin and /api)
     [locale]/                   every page (URL rules: the main language has no prefix, the proxy rewrites it here)
-      (site)/                   the public site frame (header, footer, "confirm your email" banner; phase 3 themes replace it)
-        page.tsx                the home page (/, /fa, /en): _components/home-hero, upcoming-workshops
+      (site)/                   the public site: the active theme's Frame (src/themes) around the page, the "confirm your email" banner and the notice toast
+        page.tsx                the home page (/, /fa, /en): the active theme's Home with getHomeData
         workshops/              list, /[slug] page, /[slug]/register
         account/                My workshops (page.tsx), registrations/[id], signup, login, verify, forgot, reset
       instructor/(auth)/        instructor sign in, sign up, invite, forgot, reset, verify (no panel chrome)
@@ -57,7 +57,7 @@ src/
   components/
     ui/                         shadcn/ui primitives (do not edit casually)
     admin/                      shared admin building blocks (shell, page header, forms, uploads)
-    site/                       the public site frame and the member / instructor sign-in forms
+    site/                       public-site parts every theme uses (account and language menus, banner, notice toast, workshop labels), the classic theme's header and footer, the member / instructor sign-in forms
     contract-document.tsx       a contract text as a printable document (admin and instructor panel)
     language-picker.tsx         teaching languages field (admin instructor form and instructor profile)
     impersonation-bar.tsx       "viewing as {name}" bar with End (instructor panel and site, while a super admin views as someone)
@@ -68,6 +68,7 @@ src/
   features/<module>/            server logic of a module: queries, actions, schemas, tests
   i18n/                         languages, routing, the main language, links (paths, navigation, links), request config, namespaces
   lib/                          cross-cutting helpers (env, crypto, money, auth, audit, storage, email, routes, seo)
+  themes/                       public-site themes (Settings → Appearance): the contract (types.ts), ids and fonts, registry, SiteRoot; default = Classic, atelier
 scripts/                        admin:create, db:seed, jobs (scheduled), contracts:encrypt
 messages/<locale>/<ns>.json     translations, one file per module namespace
 drizzle/                        SQL migrations (generated + custom guards)
@@ -781,7 +782,14 @@ server-renders it puts `suppressHydrationWarning` on the element), `formatTime`,
 - `saveHomeSettings` (`features/site/home-actions.ts`) reads the setting
   under a lock and writes it with one `setting.update` audit entry
   (`entityId` "home", the changes per field: `"hero.title": { from, to }`)
-  in one transaction; nothing is written when nothing changed. After the
+  in one transaction; nothing is written when nothing changed. The form
+  sends the version of the value it was loaded with (`homeFormSchema`:
+  the row's `updated_at` in microseconds from `readHome`, "" before the
+  first save); a save from a page opened before another save (another tab,
+  another admin) is refused with "reload the page" (`homeEditor.errors.pageChanged`),
+  since its photos may be files that save removed, and a file the stored
+  value does not use yet must still be in storage (`exists`, refused on its
+  field). The action returns the new version, which the form keeps. After the
   commit it removes the `site/` files the old value used and the new one
   does not (a file that cannot be removed is only logged). A file uploaded
   but never saved stays in storage.
@@ -1037,16 +1045,20 @@ a toast and removes `?notice=` from the address. Only those values are shown.
 ### The public site shell
 
 `src/app/[locale]/(site)/layout.tsx` frames every public page (the home
-page, workshops, the member's account pages): `SiteHeader` (brand wordmark →
-the home page, "Workshops", language, account button: "Log in / Sign up"
-coming back to the page, or the member's first name with My workshops →
-`/account`, language, log out; below `sm` the language and account buttons
-show only their icon or initial, so the brand keeps its room), the "Please
-confirm your email" banner (with
-"Send it again") for a signed-in member whose email is not confirmed, and
-`SiteFooter`. Pages in the group render inside its `<main>`: do not add
-another. Small centred forms use `AuthCard` (`@/components/site/auth-card`).
-Nothing on the public site links to the instructor pages.
+page, workshops, the member's account pages) with the active theme's `Frame`
+inside `SiteRoot` (the chosen fonts, `data-site-theme`): the header with the
+"viewing as" bar as its `top`, the "Please confirm your email" banner (with
+"Send it again") for a signed-in member whose email is not confirmed as its
+`banner`, the page in one `<main>`, the footer; then the notice toast. Pages
+in the group render inside that `<main>`: do not add another. The classic
+theme's Frame is `SiteHeader` (brand wordmark → the home page, "Workshops",
+language, account button: "Log in / Sign up" coming back to the page, or the
+member's first name with My workshops → `/account`, language, log out; below
+`sm` the language and account buttons show only their icon or initial, so
+the brand keeps its room) and `SiteFooter`; Atelier has its own header and
+footer (`src/themes/atelier`) around the same account and language menus.
+Small centred forms use `AuthCard` (`@/components/site/auth-card`). Nothing
+on the public site links to the instructor pages.
 
 **Themes and their data.** Pages and the layout read the data and hand the
 active theme (`getActiveTheme()`, Settings → Appearance) plain props; a theme
@@ -1122,7 +1134,9 @@ panels share them): `SiteRoot` puts the attribute on the site's wrapper and
 `HtmlTheme` on `<html>` while a site page is open, so dialogs and toasts at
 the end of `<body>` get them too. The chosen fonts arrive as
 `--site-font-heading`, `--site-font-heading-weight` and `--site-font-body`
-(`font-serif` and `font-sans` follow them on the site).
+(`font-serif` and `font-sans` follow them on the site, `<html>` included, so
+menus, dialogs and toasts use them; on a Persian page
+`html[data-site-theme]:lang(fa)` outranks the panels' IRANSans rule).
 
 Atelier (`src/themes/atelier`, after throttlehaus.ca) maps the owner's
 palette (cream `#F2E9E5`, beige `#C5AA8E`, brick `#8B4A2E`, dark brown
@@ -1249,7 +1263,7 @@ Both an instructor's and a student's admin page end with **account access**
   audit leaves no session and no cookie; the action redirects to `/instructor` or `/account`. The admin keeps their
   own session. `ImpersonationBar` (`components/impersonation-bar.tsx`) is
   the first row of the sticky header of the instructor panel
-  (`PanelShell`) and of the site (`SiteHeader`'s `top`): "You are viewing
+  (`PanelShell`) and of the site (the theme Frame's `top`): "You are viewing
   as {name} — signed in as {admin}" and **End**.
 - A viewing session ends, with an `<kind>.impersonate_end` entry (`reason`)
   as the admin, when: End is pressed (`endImpersonationAction`,

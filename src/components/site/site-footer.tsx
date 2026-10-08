@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { formatNumber } from "@/lib/format"
 
-/** A quiet footer: the brand and the year, and the light / dark switch. */
+/** The classic theme's quiet footer: the brand and the year, and the light / dark switch. */
 export async function SiteFooter({ brand, locale }: { brand: string; locale: string }) {
   const t = await getTranslations("site.footer")
   const year = formatNumber(new Date().getFullYear(), locale, { useGrouping: false })

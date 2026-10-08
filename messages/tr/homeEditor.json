@@ -70,6 +70,7 @@
   "errors": {
     "photo": "Lütfen bu fotoğrafı yeniden yükleyin.",
     "video": "Lütfen videoyu yeniden yükleyin.",
+    "pageChanged": "Bu sayfa siz açtıktan sonra yeniden kaydedildi (başka bir sekmede ya da başka bir yönetici tarafından). Lütfen sayfayı yenileyin ve değişikliklerinizi yeniden yapın.",
     "photosNeeded": "En az bir fotoğraf ekleyin ya da başka bir arka plan seçin.",
     "videoNeeded": "Bir video ekleyin ya da başka bir arka plan seçin.",
     "instagram": "Lütfen Instagram sayfanızın adresini yapıştırın, örneğin https://instagram.com/adiniz",

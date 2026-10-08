@@ -5,7 +5,7 @@ import type { CSSProperties } from "react"
 import { Link } from "@/i18n/navigation"
 import { formatDate, formatNumber } from "@/lib/format"
 import type { HomeData, PublicCategory } from "../types"
-import { HeroMedia, type HeroPhoto } from "./hero-media"
+import { HeroMedia, type HeroImage, type HeroPhoto } from "./hero-media"
 import { atelierPhotos, type AtelierPhoto } from "./photos"
 import { PillLink } from "./pill"
 import { RevealObserver } from "./reveal"
@@ -67,14 +67,14 @@ function Backdrop({ photo }: { photo: HeroPhoto }) {
  * (theme.css, `data-at-hero`), which stays see-through over it.
  */
 function Hero({ data }: { data: HomeData }) {
-  const t = useTranslations("home")
+  const t = useTranslations("home.atelier")
   const { hero, brand } = data
-  const own = atelierPhotos.hero.map((p) => ({ ...p, alt: t(`atelier.photos.${p.alt}`) }))
-  const photos: HeroPhoto[] =
-    hero.media.kind === "images" ? hero.media.images.map((src) => ({ src, alt: t("hero.imageAlt") })) : own
+  // A backdrop behind the words, never described (HeroMedia): the admin's photos may show anything.
+  const own: HeroImage[] = atelierPhotos.hero.map(({ src, width, height, focus }) => ({ src, width, height, focus }))
+  const photos = hero.media.kind === "images" ? hero.media.images.map((src): HeroImage => ({ src })) : own
   const video =
     hero.media.kind === "video"
-      ? { url: hero.media.url, poster: hero.media.posterUrl ? { src: hero.media.posterUrl, alt: t("hero.imageAlt") } : own[0] }
+      ? { url: hero.media.url, poster: hero.media.posterUrl ? { src: hero.media.posterUrl } : own[0] }
       : undefined
 
   return (
@@ -83,7 +83,7 @@ function Hero({ data }: { data: HomeData }) {
       aria-labelledby="at-hero-brand"
       className="text-at-cream relative isolate flex min-h-svh flex-col items-center justify-center overflow-hidden bg-[#2a1912]"
     >
-      <HeroMedia photos={photos} video={video} />
+      <HeroMedia photos={photos} video={video} labels={{ pause: t("pauseMotion"), play: t("playMotion") }} />
       {/* A warm veil: darker under the header, behind the words and at the bottom; the photo stays alive around them. */}
       <div
         aria-hidden
@@ -106,9 +106,9 @@ function Hero({ data }: { data: HomeData }) {
           {hero.button}
         </PillLink>
       </div>
-      {/* A quiet hint that the page goes on. */}
+      {/* A quiet hint that the page goes on: it runs twice (under 5 seconds, so it needs no pause button) and rests. */}
       <span aria-hidden className="bg-at-cream/25 absolute bottom-7 left-1/2 h-12 w-px -translate-x-1/2 overflow-hidden">
-        <span className="bg-at-cream block h-1/2 w-full motion-safe:animate-[at-scroll-cue_2.4s_ease-in-out_infinite]" />
+        <span className="bg-at-cream block h-1/2 w-full motion-safe:animate-[at-scroll-cue_2.4s_ease-in-out_2]" />
       </span>
     </section>
   )
@@ -180,7 +180,7 @@ function Story({ story }: { story: NonNullable<HomeData["story"]> }) {
           aria-hidden
           className="absolute inset-0 -z-10 bg-linear-to-t from-[rgb(26_13_7/0.9)] via-[rgb(26_13_7/0.5)] to-[rgb(26_13_7/0.05)] md:bg-linear-to-r md:from-[rgb(26_13_7/0.85)] md:via-[rgb(26_13_7/0.45)] md:to-transparent rtl:md:bg-linear-to-l"
         />
-        <div className="text-at-cream max-w-[36rem] p-7 sm:p-12 lg:p-16">
+        <div className="text-at-cream max-w-[36rem] min-w-0 p-7 sm:p-12 lg:p-16">
           <h2 id="at-story" className="text-[32px] leading-[1.05] text-balance sm:text-[44px] lg:text-[52px] rtl:leading-[1.5]">
             {story.title}
           </h2>

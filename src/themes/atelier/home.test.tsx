@@ -91,6 +91,13 @@ function render(data: HomeData) {
   )
 }
 
+/** The hero section's HTML. */
+const heroOf = (html: string) => html.slice(html.indexOf("data-at-hero"), html.indexOf("</section>", html.indexOf("data-at-hero")))
+/** The alt texts of the images in some HTML. */
+const alts = (html: string) => [...html.matchAll(/<img[^>]*>/g)].map((m) => m[0].match(/ alt="([^"]*)"/)?.[1])
+/** The hero's pause button's label, if it has one. */
+const pauseLabel = (html: string) => heroOf(html).match(/<button[^>]*aria-label="([^"]*)"/)?.[1]
+
 const h1s = (html: string) => [...html.matchAll(/<h1[^>]*>(.*?)<\/h1>/g)].map((m) => m[1].replace(/<[^>]+>/g, ""))
 /** The texts of the links to exactly `href`. */
 const linksTo = (html: string, href: string) =>
@@ -150,12 +157,38 @@ describe("the Atelier home page", () => {
       ...full(),
       hero: { ...full().hero, media: { kind: "video", url: "https://cdn.test/hero.mp4", posterUrl: "https://cdn.test/poster.webp" } },
     })
-    expect(video).toMatch(/<video[^>]*src="https:\/\/cdn.test\/hero.mp4"/)
+    // The file only through a source that matches without reduced motion: with it, nothing is downloaded.
+    expect(video).toMatch(/<video[^>]*><source src="https:\/\/cdn.test\/hero.mp4" media="\(prefers-reduced-motion: no-preference\)"/)
+    expect(video).not.toMatch(/<video[^>]* src=/)
     expect(video).toContain('poster="https://cdn.test/poster.webp"')
     expect(video).toMatch(/<video[^>]*autoPlay|<video[^>]*autoplay/)
 
     const photos = render({ ...full(), hero: { ...full().hero, media: { kind: "images", images: ["https://cdn.test/a.webp", "https://cdn.test/b.webp"] } } })
     expect(photos).toContain('src="https://cdn.test/a.webp"')
     expect(photos).not.toContain("hero.mp4")
+  })
+
+  it("never describes the hero's photos: a backdrop, whatever the admin uploads", () => {
+    const own = heroOf(render(full()))
+    expect(own).toContain('src="/themes/atelier/')
+    const photos = heroOf(render({ ...full(), hero: { ...full().hero, media: { kind: "images", images: ["https://cdn.test/a.webp"] } } }))
+    expect(photos).toContain('src="https://cdn.test/a.webp"')
+    const video = heroOf(
+      render({ ...full(), hero: { ...full().hero, media: { kind: "video", url: "https://cdn.test/hero.mp4", posterUrl: "https://cdn.test/poster.webp" } } }),
+    )
+    expect(video).toContain('src="https://cdn.test/poster.webp"')
+    for (const html of [own, photos, video]) {
+      expect(alts(html).length).toBeGreaterThan(0)
+      expect(alts(html).every((alt) => alt === "")).toBe(true)
+    }
+  })
+
+  it("lets the visitor pause the slideshow and the video, and has no button when nothing moves (WCAG 2.2.2)", () => {
+    expect(pauseLabel(render(full()))).toBe("Pause the background motion")
+    expect(
+      pauseLabel(render({ ...full(), hero: { ...full().hero, media: { kind: "video", url: "https://cdn.test/hero.mp4", posterUrl: null } } })),
+    ).toBe("Pause the background motion")
+    // One photo of the admin's stands still.
+    expect(pauseLabel(render({ ...full(), hero: { ...full().hero, media: { kind: "images", images: ["https://cdn.test/a.webp"] } } }))).toBeUndefined()
   })
 })

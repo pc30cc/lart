@@ -107,6 +107,15 @@ export const homeSettingsSchema = z
 export type HomeSettingsInput = z.input<typeof homeSettingsSchema>
 export type HomeSettingsValues = z.output<typeof homeSettingsSchema>
 
+/**
+ * What the form sends: the content, and the version of the saved page it was
+ * loaded with (`getHomeSettings`; "" before the first save). `saveHomeSettings`
+ * refuses a save from a page opened before another save.
+ */
+export const homeFormSchema = homeSettingsSchema.safeExtend({ version: z.string().max(40) })
+
+export type HomeFormInput = z.input<typeof homeFormSchema>
+
 /** A text in every language. */
 export type Texts = Record<Locale, string>
 
@@ -123,12 +132,27 @@ export type HomeDefaults = {
   footer: { about: Texts }
 }
 
-/** Every file a home value uses (the hero's photos, video and poster, the sections' photos). */
-export function homeFiles(home: {
+type HomeWithFiles = {
   hero: { images: string[]; video: string; poster: string }
   story: { image: string }
   crafts: { image: string }
   steps: { image: string }
-}): string[] {
-  return [...home.hero.images, home.hero.video, home.hero.poster, home.story.image, home.crafts.image, home.steps.image].filter(Boolean)
+}
+
+/** Every file a home value uses, with the form field that holds it ("hero.images.0", "story.image"…). */
+export function homeFileFields(home: HomeWithFiles): [field: string, path: string][] {
+  const fields: [string, string][] = [
+    ...home.hero.images.map((path, i): [string, string] => [`hero.images.${i}`, path]),
+    ["hero.video", home.hero.video],
+    ["hero.poster", home.hero.poster],
+    ["story.image", home.story.image],
+    ["crafts.image", home.crafts.image],
+    ["steps.image", home.steps.image],
+  ]
+  return fields.filter(([, path]) => path)
+}
+
+/** Every file a home value uses (the hero's photos, video and poster, the sections' photos). */
+export function homeFiles(home: HomeWithFiles): string[] {
+  return homeFileFields(home).map(([, path]) => path)
 }

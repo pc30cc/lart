@@ -15,11 +15,11 @@ export async function generateMetadata(): Promise<Metadata> {
 /** The home page's content: hero, sections shown or hidden, their texts and photos, the footer. */
 export default async function HomeSettingsPage() {
   await requireAdmin()
-  const [t, { saved, urls, theme }, defaults] = await Promise.all([getTranslations("settings"), getHomeSettings(), getHomeDefaults()])
+  const [t, { saved, version, urls, theme }, defaults] = await Promise.all([getTranslations("settings"), getHomeSettings(), getHomeDefaults()])
   return (
     <>
       <BreadcrumbTitle title={t("tabs.home")} />
-      <HomeSettingsForm saved={saved} urls={urls} defaults={defaults} classic={!isThemeId(theme) || theme === DEFAULT_THEME} />
+      <HomeSettingsForm saved={saved} version={version} urls={urls} defaults={defaults} classic={!isThemeId(theme) || theme === DEFAULT_THEME} />
     </>
   )
 }

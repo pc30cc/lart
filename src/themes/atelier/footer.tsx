@@ -61,7 +61,8 @@ export async function Footer({
             )}
           </Column>
           {contacts.length > 0 && (
-            <Column title={t("contact")}>
+            // On a phone the whole row: an email address in half of it would break mid-domain.
+            <Column title={t("contact")} className="col-span-2 md:col-span-1">
               {contacts.map((c) => (
                 <li key={c.href}>
                   <a
@@ -104,9 +105,9 @@ function ColumnTitle({ children }: { children: React.ReactNode }) {
   )
 }
 
-function Column({ title, children }: { title: string; children: React.ReactNode }) {
+function Column({ title, className, children }: { title: string; className?: string; children: React.ReactNode }) {
   return (
-    <div>
+    <div className={className}>
       <ColumnTitle>{title}</ColumnTitle>
       <ul className="mt-5 space-y-3 text-[15px]">{children}</ul>
     </div>

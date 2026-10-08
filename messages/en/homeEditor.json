@@ -1,17 +1,17 @@
 {
-  "intro": "Choose what your home page shows. Any field you leave empty uses the theme’s own text or photo, so fill in only what you’d like to change. The grey text in an empty field is what the site shows.",
-  "classicNote": "Your site’s current theme shows only the welcome line and the workshops. The parts on this page appear with a theme that has them.",
-  "chooseTheme": "Choose a theme",
+  "intro": "Choose what your home page shows. Any field you leave empty uses the template’s own text or photo, so fill in only what you’d like to change. The grey text in an empty field is what the site shows.",
+  "classicNote": "Your site’s current template shows only the welcome line and the workshops. The parts on this page appear with a template that has them.",
+  "chooseTheme": "Choose a template",
   "show": "Show on the home page",
   "hidden": "This part is hidden: visitors don’t see it.",
-  "photoHint": "Leave it empty to use the theme’s own photo.",
+  "photoHint": "Leave it empty to use the template’s own photo.",
   "unsaved": "You have changes that aren’t saved yet.",
   "hero": {
     "title": "Top of the page",
     "description": "The first thing visitors see: a big photo or video with your headline and a button to the workshops.",
     "background": "Background",
     "media": {
-      "theme": { "title": "The theme’s photos", "hint": "Ready-made photos that come with the theme." },
+      "theme": { "title": "The template’s photos", "hint": "Ready-made photos that come with the template." },
       "images": { "title": "My photos", "hint": "Up to {max, number} photos, shown one after another." },
       "video": { "title": "A video", "hint": "A short video that plays silently, over and over." }
     },
@@ -70,6 +70,7 @@
   "errors": {
     "photo": "Please upload this photo again.",
     "video": "Please upload the video again.",
+    "pageChanged": "This page was saved again after you opened it (in another tab or by another admin). Please reload the page and make your changes again.",
     "photosNeeded": "Add at least one photo, or choose another background.",
     "videoNeeded": "Add a video, or choose another background.",
     "instagram": "Please paste your Instagram page’s address, for example https://instagram.com/yourname",

@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef } from "react"
 
-/** How much of the letters' height shows above the footer's bottom bar. */
+/** How much of the capitals' height shows above the footer's bottom bar. */
 const SHOWN = 0.86
 /** Room above the letters, as a share of their height. */
 const ABOVE = 0.04
@@ -13,7 +13,9 @@ const SIZE = 100
 
 /**
  * The brand as a giant wordmark spanning the footer's width, its feet cut off
- * by the bar under it (like throttlehaus.ca's footer). The letters are
+ * by the bar under it (like throttlehaus.ca's footer); a script without
+ * capitals (Persian) shows whole, its dots and tails under the baseline
+ * included, or the word would read as another one. The letters are
  * measured (the ink that shows, not their boxes) to fill the width exactly, for any
  * brand and any heading font; before that, and without JavaScript, a guess
  * from the brand's length shows. Decorative: the brand is in the header and
@@ -47,18 +49,25 @@ export function Wordmark({ text }: { text: string }) {
       setup()
       const metrics = canvas.measureText(letters)
       const ascent = metrics.actualBoundingBoxAscent
+      const descent = Math.max(0, metrics.actualBoundingBoxDescent)
       if (!width || !ascent) return
+      // The share of the height above the baseline that shows: Latin capitals lose their feet,
+      // anything else keeps what hangs under its baseline, with the same room under it as above.
+      const whole = css.textTransform !== "uppercase"
+      const shown = whole ? 1 + descent / ascent : SHOWN
+      // The wordmark's height, as a share of the letters' height above the baseline.
+      const tall = ABOVE + shown + (whole ? ABOVE : 0)
 
       // Draw the letters and find where their ink starts and ends in the part that shows
       // (a letter's foot, like R's leg, may reach further out below the cut).
       const x0 = SIZE
       const y0 = Math.ceil(ascent) + 2
       canvas.canvas.width = Math.ceil(metrics.width + 2 * SIZE)
-      canvas.canvas.height = y0 + 2
+      canvas.canvas.height = y0 + Math.ceil(descent) + 2
       setup()
       canvas.fillText(letters, x0, y0)
       const top = Math.max(0, Math.floor(y0 - ascent))
-      const rows = Math.max(1, Math.round(ascent * SHOWN))
+      const rows = Math.max(1, Math.round(ascent * shown))
       const { data } = canvas.getImageData(0, top, canvas.canvas.width, rows)
       let left = Infinity
       let right = -1
@@ -71,13 +80,13 @@ export function Wordmark({ text }: { text: string }) {
       if (right < left) return
 
       // As wide as the page, unless that makes it too tall (a short Persian brand): then it keeps to the start side.
-      const scale = Math.min(width / (right - left + 1), (width * MAX_HEIGHT) / (ascent * (ABOVE + SHOWN)))
+      const scale = Math.min(width / (right - left + 1), (width * MAX_HEIGHT) / (ascent * tall))
       const inkWidth = (right - left + 1) * scale
       el.style.fontSize = `${SIZE * scale}px`
       el.style.left = `${(css.direction === "rtl" ? pad + width - inkWidth : pad) - (left - x0) * scale}px`
-      // From just above the letters' top to SHOWN of their height above the baseline.
+      // From just above the letters' top to the cut (or to just under their ink).
       el.style.top = `${ascent * scale * ABOVE - (probe.offsetTop - ascent * scale)}px`
-      wrap.style.height = `${ascent * scale * (ABOVE + SHOWN)}px`
+      wrap.style.height = `${ascent * scale * tall}px`
     }
 
     fit()

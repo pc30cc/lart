@@ -7,7 +7,7 @@ import { admins, auditLog, settings } from "@/db/schema"
 import { getSetting, settingDefaults } from "@/lib/settings"
 import { saveHomeSettings } from "./home-actions"
 import type { HomeSettingsInput } from "./home-schema"
-import { getHomeDefaults, getHomeSettings } from "./home-settings"
+import { getHomeDefaults, getHomeSettings, readHome } from "./home-settings"
 
 vi.mock("next-intl/server", async () => {
   const { createTranslator } = await import("next-intl")
@@ -25,8 +25,20 @@ vi.mock("next-intl/server", async () => {
   }
 })
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn(), refresh: vi.fn() }))
-const storage = vi.hoisted(() => ({ remove: vi.fn<(path: string) => Promise<void>>(async () => {}) }))
-vi.mock("@/lib/storage", async (original) => ({ ...(await original<typeof import("@/lib/storage")>()), remove: storage.remove }))
+// Every file is in storage, except the ones in `gone`.
+const storage = vi.hoisted(() => {
+  const gone = new Set<string>()
+  return {
+    gone,
+    remove: vi.fn<(path: string) => Promise<void>>(async () => {}),
+    exists: vi.fn<(path: string) => Promise<boolean>>(async (path) => !gone.has(path)),
+  }
+})
+vi.mock("@/lib/storage", async (original) => ({
+  ...(await original<typeof import("@/lib/storage")>()),
+  remove: storage.remove,
+  exists: storage.exists,
+}))
 const auditing = vi.hoisted(() => ({ fail: false }))
 vi.mock("@/lib/audit", async (original) => {
   const actual = await original<typeof import("@/lib/audit")>()
@@ -66,6 +78,14 @@ function values(change: (v: HomeSettingsInput) => void = () => {}): HomeSettings
   return v
 }
 
+/** The saved page's version, as the settings page gives it to the form. */
+const version = async () => (await readHome()).version
+/** Save from a page opened just now. */
+const save = async (change?: (v: HomeSettingsInput) => void) => saveHomeSettings({ ...values(change), version: await version() })
+const saved = (changed: boolean) => ({ ok: true, data: { changed, version: expect.stringMatching(/^\d+$/) } })
+const pageChanged =
+  "This page was saved again after you opened it (in another tab or by another admin). Please reload the page and make your changes again."
+
 const stored = async () => (await db.select().from(settings).where(eq(settings.key, "home")))[0]?.value
 const audits = () =>
   db
@@ -85,21 +105,24 @@ afterAll(async () => {
 })
 beforeEach(() => {
   storage.remove.mockClear()
+  storage.remove.mockImplementation(async () => {})
+  storage.exists.mockClear()
+  storage.gone.clear()
   auditing.fail = false
 })
 
 describe("saveHomeSettings", () => {
   it("writes the setting and audits what changed, field by field", async () => {
-    const result = await saveHomeSettings(
-      values((v) => {
-        Object.assign(v.hero, { media: "images", images: [a, b] })
-        v.hero.title = { fa: "", tr: "Birlikte üretelim", en: " Let's make " }
-        v.story.image = c
-        v.past.show = false
-        v.footer.instagram = "https://www.instagram.com/limer.tr?igsh=abc"
-      }),
-    )
-    expect(result).toEqual({ ok: true, data: { changed: true } })
+    expect(await version()).toBe("") // never saved
+    const result = await save((v) => {
+      Object.assign(v.hero, { media: "images", images: [a, b] })
+      v.hero.title = { fa: "", tr: "Birlikte üretelim", en: " Let's make " }
+      v.story.image = c
+      v.past.show = false
+      v.footer.instagram = "https://www.instagram.com/limer.tr?igsh=abc"
+    })
+    expect(result).toEqual(saved(true))
+    expect(result.ok && result.data.version).toBe(await version())
     expect(await stored()).toEqual({
       ...settingDefaults.home,
       hero: { ...settingDefaults.home.hero, media: "images", images: [a, b], title: { tr: "Birlikte üretelim", en: "Let's make" } },
@@ -118,52 +141,127 @@ describe("saveHomeSettings", () => {
       "footer.instagram": { from: "", to: "https://www.instagram.com/limer.tr" },
     })
     expect(storage.remove).not.toHaveBeenCalled()
+    expect(storage.exists.mock.calls.map(([path]) => path).sort()).toEqual([a, b, c])
   })
 
-  it("writes and audits nothing when nothing changed", async () => {
+  it("writes and audits nothing when nothing changed, even from a page opened before the last save", async () => {
     const before = await audits()
+    const current = await version()
     const same = values((v) => {
       Object.assign(v.hero, { media: "images", images: [a, b], title: { fa: "", tr: "Birlikte üretelim", en: "Let's make" } })
       v.story.image = c
       v.past.show = false
       v.footer.instagram = "https://www.instagram.com/limer.tr"
     })
-    expect(await saveHomeSettings(same)).toEqual({ ok: true, data: { changed: false } })
+    // The page is up to date: it gets the current version.
+    for (const opened of [current, "", "1"]) {
+      expect(await saveHomeSettings({ ...same, version: opened })).toEqual({ ok: true, data: { changed: false, version: current } })
+    }
     expect(await audits()).toHaveLength(before.length)
+    expect(await version()).toBe(current)
+  })
+
+  it("gives the new version, with which the same page saves again", async () => {
+    const first = await save((v) => (v.footer.email = "hello@limer.test"))
+    expect(first).toEqual(saved(true))
+    const next = first.ok ? first.data.version : ""
+    expect(next).toBe(await version())
+    const again = await saveHomeSettings({ ...values((v) => (v.footer.email = "hi@limer.test")), version: next })
+    expect(again).toEqual(saved(true))
+    expect(again.ok && again.data.version).not.toBe(next)
+    expect(await stored()).toMatchObject({ footer: expect.objectContaining({ email: "hi@limer.test" }) })
+  })
+
+  it("refuses a save from a page opened before another save, keeping that save and its photo", async () => {
+    await save((v) => (v.story.image = a))
+    // Two tabs open the page, with photo a; removing a file takes it out of storage.
+    const opened = await version()
+    storage.remove.mockImplementation(async (path) => void storage.gone.add(path))
+    // The first tab replaces the photo with b: a is removed.
+    expect(await saveHomeSettings({ ...values((v) => (v.story.image = b)), version: opened })).toEqual(saved(true))
+    expect(storage.remove.mock.calls).toEqual([[a]])
+    // The second tab still shows a, and changes only the footer.
+    const late = values((v) => {
+      v.story.image = a
+      v.footer.phone = "+90 555 123 45 67"
+    })
+    for (const stale of [opened, ""]) {
+      expect(await saveHomeSettings({ ...late, version: stale })).toEqual({ ok: false, error: pageChanged })
+    }
+    expect(await stored()).toMatchObject({ story: expect.objectContaining({ image: b }), footer: expect.objectContaining({ phone: "" }) })
+    expect(storage.remove.mock.calls).toEqual([[a]]) // b is kept
+  })
+
+  it("refuses a new photo or video no longer in storage, on its field; files already saved are not checked", async () => {
+    await save((v) => (v.story.image = a))
+    storage.remove.mockClear()
+    storage.exists.mockClear()
+    storage.gone.add(a).add(c).add(clip) // a, the saved photo, too: not this page's to fix
+    const before = await stored()
+    for (const [change, field, message] of [
+      [(v: HomeSettingsInput) => (v.crafts.image = c), "crafts.image", "Please upload this photo again."],
+      [(v: HomeSettingsInput) => Object.assign(v.hero, { media: "images", images: [b, c] }), "hero.images.1", "Please upload this photo again."],
+      [(v: HomeSettingsInput) => Object.assign(v.hero, { media: "video", video: clip }), "hero.video", "Please upload the video again."],
+    ] as const) {
+      const result = await save((v) => {
+        v.story.image = a
+        change(v)
+      })
+      expect(result).toEqual({ ok: false, error: message, fieldErrors: { [field]: message } })
+    }
+    expect(await stored()).toEqual(before)
+    expect(storage.exists).not.toHaveBeenCalledWith(a)
+
+    expect(
+      await save((v) => {
+        v.story.image = a
+        v.crafts.image = b
+      }),
+    ).toEqual(saved(true))
+    expect(storage.exists).toHaveBeenLastCalledWith(b)
+    expect(storage.remove).not.toHaveBeenCalled()
   })
 
   it("removes the files no longer used, only after the change is saved", async () => {
     const at: unknown[] = []
-    storage.remove.mockImplementation(async () => void at.push(await stored()))
-    const next = values((v) => {
-      Object.assign(v.hero, { media: "video", images: [b], video: clip, poster: d })
-      v.steps.image = a // a photo moved to another section is kept
+    await save((v) => {
+      Object.assign(v.hero, { media: "images", images: [a, b] })
+      v.story.image = c
     })
-    expect(await saveHomeSettings(next)).toMatchObject({ ok: true })
+    storage.remove.mockClear()
+    storage.remove.mockImplementation(async () => void at.push(await stored()))
+    expect(
+      await save((v) => {
+        Object.assign(v.hero, { media: "video", images: [b], video: clip, poster: d })
+        v.steps.image = a // a photo moved to another section is kept
+      }),
+    ).toMatchObject({ ok: true })
     expect(storage.remove.mock.calls.map(([path]) => path).sort()).toEqual([c])
     // When the file was removed, the new value was already saved.
     expect(at).toEqual([expect.objectContaining({ hero: expect.objectContaining({ video: clip, poster: d }) })])
 
     storage.remove.mockImplementation(async () => {})
-    await saveHomeSettings(values())
+    await save()
     expect(storage.remove.mock.calls.map(([path]) => path).sort()).toEqual([a, b, c, clip, d].sort())
   })
 
   it("keeps the saved value and every file when saving fails", async () => {
-    await saveHomeSettings(values((v) => (v.story.image = a)))
+    await save((v) => (v.story.image = a))
+    const opened = await version()
     vi.spyOn(console, "error").mockImplementation(() => {})
     auditing.fail = true
     storage.remove.mockClear()
-    const result = await saveHomeSettings(values())
+    const result = await save()
     expect(result).toMatchObject({ ok: false })
     expect(await stored()).toMatchObject({ story: expect.objectContaining({ image: a }) })
+    expect(await version()).toBe(opened)
     expect(storage.remove).not.toHaveBeenCalled()
   })
 
   it("still saves when an old file cannot be removed", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
     storage.remove.mockRejectedValueOnce(new Error("CDN down"))
-    expect(await saveHomeSettings(values())).toEqual({ ok: true, data: { changed: true } })
+    expect(await save()).toEqual(saved(true))
     expect(storage.remove).toHaveBeenCalledWith(a)
     expect(warn).toHaveBeenCalled()
     expect(await stored()).toMatchObject({ story: expect.objectContaining({ image: "" }) })
@@ -172,7 +270,7 @@ describe("saveHomeSettings", () => {
   it("never removes a file outside site/, even one an older value pointed to", async () => {
     const odd = { ...settingDefaults.home, story: { ...settingDefaults.home.story, image: "brand/watermark-logo-x.png" } }
     await db.insert(settings).values({ key: "home", value: odd }).onConflictDoUpdate({ target: settings.key, set: { value: odd } })
-    expect(await saveHomeSettings(values())).toEqual({ ok: true, data: { changed: true } })
+    expect(await save()).toEqual(saved(true))
     expect(storage.remove).not.toHaveBeenCalled()
   })
 
@@ -184,27 +282,29 @@ describe("saveHomeSettings", () => {
       [(v: HomeSettingsInput) => (v.hero.poster = "site/../brand/x.webp"), "hero.poster"],
       [(v: HomeSettingsInput) => (v.hero.video = "site/video-AbC_-123AbC_-123AbC_-1.mov"), "hero.video"],
     ] as const) {
-      const result = await saveHomeSettings(values(change))
+      const result = await save(change)
       expect(result.ok).toBe(false)
       expect(!result.ok && Object.keys(result.fieldErrors ?? {})).toEqual([field])
     }
-    const result = await saveHomeSettings(values((v) => (v.crafts.image = "partners/x/photo-AbC_-123AbC_-123AbC_-1.webp")))
+    const result = await save((v) => (v.crafts.image = "partners/x/photo-AbC_-123AbC_-123AbC_-1.webp"))
     expect(!result.ok && result.fieldErrors).toEqual({ "crafts.image": "Please upload this photo again." })
     expect(await stored()).toEqual(before)
     expect(storage.remove).not.toHaveBeenCalled()
+    expect(storage.exists).not.toHaveBeenCalled()
   })
 
   it("explains what is missing for the background chosen", async () => {
-    const result = await saveHomeSettings(values((v) => (v.hero.media = "video")))
+    const result = await save((v) => (v.hero.media = "video"))
     expect(!result.ok && result.fieldErrors).toEqual({ "hero.video": "Add a video, or choose another background." })
   })
 })
 
 describe("the Home page settings page", () => {
-  it("gets the saved value with its files' URLs and the active theme", async () => {
-    await saveHomeSettings(values((v) => Object.assign(v.hero, { media: "images", images: [a], video: clip })))
+  it("gets the saved value and its version with its files' URLs and the active theme", async () => {
+    const result = await save((v) => Object.assign(v.hero, { media: "images", images: [a], video: clip }))
     const page = await getHomeSettings()
     expect(page.saved).toEqual(await getSetting("home"))
+    expect(page.version).toBe(result.ok && result.data.version)
     expect(page.urls).toEqual({ [a]: `/media/${a}`, [clip]: `/media/${clip}` })
     expect(typeof page.theme).toBe("string")
   })

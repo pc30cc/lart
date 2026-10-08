@@ -212,12 +212,16 @@ html[data-site-theme="atelier"]:lang(fa) {
   }
 }
 
-/* The header's height, which the home page's hero slides under (the header is see-through there). */
+/*
+ * The header's height, which the home page's hero slides under (the header is
+ * see-through there): its bar and its 1px bottom line (transparent over the
+ * hero, but it still takes room).
+ */
 [data-site-theme="atelier"] {
-  --at-bar-h: 4rem;
+  --at-bar-h: calc(4rem + 1px);
 
   @media (width >= 48rem) {
-    --at-bar-h: 5rem;
+    --at-bar-h: calc(5rem + 1px);
   }
 }
 
@@ -228,4 +232,13 @@ html[data-site-theme="atelier"]:lang(fa) {
 /* With the "confirm your email" banner under the header, the hero starts below it instead. */
 [data-at-banner] ~ main [data-at-hero] {
   margin-top: 0;
+}
+
+/*
+ * Menus (language, account) open over the hero's photo: opaque instead of the
+ * shared see-through glass, so their small muted text keeps 4.5:1. Outside the
+ * utilities layer, so it wins over the component's `bg-popover/70`.
+ */
+html[data-site-theme="atelier"] :is([data-slot="dropdown-menu-content"], [data-slot="dropdown-menu-sub-content"]) {
+  background-color: var(--popover);
 }

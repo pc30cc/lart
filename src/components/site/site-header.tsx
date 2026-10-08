@@ -8,10 +8,10 @@ import { LocaleMenu } from "./locale-menu"
 export type HeaderMember = { name: string; email: string }
 
 /**
- * The public site's header: the brand as a wordmark (to the home page), a
- * "Workshops" link, the language and the account button. Phase 3 replaces it
- * with the theme's own header (same data). `top` is shown above it, inside the
- * sticky header (the "viewing as" bar while a super admin views as the member).
+ * The classic theme's header (src/themes/default; other themes bring their
+ * own): the brand as a wordmark (to the home page), a "Workshops" link, the
+ * language and the account button. `top` is shown above it, inside the sticky
+ * header (the "viewing as" bar while a super admin views as the member).
  */
 export async function SiteHeader({
   brand,
