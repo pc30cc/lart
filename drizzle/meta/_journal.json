@@ -64,6 +64,13 @@
       "when": 1791408307432,
       "tag": "0008_session_impersonation",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791457038431,
+      "tag": "0009_site_logo",
+      "breakpoints": true
     }
   ]
 }

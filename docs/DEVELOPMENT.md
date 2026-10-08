@@ -762,6 +762,12 @@ server-renders it puts `suppressHydrationWarning` on the element), `formatTime`,
   with `BrandLogo` (`src/themes/logo.tsx`, `fill: currentColor`, so it takes
   the text colour of where it shows, light or dark), sized by
   `SiteFrameProps.logo` / `HomeData.logo` (its width and height).
+- Limer's own logo is in `public/brand/` (`limer-logo.svg`, and transparent
+  PNGs in white and brown for Settings → Watermark). Migration
+  `0009_site_logo` sets it as the `logo` setting once, on a database whose
+  brand is "Limer" and that has no logo yet (with a `setting.update` audit
+  entry without an admin); other databases are left alone. After that it is
+  an ordinary setting: replacing or removing it in Appearance sticks.
 
 ### Settings → Home page: the home page's content
 
