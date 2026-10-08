@@ -73,6 +73,7 @@ function saveHome(parts: { [K in keyof Home]?: Partial<Home[K]> }) {
     past: { show: true, title: {} },
     steps: { show: true, title: {}, items: [], image: "" },
     footer: { about: {}, instagram: "", email: "", phone: "" },
+    aboutPage: { text: {} },
   }
   state.saved.home = Object.fromEntries(
     Object.entries(base).map(([k, v]) => [k, { ...v, ...(parts[k as keyof Home] ?? {}) }]),

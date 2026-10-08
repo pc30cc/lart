@@ -99,6 +99,13 @@
       "when": 1791479367998,
       "tag": "0013_factory_reset",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791480141103,
+      "tag": "0014_about_page_text",
+      "breakpoints": true
     }
   ]
 }

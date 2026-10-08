@@ -865,6 +865,27 @@ links come out without a prefix in Turkish and with `/fa`, `/en` otherwise;
 `main-locale.test.ts` and `settings.test.ts` use the real cache
 (`vi.unmock("@/i18n/main-locale")`).
 
+### Settings → Home page → About page, and Settings → Danger zone
+
+**About page.** `home.aboutPage.text` (fa/tr/en, up to 4000 characters each)
+is the About page's (/about) own text; empty, the page shows the footer's
+short "About us" text, which stays the footer's. `drizzle/0014_about_page_text.sql`
+set Limer's (only while it had none).
+
+**Danger zone** (`/admin/settings/danger`, `features/settings/reset*.ts`):
+"Delete all transactions" empties the ledger (the wallet and every account
+back to zero), deletes the contracts not signed and every contract of a
+workshop not held (held: closed, or ended while published or confirmed), and
+the activity log's money rows (`money.*`, registration payments and refunds,
+workshop closings, the deleted contracts' rows). People, workshops,
+registrations, media, templates and settings stay; a workshop left without a
+contract gets a new one when it is saved again. It needs the admin's password
+and the phrase typed out, runs in one transaction with the tables locked, and
+is logged as `setting.factory_reset` with the counts. The ledger and the log
+stay append-only: `forbid_change()` lets a DELETE through only inside a
+transaction that set `lart.factory_reset` (`drizzle/0013_factory_reset.sql`).
+Its test runs on a database of its own (`lart_test_reset`).
+
 ## Operations
 
 ### Encrypting older signed contract texts (once)

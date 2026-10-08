@@ -16,6 +16,7 @@ const blank = (): HomeSettingsInput => ({
   past: { show: true, title: empty() },
   steps: { show: true, title: empty(), items: Array.from({ length: 4 }, () => ({ title: empty(), text: empty() })), image: "" },
   footer: { about: empty(), instagram: "", email: "", phone: "" },
+  aboutPage: { text: empty() },
 })
 
 const parse = (change: (v: HomeSettingsInput) => void) => {

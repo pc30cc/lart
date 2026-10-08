@@ -15,6 +15,7 @@ import type { LocalizedText } from "@/db/schema"
 import { saveHomeSettings } from "@/features/site/home-actions"
 import {
   HERO_IMAGES_MAX,
+  ABOUT_PAGE_TEXT_MAX,
   HOME_LONG_TEXT_MAX,
   HOME_STEPS_MAX,
   HOME_TEXT_MAX,
@@ -60,6 +61,7 @@ function initialValues(home: HomeSettingsValues, version: string): Values {
         : Array.from({ length: HOME_STEPS_MAX }, emptyStep),
     },
     footer: { ...home.footer, about: all(home.footer.about) },
+    aboutPage: { text: all(home.aboutPage.text) },
   }
 }
 
@@ -273,6 +275,17 @@ export function HomeSettingsForm({
             placeholder="+90 555 123 45 67"
           />
         </div>
+      </FormSection>
+
+      <FormSection title={t("aboutPage.title")} description={t("aboutPage.description")}>
+        <LocalizedTextarea
+          name="aboutPage.text"
+          label={t("aboutPage.text")}
+          description={t("aboutPage.textHint", { max: ABOUT_PAGE_TEXT_MAX })}
+          placeholder={defaults.footer.about}
+          maxLength={ABOUT_PAGE_TEXT_MAX}
+          rows={12}
+        />
       </FormSection>
 
       <FormActions className="bg-background/85 supports-backdrop-filter:backdrop-blur-md sticky bottom-0 z-10 -mx-4 px-4 pb-4 md:-mx-8 md:px-8">

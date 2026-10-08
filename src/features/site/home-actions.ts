@@ -13,7 +13,7 @@ import { readHome } from "./home-settings"
 
 type Home = SettingValue<"home">
 
-const sections = ["hero", "story", "crafts", "past", "steps", "footer"] as const
+const sections = ["hero", "story", "crafts", "past", "steps", "footer", "aboutPage"] as const
 
 /**
  * The home page's content (Settings → Home page). Audited as one

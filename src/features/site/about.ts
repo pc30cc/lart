@@ -55,8 +55,8 @@ export async function storyHasPartners(): Promise<boolean> {
 
 /**
  * Everything a page shows, in `locale` (themes/types `AboutData`): the About
- * page (/about) is the brand's own words (the footer's "About us" text) and
- * nobody else; the Our story page (/story) is the partners who chose to be on it.
+ * page (/about) is the brand's own words (Settings → Home page → About page,
+ * else the footer's "About us" text) and nobody else; the Our story page (/story) is the partners who chose to be on it.
  */
 export async function getAboutData(locale: string, page: "about" | "story"): Promise<AboutData> {
   const [t, brand, frame, partners, home, url] = await Promise.all([
@@ -73,7 +73,7 @@ export async function getAboutData(locale: string, page: "about" | "story"): Pro
     brand,
     ...(page === "story"
       ? { kicker: brand, title: t("story.title"), intro: t("story.intro", { brand }) }
-      : { kicker: t("kicker"), title: t("title", { brand }), intro: frame.footer.about }),
+      : { kicker: t("kicker"), title: t("title", { brand }), intro: ownText(home.aboutPage.text, locale) || frame.footer.about }),
     partners,
     storyImageUrl: url(home.story.image),
     labels: {

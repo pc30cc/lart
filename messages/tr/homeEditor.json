@@ -11,9 +11,18 @@
     "description": "Ziyaretçilerin ilk gördüğü yer: başlığınız ve atölyelere giden bir düğmeyle büyük bir fotoğraf ya da video.",
     "background": "Arka plan",
     "media": {
-      "theme": { "title": "Temanın fotoğrafları", "hint": "Temayla birlikte gelen hazır fotoğraflar." },
-      "images": { "title": "Kendi fotoğraflarım", "hint": "Sırayla gösterilen en fazla {max, number} fotoğraf." },
-      "video": { "title": "Bir video", "hint": "Sessizce, tekrar tekrar oynayan kısa bir video." }
+      "theme": {
+        "title": "Temanın fotoğrafları",
+        "hint": "Temayla birlikte gelen hazır fotoğraflar."
+      },
+      "images": {
+        "title": "Kendi fotoğraflarım",
+        "hint": "Sırayla gösterilen en fazla {max, number} fotoğraf."
+      },
+      "video": {
+        "title": "Bir video",
+        "hint": "Sessizce, tekrar tekrar oynayan kısa bir video."
+      }
     },
     "photos": "Fotoğraflarınız",
     "photosHint": "Yatay fotoğraflar en güzel görünür. İlk fotoğraf ilk sırada gösterilir; sırayı değiştirmek için sürükleyin ya da okları kullanın.",
@@ -75,5 +84,11 @@
     "videoNeeded": "Bir video ekleyin ya da başka bir arka plan seçin.",
     "instagram": "Lütfen Instagram sayfanızın adresini yapıştırın, örneğin https://instagram.com/adiniz",
     "phone": "Lütfen telefon numarasını yalnızca rakamlarla yazın, örneğin +90 555 123 45 67"
+  },
+  "aboutPage": {
+    "title": "Hakkımızda sayfası",
+    "description": "Hakkımızda sayfasının (/about) metni, alt bilgideki kısa metinden ayrı. Boş kalırsa alt bilgideki metin gösterilir.",
+    "text": "Sayfa metni",
+    "textHint": "Birkaç paragraf, en fazla {max} karakter. Boş bir satır yeni paragraf başlatır."
   }
 }

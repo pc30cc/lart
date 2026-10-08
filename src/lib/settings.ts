@@ -29,6 +29,13 @@ const localizedLong = z.object({
   en: z.string().trim().max(1500).optional(),
 })
 
+/** A page's own text in three languages (the About page). */
+const localizedPage = z.object({
+  fa: z.string().trim().max(4000).optional(),
+  tr: z.string().trim().max(4000).optional(),
+  en: z.string().trim().max(4000).optional(),
+})
+
 /** One font choice of the site (an id of src/themes/fonts.ts and a weight; checked against it when used). */
 const fontChoice = z.object({ id: z.string().regex(/^[a-z0-9-]{1,40}$/), weight: z.number().int().min(100).max(900) })
 const scriptFonts = z.object({ heading: fontChoice, body: fontChoice })
@@ -116,6 +123,8 @@ export const settingSchemas = {
         phone: z.string().trim().max(40).default(""),
       })
       .default({ about: {}, instagram: "", email: "", phone: "" }),
+    /** The About page's (/about) own text; empty: the footer's "About us" text. */
+    aboutPage: z.object({ text: localizedPage.default({}) }).default({ text: {} }),
   }),
   /**
    * Where uploads go: one storage zone / bucket whose files the CDN serves.
@@ -231,6 +240,7 @@ export const settingDefaults: { [K in SettingKey]: SettingValue<K> } = {
     past: { show: true, title: {} },
     steps: { show: true, title: {}, items: [], image: "" },
     footer: { about: {}, instagram: "", email: "", phone: "" },
+    aboutPage: { text: {} },
   },
   cdn: { provider: "local" },
   watermark: {

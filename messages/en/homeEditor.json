@@ -11,9 +11,18 @@
     "description": "The first thing visitors see: a big photo or video with your headline and a button to the workshops.",
     "background": "Background",
     "media": {
-      "theme": { "title": "The template’s photos", "hint": "Ready-made photos that come with the template." },
-      "images": { "title": "My photos", "hint": "Up to {max, number} photos, shown one after another." },
-      "video": { "title": "A video", "hint": "A short video that plays silently, over and over." }
+      "theme": {
+        "title": "The template’s photos",
+        "hint": "Ready-made photos that come with the template."
+      },
+      "images": {
+        "title": "My photos",
+        "hint": "Up to {max, number} photos, shown one after another."
+      },
+      "video": {
+        "title": "A video",
+        "hint": "A short video that plays silently, over and over."
+      }
     },
     "photos": "Your photos",
     "photosHint": "Wide (landscape) photos look best. The first one shows first; drag them or use the arrows to change the order.",
@@ -75,5 +84,11 @@
     "videoNeeded": "Add a video, or choose another background.",
     "instagram": "Please paste your Instagram page’s address, for example https://instagram.com/yourname",
     "phone": "Please write the phone number with digits only, for example +90 555 123 45 67"
+  },
+  "aboutPage": {
+    "title": "About page",
+    "description": "The text of the About page (/about), separate from the footer's short text. Left empty, the footer's text shows.",
+    "text": "Page text",
+    "textHint": "A few paragraphs, up to {max} characters. A blank line starts a new paragraph."
   }
 }

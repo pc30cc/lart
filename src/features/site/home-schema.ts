@@ -14,6 +14,8 @@ import { isSafePath } from "@/lib/storage/shared"
 /** Same limits as the stored setting: short texts, the paragraphs, photos in the hero, steps. */
 export const HOME_TEXT_MAX = 500
 export const HOME_LONG_TEXT_MAX = 1500
+/** The About page's own text (several paragraphs). */
+export const ABOUT_PAGE_TEXT_MAX = 4000
 export const HERO_IMAGES_MAX = 6
 export const HOME_STEPS_MAX = 4
 
@@ -93,6 +95,7 @@ export const homeSettingsSchema = z
         .transform((v) => normalizeDigits(v).replace(/[-().]/g, " ").replace(/\s+/g, " ").trim())
         .refine((v) => v === "" || isPhone(v), { error: "homeEditor.errors.phone" }),
     }),
+    aboutPage: z.object({ text: localizedText({ max: ABOUT_PAGE_TEXT_MAX }) }),
   })
   .superRefine((home, ctx) => {
     // The background chosen must have something to show.
