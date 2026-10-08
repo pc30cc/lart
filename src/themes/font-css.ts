@@ -1,4 +1,4 @@
-import { type FontChoice, type FontDef, fontById, type FontScript, type SiteFonts } from "./fonts"
+import { type FontChoice, type FontDef, fontById, fonts, type FontScript, type SiteFonts } from "./fonts"
 
 /**
  * The CSS for the site's chosen fonts: @font-face for the self-hosted files of
@@ -20,30 +20,65 @@ export function siteFontCss(choices: SiteFonts): string {
     }
   }
 
-  const faces = [...used.values()].flatMap((font) =>
-    font.files.map(
-      (file) =>
-        `@font-face{font-family:${familyName(font)};font-style:normal;font-display:swap;font-weight:${font.weightRange};src:url(${file.src}) format("woff2");unicode-range:${file.range}}`,
-    ),
-  )
-
+  const styles = siteFontStyles(choices)
   const vars = (script: FontScript) => {
-    const { heading, body } = choices[script]
-    const latin = choices.latin
-    // A Persian page also shows Latin words (venues, names): they fall back to the Latin fonts.
-    const headingStack = script === "persian" ? stack(heading, latin.heading) : stack(heading)
-    const bodyStack = script === "persian" ? stack(body, latin.body) : stack(body)
+    const s = styles[script]
     return [
-      `--site-font-heading:${headingStack}`,
-      `--site-font-heading-weight:${heading.weight}`,
-      `--site-font-body:${bodyStack}`,
-      `--site-font-body-weight:${body.weight}`,
-      // Glyph variants of the Latin text font (Inter's); Persian pages keep the fonts' own glyphs.
-      `--site-font-features:${script === "persian" ? "normal" : (fontById(latin.body.id)?.features ?? "normal")}`,
+      `--site-font-heading:${s.heading.family}`,
+      `--site-font-heading-weight:${s.heading.weight}`,
+      `--site-font-body:${s.body.family}`,
+      `--site-font-body-weight:${s.body.weight}`,
+      `--site-font-features:${s.features}`,
     ].join(";")
   }
 
-  return [...faces, `[data-site-theme]{${vars("latin")}}`, `[data-site-theme]:lang(fa){${vars("persian")}}`].join("\n")
+  return [
+    ...[...used.values()].flatMap(fontFaces),
+    `[data-site-theme]{${vars("latin")}}`,
+    `[data-site-theme]:lang(fa){${vars("persian")}}`,
+  ].join("\n")
+}
+
+type FontStyle = { family: string; weight: number }
+
+/**
+ * The font-family lists, weights and glyph variants the site's styles get for
+ * each script: what `siteFontCss` writes into its variables, and what the
+ * Appearance settings' preview shows.
+ */
+export function siteFontStyles(choices: SiteFonts): Record<FontScript, { heading: FontStyle; body: FontStyle; features: string }> {
+  const latin = choices.latin
+  const persian = choices.persian
+  return {
+    latin: {
+      heading: { family: stack(latin.heading), weight: weightOf(latin.heading) },
+      body: { family: stack(latin.body), weight: weightOf(latin.body) },
+      // Glyph variants of the Latin text font (Inter's).
+      features: fontById(latin.body.id)?.features ?? "normal",
+    },
+    persian: {
+      // A Persian page also shows Latin words (venues, names): they fall back to the Latin fonts.
+      heading: { family: stack(persian.heading, latin.heading), weight: weightOf(persian.heading) },
+      body: { family: stack(persian.body, latin.body), weight: weightOf(persian.body) },
+      // Persian pages keep the fonts' own glyphs.
+      features: "normal",
+    },
+  }
+}
+
+/**
+ * @font-face rules for every self-hosted font of the registry, with the same
+ * family names as on the site. Only the Appearance settings page uses it, so
+ * its preview can show any font; a browser downloads a file only when the
+ * page uses that font.
+ */
+export function fontPoolCss(): string {
+  return fonts.flatMap(fontFaces).join("\n")
+}
+
+/** One font's font-family list with its fallback (an unknown id gives only the fallback). */
+export function fontStack(id: string): string {
+  return stack({ id: id as FontChoice["id"], weight: 400 })
 }
 
 /** The files to preload for a page in `script`: the main file of its heading and body fonts. */
@@ -56,9 +91,23 @@ export function siteFontPreloads(choices: SiteFonts, script: FontScript): string
   return [...files]
 }
 
+/** The @font-face rules of a self-hosted font (none for a font named by its `stack`). */
+function fontFaces(font: FontDef): string[] {
+  return font.files.map(
+    (file) =>
+      `@font-face{font-family:${familyName(font)};font-style:normal;font-display:swap;font-weight:${font.weightRange};src:url(${file.src}) format("woff2");unicode-range:${file.range}}`,
+  )
+}
+
 /** The @font-face family name of a self-hosted font (prefixed, so an installed copy is never used instead). */
 function familyName(font: FontDef): string {
   return `"Site ${font.label}"`
+}
+
+/** The choice's weight when the font has it, else a plain 400 (never a value from outside the registry). */
+function weightOf(choice: FontChoice): number {
+  const weights: readonly number[] = fontById(choice.id)?.weights ?? []
+  return weights.includes(choice.weight) ? choice.weight : 400
 }
 
 function stack(...choices: FontChoice[]): string {

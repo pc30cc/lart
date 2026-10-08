@@ -26,14 +26,7 @@
     "seoPageTitle": "Başlık",
     "seoPageTitleHint": "50–60 karakter civarı en iyi sonucu verir.",
     "seoPageDescription": "Açıklama",
-    "seoPageDescriptionHint": "Bir iki cümle, 150–160 karakter civarı. Ana sayfada markanın altında görünen cümle de budur.",
-    "themeTitle": "Site teması",
-    "themeDescription": "Herkese açık sitenin görünümü. Yönetim paneli ve eğitmen paneli her zaman kendi tasarımlarını korur.",
-    "theme": "Tema",
-    "themeHint": "Yeni temalar eklendikçe burada görünür.",
-    "themes": {
-      "default": "Varsayılan"
-    }
+    "seoPageDescriptionHint": "Bir iki cümle, 150–160 karakter civarı. Ana sayfada markanın altında görünen cümle de budur."
   },
   "email": {
     "providerTitle": "E-postalar nasıl gönderilsin",

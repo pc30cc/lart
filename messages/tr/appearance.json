@@ -1,3 +1,55 @@
 {
-  "title": "Görünüm"
+  "theme": {
+    "title": "Site teması",
+    "description": "Sitenizin ziyaretçilere görünen yüzü. Yönetim paneli ve eğitmen paneli her zaman kendi görünümünü korur.",
+    "label": "Tema",
+    "current": "Şu an sitenizde",
+    "names": {
+      "default": "Klasik",
+      "atelier": "Atelier"
+    },
+    "descriptions": {
+      "default": "Sitenin her zamanki görünümü: aydınlık, sade ve sakin, kiremit rengi dokunuşlarla.",
+      "atelier": "Sıcak krem ve kahve tonları, büyük fotoğraflar ve zarif başlıklar; tıpkı bir sanat atölyesi gibi."
+    }
+  },
+  "fonts": {
+    "title": "Yazı tipleri",
+    "description": "{theme} temasının yazı tipleri: her dil için biri başlıklara, biri metinlere. Her tema kendi seçimini saklar.",
+    "rows": {
+      "latinHeading": "Türkçe ve İngilizce başlıklar",
+      "latinBody": "Türkçe ve İngilizce metinler",
+      "persianHeading": "Farsça başlıklar",
+      "persianBody": "Farsça metinler"
+    },
+    "font": "Yazı tipi",
+    "weight": "Kalınlık",
+    "weightName": "{name} {n, number}",
+    "weights": {
+      "100": "En ince",
+      "200": "Çok ince",
+      "300": "İnce",
+      "400": "Normal",
+      "500": "Orta",
+      "600": "Yarı kalın",
+      "700": "Kalın",
+      "800": "Çok kalın",
+      "900": "En kalın"
+    },
+    "useThemeFonts": "Temanın kendi yazı tiplerini kullan",
+    "usingThemeFonts": "Bunlar temanın kendi yazı tipleri."
+  },
+  "preview": {
+    "title": "Önizleme",
+    "description": "Başlıklar ve metinler sitenizde böyle görünecek.",
+    "latin": "Türkçe ve İngilizce",
+    "persian": "Farsça",
+    "unsaved": "Henüz kaydetmediğiniz değişiklikler gösteriliyor."
+  },
+  "seeSite": "Siteyi görüntüle",
+  "errors": {
+    "theme": "Temalardan birini seçin.",
+    "font": "Listeden bir yazı tipi seçin.",
+    "weight": "Bu yazı tipinin bu kalınlığı yok. Lütfen başka birini seçin."
+  }
 }
