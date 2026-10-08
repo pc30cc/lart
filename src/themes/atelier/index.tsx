@@ -1,14 +1,34 @@
-import { defaultTheme } from "../default"
 import { themeDefaultFonts } from "../ids"
-import type { Theme } from "../types"
+import type { SiteFrameProps, Theme } from "../types"
+import { Footer } from "./footer"
+import { Header } from "./header"
+import { Home } from "./home"
+import { WorkshopCard } from "./workshop-card"
 
 /**
- * Atelier: the premium theme after the owner's earlier site (throttlehaus.ca).
- * Placeholder until its own components land: the classic frame and sections.
+ * Atelier: the premium theme after the owner's earlier site (throttlehaus.ca),
+ * in the owner's palette (cream, beige, brick, dark brown; theme.css) and
+ * photos (photos.ts). A sticky header that is see-through over the home
+ * page's full-screen hero, rounded photo bands, framed workshop cards and a
+ * dark brown footer ending in the brand as a giant wordmark.
  */
+function Frame({ locale, brand, member, top, banner, nav, footer, children }: SiteFrameProps) {
+  return (
+    <>
+      <Header brand={brand} member={member} top={top} nav={nav} overHero={!banner} />
+      {/* The hero starts under the banner instead of under the header (theme.css). */}
+      {banner && <div data-at-banner>{banner}</div>}
+      <main className="flex flex-1 flex-col">{children}</main>
+      <Footer brand={brand} locale={locale} member={member} nav={nav} footer={footer} />
+    </>
+  )
+}
+
 export const atelierTheme: Theme = {
-  ...defaultTheme,
   id: "atelier",
+  Frame,
+  Home,
+  WorkshopCard,
   themeColor: { light: "#F2E9E5", dark: "#24160F" },
   fonts: themeDefaultFonts.atelier,
 }

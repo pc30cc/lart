@@ -43,5 +43,19 @@
     "contact": "İletişim",
     "home": "Ana sayfa",
     "instagram": "Instagram"
+  },
+  "atelier": {
+    "menu": "Menü",
+    "closeMenu": "Menüyü kapat",
+    "photos": {
+      "candlesPouring": "Ahşap bir masanın etrafında mum döken kadınlar",
+      "candlesTable": "Gülerek birlikte mum yapan arkadaşlar",
+      "candlesFriends": "Güneşli bir odada kavanozlara mum döken kadınlar",
+      "pottery": "Seramik atölyesinde çömlek çarkında çalışan kadınlar",
+      "macrame": "Makrome düğümleri atan eller",
+      "painting": "Bir resim atölyesinde yan yana resim yapan kadınlar",
+      "studio": "Ahşap masaları ve hazır malzemeleriyle aydınlık bir atölye salonu",
+      "closeUp": "Güzel bir şey yaratan ellerin yakından görünümü"
+    }
   }
 }
