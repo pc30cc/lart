@@ -6,17 +6,14 @@
  */
 import { z } from "zod"
 
-import { fontById, type FontId, fonts, type FontScript, isValidChoice } from "@/themes/fonts"
+import { fontById, type FontScript, isValidChoice, latinFontIds, persianFontIds } from "@/themes/fonts"
 import { themeIds } from "@/themes/ids"
-
-/** The ids of one script's fonts, for its selects and its schema. */
-export const scriptFontIds = (script: FontScript) => fonts.filter((f) => f.script === script).map((f) => f.id) as [FontId, ...FontId[]]
 
 /** A font of `script` and one of that font's weights. */
 const fontChoice = (script: FontScript) =>
   z
     .object({
-      id: z.enum(scriptFontIds(script), { error: "appearance.errors.font" }),
+      id: z.enum(script === "latin" ? latinFontIds : persianFontIds, { error: "appearance.errors.font" }),
       weight: z.number().int(),
     })
     .refine((choice) => isValidChoice(choice, script), { path: ["weight"], error: "appearance.errors.weight" })

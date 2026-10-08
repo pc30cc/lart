@@ -39,7 +39,8 @@ export function siteFontCss(choices: SiteFonts): string {
   ].join("\n")
 }
 
-type FontStyle = { family: string; weight: number }
+/** A font as the site's styles get it: its font-family list and weight. */
+export type FontStyle = { family: string; weight: number }
 
 /**
  * The font-family lists, weights and glyph variants the site's styles get for

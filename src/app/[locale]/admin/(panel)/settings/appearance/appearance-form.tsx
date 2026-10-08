@@ -11,16 +11,11 @@ import { StatusBadge } from "@/components/admin/status-badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { saveAppearanceSettings } from "@/features/settings/appearance-actions"
-import {
-  appearanceSettingsSchema,
-  nearestWeight,
-  scriptFontIds,
-  type AppearanceSettingsValues,
-} from "@/features/settings/appearance-schema"
+import { appearanceSettingsSchema, nearestWeight, type AppearanceSettingsValues } from "@/features/settings/appearance-schema"
 import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
 import { fontStack, siteFontStyles } from "@/themes/font-css"
-import { fontById, scriptOf, type FontScript, type SiteFonts } from "@/themes/fonts"
+import { fontById, latinFontIds, persianFontIds, scriptOf, type FontScript, type SiteFonts } from "@/themes/fonts"
 import { themeDefaultFonts, themeIds, type ThemeId } from "@/themes/ids"
 import { ChoiceCards, Panel } from "../_components/fields"
 import { previewLooks, ThemePicture } from "./theme-pictures"
@@ -91,7 +86,7 @@ export function AppearanceSettingsForm({
                   value: id,
                   title: t(`theme.names.${id}`),
                   description: t(`theme.descriptions.${id}`),
-                  preview: <ThemePicture themeId={id} brand={brand} heading={style.heading} body={style.body} persian={persian} />,
+                  preview: <ThemePicture themeId={id} brand={brand} heading={style.heading} persian={persian} />,
                   badge: id === saved.theme ? <StatusBadge tone="success">{t("theme.current")}</StatusBadge> : undefined,
                 }
               })}
@@ -179,7 +174,7 @@ function FontRow({ script, part, label }: (typeof rows)[number]) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {scriptFontIds(script).map((id) => (
+                {(script === "latin" ? latinFontIds : persianFontIds).map((id) => (
                   <SelectItem key={id} value={id}>
                     <FontName id={id} script={script} />
                   </SelectItem>

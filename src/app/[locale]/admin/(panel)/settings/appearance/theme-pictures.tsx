@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react"
 
 import { cn } from "@/lib/utils"
+import type { FontStyle } from "@/themes/font-css"
 import type { ThemeId } from "@/themes/ids"
 
 /**
@@ -11,13 +12,10 @@ import type { ThemeId } from "@/themes/ids"
  * true miniature at any card width.
  */
 
-/** A font as the site's styles get it (src/themes/font-css.ts, `siteFontStyles`). */
-export type FontStyle = { family: string; weight: number }
-
 type PictureProps = {
   brand: string
+  /** The theme's heading font in the admin's script (the pictures' only text is the brand). */
   heading: FontStyle
-  body: FontStyle
   /** The admin's language is Persian: the picture shows a Persian page (no capitals). */
   persian: boolean
 }
