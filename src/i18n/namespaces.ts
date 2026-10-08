@@ -22,4 +22,7 @@ export const namespaces = [
   "registration",
   "partners",
   "students",
+  "home",
+  "appearance",
+  "homeEditor",
 ] as const

@@ -260,6 +260,8 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 | `/admin/profile` | admin | private | |
 | `/admin/registrations` | admin | private | |
 | `/admin/settings` | admin | private | |
+| `/admin/settings/appearance` | admin | private | |
+| `/admin/settings/home` | admin | private | |
 | `/admin/settings/email` | admin | private | |
 | `/admin/settings/payments` | admin | private | |
 | `/admin/settings/storage` | admin | private | |
@@ -326,8 +328,10 @@ no private storage. The database stores only the storage path, e.g.
 
 - **Upload from a form** with the components in `components/admin/upload`:
   `<ImageUpload purpose="course_cover" {...field} previewUrl={url} target={…} />`,
-  `<VideoUpload {...field} />` and `<MediaGrid value onChange target={…} />`
-  (many photos and videos, reorder, remove). The value is the storage path.
+  `<VideoUpload {...field} />` (`purpose="site_video"` for the home page's
+  video; `gallery_video` by default) and `<MediaGrid value onChange target={…} />`
+  (many photos and videos, reorder, remove; `imagePurpose`, `allowVideos`,
+  `videoPurpose`, `max`). The value is the storage path.
 - **Purposes** (`lib/storage/shared.ts`) and where they are stored
   (`uploadPath` in `lib/storage/upload.ts`; `<random>` is 128 random bits):
 
@@ -340,6 +344,12 @@ no private storage. The database stores only the storage path, e.g.
   | `instructor_photo` | square 800 | `instructors/<name>/photo-<random>.webp` |
   | `admin_photo` | a partner's photo, square 512 | `partners/<name>/photo-<random>.webp` |
   | `watermark_logo` | PNG | `brand/watermark-logo-<random>.png` |
+  | `site_image` | the home page's photos: 2560 wide, never watermarked | `site/img-<random>.webp` |
+  | `site_video` | the home page's video: MP4 or WebM only (a MOV does not play by itself in Chromium or Firefox), up to 80 MB, sent in 8 MB parts | `site/video-<random>.<ext>` |
+
+  Video purposes are listed in `videoPurposes`, the formats each one takes
+  in `videoFormats` (checked from the content on the server, from the type
+  or name in the browser) and their size in `maxUploadBytes`.
 
   Images are checked from their bytes, auto-rotated, stripped of all metadata
   (GPS) and re-encoded as WebP.
@@ -354,8 +364,10 @@ no private storage. The database stores only the storage path, e.g.
   not just digits, else the email's local part) and on the instructor route
   (the instructor's name), and for a workshop or instructor not saved yet
   from the form's `target={{ folder }}` hint (the slug field, the English
-  name), sanitized again, else `new`. An unknown id is refused (400).
-  Renaming a record never moves its files (the paths are stored). Paths
+  name), sanitized again, else `new`. An unknown id is refused (400), and so
+  is any `courseId`, `instructorId` or `folder` sent with the watermark logo,
+  a partner's photo or the home page's files (`brand/`, `partners/<name>/`
+  from the session, `site/`). Renaming a record never moves its files (the paths are stored). Paths
   from before the named folders (`courses/<yyyy-mm>/…`, `gallery/<yyyy-mm>/…`,
   `admins/…`, `brand/<yyyy-mm>/…`) stay valid.
 - **Validate a submitted path** with `isSafePath` and the layout of its kind
@@ -693,7 +705,8 @@ server-renders it puts `suppressHydrationWarning` on the element), `formatTime`,
   accent; `success`, `warning`, `info` for states; `chart-1`…`chart-5` is a
   colour-blind-checked set: assign series in that order, never cycle.
 - Fonts: IRANSans for Persian, Inter (latin + latin-ext) otherwise, chosen by
-  `<html lang>` through `font-sans`.
+  `<html lang>` through `font-sans` (the panels; the public site's fonts are
+  a setting, see the next section).
 - RTL: logical classes only (`ms-`, `pe-`, `start-`, `text-start`); flip
   direction icons with `rtl:rotate-180`. shadcn components that still use
   `text-left` take a `text-start` override via `className`.
@@ -701,6 +714,77 @@ server-renders it puts `suppressHydrationWarning` on the element), `formatTime`,
   (`@/components/locale-switcher`) work anywhere.
 - Messages shared by all modules: `common` (actions, toast, errors,
   validation, table, form, date, theme, locales), `auth`, `admin` (nav, shell).
+
+### Settings → Appearance: theme and fonts
+
+- `theme` is the public site's theme, an id of `src/themes/ids.ts`
+  (`themeIds`; an unknown id shows the classic theme). `fonts` holds, **per
+  theme id**, the heading and text font with its weight for Latin (Turkish,
+  English) and Persian. A theme without an entry uses its own fonts
+  (`themeDefaultFonts`), and so does a script whose saved choice is not in
+  the registry any more (`resolveSiteFonts`).
+- The page (`settings/appearance/`): one card per theme with a small picture
+  of it (`theme-pictures.tsx`: a picture and a preview look per theme id,
+  so a new theme needs one there), the chosen theme's four fonts and a live
+  preview. Choosing another theme shows that theme's saved fonts (or its
+  own); "Use the template's own fonts" puts the theme's own back.
+- `saveAppearanceSettings` (`features/settings/appearance-actions.ts`)
+  validates with `appearanceSettingsSchema` (registry themes, each row only
+  its script's fonts, a weight the font has), writes only `theme` and/or
+  `fonts` when they changed (one transaction, one `setting.update` audit
+  entry each), and touches only the chosen theme's entry in `fonts`; fonts
+  equal to the theme's own remove that entry, so a theme's defaults keep
+  following the code. `getAppearanceSettings()` gives the theme, the saved
+  map and every theme's resolved fonts.
+- The site writes only the chosen fonts' `@font-face` and variables
+  (`siteFontCss`, in `SiteRoot`); the settings page declares the whole pool
+  (`fontPoolCss`) for its preview, with the same family names. Both write
+  registry values only, never text from the database.
+- **Adding a font**: its woff2 files in `public/fonts/<id>/`, named
+  `<id>-<subset>-v<version>.woff2` (a Latin font: `latin` and `latin-ext`,
+  for Turkish; a Persian font: `arabic`), with the font's `LICENSE.txt`
+  (OFL), and one entry in `src/themes/fonts.ts` (id, the font's own name,
+  script, serif or sans, the weights to offer, the file's weight range, the
+  files with their unicode-range). Bump the version in the names whenever a
+  file changes: fonts are cached for a year. Nothing else changes: the page
+  lists it, the schema accepts it, the site loads it once it is chosen.
+
+### Settings → Home page: the home page's content
+
+- The `home` setting (`lib/settings.ts`) holds what the home page shows, for
+  every theme: the hero (`media`: `theme` = the theme's own photos, `images`
+  = up to six photos shown in turn, `video` = one video with an optional
+  cover photo; title, subtitle, button), the story, "explore by craft", past
+  workshops and "how it works" sections (each with `show`, its texts and,
+  except past workshops, a photo; up to four steps) and the footer (about
+  text, Instagram, email, phone). Texts are per language; an empty one uses
+  the bundled text of `messages/<locale>/home.json`, an empty photo the
+  theme's own (`getHomeData`, `getSiteFrame`). Four empty steps are stored
+  as none (the theme's four steps); fewer steps show only those, each empty
+  field falling back to the bundled step of its place. The files of the
+  background not chosen stay saved, so switching back needs no new upload.
+- The page (`settings/home/`): `HomeSettingsForm` with the bundled texts of
+  all three languages as placeholders (`getHomeDefaults()`), the saved value
+  with its files' URLs (`getHomeSettings()`, `features/site/home-settings.ts`)
+  and, while the classic theme is active (it shows only the tagline and the
+  workshops), a note with a link to Appearance.
+- **Files**: photos are uploaded as `site_image`, the video as `site_video`
+  (MP4 or WebM, up to 80 MB; see [Uploads](#uploads-and-media)), both under
+  `site/`. `homeSettingsSchema` (`features/site/home-schema.ts`, client-safe)
+  takes only such paths (`isSiteImagePath`: `site/….webp`,
+  `isSiteVideoPath`: `site/….mp4|webm`), the stored setting's text limits
+  (500, paragraphs 1500), an Instagram address `https://instagram.com/<name>`
+  or `https://www.instagram.com/<name>` (a shared link's `?igsh=…` is
+  dropped), an email, and a phone of digits, spaces and a leading `+`
+  (Persian digits are converted); the chosen background must have its
+  photos or video.
+- `saveHomeSettings` (`features/site/home-actions.ts`) reads the setting
+  under a lock and writes it with one `setting.update` audit entry
+  (`entityId` "home", the changes per field: `"hero.title": { from, to }`)
+  in one transaction; nothing is written when nothing changed. After the
+  commit it removes the `site/` files the old value used and the new one
+  does not (a file that cannot be removed is only logged). A file uploaded
+  but never saved stays in storage.
 
 ### Tests
 
@@ -964,12 +1048,42 @@ confirm your email" banner (with
 another. Small centred forms use `AuthCard` (`@/components/site/auth-card`).
 Nothing on the public site links to the instructor pages.
 
-The home page (`(site)/page.tsx`: `/`, `/fa`, `/en`) is two sections a theme
-can replace with its own (same props): `HomeHero` (the brand, the SEO
-description setting in the page's language or `site.home.tagline`, "See all
-workshops" only when a workshop is open) and `UpcomingWorkshops` (the next six open workshops,
-`listOpenWorkshops(locale, { limit })`, as `WorkshopCard`s with `h3` titles,
-"All workshops", or the "coming soon" empty state). Its title and
+**Themes and their data.** Pages and the layout read the data and hand the
+active theme (`getActiveTheme()`, Settings → Appearance) plain props; a theme
+only decides how things look and never reads the database. The layout renders
+`theme.Frame` (menu and footer: `getSiteFrame`, `src/features/site/frame.ts`),
+the home page `theme.Home` with `getHomeData(locale)`
+(`src/features/site/home.ts`: the `home` setting, with the bundled texts of
+`messages/<locale>/home.json` where a field is empty; a section is null when
+the admin hid it or it has nothing to show), and every list of workshops
+`theme.WorkshopCard` with the cards of `listOpenWorkshops`.
+`src/themes/types.ts` is the contract, accessibility rules included. Public
+reads live in `src/features/registrations/public.ts` (open workshops, one
+workshop, seats, terms) and `src/features/site/public.ts`:
+`listPublicCategories(locale)` (the categories of the open workshops, in the
+admin's order, with how many; "open" is `openWorkshopsWhere`, the one rule of
+the list, its categories and the sitemap) and `listPastWorkshops(locale,
+{ limit })` (closed, never cancelled, workshops with a cover or gallery
+photos, newest first, each with its cover and first six gallery photos: the
+gallery is what the admins chose to publish). Both are cached per request
+and return public fields only: never an instructor's private fields.
+
+**Craft filter.** `/workshops?category=<categories.slug>` lists one
+category's workshops (`listOpenWorkshops(locale, { category })`; each card
+also carries its `categorySlug`). Above the grid a row of links, All and
+each category with open workshops (only when there are two or more), marks
+the current one with `aria-current="page"`; it uses the design tokens, so
+each theme gives it its own colours. A malformed slug, an unknown one or one
+without open workshops shows the whole list, without an error. A filtered
+view keeps the list's canonical address (`alternates("/workshops")`) and is
+`noindex, follow`; the sitemap lists only `/workshops`.
+
+The home page is `(site)/page.tsx` (`/`, `/fa`, `/en`). The classic theme
+(`src/themes/default`) shows two sections: `HomeHero` (the brand, the
+tagline: the SEO description setting in the page's language or
+`site.home.tagline`, "See all workshops" only when a workshop is open) and
+`UpcomingWorkshops` (the first six of `upcoming` as `WorkshopCard`s with `h3`
+titles, "All workshops", or the "coming soon" empty state). Its title and
 description come from the SEO setting in the page's own language (never
 another language's text), else the brand and `site.home.metaDescription`.
 
@@ -984,6 +1098,46 @@ pages' meta noindex), not on a robots.txt Disallow: `src/app/robots.ts` does
 not name them, so crawlers can fetch them and see the noindex (a blocked page
 can still be indexed as a bare URL), and robots.txt does not publish the
 instructor panel's private address (README §5). Do not add them there.
+
+### Themes
+
+The public site's look is a theme (`src/themes`, chosen in Settings →
+Appearance): `default` (shown as "Classic", the original look) and
+`atelier`. Pages and layouts fetch the data and hand the active theme plain
+props; a theme only decides how things look. The contract is
+`src/themes/types.ts`: a `Theme` has a `Frame` (header, the page in one
+`<main>`, footer), a `Home` (the home page's sections from `HomeData`,
+`src/features/site/home.ts`; a hidden section is `null`), a `WorkshopCard`
+(home page and `/workshops`), its `themeColor` and its default `fonts`. Its
+header lists what every theme keeps: one `h1` on the home page, the brand;
+the brand as the first link of the first `<header>`; a header at most 80px
+tall on a phone; `top` (the "viewing as" bar) above it and `banner` under it.
+
+A new theme is a folder `src/themes/<id>/` exporting its `Theme`, its id and
+fonts in `ids.ts`, one line in `registry.ts`, and its `theme.css` imported in
+`src/app/globals.css`. Its colour tokens go under `[data-site-theme="<id>"]`
+and `html[data-site-theme="<id>"]` (dark: `.dark [data-site-theme="<id>"]`,
+`html.dark[data-site-theme="<id>"]`), never on bare `:root` or `body` (the
+panels share them): `SiteRoot` puts the attribute on the site's wrapper and
+`HtmlTheme` on `<html>` while a site page is open, so dialogs and toasts at
+the end of `<body>` get them too. The chosen fonts arrive as
+`--site-font-heading`, `--site-font-heading-weight` and `--site-font-body`
+(`font-serif` and `font-sans` follow them on the site).
+
+Atelier (`src/themes/atelier`, after throttlehaus.ca) maps the owner's
+palette (cream `#F2E9E5`, beige `#C5AA8E`, brick `#8B4A2E`, dark brown
+`#5B311E`, earthy brown `#9D816B`) onto the shadcn tokens in `theme.css`, so
+the shared pages (a workshop, registering, the account, dialogs, toasts)
+follow it, and adds the palette as colours (`bg-at-paper`, `text-at-cream`,
+`bg-at-deep`…) and the utilities `at-container` (1280px of content with 80px
+sides, 20px on a phone), `at-heading` and `at-caps`. Its headings use the
+heading font, Latin ones in capitals with a little letter-spacing (Persian
+never). Its own photos are in `public/themes/atelier/` (versioned names: they
+are cached for a year) and are named only in `photos.ts` (the hero's
+slideshow, the story, crafts and steps bands, the card fallback), with their
+descriptions in `home.atelier.photos`: swapping a photo is an edit of that
+file. Sections fade up into view through `data-reveal` (`reveal.tsx`, one
+observer; with reduced motion everything simply shows).
 
 ### Emails of phase 2
 

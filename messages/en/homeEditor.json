@@ -1,0 +1,78 @@
+{
+  "intro": "Choose what your home page shows. Any field you leave empty uses the theme’s own text or photo, so fill in only what you’d like to change. The grey text in an empty field is what the site shows.",
+  "classicNote": "Your site’s current theme shows only the welcome line and the workshops. The parts on this page appear with a theme that has them.",
+  "chooseTheme": "Choose a theme",
+  "show": "Show on the home page",
+  "hidden": "This part is hidden: visitors don’t see it.",
+  "photoHint": "Leave it empty to use the theme’s own photo.",
+  "unsaved": "You have changes that aren’t saved yet.",
+  "hero": {
+    "title": "Top of the page",
+    "description": "The first thing visitors see: a big photo or video with your headline and a button to the workshops.",
+    "background": "Background",
+    "media": {
+      "theme": { "title": "The theme’s photos", "hint": "Ready-made photos that come with the theme." },
+      "images": { "title": "My photos", "hint": "Up to {max, number} photos, shown one after another." },
+      "video": { "title": "A video", "hint": "A short video that plays silently, over and over." }
+    },
+    "photos": "Your photos",
+    "photosHint": "Wide (landscape) photos look best. The first one shows first; drag them or use the arrows to change the order.",
+    "video": "Video",
+    "videoHint": "A short clip of {min, number} to {max, number} seconds loads fastest. A MOV video from an iPhone needs to be saved as MP4 first.",
+    "poster": "Cover photo",
+    "posterHint": "Shown while the video loads. Optional.",
+    "heading": "Headline",
+    "subtitle": "Line under the headline",
+    "button": "Button text",
+    "buttonHint": "The button opens the list of workshops."
+  },
+  "story": {
+    "title": "Our story",
+    "description": "A photo with a few warm sentences about you, and a button to the upcoming workshops.",
+    "heading": "Title",
+    "text": "Text",
+    "textHint": "A few sentences, up to {max, number} characters.",
+    "button": "Button text",
+    "photo": "Photo"
+  },
+  "crafts": {
+    "title": "Explore by craft",
+    "description": "A photo with a button for each kind of workshop (candles, ceramics…). It appears when there are open workshops.",
+    "heading": "Title",
+    "photo": "Photo"
+  },
+  "past": {
+    "title": "Past workshops",
+    "description": "Photos from workshops that have ended. It appears once there are some.",
+    "heading": "Title"
+  },
+  "steps": {
+    "title": "How it works",
+    "description": "Up to {max, number} short steps over a photo, telling visitors how to join a workshop.",
+    "heading": "Title",
+    "step": "Step {n, number}",
+    "stepTitle": "Step title",
+    "stepText": "Step text",
+    "add": "Add a step",
+    "remove": "Remove step {n, number}",
+    "photo": "Photo"
+  },
+  "footer": {
+    "title": "Footer",
+    "description": "The bottom of every page: a few words about you and how to reach you. Contact fields left empty are not shown.",
+    "about": "About you",
+    "instagram": "Instagram address",
+    "instagramHint": "Copy it from your Instagram profile, for example https://instagram.com/yourname",
+    "email": "Email",
+    "phone": "Phone",
+    "phoneHint": "With the country code, for example +90 555 123 45 67"
+  },
+  "errors": {
+    "photo": "Please upload this photo again.",
+    "video": "Please upload the video again.",
+    "photosNeeded": "Add at least one photo, or choose another background.",
+    "videoNeeded": "Add a video, or choose another background.",
+    "instagram": "Please paste your Instagram page’s address, for example https://instagram.com/yourname",
+    "phone": "Please write the phone number with digits only, for example +90 555 123 45 67"
+  }
+}

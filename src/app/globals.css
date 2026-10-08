@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "../themes/atelier/theme.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -74,6 +75,25 @@
 
 :root:lang(fa) {
   --font-app: var(--font-iransans), var(--font-inter), var(--font-inter-ext), ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+ * The public site (src/themes): its wrapper, and <html> while a site page is
+ * open, carry data-site-theme. The chosen fonts' variables come from SiteRoot
+ * (src/themes/font-css.ts); here `font-sans` and `font-serif` follow them on
+ * the site only, so the panels keep their own fonts. A theme's colour tokens
+ * live in src/themes/<id>/theme.css under the same attribute.
+ */
+[data-site-theme] {
+  --font-app: var(--site-font-body);
+  --font-serif: var(--site-font-heading);
+  font-family: var(--site-font-body);
+  font-weight: var(--site-font-body-weight);
+  font-feature-settings: var(--site-font-features);
+}
+
+html[data-site-theme] body {
+  font-feature-settings: var(--site-font-features);
 }
 
 .dark {

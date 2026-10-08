@@ -9,12 +9,14 @@ import {
   MAX_MEGAPIXELS,
   maxUploadBytes,
   VIDEO_PART_BYTES,
+  videoFormats,
   type UploadErrorCode,
   type UploadPurpose,
   type UploadResult,
   type UploadTarget,
   type VideoPartReceived,
 } from "@/lib/storage/shared"
+import { videoContentType, type VideoType } from "@/lib/storage/sniff"
 
 /** Errors the user is told about: the server's codes plus a lost connection. */
 export type ClientUploadError = UploadErrorCode | "network"
@@ -33,12 +35,25 @@ const VIDEO_EXT = /\.(mp4|m4v|mov|webm)$/i
 export const isVideoFile = (file: File) => VIDEO_TYPE.test(file.type) || VIDEO_EXT.test(file.name)
 const isImageFile = (file: File) => IMAGE_TYPE.test(file.type) || IMAGE_EXT.test(file.name)
 
+const VIDEO_EXTS: Record<VideoType, RegExp> = { mp4: /\.(mp4|m4v)$/i, mov: /\.mov$/i, webm: /\.webm$/i }
+/** Whether the video's type or name is one of `formats`. */
+const isVideoOf = (file: File, formats: readonly VideoType[]) =>
+  formats.some((format) => file.type === videoContentType[format] || VIDEO_EXTS[format].test(file.name))
+
 /** Quick checks before sending anything; the server checks the real content again. */
 export function checkFile(file: File, purpose: UploadPurpose): ClientUploadError | null {
-  if (!file.size || !(isImagePurpose(purpose) ? isImageFile(file) : isVideoFile(file))) return "unsupported_type"
+  const ok = isImagePurpose(purpose) ? isImageFile(file) : isVideoFile(file) && isVideoOf(file, videoFormats[purpose])
+  if (!file.size || !ok) return "unsupported_type"
   if (file.size > maxUploadBytes(purpose)) return "too_large"
   return null
 }
+
+/**
+ * Which files a purpose takes, for messages: photos, videos, or only videos
+ * every browser plays (MP4, WebM).
+ */
+export const fileKind = (purpose: UploadPurpose) =>
+  isImagePurpose(purpose) ? "image" : videoFormats[purpose].includes("mov") ? "video" : "webVideo"
 
 /** Upload routes: the super-admin panel's (default) and the instructor panel's (profile photo only). */
 export type UploadEndpoint = "/api/admin/uploads" | "/api/instructor/uploads"
@@ -163,7 +178,7 @@ export function useMediaText() {
     (code: ClientUploadError, purpose: UploadPurpose) =>
       t(`errors.${code}`, {
         size: size(maxUploadBytes(purpose)),
-        kind: isImagePurpose(purpose) ? "image" : "video",
+        kind: fileKind(purpose),
         megapixels: MAX_MEGAPIXELS,
       }),
     [t, size],

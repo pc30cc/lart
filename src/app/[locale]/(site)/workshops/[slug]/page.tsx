@@ -24,7 +24,7 @@ import { formatDate, formatDateTime, formatTimeRange } from "@/lib/format"
 import { absoluteUrl, alternates, jsonLdText, ogLocale } from "@/lib/seo"
 import { getBrand } from "@/lib/settings"
 import { cn } from "@/lib/utils"
-import { AgeLabel, AvailabilityBadge, Price } from "../_components/labels"
+import { AgeLabel, AvailabilityBadge, Price } from "@/components/site/workshop-labels"
 
 /** Search engines get a summary of at most this many characters. */
 const DESCRIPTION_MAX = 160

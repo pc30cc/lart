@@ -24,10 +24,21 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const isUuid = (v: string) => z.uuid().safeParse(v).success
 
+/** The settings page of each setting key that is not on the General tab. */
+const settingPages: Record<string, string> = {
+  theme: "/admin/settings/appearance",
+  fonts: "/admin/settings/appearance",
+  home: "/admin/settings/home",
+  payment: "/admin/settings/payments",
+  email: "/admin/settings/email",
+  cdn: "/admin/settings/storage",
+  watermark: "/admin/settings/watermark",
+}
+
 /** Where an entry's record can be opened, when the panel has a page for it. */
 function recordHref(entity: string, id: string | null): string | null {
   if (!id) return null
-  if (entity === "setting") return id === "cdn" ? "/admin/settings/storage" : id === "watermark" ? "/admin/settings/watermark" : "/admin/settings"
+  if (entity === "setting") return Object.hasOwn(settingPages, id) ? settingPages[id] : "/admin/settings"
   if (entity === "email") return (emailTemplateNames as readonly string[]).includes(id) ? `/admin/templates/emails/${id}` : null
   if (entity === "admin_invite") return "/admin/money/partners"
   const base = {

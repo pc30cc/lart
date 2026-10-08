@@ -26,6 +26,14 @@ type Exec = Tx | typeof db
 /** Workshops that can be found on the site. */
 const listedStatuses = ["published", "confirmed"] as const
 
+/**
+ * The open workshops at `now`: listed (published or confirmed) and not started
+ * yet. The one rule behind the workshops list, its categories
+ * (site/public.ts) and the sitemap.
+ */
+export const openWorkshopsWhere = (now: Date) =>
+  and(inArray(courses.status, [...listedStatuses]), gt(courses.startsAt, now))
+
 // ─── Seats ────────────────────────────────────────────────────────────────────
 
 /** Places held in a workshop: registered (not paid yet) and paid registrations. */
@@ -76,11 +84,12 @@ const urlOf = (s: Storage | null, path: string | null) => {
 /**
  * Upcoming workshops on the site: published or confirmed, not started yet,
  * soonest first, at most `limit` (the home page shows a few). Those past their
- * registration deadline stay listed as "registration closed".
+ * registration deadline stay listed as "registration closed". `category` (a
+ * category's slug) keeps only that category's workshops.
  */
 export async function listOpenWorkshops(
   locale: string,
-  { now = new Date(), limit = 120 }: { now?: Date; limit?: number } = {},
+  { now = new Date(), limit = 120, category }: { now?: Date; limit?: number; category?: string } = {},
 ) {
   const rows = await db
     .select({
@@ -99,12 +108,13 @@ export async function listOpenWorkshops(
       ageMin: courses.ageMin,
       ageMax: courses.ageMax,
       category: categories.name,
+      categorySlug: categories.slug,
       instructorName: instructors.displayName,
     })
     .from(courses)
     .innerJoin(categories, eq(categories.id, courses.categoryId))
     .innerJoin(instructors, eq(instructors.id, courses.instructorId))
-    .where(and(inArray(courses.status, [...listedStatuses]), gt(courses.startsAt, now)))
+    .where(and(openWorkshopsWhere(now), category === undefined ? undefined : eq(categories.slug, category)))
     .orderBy(asc(courses.startsAt), asc(courses.id))
     .limit(limit)
   const [taken, files] = await Promise.all([seatsTakenOf(rows.map((r) => r.id)), storage()])
@@ -117,6 +127,8 @@ export async function listOpenWorkshops(
       title: localized(r.title, locale),
       venue: localized(r.venue, locale),
       category: localized(r.category, locale),
+      /** For a link to the category's list (/workshops?category=<slug>). */
+      categorySlug: r.categorySlug,
       instructorName: profileText(r.instructorName, locale),
       coverUrl: urlOf(files, r.coverPath),
       startsAt: r.startsAt,
@@ -139,7 +151,7 @@ export async function sitemapWorkshops(now: Date = new Date()) {
   return db
     .select({ slug: courses.slug, updatedAt: courses.updatedAt })
     .from(courses)
-    .where(and(inArray(courses.status, [...listedStatuses]), gt(courses.startsAt, now)))
+    .where(openWorkshopsWhere(now))
     .orderBy(asc(courses.startsAt), asc(courses.id))
 }
 

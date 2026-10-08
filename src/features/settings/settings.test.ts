@@ -47,7 +47,7 @@ const session = vi.hoisted(() => ({
 }))
 vi.mock("@/lib/auth/admin", () => ({ requireAdmin: async () => session, getAdmin: async () => session }))
 
-const KEYS = ["brand", "defaultLocale", "seo", "theme", "cdn", "watermark", "email"] as const
+const KEYS = ["brand", "defaultLocale", "seo", "cdn", "watermark", "email"] as const
 const run = randomUUID().slice(0, 8)
 let startedAt: Date
 
@@ -241,7 +241,6 @@ describe("general settings", () => {
     brand: { fa: "لارت", tr: `Lart ${run}`, en: `Lart ${run}` },
     defaultLocale: "fa" as const,
     seo: { title: { tr: "Atölyeler", en: "", fa: "" }, description: { fa: "", tr: "", en: "" } },
-    theme: "default" as const,
   }
 
   it("writes only the settings that changed, each with its own audit entry", async () => {
@@ -249,9 +248,8 @@ describe("general settings", () => {
     expect(result).toEqual({ ok: true, data: { changed: ["brand", "defaultLocale", "seo"] } })
     expect(await stored("brand")).toEqual(input.brand)
     expect(await stored("seo")).toEqual({ title: { tr: "Atölyeler" }, description: {} })
-    expect(await stored("theme")).toBeUndefined() // unchanged default: nothing written
     expect((await auditsOf("defaultLocale"))[0]).toMatchObject({ action: "setting.update", data: { from: "tr", to: "fa" } })
-    expect(await getGeneralSettings()).toMatchObject({ brand: input.brand, defaultLocale: "fa", theme: "default" })
+    expect(await getGeneralSettings()).toEqual({ brand: input.brand, defaultLocale: "fa", seo: { title: { tr: "Atölyeler" }, description: {} } })
 
     expect(await saveGeneralSettings(input)).toEqual({ ok: true, data: { changed: [] } })
     expect(await auditsOf("brand")).toHaveLength(1)
@@ -267,12 +265,16 @@ describe("general settings", () => {
     expect(await getMainLocale()).toBe("en")
   })
 
-  it("needs the brand name in all three languages and a known theme and language", async () => {
-    const result = await saveGeneralSettings({ ...input, brand: { fa: "", tr: "Lart", en: "Lart" }, theme: "neon" as never, defaultLocale: "de" as never })
-    expect(result).toMatchObject({
-      ok: false,
-      fieldErrors: { "brand.fa": "Please fill this in.", theme: expect.any(String), defaultLocale: expect.any(String) },
-    })
+  it("needs the brand name in all three languages and a known language", async () => {
+    const result = await saveGeneralSettings({ ...input, brand: { fa: "", tr: "Lart", en: "Lart" }, defaultLocale: "de" as never })
+    expect(result).toMatchObject({ ok: false, fieldErrors: { "brand.fa": "Please fill this in.", defaultLocale: expect.any(String) } })
+  })
+
+  it("leaves the theme alone (it is set under Appearance)", async () => {
+    const result = await saveGeneralSettings({ ...input, theme: "atelier" } as typeof input)
+    expect(result).toMatchObject({ ok: true })
+    expect(result.ok && result.data.changed).not.toContain("theme")
+    expect(await auditsOf("theme")).toHaveLength(0)
   })
 })
 

@@ -2,7 +2,7 @@ import { NextIntlClientProvider } from "next-intl"
 import { renderToString } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 
-import { WorkshopCard } from "@/app/[locale]/(site)/workshops/_components/workshop-card"
+import { WorkshopCard } from "@/themes/default/workshop-card"
 import type { MyRegistration } from "../member"
 import { CancelRegistration } from "./cancel-registration"
 import { PaymentBadge } from "./payment-badge"
@@ -106,6 +106,7 @@ describe.each(["fa", "en", "tr"])("renders in %s", (locale) => {
               title: "Mum",
               venue: "Moda",
               category: "Mum",
+              categorySlug: "mum",
               instructorName: "Zeynep",
               coverUrl: null,
               startsAt,

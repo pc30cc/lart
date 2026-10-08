@@ -1,0 +1,55 @@
+{
+  "theme": {
+    "title": "Site template",
+    "description": "How your website looks to visitors. The admin panel and the instructor panel always keep their own look.",
+    "label": "Template",
+    "current": "On your site now",
+    "names": {
+      "default": "Classic",
+      "atelier": "Atelier"
+    },
+    "descriptions": {
+      "default": "The site’s original look: light, simple and calm, with clay-coloured touches.",
+      "atelier": "Warm creams and browns, large photos and elegant headings, just like an art studio."
+    }
+  },
+  "fonts": {
+    "title": "Fonts",
+    "description": "The fonts of the {theme} template: for each language, one for headings and one for text. Each template keeps its own.",
+    "rows": {
+      "latinHeading": "Turkish & English headings",
+      "latinBody": "Turkish & English text",
+      "persianHeading": "Persian headings",
+      "persianBody": "Persian text"
+    },
+    "font": "Font",
+    "weight": "Weight",
+    "weightName": "{name} {n, number}",
+    "weights": {
+      "100": "Thin",
+      "200": "Extra light",
+      "300": "Light",
+      "400": "Regular",
+      "500": "Medium",
+      "600": "Semibold",
+      "700": "Bold",
+      "800": "Extra bold",
+      "900": "Black"
+    },
+    "useThemeFonts": "Use the template’s own fonts",
+    "usingThemeFonts": "These are the template’s own fonts."
+  },
+  "preview": {
+    "title": "Preview",
+    "description": "How headings and text will look on your site.",
+    "latin": "Turkish & English",
+    "persian": "Persian",
+    "unsaved": "Showing changes you haven’t saved yet."
+  },
+  "seeSite": "See your site",
+  "errors": {
+    "theme": "Choose one of the templates.",
+    "font": "Choose a font from the list.",
+    "weight": "This font doesn’t come in that weight. Please choose another."
+  }
+}

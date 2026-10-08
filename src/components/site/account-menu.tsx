@@ -23,34 +23,42 @@ import { useMainLocale } from "@/i18n/main-locale-context"
 import { Link, usePathname } from "@/i18n/navigation"
 import { localePath } from "@/i18n/paths"
 import { areaOf, isOpenPath } from "@/lib/routes"
+import { cn } from "@/lib/utils"
 import { LocaleChoices } from "./locale-menu"
 import { useSwitchLocale } from "./use-switch-locale"
 
 /** Pages where "Log in" should not come back to: the member's sign-in pages (they would loop or make no sense). */
 const isAuthPage = (pathname: string) => areaOf(pathname) === "account" && isOpenPath(pathname)
 
-/**
- * The account button in the site header: "Log in / Sign up" (which comes back
- * to this page), or the member's first name with a small menu: My workshops,
- * language, log out. On a phone only the icon or the initial shows (the
- * brand needs the room); the text stays for screen readers.
- */
-export function AccountMenu({ member }: { member: { name: string; email: string } | null }) {
-  const t = useTranslations("site.header")
+/** "Log in" for a visitor: the login page, which comes back to this page afterwards (not from the sign-in pages). */
+export function useLoginHref(): string {
   const locale = useLocale()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const main = useMainLocale()
+  const query = searchParams.toString()
+  const here = localePath(locale, pathname + (query ? `?${query}` : ""), main)
+  return isAuthPage(pathname) ? "/account/login" : `/account/login?next=${encodeURIComponent(here)}`
+}
+
+/**
+ * The account button in the site header: "Log in / Sign up" (which comes back
+ * to this page), or the member's first name with a small menu: My workshops,
+ * language, log out. On a phone only the icon or the initial shows (the
+ * brand needs the room); the text stays for screen readers. A theme may
+ * restyle the button (`className`).
+ */
+export function AccountMenu({ member, className }: { member: { name: string; email: string } | null; className?: string }) {
+  const t = useTranslations("site.header")
+  const locale = useLocale()
+  const loginHref = useLoginHref()
   const { switchTo, pending: switching } = useSwitchLocale(true)
   const [leaving, startLeaving] = useTransition()
 
   if (!member) {
-    const query = searchParams.toString()
-    const here = localePath(locale, pathname + (query ? `?${query}` : ""), main)
-    const href = isAuthPage(pathname) ? "/account/login" : `/account/login?next=${encodeURIComponent(here)}`
     return (
-      <Button asChild className="h-10 rounded-full px-4 text-sm max-sm:w-10 max-sm:px-0">
-        <Link href={href}>
+      <Button asChild className={cn("h-10 rounded-full px-4 text-sm max-sm:w-10 max-sm:px-0", className)}>
+        <Link href={loginHref}>
           <UserRoundIcon className="size-4.5" />
           <span className="sr-only sm:hidden">{t("logIn")}</span>
           <span className="hidden sm:inline">{t("logInOrSignUp")}</span>
@@ -66,7 +74,7 @@ export function AccountMenu({ member }: { member: { name: string; email: string 
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="h-10 max-w-32 gap-1.5 rounded-full ps-2.5 pe-3 text-sm max-sm:w-10 max-sm:px-0 sm:max-w-44"
+          className={cn("h-10 max-w-32 gap-1.5 rounded-full ps-2.5 pe-3 text-sm max-sm:w-10 max-sm:px-0 sm:max-w-44", className)}
           aria-label={t("account")}
         >
           <span className="bg-primary/12 text-primary flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold">

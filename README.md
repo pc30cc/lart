@@ -90,11 +90,19 @@ languages. Premium, mobile-first, with polished navigation.
 All fonts are **self-hosted** (served from the site / CDN, never from Google
 Fonts or any third party), subset and preloaded for speed.
 
+The panels always use these:
+
 | Language | Font | Notes |
 | --- | --- | --- |
 | Persian | **IRANSans** | Persian digits, RTL; font files taken from the owner's other repositories |
 | Turkish | **Inter** | full Turkish set (ç ğ ı İ ö ş ü), excellent on screen |
 | English | **Inter** | same family as Turkish for a consistent look |
+
+The public site's fonts are chosen **per theme** in Settings → Appearance:
+a heading font and a text font, each with its weight, for Turkish & English
+and for Persian, from a short list of self-hosted fonts. Each theme starts
+with its own fonts (Atelier: Cormorant Garamond and Montserrat, Noto Naskh
+Arabic and IRANSans), and "Use the template's own fonts" goes back to them.
 
 ### Swappable landing theme
 
@@ -109,7 +117,8 @@ example when a new design reference is given:
 - Every home-page section (hero, latest workshops, instructors, past
   workshops, ...) has a fixed data contract, so a new theme just implements
   the same sections in a new style.
-- The active theme is chosen in the super-admin settings.
+- The active theme is chosen in the super-admin settings (Settings →
+  Appearance), with a picture of each theme.
 - The instructor and super-admin panels keep their own design and are not
   affected by a theme change.
 
@@ -129,11 +138,15 @@ example when a new design reference is given:
 
 ### Editable from the super-admin panel
 
-- **Hero**: the moving hero video or image, headline, subtitle and
-  call-to-action button, per language.
-- **Every page and section** (home, about, contact, FAQ, footer, menus) in
-  FA / TR / EN, each with its own SEO title and description.
-- Home-page sections can be shown, hidden and reordered.
+- **Hero** (Settings → Home page): the theme's own photos, up to six of
+  your own shown one after another, or a short video (MP4 or WebM) with a
+  cover photo; headline, subtitle and button text in FA / TR / EN.
+- **Home-page sections** (our story, explore by craft, past workshops, how
+  it works): each can be shown or hidden, with its title, text and photo
+  per language. A field left empty shows the theme's own text or photo.
+- **Footer**: a few words about the brand, Instagram, email and phone.
+- **Every other page** (about, contact, FAQ) and the menus in FA / TR / EN,
+  each with its own SEO title and description.
 
 ## 4. Students
 
@@ -487,8 +500,8 @@ service). The database stores only the file path.
 
 Each part of the site has its own folder, named after the workshop or the
 person: `workshops/<workshop>/` (the cover, `samples/`, `gallery/`,
-`videos/`), `instructors/<name>/`, `partners/<name>/` and `brand/` (the
-watermark logo). Folder names are written in plain Latin letters (Turkish
+`videos/`), `instructors/<name>/`, `partners/<name>/`, `brand/` (the
+watermark logo) and `site/` (the home page's photos and video). Folder names are written in plain Latin letters (Turkish
 letters without their marks); a partner whose name has no Latin letters
 gets the name part of their email. A file keeps its folder when the
 workshop or person is renamed later.

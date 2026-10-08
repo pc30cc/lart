@@ -31,7 +31,7 @@ export async function SiteHeader({
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:gap-6">
         <Link
           href="/"
-          className="focus-visible:ring-ring/50 min-w-0 shrink truncate rounded-md font-serif text-lg font-medium tracking-wide outline-none focus-visible:ring-3 sm:text-2xl rtl:font-sans rtl:font-bold rtl:tracking-normal"
+          className="focus-visible:ring-ring/50 min-w-0 shrink truncate rounded-md font-serif text-lg [font-weight:var(--site-font-heading-weight)] tracking-wide outline-none focus-visible:ring-3 sm:text-2xl rtl:tracking-normal"
           aria-label={t("home", { brand })}
         >
           {brand}

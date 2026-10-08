@@ -6,6 +6,8 @@
     "subtitle": "Kendi ellerinizle güzel bir şey yapın. Bir atölye seçin ve yerinizi ayırtın.",
     "emptyTitle": "Yeni atölyeler çok yakında",
     "emptyText": "Şu anda kayda açık bir atölye yok. Lütfen biraz sonra yeniden bakın!",
+    "filterLabel": "Zanaata göre atölyeler",
+    "all": "Tümü",
     "with": "Eğitmen: {name}"
   },
   "price": {

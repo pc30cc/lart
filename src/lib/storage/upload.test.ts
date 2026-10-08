@@ -53,6 +53,9 @@ describe("uploadPath", () => {
     ["instructor_photo", "Çiğdem Işık", "webp", `instructors/cigdem-isik/photo-${rand}\\.webp`],
     ["admin_photo", "mina", "webp", `partners/mina/photo-${rand}\\.webp`],
     ["watermark_logo", "anything", "png", `brand/watermark-logo-${rand}\\.png`],
+    ["site_image", "mum-yapimi", "webp", `site/img-${rand}\\.webp`],
+    ["site_video", undefined, "mp4", `site/video-${rand}\\.mp4`],
+    ["site_video", "../../brand", "webm", `site/video-${rand}\\.webm`],
   ] as const)("puts %s files in their folder", (purpose, folder, ext, pattern) => {
     const p = uploadPath(purpose, folder, ext)
     expect(p).toMatch(new RegExp(`^${pattern}$`))
@@ -113,6 +116,26 @@ describe("storeImage", () => {
     expect(await files()).toEqual([...before, result.path].sort())
   })
 
+  it("stores a home page photo in site/, at most 2560 wide, upright, without metadata or watermark", async () => {
+    const watermark = await withLogo()
+    const phone = await sharp({ create: { width: 3000, height: 2000, channels: 3, background: { r: 0, g: 0, b: 0 } } })
+      .jpeg()
+      .withExif({ IFD0: { Make: "PhoneMaker" }, IFD3: { GPSLatitudeRef: "N", GPSLatitude: "41/1 0/1 0/1" } })
+      .withMetadata({ orientation: 6 })
+      .toBuffer()
+    const result = await storeImage({ storage, purpose: "site_image", file: toStream(phone), watermark })
+    expect(result.path).toMatch(/^site\/img-[\w-]{22}\.webp$/)
+    // Stored 3000 × 2000 sideways: upright it is 2000 × 3000, already narrower than 2560.
+    expect(result).toMatchObject({ width: 2000, height: 3000, url: `/media/${result.path}` })
+    const meta = await sharp(await read(result.path)).metadata()
+    expect([meta.format, meta.exif, meta.orientation]).toEqual(["webp", undefined, undefined])
+    // The logo would be white in the top-left corner: the photo stays black there.
+    expect(await pixel(result.path, 20, 20)).toBeLessThan(20)
+
+    const wide = await storeImage({ storage, purpose: "site_image", file: toStream(await jpeg(4000, 1000)), watermark })
+    expect([wide.width, wide.height]).toEqual([2560, 640])
+  })
+
   it("refuses gallery photos while no watermark logo is set, storing nothing", async () => {
     await expect(
       storeImage({ storage, purpose: "gallery_photo", file: toStream(await jpeg(100, 100)), watermark: noWatermark }),
@@ -144,7 +167,7 @@ describe("storeVideoPart", () => {
   const part = (from: number, to?: number) => toStream(video.subarray(from, to))
 
   it("stores a whole video sent at once, under a random name in the workshop's folder", async () => {
-    const result = await storeVideoPart({ storage, owner: "admin-1", file: part(0), folder: "mum-yapimi" })
+    const result = await storeVideoPart({ storage, purpose: "gallery_video", owner: "admin-1", file: part(0), folder: "mum-yapimi" })
     expect("path" in result && result.path).toMatch(/^workshops\/mum-yapimi\/videos\/[\w-]{22}\.mp4$/)
     if (!("path" in result)) throw new Error("not stored")
     expect(result.url).toBe(`/media/${result.path}`)
@@ -154,39 +177,39 @@ describe("storeVideoPart", () => {
 
   it("assembles a video sent in parts and stores it only when complete", async () => {
     const total = video.length
-    const first = await storeVideoPart({ storage, owner: "admin-1", file: part(0, 100_000), total })
+    const first = await storeVideoPart({ storage, purpose: "gallery_video", owner: "admin-1", file: part(0, 100_000), total })
     expect(first).toMatchObject({ received: 100_000 })
     if ("path" in first) throw new Error("stored too early")
     expect(await files().catch(() => [])).toEqual([])
 
-    const second = await storeVideoPart({ storage, owner: "admin-1", file: part(100_000, 200_000), upload: first.upload, offset: 100_000, total })
+    const second = await storeVideoPart({ storage, purpose: "gallery_video", owner: "admin-1", file: part(100_000, 200_000), upload: first.upload, offset: 100_000, total })
     expect(second).toEqual({ upload: first.upload, received: 200_000 })
 
     // A repeated part (its answer was lost) tells the client where to continue.
-    const again = await storeVideoPart({ storage, owner: "admin-1", file: part(100_000, 200_000), upload: first.upload, offset: 100_000, total }).catch((e) => e)
+    const again = await storeVideoPart({ storage, purpose: "gallery_video", owner: "admin-1", file: part(100_000, 200_000), upload: first.upload, offset: 100_000, total }).catch((e) => e)
     expect(again).toBeInstanceOf(PartMismatch)
     expect(again.received).toEqual({ upload: first.upload, received: 200_000 })
 
-    const last = await storeVideoPart({ storage, owner: "admin-1", file: part(200_000), upload: first.upload, offset: 200_000, total })
+    const last = await storeVideoPart({ storage, purpose: "gallery_video", owner: "admin-1", file: part(200_000), upload: first.upload, offset: 200_000, total })
     if (!("path" in last)) throw new Error("not stored")
     expect((await read(last.path)).equals(video)).toBe(true)
     expect(await leftovers()).toEqual([])
   })
 
   it("does not let another admin continue an upload", async () => {
-    const first = await storeVideoPart({ storage, owner: "admin-1", file: part(0, 1000), total: video.length })
+    const first = await storeVideoPart({ storage, purpose: "gallery_video", owner: "admin-1", file: part(0, 1000), total: video.length })
     if ("path" in first) throw new Error("stored too early")
     await expect(
-      storeVideoPart({ storage, owner: "admin-2", file: part(1000, 2000), upload: first.upload, offset: 1000, total: video.length }),
+      storeVideoPart({ storage, purpose: "gallery_video", owner: "admin-2", file: part(1000, 2000), upload: first.upload, offset: 1000, total: video.length }),
     ).rejects.toMatchObject({ code: "bad_request" })
   })
 
   it("refuses a part that is too long for the declared total", async () => {
-    const first = await storeVideoPart({ storage, owner: "admin-1", file: part(0, 1000), total: 1500 }).catch((e) => e)
+    const first = await storeVideoPart({ storage, purpose: "gallery_video", owner: "admin-1", file: part(0, 1000), total: 1500 }).catch((e) => e)
     expect(first).toMatchObject({ upload: expect.any(String), received: 1000 })
     // The route limits the stream to total - offset; here the store refuses the size mismatch.
     await expect(
-      storeVideoPart({ storage, owner: "admin-1", file: part(1000, 2000), upload: first.upload, offset: 1000, total: 1500 }),
+      storeVideoPart({ storage, purpose: "gallery_video", owner: "admin-1", file: part(1000, 2000), upload: first.upload, offset: 1000, total: 1500 }),
     ).rejects.toMatchObject({ code: "bad_request" })
     expect(await leftovers()).toEqual([])
   })
@@ -196,20 +219,56 @@ describe("storeVideoPart", () => {
     ["a malformed upload id", { upload: "../../etc/passwd", offset: 0 }],
     ["an unknown upload id", { upload: "AAAAAAAAAAAAAAAAAAAAAA", offset: 10 }],
   ])("refuses %s", async (_, extra) => {
-    await expect(storeVideoPart({ storage, owner: "admin-1", file: part(0, 100), total: video.length, ...extra })).rejects.toMatchObject({
+    await expect(storeVideoPart({ storage, purpose: "gallery_video", owner: "admin-1", file: part(0, 100), total: video.length, ...extra })).rejects.toMatchObject({
       code: "bad_request",
     })
   })
 
   it("refuses videos over the size limit before reading them", async () => {
-    await expect(storeVideoPart({ storage, owner: "admin-1", file: part(0, 10), total: 501 * 1024 * 1024 })).rejects.toMatchObject({
+    await expect(storeVideoPart({ storage, purpose: "gallery_video", owner: "admin-1", file: part(0, 10), total: 501 * 1024 * 1024 })).rejects.toMatchObject({
       code: "too_large",
+    })
+  })
+
+  describe("the home page's video", () => {
+    const mov = Buffer.concat([Buffer.from([0, 0, 0, 0x14]), Buffer.from("ftypqt  \0\0\0\0qt  "), Buffer.alloc(5_000, 1)])
+    const webm = Buffer.concat([
+      Buffer.from([0x1a, 0x45, 0xdf, 0xa3, 0x9f, 0x42, 0x86, 0x81, 0x01, 0x42, 0x82, 0x84]),
+      Buffer.from("webm"),
+      Buffer.alloc(5_000, 2),
+    ])
+
+    it("stores an MP4 or a WebM in site/, whatever folder is given", async () => {
+      const mp4 = await storeVideoPart({ storage, purpose: "site_video", owner: "admin-1", file: part(0), folder: "mum-yapimi" })
+      if (!("path" in mp4)) throw new Error("not stored")
+      expect(mp4.path).toMatch(/^site\/video-[\w-]{22}\.mp4$/)
+      expect((await read(mp4.path)).equals(video)).toBe(true)
+      const other = await storeVideoPart({ storage, purpose: "site_video", owner: "admin-1", file: toStream(webm) })
+      expect("path" in other && other.path).toMatch(/^site\/video-[\w-]{22}\.webm$/)
+    })
+
+    it("refuses a MOV from its first part, storing nothing (gallery videos still take it)", async () => {
+      await expect(
+        storeVideoPart({ storage, purpose: "site_video", owner: "admin-1", file: toStream(mov), total: mov.length * 2 }),
+      ).rejects.toMatchObject({ code: "unsupported_type", status: 415 })
+      expect(await files().catch(() => [])).toEqual([])
+      expect(await leftovers()).toEqual([])
+      const gallery = await storeVideoPart({ storage, purpose: "gallery_video", owner: "admin-1", file: toStream(mov), folder: "x" })
+      expect("path" in gallery && gallery.path).toMatch(/^workshops\/x\/videos\/[\w-]{22}\.mov$/)
+    })
+
+    it("refuses one over 80 MB before reading it", async () => {
+      await expect(
+        storeVideoPart({ storage, purpose: "site_video", owner: "admin-1", file: part(0, 10), total: 80 * 1024 * 1024 + 1 }),
+      ).rejects.toMatchObject({ code: "too_large" })
+      const big = await storeVideoPart({ storage, purpose: "gallery_video", owner: "admin-1", file: part(0, 1000), total: 80 * 1024 * 1024 + 1 })
+      expect(big).toMatchObject({ received: 1000 })
     })
   })
 
   it("rejects a file that is not a video from its first part", async () => {
     const fake = Buffer.concat([Buffer.from("<html><script>alert(1)</script>"), Buffer.alloc(100)])
-    await expect(storeVideoPart({ storage, owner: "admin-1", file: toStream(fake), total: 10_000 })).rejects.toMatchObject({
+    await expect(storeVideoPart({ storage, purpose: "gallery_video", owner: "admin-1", file: toStream(fake), total: 10_000 })).rejects.toMatchObject({
       code: "unsupported_type",
     })
     expect(await files().catch(() => [])).toEqual([])

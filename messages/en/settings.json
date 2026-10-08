@@ -4,6 +4,8 @@
   "tabs": {
     "label": "Settings sections",
     "general": "General",
+    "appearance": "Appearance",
+    "home": "Home page",
     "payments": "Payments",
     "email": "Email",
     "storage": "Storage",
@@ -24,14 +26,7 @@
     "seoPageTitle": "Title",
     "seoPageTitleHint": "Around 50–60 characters works best.",
     "seoPageDescription": "Description",
-    "seoPageDescriptionHint": "One or two sentences, around 150–160 characters. It is also the sentence under the brand on the home page.",
-    "themeTitle": "Site theme",
-    "themeDescription": "The look of the public website. The admin panel and the instructor panel always keep their own design.",
-    "theme": "Theme",
-    "themeHint": "New themes will appear here as they are added.",
-    "themes": {
-      "default": "Default"
-    }
+    "seoPageDescriptionHint": "One or two sentences, around 150–160 characters. It is also the sentence under the brand on the home page."
   },
   "email": {
     "providerTitle": "How emails are sent",

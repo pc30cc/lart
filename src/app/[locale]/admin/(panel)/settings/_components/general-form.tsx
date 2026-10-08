@@ -5,27 +5,20 @@ import { useTranslations } from "next-intl"
 import { Form, FormActions, FormField, FormSection, SubmitButton } from "@/components/admin/form/form"
 import { LocalizedInput, LocalizedTextarea } from "@/components/admin/form/localized-input"
 import { useActionForm } from "@/components/admin/form/use-action-form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { LocalizedText } from "@/db/schema"
 import { saveGeneralSettings } from "@/features/settings/actions"
-import {
-  generalSettingsSchema,
-  siteLocales,
-  themes,
-  type GeneralSettingsValues,
-} from "@/features/settings/schema"
+import { generalSettingsSchema, siteLocales, type GeneralSettingsValues } from "@/features/settings/schema"
 import { ChoiceCards } from "./fields"
 
 type Saved = {
   brand: LocalizedText
   defaultLocale: (typeof siteLocales)[number]
   seo: { title: LocalizedText; description: LocalizedText }
-  theme: string
 }
 
 const full = (text: LocalizedText) => ({ fa: text.fa ?? "", tr: text.tr ?? "", en: text.en ?? "" })
 
-/** Brand name, default language, SEO defaults and theme: one form, one save. */
+/** Brand name, default language and SEO defaults: one form, one save (the theme is under Appearance). */
 export function GeneralSettingsForm({ saved }: { saved: Saved }) {
   const t = useTranslations("settings.general")
   const ts = useTranslations("settings")
@@ -38,7 +31,6 @@ export function GeneralSettingsForm({ saved }: { saved: Saved }) {
       brand: full(saved.brand),
       defaultLocale: saved.defaultLocale,
       seo: { title: full(saved.seo.title), description: full(saved.seo.description) },
-      theme: (themes as readonly string[]).includes(saved.theme) ? (saved.theme as (typeof themes)[number]) : themes[0],
     },
     successMessage: ts("toast.saved"),
     onSuccess: () => form.reset(form.getValues()),
@@ -73,31 +65,6 @@ export function GeneralSettingsForm({ saved }: { saved: Saved }) {
           maxLength={300}
           rows={3}
         />
-      </FormSection>
-
-      <FormSection title={t("themeTitle")} description={t("themeDescription")}>
-        <FormField<GeneralSettingsValues> name="theme" label={t("theme")} description={t("themeHint")}>
-          {(field) => (
-            <Select
-              value={field.value as string}
-              onValueChange={(v) => {
-                field.onChange(v)
-                field.onBlur()
-              }}
-            >
-              <SelectTrigger id={field.id} ref={field.ref} aria-describedby={field["aria-describedby"]} className="w-full sm:max-w-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {themes.map((theme) => (
-                  <SelectItem key={theme} value={theme}>
-                    {t(`themes.${theme}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </FormField>
       </FormSection>
 
       <FormActions>

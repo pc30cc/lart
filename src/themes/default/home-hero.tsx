@@ -13,7 +13,7 @@ export function HomeHero({ brand, text, cta }: { brand: string; text: string; ct
   return (
     <section className="from-primary/8 border-b bg-linear-to-b to-transparent">
       <div className="motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 mx-auto w-full max-w-6xl px-4 py-14 motion-safe:duration-500 sm:py-20">
-        <h1 className="font-serif text-4xl font-medium tracking-wide text-balance sm:text-6xl rtl:font-sans rtl:font-bold rtl:tracking-normal">
+        <h1 className="font-serif text-4xl [font-weight:var(--site-font-heading-weight)] tracking-wide text-balance sm:text-6xl rtl:tracking-normal">
           {brand}
         </h1>
         <p className="text-muted-foreground mt-4 max-w-2xl text-lg text-pretty sm:text-xl">{text}</p>

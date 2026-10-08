@@ -15,10 +15,18 @@ import { useCallback, useEffect, useRef, useState, type DragEvent } from "react"
 import { useFormatter } from "next-intl"
 
 import { Button } from "@/components/ui/button"
-import { IMAGE_ACCEPT, MAX_IMAGE_BYTES, MAX_VIDEO_BYTES, VIDEO_ACCEPT, type UploadResult, type UploadTarget } from "@/lib/storage/shared"
+import {
+  IMAGE_ACCEPT,
+  MAX_IMAGE_BYTES,
+  maxUploadBytes,
+  videoAccept,
+  type UploadResult,
+  type UploadTarget,
+  type VideoPurpose,
+} from "@/lib/storage/shared"
 import { cn } from "@/lib/utils"
 import { Dropzone, OverlayButton, UploadMessage, UploadOverlay } from "./parts"
-import { checkFile, failureCode, isVideoFile, uploadFile, useFileDrop, useMediaText, type ClientUploadError } from "./upload-client"
+import { checkFile, failureCode, fileKind, isVideoFile, uploadFile, useFileDrop, useMediaText, type ClientUploadError } from "./upload-client"
 
 export type MediaItem = Pick<UploadResult, "path" | "url" | "width" | "height"> & {
   kind: "image" | "video"
@@ -39,10 +47,12 @@ export type MediaGridProps = {
   /** The items in order (the form field value). */
   value: MediaItem[]
   onChange: (items: MediaItem[]) => void
-  /** gallery_photo (watermarked, default) or course_sample. */
-  imagePurpose?: "gallery_photo" | "course_sample"
+  /** gallery_photo (watermarked, default), course_sample or site_image (the home page's photos). */
+  imagePurpose?: "gallery_photo" | "course_sample" | "site_image"
   /** Accept videos as well. Default: true for the gallery. */
   allowVideos?: boolean
+  /** The purpose of videos, when they are allowed: gallery_video unless given. */
+  videoPurpose?: VideoPurpose
   /** Whose folder the files go to: the saved workshop, or the slug of a new one. */
   target?: UploadTarget
   max?: number
@@ -65,6 +75,7 @@ export function MediaGrid({
   onChange,
   imagePurpose = "gallery_photo",
   allowVideos = imagePurpose === "gallery_photo",
+  videoPurpose = "gallery_video",
   target,
   max = 200,
   disabled,
@@ -116,7 +127,7 @@ export function MediaGrid({
       ),
     [setPending],
   )
-  const purposeOf = useCallback((kind: MediaItem["kind"]) => (kind === "video" ? "gallery_video" : imagePurpose), [imagePurpose])
+  const purposeOf = useCallback((kind: MediaItem["kind"]) => (kind === "video" ? videoPurpose : imagePurpose), [imagePurpose, videoPurpose])
 
   const run = useCallback(async () => {
     if (running.current) return
@@ -214,7 +225,7 @@ export function MediaGrid({
           ref={inputRef}
           type="file"
           multiple
-          accept={allowVideos ? `${IMAGE_ACCEPT},${VIDEO_ACCEPT}` : IMAGE_ACCEPT}
+          accept={allowVideos ? `${IMAGE_ACCEPT},${videoAccept[videoPurpose]}` : IMAGE_ACCEPT}
           className="sr-only"
           tabIndex={-1}
           disabled={disabled}
@@ -261,7 +272,9 @@ export function MediaGrid({
                 {allowVideos && (
                   <>
                     <br />
-                    {t("upload.videoHint", { size: size(MAX_VIDEO_BYTES) })}
+                    {t(fileKind(videoPurpose) === "webVideo" ? "upload.webVideoHint" : "upload.videoHint", {
+                      size: size(maxUploadBytes(videoPurpose)),
+                    })}
                   </>
                 )}
               </>

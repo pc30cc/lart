@@ -21,6 +21,23 @@ const localized = z.object({
 
 const locale = z.enum(["fa", "tr", "en"])
 
+/** A longer text in three languages (the home page's paragraphs). */
+const localizedLong = z.object({
+  fa: z.string().trim().max(1500).optional(),
+  tr: z.string().trim().max(1500).optional(),
+  en: z.string().trim().max(1500).optional(),
+})
+
+/** One font choice of the site (an id of src/themes/fonts.ts and a weight; checked against it when used). */
+const fontChoice = z.object({ id: z.string().regex(/^[a-z0-9-]{1,40}$/), weight: z.number().int().min(100).max(900) })
+const scriptFonts = z.object({ heading: fontChoice, body: fontChoice })
+
+/** A file in storage under site/ (checked by the action that saves it). Empty: none. */
+const sitePath = z.string().max(300)
+
+/** A home-page section that can be hidden: shown by default. */
+const shown = z.boolean().default(true)
+
 /** One email text in three languages; longer than `localized`. Empty means "use the bundled text". */
 const emailText = z.object({
   fa: z.string().trim().max(EMAIL_TEXT_MAX).optional(),
@@ -38,8 +55,62 @@ export const settingSchemas = {
    */
   defaultLocale: locale,
   seo: z.object({ title: localized, description: localized }),
-  /** Active public-site theme folder name (src/themes/<name>). */
+  /** Active public-site theme: an id of src/themes/ids.ts (an unknown one shows the default theme). */
   theme: z.string().regex(/^[a-z0-9-]+$/),
+  /**
+   * The site's fonts per theme (Settings → Appearance): heading and text font
+   * for Latin (Turkish, English) and Persian. A theme or script left out uses
+   * the theme's own fonts (themeDefaultFonts); an id or weight that is not in
+   * the registry any more is ignored the same way.
+   */
+  fonts: z.record(
+    z.string().regex(/^[a-z0-9-]+$/),
+    z.object({ latin: scriptFonts.optional(), persian: scriptFonts.optional() }),
+  ),
+  /**
+   * The home page's content (Settings → Home page), for every theme. Empty
+   * texts use the bundled ones (messages/<locale>/home.json); empty images
+   * use the theme's own photos. Paths are files in storage under site/.
+   * Each part has its own default, so a row saved before a part existed
+   * still parses.
+   */
+  home: z.object({
+    hero: z
+      .object({
+        /** theme: the theme's own photos; images: up to 6 photos in turn; video: one video (and its poster). */
+        media: z.enum(["theme", "images", "video"]).default("theme"),
+        images: z.array(sitePath).max(6).default([]),
+        video: sitePath.default(""),
+        poster: sitePath.default(""),
+        title: localized.default({}),
+        subtitle: localized.default({}),
+        button: localized.default({}),
+      })
+      .default({ media: "theme", images: [], video: "", poster: "", title: {}, subtitle: {}, button: {} }),
+    story: z
+      .object({ show: shown, title: localized.default({}), text: localizedLong.default({}), button: localized.default({}), image: sitePath.default("") })
+      .default({ show: true, title: {}, text: {}, button: {}, image: "" }),
+    crafts: z
+      .object({ show: shown, title: localized.default({}), image: sitePath.default("") })
+      .default({ show: true, title: {}, image: "" }),
+    past: z.object({ show: shown, title: localized.default({}) }).default({ show: true, title: {} }),
+    steps: z
+      .object({
+        show: shown,
+        title: localized.default({}),
+        items: z.array(z.object({ title: localized, text: localized })).max(4).default([]),
+        image: sitePath.default(""),
+      })
+      .default({ show: true, title: {}, items: [], image: "" }),
+    footer: z
+      .object({
+        about: localizedLong.default({}),
+        instagram: z.string().trim().max(200).default(""),
+        email: z.string().trim().max(254).default(""),
+        phone: z.string().trim().max(40).default(""),
+      })
+      .default({ about: {}, instagram: "", email: "", phone: "" }),
+  }),
   /**
    * Where uploads go: one storage zone / bucket whose files the CDN serves.
    * `local` is for development only. The field names (`public…`) date from
@@ -145,6 +216,15 @@ export const settingDefaults: { [K in SettingKey]: SettingValue<K> } = {
   defaultLocale: FALLBACK_LOCALE,
   seo: { title: {}, description: {} },
   theme: "default",
+  fonts: {},
+  home: {
+    hero: { media: "theme", images: [], video: "", poster: "", title: {}, subtitle: {}, button: {} },
+    story: { show: true, title: {}, text: {}, button: {}, image: "" },
+    crafts: { show: true, title: {}, image: "" },
+    past: { show: true, title: {} },
+    steps: { show: true, title: {}, items: [], image: "" },
+    footer: { about: {}, instagram: "", email: "", phone: "" },
+  },
   cdn: { provider: "local" },
   watermark: {
     logoPath: null,
