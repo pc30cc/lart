@@ -44,7 +44,7 @@ Next.js 16 differs from older versions: read the relevant guide in
 ```
 src/
   app/
-    icon.svg, favicon.ico, apple-icon.png   the site's icons, the "L" of the logo on clay (`pnpm icons` draws them again from public/brand/limer-logo.svg)
+    icon.svg, favicon.ico, apple-icon.png   the site's icons, a white autumn leaf on clay (`pnpm icons` draws them again from scripts/favicons.ts)
     sitemap.ts, robots.ts       /sitemap.xml (home, workshops list + open workshop pages, /about, /story while a partner is on it, fa/tr/en with hreflang), /robots.txt (disallows only /admin, /<l>/admin and /api)
     og.png/route.tsx            /og.png: the site's share picture (its logo on paper, 1200×630) for pages without their own
     [locale]/                   every page (URL rules: the main language has no prefix, the proxy rewrites it here)
