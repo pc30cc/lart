@@ -11,9 +11,6 @@ import { isSafePath } from "@/lib/storage/shared"
 
 export const siteLocales = ["fa", "tr", "en"] as const
 
-/** Public-site themes (src/themes/<name>). A new theme is added to this list. */
-export const themes = ["default"] as const
-
 export const generalSettingsSchema = z.object({
   brand: localizedText({ required: siteLocales, max: 60 }),
   defaultLocale: z.enum(siteLocales),
@@ -21,7 +18,6 @@ export const generalSettingsSchema = z.object({
     title: localizedText({ max: 120 }),
     description: localizedText({ max: 300 }),
   }),
-  theme: z.enum(themes),
 })
 
 export type GeneralSettingsValues = z.input<typeof generalSettingsSchema>

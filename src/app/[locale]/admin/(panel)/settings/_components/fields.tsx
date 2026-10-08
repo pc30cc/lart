@@ -4,7 +4,7 @@ import { Field, FieldContent, FieldDescription, FieldLabel, FieldTitle } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { cn } from "@/lib/utils"
 
-/** Radio choices shown as cards (icon, title, one line of help). */
+/** Radio choices shown as cards (icon, title, one line of help; optionally a picture above them). */
 export function ChoiceCards<V extends string>({
   id,
   value,
@@ -16,7 +16,17 @@ export function ChoiceCards<V extends string>({
   id: string
   value: V
   onChange: (value: V) => void
-  choices: { value: V; title: string; description?: string; icon?: React.ComponentType<{ className?: string }>; lang?: string }[]
+  choices: {
+    value: V
+    title: string
+    description?: string
+    icon?: React.ComponentType<{ className?: string }>
+    lang?: string
+    /** A small picture of the choice, above its title (decorative: the title and description say it all). */
+    preview?: React.ReactNode
+    /** A short note after the title (e.g. "On your site now"). */
+    badge?: React.ReactNode
+  }[]
   describedBy?: string
   className?: string
 }) {
@@ -30,10 +40,18 @@ export function ChoiceCards<V extends string>({
     >
       {choices.map((choice) => (
         <FieldLabel key={choice.value} htmlFor={`${id}-${choice.value}`} className="cursor-pointer">
+          {choice.preview && (
+            <div aria-hidden className="w-full p-2.5 pb-0">
+              {choice.preview}
+            </div>
+          )}
           <Field orientation="horizontal">
             {choice.icon && <choice.icon className="text-muted-foreground mt-0.5 size-4 shrink-0" />}
             <FieldContent>
-              <FieldTitle lang={choice.lang}>{choice.title}</FieldTitle>
+              <FieldTitle lang={choice.lang}>
+                {choice.title}
+                {choice.badge}
+              </FieldTitle>
               {choice.description && <FieldDescription className="text-start">{choice.description}</FieldDescription>}
             </FieldContent>
             <RadioGroupItem value={choice.value} id={`${id}-${choice.value}`} />

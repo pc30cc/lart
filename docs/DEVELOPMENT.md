@@ -695,7 +695,8 @@ server-renders it puts `suppressHydrationWarning` on the element), `formatTime`,
   accent; `success`, `warning`, `info` for states; `chart-1`…`chart-5` is a
   colour-blind-checked set: assign series in that order, never cycle.
 - Fonts: IRANSans for Persian, Inter (latin + latin-ext) otherwise, chosen by
-  `<html lang>` through `font-sans`.
+  `<html lang>` through `font-sans` (the panels; the public site's fonts are
+  a setting, see the next section).
 - RTL: logical classes only (`ms-`, `pe-`, `start-`, `text-start`); flip
   direction icons with `rtl:rotate-180`. shadcn components that still use
   `text-left` take a `text-start` override via `className`.
@@ -703,6 +704,40 @@ server-renders it puts `suppressHydrationWarning` on the element), `formatTime`,
   (`@/components/locale-switcher`) work anywhere.
 - Messages shared by all modules: `common` (actions, toast, errors,
   validation, table, form, date, theme, locales), `auth`, `admin` (nav, shell).
+
+### Settings → Appearance: theme and fonts
+
+- `theme` is the public site's theme, an id of `src/themes/ids.ts`
+  (`themeIds`; an unknown id shows the classic theme). `fonts` holds, **per
+  theme id**, the heading and text font with its weight for Latin (Turkish,
+  English) and Persian. A theme without an entry uses its own fonts
+  (`themeDefaultFonts`), and so does a script whose saved choice is not in
+  the registry any more (`resolveSiteFonts`).
+- The page (`settings/appearance/`): one card per theme with a small picture
+  of it (`theme-pictures.tsx`: a picture and a preview look per theme id,
+  so a new theme needs one there), the chosen theme's four fonts and a live
+  preview. Choosing another theme shows that theme's saved fonts (or its
+  own); "Use the template's own fonts" puts the theme's own back.
+- `saveAppearanceSettings` (`features/settings/appearance-actions.ts`)
+  validates with `appearanceSettingsSchema` (registry themes, each row only
+  its script's fonts, a weight the font has), writes only `theme` and/or
+  `fonts` when they changed (one transaction, one `setting.update` audit
+  entry each), and touches only the chosen theme's entry in `fonts`; fonts
+  equal to the theme's own remove that entry, so a theme's defaults keep
+  following the code. `getAppearanceSettings()` gives the theme, the saved
+  map and every theme's resolved fonts.
+- The site writes only the chosen fonts' `@font-face` and variables
+  (`siteFontCss`, in `SiteRoot`); the settings page declares the whole pool
+  (`fontPoolCss`) for its preview, with the same family names. Both write
+  registry values only, never text from the database.
+- **Adding a font**: its woff2 files in `public/fonts/<id>/`, named
+  `<id>-<subset>-v<version>.woff2` (a Latin font: `latin` and `latin-ext`,
+  for Turkish; a Persian font: `arabic`), with the font's `LICENSE.txt`
+  (OFL), and one entry in `src/themes/fonts.ts` (id, the font's own name,
+  script, serif or sans, the weights to offer, the file's weight range, the
+  files with their unicode-range). Bump the version in the names whenever a
+  file changes: fonts are cached for a year. Nothing else changes: the page
+  lists it, the schema accepts it, the site loads it once it is chosen.
 
 ### Tests
 

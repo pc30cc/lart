@@ -19,9 +19,12 @@ import { cdnSettingsSchema, emailSettingsSchema, generalSettingsSchema, watermar
 const settingAudit = (key: SettingKey, data: Record<string, unknown>) =>
   ({ action: "setting.update", entity: "setting", entityId: key, data }) as const
 
-/** Brand, main language, SEO defaults and theme: only the settings that changed are written. */
+/**
+ * Brand, main language and SEO defaults: only the settings that changed are
+ * written. (The theme is on the Appearance page: appearance-actions.ts.)
+ */
 export const saveGeneralSettings = adminAction(generalSettingsSchema, async (input, ctx) => {
-  const keys = ["brand", "defaultLocale", "seo", "theme"] as const
+  const keys = ["brand", "defaultLocale", "seo"] as const
   const before = await Promise.all(keys.map((key) => getSetting(key)))
   const changed = keys.filter((key, i) => Object.keys(changes({ value: before[i] }, { value: input[key] })).length > 0)
   if (changed.length === 0) return { changed }
