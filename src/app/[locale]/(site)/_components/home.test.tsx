@@ -6,7 +6,8 @@ import type { WorkshopCard } from "@/features/registrations/public"
 import HomePage from "../page"
 
 // Outside a Next.js request: plain links, the texts of the real messages, and
-// the data the page reads (open workshops, brand, SEO setting) per test.
+// the data the page reads (open workshops, brand, settings) per test. No theme
+// is saved, so the page shows the classic theme.
 vi.mock("@/i18n/navigation", () => ({
   Link: ({ href, children, ...rest }: { href: string; children: React.ReactNode }) => (
     <a href={href} {...rest}>
@@ -19,21 +20,29 @@ const messages = vi.hoisted(async () => ({
   common: (await import("../../../../../messages/en/common.json")).default,
   site: (await import("../../../../../messages/en/site.json")).default,
   registration: (await import("../../../../../messages/en/registration.json")).default,
+  home: (await import("../../../../../messages/en/home.json")).default,
 }))
 vi.mock("next-intl/server", async () => {
   const { createTranslator } = await import("next-intl")
   const all = await messages
   return {
-    getTranslations: async (namespace?: string) => createTranslator({ locale: "en", messages: all, namespace: namespace as never }),
+    getTranslations: async (arg?: string | { namespace?: string }) =>
+      createTranslator({ locale: "en", messages: all, namespace: (typeof arg === "string" ? arg : arg?.namespace) as never }),
   }
 })
 
 const data = vi.hoisted(() => ({ workshops: [] as WorkshopCard[] }))
 vi.mock("@/features/registrations/public", () => ({ listOpenWorkshops: async () => data.workshops }))
-vi.mock("@/lib/settings", () => ({
-  getBrand: async () => "Lart",
-  getSetting: async () => ({ title: {}, description: { en: "Art workshops in Istanbul." } }),
-}))
+vi.mock("@/features/site/public", () => ({ listPublicCategories: async () => [], listPastWorkshops: async () => [] }))
+vi.mock("@/lib/storage", () => ({ publicUrls: async () => () => null }))
+vi.mock("@/lib/settings", async () => {
+  const { settingDefaults } = await vi.importActual<typeof import("@/lib/settings")>("@/lib/settings")
+  const saved: Record<string, unknown> = { seo: { title: {}, description: { en: "Art workshops in Istanbul." } } }
+  return {
+    getBrand: async () => "Lart",
+    getSetting: async (key: keyof typeof settingDefaults) => saved[key] ?? settingDefaults[key],
+  }
+})
 vi.mock("@/lib/seo", () => ({ alternates: async () => ({}), ogLocale: {} }))
 
 const startsAt = new Date(Date.now() + 5 * 86_400_000)

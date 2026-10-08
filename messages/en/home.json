@@ -1,0 +1,47 @@
+{
+  "hero": {
+    "title": "Make something beautiful with your own hands",
+    "subtitle": "Candles, ceramics, macramé and more: small, warm workshops where we learn and create together.",
+    "button": "Explore workshops",
+    "imageAlt": "Women creating together at a workshop"
+  },
+  "story": {
+    "title": "A place to create together",
+    "text": "Every workshop is a small gathering: experienced instructors, carefully chosen materials and a warm, friendly room. Never tried it before? That's fine. Just come, and we'll make it together.",
+    "button": "Upcoming workshops"
+  },
+  "crafts": {
+    "title": "Explore by craft"
+  },
+  "past": {
+    "title": "From past workshops"
+  },
+  "steps": {
+    "title": "How it works",
+    "step1": {
+      "title": "Choose a workshop",
+      "text": "See the date, the place and the price, and pick the one for you."
+    },
+    "step2": {
+      "title": "Reserve your place",
+      "text": "Sign up in a few steps; your place is held right away."
+    },
+    "step3": {
+      "title": "Pay your way",
+      "text": "Cash, bank transfer or a payment link: whichever suits you."
+    },
+    "step4": {
+      "title": "Come and create",
+      "text": "Everything is ready for you; take your own piece home."
+    }
+  },
+  "footer": {
+    "about": "We hold small, friendly workshops in candle making, ceramics, macramé and many other crafts. Experienced instructors, good materials, and a piece of your own to take home.",
+    "aboutTitle": "About us",
+    "explore": "Explore",
+    "account": "My account",
+    "contact": "Contact",
+    "home": "Home",
+    "instagram": "Instagram"
+  }
+}

@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/admin/empty-state"
 import { listOpenWorkshops } from "@/features/registrations/public"
 import { alternates, ogLocale } from "@/lib/seo"
 import { getBrand } from "@/lib/settings"
-import { WorkshopCard } from "./_components/workshop-card"
+import { getActiveTheme } from "@/themes/registry"
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/workshops">): Promise<Metadata> {
   const { locale } = await params
@@ -20,10 +20,15 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/workshop
   }
 }
 
-/** The upcoming workshops, soonest first. Phase 3 themes restyle it with the same data. */
+/** The upcoming workshops, soonest first, as the active theme's cards. */
 export default async function WorkshopsPage({ params }: PageProps<"/[locale]/workshops">) {
   const { locale } = await params
-  const [t, workshops] = await Promise.all([getTranslations("registration.list"), listOpenWorkshops(locale)])
+  const [t, workshops, { theme }] = await Promise.all([
+    getTranslations("registration.list"),
+    listOpenWorkshops(locale),
+    getActiveTheme(),
+  ])
+  const WorkshopCard = theme.WorkshopCard
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:py-14">

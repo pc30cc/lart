@@ -1,0 +1,6 @@
+/*
+ * Atelier's design tokens, scoped to its pages: [data-site-theme="atelier"] on
+ * the site's wrapper and on <html> while a site page is open (src/themes/html-theme.tsx),
+ * so dialogs and toasts rendered at the end of <body> get them too. Never put
+ * tokens on bare :root or body (the panels share them).
+ */

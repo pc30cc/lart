@@ -4,6 +4,8 @@
   "tabs": {
     "label": "Ayar bölümleri",
     "general": "Genel",
+    "appearance": "Görünüm",
+    "home": "Ana sayfa",
     "payments": "Ödemeler",
     "email": "E-posta",
     "storage": "Depolama",

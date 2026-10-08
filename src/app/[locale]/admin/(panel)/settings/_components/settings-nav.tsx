@@ -1,6 +1,14 @@
 "use client"
 
-import { DatabaseIcon, MailIcon, SlidersHorizontalIcon, StampIcon, WalletCardsIcon } from "lucide-react"
+import {
+  DatabaseIcon,
+  HouseIcon,
+  MailIcon,
+  PaletteIcon,
+  SlidersHorizontalIcon,
+  StampIcon,
+  WalletCardsIcon,
+} from "lucide-react"
 import { useTranslations } from "next-intl"
 
 import { Link, usePathname } from "@/i18n/navigation"
@@ -8,13 +16,15 @@ import { cn } from "@/lib/utils"
 
 const tabs = [
   { href: "/admin/settings", label: "general", icon: SlidersHorizontalIcon },
+  { href: "/admin/settings/appearance", label: "appearance", icon: PaletteIcon },
+  { href: "/admin/settings/home", label: "home", icon: HouseIcon },
   { href: "/admin/settings/payments", label: "payments", icon: WalletCardsIcon },
   { href: "/admin/settings/email", label: "email", icon: MailIcon },
   { href: "/admin/settings/storage", label: "storage", icon: DatabaseIcon },
   { href: "/admin/settings/watermark", label: "watermark", icon: StampIcon },
 ] as const
 
-/** General · Payments · Email · Storage · Watermark. */
+/** General · Appearance · Home page · Payments · Email · Storage · Watermark. */
 export function SettingsNav() {
   const t = useTranslations("settings.tabs")
   const pathname = usePathname()

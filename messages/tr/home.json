@@ -1,0 +1,47 @@
+{
+  "hero": {
+    "title": "Kendi ellerinle güzel bir şey yarat",
+    "subtitle": "Mum, seramik, makrome ve daha fazlası: samimi atölyelerde birlikte öğreniyor, birlikte üretiyoruz.",
+    "button": "Atölyeleri keşfet",
+    "imageAlt": "Bir atölyede birlikte üreten kadınlar"
+  },
+  "story": {
+    "title": "Birlikte üretmek için bir alan",
+    "text": "Her atölye küçük bir buluşma: deneyimli eğitmenler, özenle seçilmiş malzemeler ve sıcak bir ortam. Daha önce hiç denememiş olman önemli değil; sadece gel, gerisini birlikte yaparız.",
+    "button": "Yaklaşan atölyeler"
+  },
+  "crafts": {
+    "title": "Zanaata göre keşfet"
+  },
+  "past": {
+    "title": "Geçmiş atölyelerden"
+  },
+  "steps": {
+    "title": "Nasıl katılırım?",
+    "step1": {
+      "title": "Atölyeni seç",
+      "text": "Tarihi, yeri ve fiyatı gör; sana uyanı seç."
+    },
+    "step2": {
+      "title": "Yerini ayırt",
+      "text": "Birkaç adımda kaydol, yerin hemen ayrılsın."
+    },
+    "step3": {
+      "title": "Ödemeni yap",
+      "text": "Nakit, havale ya da ödeme linkiyle; nasıl istersen."
+    },
+    "step4": {
+      "title": "Gel ve üret",
+      "text": "Her şey hazır; kendi eserini evine götür."
+    }
+  },
+  "footer": {
+    "about": "Mum, seramik, makrome ve daha birçok el sanatında küçük, samimi atölyeler düzenliyoruz. Deneyimli eğitmenler, kaliteli malzemeler ve evine götüreceğin kendi eserin.",
+    "aboutTitle": "Hakkımızda",
+    "explore": "Keşfet",
+    "account": "Hesabım",
+    "contact": "İletişim",
+    "home": "Ana sayfa",
+    "instagram": "Instagram"
+  }
+}

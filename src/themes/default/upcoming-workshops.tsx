@@ -4,7 +4,7 @@ import { EmptyState } from "@/components/admin/empty-state"
 import { Button } from "@/components/ui/button"
 import type { WorkshopCard as Card } from "@/features/registrations/public"
 import { Link } from "@/i18n/navigation"
-import { WorkshopCard } from "../workshops/_components/workshop-card"
+import { WorkshopCard } from "./workshop-card"
 
 /**
  * The home page's next workshops (a few, soonest first) with the way to all

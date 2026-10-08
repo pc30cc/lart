@@ -260,6 +260,8 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 | `/admin/profile` | admin | private | |
 | `/admin/registrations` | admin | private | |
 | `/admin/settings` | admin | private | |
+| `/admin/settings/appearance` | admin | private | |
+| `/admin/settings/home` | admin | private | |
 | `/admin/settings/email` | admin | private | |
 | `/admin/settings/payments` | admin | private | |
 | `/admin/settings/storage` | admin | private | |

@@ -4,6 +4,8 @@
   "tabs": {
     "label": "Settings sections",
     "general": "General",
+    "appearance": "Appearance",
+    "home": "Home page",
     "payments": "Payments",
     "email": "Email",
     "storage": "Storage",

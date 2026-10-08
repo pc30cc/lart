@@ -23,7 +23,7 @@ import { Link } from "@/i18n/navigation"
 import { getMember } from "@/lib/auth/member"
 import { formatDate, formatTimeRange, isolate } from "@/lib/format"
 import { getBrand, getSetting } from "@/lib/settings"
-import { Price } from "../../_components/labels"
+import { Price } from "@/components/site/workshop-labels"
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/workshops/[slug]/register">): Promise<Metadata> {
   const { locale, slug } = await params

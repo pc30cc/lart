@@ -1,10 +1,10 @@
 import { CalendarDaysIcon, ClockIcon, MapPinIcon, PaletteIcon, UsersRoundIcon, type LucideIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 
+import { AgeLabel, AvailabilityBadge, Price } from "@/components/site/workshop-labels"
 import type { WorkshopCard as Card } from "@/features/registrations/public"
 import { Link } from "@/i18n/navigation"
 import { formatDate, formatTimeRange } from "@/lib/format"
-import { AgeLabel, AvailabilityBadge, Price } from "./labels"
 
 /**
  * One workshop in a list: cover, title, when and where, who it's for, price
