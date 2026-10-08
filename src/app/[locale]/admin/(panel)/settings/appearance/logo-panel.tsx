@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { removeSiteLogo, saveSiteLogo } from "@/features/settings/appearance-actions"
 import { LOGO_FILE_MAX, LogoSvgError, parseLogoSvg, type ParsedLogo } from "@/features/settings/logo-svg"
-import type { LogoData } from "@/lib/logo"
+import { LOGO_DATA_MAX, logoSchema, type LogoData } from "@/lib/logo"
 import { LogoPicture } from "@/themes/logo"
 import { Panel } from "../_components/fields"
 
@@ -60,7 +60,13 @@ export function LogoPanel({ saved, brand }: { saved: LogoData | null; brand: str
       try {
         if (file.size > LOGO_FILE_MAX) throw new LogoSvgError("tooBig")
         const parsed = parseLogoSvg(await file.text())
-        const result = await saveSiteLogo({ logo: { viewBox: inkBox(parsed), paths: parsed.paths } })
+        // The server checks the same schema: a logo it would refuse gets its reason here, not a generic error.
+        const checked = logoSchema.safeParse({ viewBox: inkBox(parsed), paths: parsed.paths })
+        if (!checked.success) {
+          const total = parsed.paths.reduce((sum, p) => sum + p.d.length, 0)
+          throw new LogoSvgError(total > LOGO_DATA_MAX ? "tooComplex" : "invalid")
+        }
+        const result = await saveSiteLogo({ logo: checked.data })
         if (!result) return // the action redirected (e.g. the session ended)
         if (result.ok) toast.success(t("saved"))
         else setError(result.error)

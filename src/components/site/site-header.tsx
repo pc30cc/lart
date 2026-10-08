@@ -36,10 +36,10 @@ export async function SiteHeader({
         {logo ? (
           <Link
             href="/"
-            className="focus-visible:ring-ring/50 shrink-0 rounded-md py-1 outline-none focus-visible:ring-3"
+            className="focus-visible:ring-ring/50 min-w-0 shrink rounded-md py-1 outline-none focus-visible:ring-3"
             aria-label={t("home", { brand })}
           >
-            <BrandLogo logo={logo} className="h-7 w-auto sm:h-8" />
+            <BrandLogo logo={logo} className="h-7 w-auto max-w-full sm:h-8" />
           </Link>
         ) : (
           <Link

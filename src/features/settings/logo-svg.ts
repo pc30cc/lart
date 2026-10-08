@@ -1,6 +1,7 @@
 /**
  * Reads an uploaded SVG logo into the site's logo data (lib/logo.ts): its
- * filled shapes as path data, with their fill rule and transforms. Runs in
+ * filled shapes as path data, with their fill rule and transform (a group's
+ * transforms multiplied into one matrix). Runs in
  * the browser (Settings → Appearance), which then crops the logo to its ink
  * (`getBBox`); the server only accepts the result through `logoSchema`, so
  * nothing of the file but numbers and path commands is ever stored or drawn.
@@ -42,7 +43,10 @@ type Props = {
   strokeOpacity: string | null
   visibility: string | null
 }
-type Frame = { name: string; ignore: boolean; props: Props; transform: string }
+/** An affine transform [a b c d e f], as SVG's matrix(a b c d e f). */
+type Matrix = [number, number, number, number, number, number]
+const IDENTITY: Matrix = [1, 0, 0, 1, 0, 0]
+type Frame = { name: string; ignore: boolean; props: Props; matrix: Matrix }
 
 /** Elements that would be missing from the logo: refused with what to do instead. */
 const REFUSED: Record<string, LogoSvgErrorCode> = {
@@ -250,6 +254,48 @@ function shapePath(name: string, a: Map<string, string>): string | null {
   }
 }
 
+/** `m` then `n` (n applied first), as nested SVG transforms compose. */
+const multiply = ([a, b, c, d, e, f]: Matrix, [g, h, i, j, k, l]: Matrix): Matrix => [
+  a * g + c * h,
+  b * g + d * h,
+  a * i + c * j,
+  b * i + d * j,
+  a * k + c * l + e,
+  b * k + d * l + f,
+]
+
+/** An SVG transform list as one matrix; refuses anything but the six functions with their numbers. */
+export function transformMatrix(list: string): Matrix {
+  if (!TRANSFORM.test(list)) throw new LogoSvgError("invalid")
+  let m = IDENTITY
+  for (const [, fn, args] of list.matchAll(/(matrix|translate|scale|rotate|skewX|skewY)\s*\(([^)]*)\)/g)) {
+    const v = args.trim() === "" ? [] : args.trim().split(/[\s,]+/).map(Number)
+    if (v.some((n) => !Number.isFinite(n))) throw new LogoSvgError("invalid")
+    const rad = (deg: number) => (deg * Math.PI) / 180
+    let t: Matrix
+    if (fn === "matrix" && v.length === 6) t = v as Matrix
+    else if (fn === "translate" && (v.length === 1 || v.length === 2)) t = [1, 0, 0, 1, v[0], v[1] ?? 0]
+    else if (fn === "scale" && (v.length === 1 || v.length === 2)) t = [v[0], 0, 0, v[1] ?? v[0], 0, 0]
+    else if (fn === "rotate" && (v.length === 1 || v.length === 3)) {
+      const [cos, sin] = [Math.cos(rad(v[0])), Math.sin(rad(v[0]))]
+      const [cx, cy] = [v[1] ?? 0, v[2] ?? 0]
+      t = multiply(multiply([1, 0, 0, 1, cx, cy], [cos, sin, -sin, cos, 0, 0]), [1, 0, 0, 1, -cx, -cy])
+    } else if (fn === "skewX" && v.length === 1) t = [1, 0, Math.tan(rad(v[0])), 1, 0, 0]
+    else if (fn === "skewY" && v.length === 1) t = [1, Math.tan(rad(v[0])), 0, 1, 0, 0]
+    else throw new LogoSvgError("invalid")
+    m = multiply(m, t)
+  }
+  return m
+}
+
+/** A matrix as the shortest transform that draws it ("" for none). */
+function matrixText(m: Matrix): string {
+  const r = m.map((n) => Number(n.toFixed(6)) + 0) // + 0: no "-0"
+  if (r.every((n, i) => n === IDENTITY[i])) return ""
+  if (r[0] === 1 && r[1] === 0 && r[2] === 0 && r[3] === 1) return `translate(${r[4]} ${r[5]})`
+  return `matrix(${r.join(" ")})`
+}
+
 /** How many numbers each path command takes. */
 const PARAMS: Record<string, number> = { m: 2, l: 2, h: 1, v: 1, c: 6, s: 4, q: 4, t: 2, a: 7, z: 0 }
 const NUMBER = /[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/y
@@ -344,7 +390,7 @@ export function parseLogoSvg(source: string): ParsedLogo {
   const stack: Frame[] = []
   let root: Map<string, string> | null = null
   let viewBox: string | null = null
-  const shapes: { d: string; evenodd: boolean; transform: string; white: boolean }[] = []
+  const shapes: { d: string; evenodd: boolean; matrix: Matrix; white: boolean }[] = []
   let strokeOnly = false
 
   const rootProps: Props = {
@@ -412,9 +458,9 @@ export function parseLogoSvg(source: string): ParsedLogo {
       props.visibility === "hidden" ||
       props.visibility === "collapse"
 
-    const transform = (attrs.get("transform") ?? "").trim()
-    if (transform && !TRANSFORM.test(transform)) throw new LogoSvgError("invalid")
-    const transforms = [parent?.transform ?? "", isRoot ? "" : transform].filter(Boolean).join(" ")
+    // Nested groups' transforms, multiplied into one (a transform on the root <svg> is not drawn by every browser: left out).
+    const transform = isRoot ? "" : (attrs.get("transform") ?? "").trim()
+    const matrix = transform ? multiply(parent?.matrix ?? IDENTITY, transformMatrix(transform)) : (parent?.matrix ?? IDENTITY)
 
     // Anything else (definitions, styles, metadata, a design app's own elements) is left out with its content.
     const skip =
@@ -435,11 +481,11 @@ export function parseLogoSvg(source: string): ParsedLogo {
       const d = filled ? shapePath(name, attrs) : null
       if (d !== null) {
         if (!PATH_DATA.test(d)) throw new LogoSvgError("invalid")
-        if (/\d/.test(d)) shapes.push({ d, evenodd: props.fillRule === "evenodd", transform: transforms, white: isWhite(props.fill) })
+        if (/\d/.test(d)) shapes.push({ d, evenodd: props.fillRule === "evenodd", matrix, white: isWhite(props.fill) })
       }
     }
 
-    if (!token.selfClosing) stack.push({ name, ignore: skip, props, transform: transforms })
+    if (!token.selfClosing) stack.push({ name, ignore: skip, props, matrix })
   }
 
   if (!root) throw new LogoSvgError("notSvg")
@@ -452,11 +498,14 @@ export function parseLogoSvg(source: string): ParsedLogo {
 
   const size = viewBox ? Math.max(...viewBox.split(" ").slice(2).map(Number)) : null
   const decimals = size ? Math.min(6, Math.max(1, 4 - Math.floor(Math.log10(size)))) : null
-  const paths = kept.map((s) => ({
-    d: normalizePath(s.d, decimals),
-    ...(s.evenodd ? { evenodd: true as const } : {}),
-    ...(s.transform ? { transform: s.transform } : {}),
-  }))
+  const paths = kept.map((s) => {
+    const transform = matrixText(s.matrix)
+    return {
+      d: normalizePath(s.d, decimals),
+      ...(s.evenodd ? { evenodd: true as const } : {}),
+      ...(transform ? { transform } : {}),
+    }
+  })
   if (paths.reduce((sum, p) => sum + p.d.length, 0) > LOGO_DATA_MAX) throw new LogoSvgError("tooComplex")
   return { viewBox, paths }
 }

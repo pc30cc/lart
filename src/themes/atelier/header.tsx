@@ -81,12 +81,12 @@ export function Header({
           className={cn(
             "focus-visible:ring-ring/50 rounded-md outline-none focus-visible:ring-3",
             logo
-              ? "shrink-0 py-1"
+              ? "min-w-0 shrink py-1"
               : "at-heading min-w-0 truncate text-xl leading-none sm:text-2xl ltr:tracking-[0.22em]! rtl:text-[26px]",
             ring,
           )}
         >
-          {logo ? <BrandLogo logo={logo} className="h-8 w-auto md:h-10" /> : brand}
+          {logo ? <BrandLogo logo={logo} className="h-8 w-auto max-w-full md:h-10" /> : brand}
         </Link>
 
         <nav aria-label={t("nav")} className="ms-auto hidden items-center gap-1 md:flex lg:gap-4">
@@ -193,9 +193,9 @@ function MobileMenu({
           <Dialog.Title className="sr-only">{tm("menu")}</Dialog.Title>
           <div className="at-container flex h-16 shrink-0 items-center gap-4">
             {logo ? (
-              <span className="shrink-0">
+              <span className="min-w-0">
                 <span className="sr-only">{brand}</span>
-                <BrandLogo logo={logo} className="h-8 w-auto" />
+                <BrandLogo logo={logo} className="h-8 w-auto max-w-full" />
               </span>
             ) : (
               <span className="at-heading min-w-0 truncate text-xl leading-none ltr:tracking-[0.22em]! rtl:text-[26px]">{brand}</span>

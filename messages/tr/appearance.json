@@ -1,7 +1,7 @@
 {
   "logo": {
     "title": "Logo",
-    "description": "Her sayfanın üstünde markanızın adı yerine, Atelier şablonunda ise sayfanın en altında büyük olarak gösterilir.",
+    "description": "Her sayfanın üstünde markanızın adı yerine, Atelier temasında ise sayfanın en altında büyük olarak gösterilir.",
     "hint": "Tek renkli bir SVG dosyası yükleyin. Siteniz onu kendi renkleriyle çizer: açık sayfalarda koyu, koyu sayfalarda açık. Dosyadaki yazılar önce dış hatlara (outline) dönüştürülmelidir.",
     "upload": "SVG logo yükle",
     "replace": "Logoyu değiştir",

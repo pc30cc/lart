@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { logoSchema, logoSize } from "@/lib/logo"
-import { LOGO_FILE_MAX, LogoSvgError, normalizePath, parseLogoSvg } from "./logo-svg"
+import { LOGO_FILE_MAX, LogoSvgError, normalizePath, parseLogoSvg, transformMatrix } from "./logo-svg"
 
 const codeOf = (svg: string) => {
   try {
@@ -50,11 +50,23 @@ describe("parseLogoSvg", () => {
     expect(logo.paths).toEqual([{ d: "M0 0H10V10Z" }, { d: "M20 0H30V10H20Z", evenodd: true }])
   })
 
-  it("keeps transforms, the groups' first", () => {
+  it("keeps transforms, a group's and the shape's multiplied into one", () => {
     const logo = parseLogoSvg(
-      `<svg viewBox="0 0 10 10"><g transform="translate(2 3)"><path transform="scale(2)" d="M0 0h1v1z"/></g><path d="M1 1h1v1z"/></svg>`,
+      `<svg viewBox="0 0 10 10"><g transform="translate(2 3)"><path transform="scale(2)" d="M0 0h1v1z"/><path transform="translate(1,1)" d="M0 0h1v1z"/></g><g transform="scale(1)"><path d="M1 1h1v1z"/></g></svg>`,
     )
-    expect(logo.paths).toEqual([{ d: "M0 0h1v1z", transform: "translate(2 3) scale(2)" }, { d: "M1 1h1v1z" }])
+    expect(logo.paths).toEqual([
+      { d: "M0 0h1v1z", transform: "matrix(2 0 0 2 2 3)" },
+      { d: "M0 0h1v1z", transform: "translate(3 4)" },
+      { d: "M1 1h1v1z" },
+    ])
+  })
+
+  it("keeps a deep nest of design-app matrices short enough for the setting", () => {
+    const m = "matrix(0.9876543,0.0123457,-0.0123457,0.9876543,12.345678,-23.456789)"
+    const svg = `<svg viewBox="0 0 100 100">${`<g transform="${m}">`.repeat(12)}<path d="M1 1h1v1z"/>${"</g>".repeat(12)}</svg>`
+    const { viewBox, paths } = parseLogoSvg(svg)
+    expect(paths[0].transform).toMatch(/^matrix\(/)
+    expect(logoSchema.safeParse({ viewBox, paths }).success).toBe(true)
   })
 
   it("leaves out hidden shapes and a design app's own elements", () => {
@@ -148,6 +160,23 @@ describe("parseLogoSvg: strokes, classes and hostile files", () => {
         // refused or empty: only the time matters here
       }
       expect(performance.now() - started, body.slice(0, 12)).toBeLessThan(1500)
+    }
+  })
+})
+
+describe("transformMatrix", () => {
+  const close = (a: number[], b: number[]) => a.every((n, i) => Math.abs(n - b[i]) < 1e-9)
+  it("reads the six functions and composes them left to right", () => {
+    expect(transformMatrix("translate(10)")).toEqual([1, 0, 0, 1, 10, 0])
+    expect(transformMatrix("scale(2, 3)")).toEqual([2, 0, 0, 3, 0, 0])
+    expect(close(transformMatrix("rotate(90 5 5)"), [0, 1, -1, 0, 10, 0])).toBe(true)
+    expect(close(transformMatrix("translate(1 2) scale(2)"), [2, 0, 0, 2, 1, 2])).toBe(true)
+    expect(close(transformMatrix("skewX(45)"), [1, 0, 1, 1, 0, 0])).toBe(true)
+  })
+
+  it("refuses a function with the wrong number of values", () => {
+    for (const bad of ["rotate(1 2)", "matrix(1 2 3)", "scale()", "translate(1 2 3)", "url(#a)", "scale(x)"]) {
+      expect(() => transformMatrix(bad), bad).toThrow(LogoSvgError)
     }
   })
 })
