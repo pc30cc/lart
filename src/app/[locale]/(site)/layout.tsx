@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 
 import { ImpersonationBar } from "@/components/impersonation-bar"
+import { siteFonts } from "@/components/site/fonts"
 import { NoticeToast } from "@/components/site/notice-toast"
 import { SiteFooter } from "@/components/site/site-footer"
 import { SiteHeader } from "@/components/site/site-header"
@@ -23,7 +24,7 @@ export default async function SiteLayout({ children, params }: LayoutProps<"/[lo
   const member = session && { name: session.member.name, email: session.member.email }
 
   return (
-    <div className="flex min-h-svh flex-col">
+    <div className={`site-type ${siteFonts} flex min-h-svh flex-col`}>
       <SiteHeader
         brand={brand}
         member={member}

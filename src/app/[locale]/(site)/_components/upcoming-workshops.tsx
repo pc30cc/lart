@@ -27,7 +27,7 @@ export function UpcomingWorkshops({
   return (
     <section aria-labelledby="upcoming-title" className="mx-auto w-full max-w-6xl px-4 py-10 sm:py-14">
       <div className="mb-6 flex items-baseline justify-between gap-4 sm:mb-8">
-        <h2 id="upcoming-title" className="text-2xl font-semibold tracking-tight text-balance rtl:tracking-normal">
+        <h2 id="upcoming-title" className="font-serif text-3xl font-medium text-balance rtl:font-bold">
           {title}
         </h2>
         {workshops.length > 0 && (

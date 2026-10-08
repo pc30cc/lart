@@ -49,7 +49,7 @@ export function WorkshopCard({
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="space-y-1">
           {w.category && <p className="text-primary text-xs font-medium">{w.category}</p>}
-          <Heading className="text-lg leading-snug font-semibold text-balance">{w.title}</Heading>
+          <Heading className="font-serif text-2xl leading-snug font-medium text-balance rtl:text-xl rtl:font-bold">{w.title}</Heading>
           {w.instructorName && <p className="text-muted-foreground text-sm">{t("list.with", { name: w.instructorName })}</p>}
         </div>
         <ul className="text-muted-foreground space-y-1.5 text-sm">

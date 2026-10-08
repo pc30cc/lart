@@ -76,6 +76,25 @@
   --font-app: var(--font-iransans), var(--font-inter), var(--font-inter-ext), ui-sans-serif, system-ui, sans-serif;
 }
 
+/*
+ * The public site (the (site) layout's wrapper, fonts in components/site/fonts.ts):
+ * Montserrat for text and Cormorant Garamond (medium) for headings in Turkish and
+ * English; Noto Naskh Arabic for both in Persian (bold headings). `font-serif`
+ * (the brand) is the heading font here.
+ */
+.site-type {
+  --font-app: var(--font-montserrat), var(--font-montserrat-ext), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-cormorant), var(--font-cormorant-ext), ui-serif, Georgia, serif;
+  font-family: var(--font-app);
+}
+
+.site-type:lang(fa) {
+  --font-app:
+    var(--font-naskh), var(--font-montserrat), var(--font-montserrat-ext), ui-sans-serif, system-ui, sans-serif;
+  --font-serif:
+    var(--font-naskh), var(--font-cormorant), var(--font-cormorant-ext), ui-serif, Georgia, serif;
+}
+
 .dark {
   --background: oklch(0.185 0.014 265);
   --foreground: oklch(0.95 0.008 85);
