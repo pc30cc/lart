@@ -24,9 +24,10 @@ export async function getSiteFrame(
   ])
   const about = (home.footer.about as Localized)[locale as keyof Localized]?.trim() || t("about")
   return {
+    // The header: workshops and the partners' story (About stays in the footer).
     nav: [
       { href: "/workshops", label: th("workshops") },
-      { href: "/about", label: th("about") },
+      { href: "/story", label: th("story") },
     ],
     footer: {
       links: [
