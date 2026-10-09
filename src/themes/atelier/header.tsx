@@ -20,8 +20,8 @@ import type { HeaderMember, LogoSize, NavItem } from "../types"
 const SOLID_AFTER = 200
 
 /**
- * Atelier's sticky header: the brand as a wordmark (or its logo) on the start side, the
- * menu in the middle, the language and the account as pills on the end side (on a phone
+ * Atelier's sticky header: the brand as a wordmark (or its logo) on the start side; the
+ * menu, the language and the account as pills on the end side (on a phone
  * one menu button opening a full-screen sheet). Over the home page's hero it
  * is see-through with cream text, and turns solid (cream, dark text, a
  * hairline) once the visitor scrolls; on every other page it is solid.
@@ -74,14 +74,12 @@ export function Header({
       )}
     >
       {top}
-      {/* From md up three columns, so the menu sits in the middle whatever the brand's width. */}
-      <div className="at-container flex h-16 items-center gap-4 md:grid md:h-20 md:grid-cols-[1fr_auto_1fr]">
+      <div className="at-container flex h-16 items-center gap-4 md:h-20">
         <Link
           href="/"
           aria-label={t("home", { brand })}
           className={cn(
             "focus-visible:ring-ring/50 rounded-md outline-none focus-visible:ring-3",
-            "md:justify-self-start",
             logo
               ? "min-w-0 shrink py-1"
               : "at-heading min-w-0 truncate text-xl leading-none sm:text-2xl ltr:tracking-[0.22em]! rtl:text-[26px]",
@@ -91,7 +89,7 @@ export function Header({
           {logo ? <BrandLogo logo={logo} className="h-8 w-auto max-w-full md:h-10" /> : brand}
         </Link>
 
-        <nav aria-label={t("nav")} className="hidden items-center gap-1 md:flex lg:gap-4">
+        <nav aria-label={t("nav")} className="ms-auto hidden items-center gap-1 md:flex lg:gap-4">
           {nav.map((item) => {
             const current = pathname === item.href || pathname.startsWith(`${item.href}/`)
             return (
@@ -111,7 +109,7 @@ export function Header({
           })}
         </nav>
 
-        <div className="hidden shrink-0 items-center gap-2 md:flex md:justify-self-end lg:gap-3">
+        <div className="hidden shrink-0 items-center gap-2 md:flex lg:gap-3">
           {/* Both read the query string (to keep it when switching language / come back after logging in). */}
           <Suspense>
             <LocaleMenu
