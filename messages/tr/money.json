@@ -79,10 +79,14 @@
       "owed": "Borcumuz"
     },
     "capital": {
-      "remaining": "Kalan sermaye",
-      "remainingHint": "Bugün hesap kapatılsa iki ortağın payı",
       "putIn": "Ortakların yatırdığı sermaye",
-      "result": "Bugüne kadar kâr veya zarar"
+      "overhead": "Genel giderler ve demirbaş",
+      "remaining": "Kalan sermaye",
+      "remainingHint": "Sermaye eksi işletmenin genel giderleri",
+      "workshops": "Atölyelerin net kârı",
+      "workshopsHint": "Atölye gelirleri eksi malzeme ve eğitmen ücreti",
+      "other": "Avans ve borçlar",
+      "otherHint": "Eğitmenlerdeki avanslar veya henüz ödenmemiş ücret ve iadeler"
     }
   },
   "forms": {

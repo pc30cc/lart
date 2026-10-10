@@ -72,23 +72,13 @@ export default async function WalletPage() {
               {balances.wallet < 0 ? t("wallet.negative") : t("wallet.balanceHint")}
             </p>
           </div>
-          <div className="border-primary/15 relative space-y-2 border-t pt-4 text-sm">
-            <div className="flex items-baseline justify-between gap-4">
-              <span className="font-medium">
-                {t("wallet.capital.remaining")}
-                <span className="text-muted-foreground block text-xs font-normal">{t("wallet.capital.remainingHint")}</span>
-              </span>
-              <Money value={data.capital.remaining} className="text-xl font-semibold" />
-            </div>
-            <div className="text-muted-foreground flex items-baseline justify-between gap-4 text-xs">
-              <span>{t("wallet.capital.putIn")}</span>
-              <Money value={data.capital.putIn} />
-            </div>
-            <div className="text-muted-foreground flex items-baseline justify-between gap-4 text-xs">
-              <span>{t("wallet.capital.result")}</span>
-              <Money value={data.capital.result} tone="signed" />
-            </div>
-          </div>
+          <dl className="border-primary/15 relative space-y-1.5 border-t pt-4 text-sm">
+            <Line label={t("wallet.capital.putIn")} value={data.capital.putIn} />
+            <Line label={t("wallet.capital.overhead")} value={-data.capital.overhead} signed />
+            <Line label={t("wallet.capital.remaining")} hint={t("wallet.capital.remainingHint")} value={data.capital.remaining} strong />
+            <Line label={t("wallet.capital.workshops")} hint={t("wallet.capital.workshopsHint")} value={data.capital.workshops} signed strong />
+            {data.capital.other !== 0 && <Line label={t("wallet.capital.other")} hint={t("wallet.capital.otherHint")} value={data.capital.other} signed />}
+          </dl>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
@@ -250,5 +240,20 @@ function RecentEntry({
         className="shrink-0 text-sm font-semibold"
       />
     </li>
+  )
+}
+
+/** One line of the wallet's split: label (and hint) on one side, the amount on the other. */
+function Line({ label, hint, value, signed, strong }: { label: string; hint?: string; value: number; signed?: boolean; strong?: boolean }) {
+  return (
+    <div className={cn("flex items-baseline justify-between gap-4", strong ? "pt-1.5 font-medium" : "text-muted-foreground text-xs")}>
+      <dt className="min-w-0">
+        {label}
+        {hint && <span className="text-muted-foreground block text-xs font-normal">{hint}</span>}
+      </dt>
+      <dd>
+        <Money value={value} tone={signed ? "signed" : "plain"} className={strong ? "text-lg font-semibold" : undefined} />
+      </dd>
+    </div>
   )
 }

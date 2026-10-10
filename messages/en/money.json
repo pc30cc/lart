@@ -79,10 +79,14 @@
       "owed": "Owed"
     },
     "capital": {
-      "remaining": "Capital remaining",
-      "remainingHint": "What both partners would get if settled today",
       "putIn": "Capital the partners put in",
-      "result": "Profit or loss so far"
+      "overhead": "General and furnishing expenses",
+      "remaining": "Capital remaining",
+      "remainingHint": "Capital less the business's own costs",
+      "workshops": "Workshops' net profit",
+      "workshopsHint": "Workshop income less materials and instructor fees",
+      "other": "Advances and amounts owed",
+      "otherHint": "Money held by instructors, or fees and refunds not paid yet"
     }
   },
   "forms": {

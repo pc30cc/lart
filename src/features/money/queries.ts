@@ -150,12 +150,16 @@ export async function getWalletOverview() {
     activePartners(db),
     partnerCapitals(db),
   ])
-  // What is left of the partners' capital: what they put in (less what they took out),
-  // plus every result so far, shared out or not.
+  // The wallet in two parts. Capital: what the partners put in (less what they took
+  // out), less the business's own costs (general and furnishing). Workshops: their
+  // profit or loss, closed ones (shared out) and the rest so far (their projected
+  // instructor fee counted). What is left over is held by instructors or owed.
   const all = [...capitals.values()]
   const putIn = all.reduce((s, c) => s + c.contributions - c.withdrawals, 0)
-  const remaining = all.reduce((s, c) => s + c.capital, 0) + open
-  const capital = { putIn, remaining, result: remaining - putIn }
+  const overhead = balances.general_expenses
+  const workshops = all.reduce((s, c) => s + c.profitShares, 0) + open + overhead
+  const remaining = putIn - overhead
+  const capital = { putIn, overhead, remaining, workshops, other: balances.wallet - remaining - workshops }
   return { balances, openResult: open, recent, toClose, withInstructors: instructorsOpen, partners, capital }
 }
 
