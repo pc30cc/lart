@@ -459,18 +459,6 @@
   },
   "backup": {
     "saved": "Backup settings saved.",
-    "password": {
-      "title": "Backup password",
-      "description": "Every backup is a ZIP locked with this password (AES-256); it opens in 7-Zip, WinRAR or the macOS Archive Utility. Without a password nothing is backed up.",
-      "label": "Password",
-      "confirm": "Password again",
-      "show": "Show password",
-      "hide": "Hide password",
-      "warning": "Keep this password somewhere safe (a password manager, for example). If it is lost, there is no way to open the backups. A new password only applies to later backups; earlier ones keep opening with the old one.",
-      "saved": "The backup password is set.",
-      "change": "Change password",
-      "keep": "Keep the current password"
-    },
     "auto": {
       "title": "Automatic backup",
       "description": "Every day after 03:00 (Istanbul time) a full copy of the database is made, and once a Solar Hijri month is over, its financial report is kept next to the backups too.",
@@ -484,7 +472,6 @@
       "running": "Backing up…",
       "done": "A full database backup was saved.",
       "where": "The backup goes in the {folder} folder, under today's folder.",
-      "needPassword": "Set the backup password first.",
       "localStorage": "The storage is still on this server. So that backups survive a server failure, set up a CDN under Storage."
     },
     "downloads": {
@@ -520,7 +507,7 @@
     },
     "list": {
       "title": "Backups kept",
-      "description": "By day, newest first. Opening a file needs the backup password.",
+      "description": "By day, newest first.",
       "empty": "No backups yet.",
       "by": "Made by {name}",
       "byItself": "Automatic",
@@ -534,9 +521,6 @@
       "monthly": "Month report"
     },
     "errors": {
-      "noPassword": "Set the backup password first.",
-      "passwordShort": "The password must be at least 10 characters.",
-      "passwordMismatch": "The two passwords differ.",
       "noPgDump": "The database backup tool (pg_dump) is not installed on the server."
     }
   }

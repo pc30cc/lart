@@ -216,12 +216,10 @@ export const settingSchemas = {
     spenderId: z.uuid().nullable(),
   }),
   /**
-   * Backups (Settings → Backup): the password of the backup files (encrypted
-   * with lib/crypto; empty: none set, and nothing is backed up) and whether a
-   * backup is made by itself every day (and the month's report at its end).
+   * Backups (Settings → Backup): whether a backup is made by itself every day
+   * (and the month's report at its end).
    */
   backup: z.object({
-    passwordEnc: z.string(),
     auto: z.boolean(),
   }),
   email: z.object({
@@ -276,7 +274,7 @@ export const settingDefaults: { [K in SettingKey]: SettingValue<K> } = {
     online: { enabled: false, note: {} },
   },
   money: { withdrawals: false, spenderId: null },
-  backup: { passwordEnc: "", auto: true },
+  backup: { auto: true },
   email: {
     provider: "env",
     fromAddress: "",

@@ -1568,15 +1568,11 @@ when another failed; exit code 1 when one failed or did not finish.
 
 Settings → Backup (`/admin/settings/backup`, `features/backup/`):
 
-- **Password.** Every backup is a ZIP locked with AES-256 (zip.js), with the
-  password from `settings.backup.passwordEnc` (encrypted with `ENCRYPTION_KEY`,
-  never shown again, never in the audit log). No password, no backup. A new
-  password only applies to later backups.
 - **Database backups.** `pg_dump --format=custom` of the whole database plus a
   restore README, kept in the storage at
   `backup/<Istanbul day>/<db-daily|db-manual|month>-<HHMM>-<random>.zip` and
   listed in the `backups` table. The random part makes the name unguessable
-  (the CDN is public), and the ZIP is locked anyway. Several on one day share
+  (the CDN is public). Several on one day share
   the day's folder. Restore with
   `pg_restore --no-owner --no-privileges --dbname <url> limer.dump`, then run
   the site with the same `ENCRYPTION_KEY`. The image installs

@@ -459,18 +459,6 @@
   },
   "backup": {
     "saved": "Yedekleme ayarları kaydedildi.",
-    "password": {
-      "title": "Yedek şifresi",
-      "description": "Her yedek bu şifreyle kilitlenmiş bir ZIP dosyasıdır (AES-256); 7-Zip, WinRAR veya macOS Arşiv İzlencesi ile açılır. Şifre yoksa yedek alınmaz.",
-      "label": "Şifre",
-      "confirm": "Şifre (tekrar)",
-      "show": "Şifreyi göster",
-      "hide": "Şifreyi gizle",
-      "warning": "Bu şifreyi güvenli bir yerde saklayın (ör. bir şifre yöneticisinde). Kaybolursa yedekleri açmanın hiçbir yolu yoktur. Şifre değişikliği yalnızca sonraki yedekleri etkiler; eskiler eski şifreyle açılır.",
-      "saved": "Yedek şifresi ayarlandı.",
-      "change": "Şifreyi değiştir",
-      "keep": "Eski şifre kalsın"
-    },
     "auto": {
       "title": "Otomatik yedek",
       "description": "Her gün saat 03:00'ten (İstanbul saati) sonra veritabanının tam bir kopyası alınır; her Hicri Şemsi ay bittiğinde o ayın mali raporu da yedeklerin yanına kaydedilir.",
@@ -484,7 +472,6 @@
       "running": "Yedek alınıyor…",
       "done": "Veritabanının tam yedeği kaydedildi.",
       "where": "Yedek {folder} klasöründe, bugünün alt klasörüne kaydedilir.",
-      "needPassword": "Önce yedek şifresini ayarlayın.",
       "localStorage": "Depolama hâlâ bu sunucuda. Yedeklerin bir sunucu arızasında kaybolmaması için «Depolama» bölümünden bir CDN ayarlayın."
     },
     "downloads": {
@@ -520,7 +507,7 @@
     },
     "list": {
       "title": "Kayıtlı yedekler",
-      "description": "Güne göre, en yenisi üstte. Her dosyayı açmak için yedek şifresi gerekir.",
+      "description": "Güne göre, en yenisi üstte.",
       "empty": "Henüz yedek alınmadı.",
       "by": "{name} tarafından alındı",
       "byItself": "Otomatik",
@@ -534,9 +521,6 @@
       "monthly": "Ay raporu"
     },
     "errors": {
-      "noPassword": "Önce yedek şifresini ayarlayın.",
-      "passwordShort": "Şifre en az 10 karakter olmalı.",
-      "passwordMismatch": "İki şifre aynı değil.",
       "noPgDump": "Veritabanı yedekleme aracı (pg_dump) sunucuda kurulu değil."
     }
   }

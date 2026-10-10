@@ -1,6 +1,6 @@
 "use client"
 
-import { DatabaseBackupIcon, EyeIcon, FileSpreadsheetIcon, FolderArchiveIcon, EyeOffIcon, KeyRoundIcon, ShieldAlertIcon } from "lucide-react"
+import { DatabaseBackupIcon, FileSpreadsheetIcon, FolderArchiveIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
@@ -8,7 +8,6 @@ import { toast } from "sonner"
 import { Form, FormActions, FormField, FormSection, SubmitButton } from "@/components/admin/form/form"
 import { useActionForm } from "@/components/admin/form/use-action-form"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Spinner } from "@/components/ui/spinner"
 import { Switch } from "@/components/ui/switch"
@@ -16,98 +15,20 @@ import { createManualBackup, saveBackupSettings } from "@/features/backup/action
 import { backupSettingsSchema, type BackupSettingsValues } from "@/features/backup/schema"
 import { cn } from "@/lib/utils"
 
-/**
- * The backup password (typed twice; once set it is never shown again, only
- * replaced) and the switch for the automatic daily backups.
- */
-export function BackupSettingsForm({ hasPassword, auto }: { hasPassword: boolean; auto: boolean }) {
+/** The switch for the automatic daily backups. */
+export function BackupSettingsForm({ auto }: { auto: boolean }) {
   const t = useTranslations("settings.backup")
   const tc = useTranslations("common")
-  const [replacing, setReplacing] = useState(!hasPassword)
-  const [shown, setShown] = useState(false)
   const { form, submit, pending } = useActionForm({
     schema: backupSettingsSchema,
     action: saveBackupSettings,
-    defaultValues: { password: "", confirm: "", auto },
+    defaultValues: { auto },
     successMessage: t("saved"),
-    onSuccess: () => {
-      form.reset({ ...form.getValues(), password: "", confirm: "" })
-      setReplacing(false)
-      setShown(false)
-    },
+    onSuccess: () => form.reset(form.getValues()),
   })
-
-  const passwordInput = (name: "password" | "confirm", label: string) => (
-    <FormField<BackupSettingsValues> name={name} label={label} required>
-      {({ value, onChange, ...field }) => (
-        <div className="relative" dir="ltr">
-          <Input
-            {...field}
-            ref={field.ref}
-            value={(value as string) ?? ""}
-            onChange={(e) => onChange(e.target.value)}
-            type={shown ? "text" : "password"}
-            dir="ltr"
-            autoComplete="new-password"
-            spellCheck={false}
-            className="pe-10 font-mono text-sm"
-          />
-          {name === "password" && (
-            <button
-              type="button"
-              onClick={() => setShown((s) => !s)}
-              aria-label={shown ? t("password.hide") : t("password.show")}
-              className="text-muted-foreground hover:text-foreground absolute inset-y-0 end-0 flex w-10 items-center justify-center"
-            >
-              {shown ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
-            </button>
-          )}
-        </div>
-      )}
-    </FormField>
-  )
 
   return (
     <Form form={form} onSubmit={submit}>
-      <FormSection title={t("password.title")} description={t("password.description")}>
-        {replacing ? (
-          <>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {passwordInput("password", t("password.label"))}
-              {passwordInput("confirm", t("password.confirm"))}
-            </div>
-            <p className="bg-warning/10 flex gap-2.5 rounded-lg p-3 text-sm text-pretty">
-              <ShieldAlertIcon className="text-warning mt-0.5 size-4 shrink-0" aria-hidden />
-              {t("password.warning")}
-            </p>
-            {hasPassword && (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  form.setValue("password", "")
-                  form.setValue("confirm", "")
-                  form.clearErrors()
-                  setReplacing(false)
-                }}
-              >
-                {t("password.keep")}
-              </Button>
-            )}
-          </>
-        ) : (
-          <div className="bg-muted/40 flex min-h-11 flex-wrap items-center justify-between gap-3 rounded-lg border px-3 py-1.5">
-            <span className="text-muted-foreground inline-flex items-center gap-2 text-sm">
-              <KeyRoundIcon className="text-success size-4 shrink-0" aria-hidden />
-              {t("password.saved")}
-            </span>
-            <Button type="button" variant="outline" size="sm" onClick={() => setReplacing(true)}>
-              {t("password.change")}
-            </Button>
-          </div>
-        )}
-      </FormSection>
-
       <FormSection title={t("auto.title")} description={t("auto.description")}>
         <FormField<BackupSettingsValues> name="auto">
           {(field) => (
@@ -140,14 +61,14 @@ export function BackupSettingsForm({ hasPassword, auto }: { hasPassword: boolean
 }
 
 /** "Back up now": the whole database into today's folder. */
-export function ManualBackupButton({ disabled }: { disabled: boolean }) {
+export function ManualBackupButton() {
   const t = useTranslations("settings.backup")
   const tc = useTranslations("common")
   const [pending, start] = useTransition()
   return (
     <Button
       size="lg"
-      disabled={disabled || pending}
+      disabled={pending}
       onClick={() =>
         start(async () => {
           try {

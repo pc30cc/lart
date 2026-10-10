@@ -8,7 +8,6 @@ import { and, desc, eq, sql } from "drizzle-orm"
 import { db } from "@/db"
 import { admins, backups, courses, ledgerTransactions } from "@/db/schema"
 import { addPeriods, calendarFields, dayBefore, periodStart } from "@/lib/calendar"
-import { decrypt } from "@/lib/crypto"
 import { env } from "@/lib/env"
 import { UserError } from "@/lib/errors"
 import { formatDate, formatMonthYear, localized, zonedParts } from "@/lib/format"
@@ -17,9 +16,8 @@ import { getStorage } from "@/lib/storage"
 import { monthWorkbook } from "./excel"
 
 /**
- * Backups (Settings → Backup). Each is a ZIP locked with the backup password
- * (AES-256, opens in 7-Zip, WinRAR or macOS's Archive Utility with the
- * password), kept in the storage under backup/<Istanbul day>/:
+ * Backups (Settings → Backup). Each is a ZIP kept in the storage under
+ * backup/<Istanbul day>/ with an unguessable name:
  *   - the whole database (`pg_dump --format=custom`, restored with pg_restore),
  *     by itself once a day and by hand at any time (several a day go in the same folder);
  *   - the financial report of each Solar Hijri month, made once that month is over.
@@ -29,12 +27,6 @@ import { monthWorkbook } from "./excel"
 configure({ useWebWorkers: false })
 
 export type BackupKind = (typeof backups.kind.enumValues)[number]
-
-/** The backup password, or null while none is set (nothing is backed up then). */
-async function password(): Promise<string | null> {
-  const { passwordEnc } = await getSetting("backup")
-  return passwordEnc ? decrypt(passwordEnc) : null
-}
 
 /** The whole database as a pg_dump archive (custom format, compressed). */
 export function dumpDatabase(url: string = env.DATABASE_URL): Promise<Buffer> {
@@ -55,9 +47,9 @@ export function dumpDatabase(url: string = env.DATABASE_URL): Promise<Buffer> {
   })
 }
 
-/** A ZIP of `entries` locked with `secret` (AES-256). */
-export async function lockedZip(entries: { name: string; data: Buffer | string }[], secret: string): Promise<Buffer> {
-  const zip = new ZipWriter(new BlobWriter("application/zip"), { password: secret, encryptionStrength: 3 })
+/** A ZIP of `entries`. */
+export async function zipFiles(entries: { name: string; data: Buffer | string }[]): Promise<Buffer> {
+  const zip = new ZipWriter(new BlobWriter("application/zip"))
   for (const e of entries) {
     await zip.add(e.name, typeof e.data === "string" ? new TextReader(e.data) : new Uint8ArrayReader(new Uint8Array(e.data)))
   }
@@ -92,8 +84,6 @@ function backupPath(day: string, time: string, kind: BackupKind) {
  * manual), or the report of the Solar Hijri month starting `month` (monthly).
  */
 export async function createBackup(kind: BackupKind, by: string | null, month?: string) {
-  const secret = await password()
-  if (!secret) throw new UserError("settings.backup.errors.noPassword")
   const now = zonedParts(new Date())
   let entries: { name: string; data: Buffer | string }[]
   if (kind === "monthly") {
@@ -107,7 +97,7 @@ export async function createBackup(kind: BackupKind, by: string | null, month?: 
       { name: "README.txt", data: RESTORE_README },
     ]
   }
-  const file = await lockedZip(entries, secret)
+  const file = await zipFiles(entries)
   const path = backupPath(now.date, now.time, kind)
   const storage = await getStorage()
   await storage.put(path, file, "application/zip")
@@ -120,12 +110,12 @@ export async function createBackup(kind: BackupKind, by: string | null, month?: 
 
 /**
  * The scheduled part (pnpm jobs, every 15 minutes): when automatic backups are
- * on and a password is set, the day's database backup (from 03:00 Istanbul
+ * on, the day's database backup (from 03:00 Istanbul
  * time) and, once a Solar Hijri month is over, its report.
  */
 export async function runScheduledBackups(at: Date = new Date()) {
   const setting = await getSetting("backup")
-  if (!setting.auto || !setting.passwordEnc) return { made: 0, due: 0 }
+  if (!setting.auto) return { made: 0, due: 0 }
   // One run at a time (the app's timer, `pnpm jobs`, and two containers side by side while deploying).
   return db.transaction(async (tx) => {
     const [{ locked }] = (await tx.execute<{ locked: boolean }>(sql`select pg_try_advisory_xact_lock(${BACKUP_LOCK}) as locked`)).rows

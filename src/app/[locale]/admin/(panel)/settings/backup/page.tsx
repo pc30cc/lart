@@ -24,7 +24,7 @@ function size(bytes: number, locale: string) {
 }
 
 /**
- * Settings → Backup: the password every backup is locked with, the automatic
+ * Settings → Backup: the automatic
  * daily backup of the whole database and one by hand, the Persian Excel
  * reports (expenses, all the books, a workshop, a month) and every receipt as
  * one ZIP, and the backups kept (backup/<day>/ in the storage), by day.
@@ -40,14 +40,13 @@ export default async function BackupSettingsPage() {
     exportChoices(locale),
     getSetting("cdn"),
   ])
-  const hasPassword = Boolean(setting.passwordEnc)
   const days = Map.groupBy(backups, (b) => b.day)
 
   return (
     <>
       <BreadcrumbTitle title={ts("tabs.backup")} />
       <div className="space-y-10">
-        <BackupSettingsForm hasPassword={hasPassword} auto={setting.auto} />
+        <BackupSettingsForm auto={setting.auto} />
 
         <section className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:gap-8">
           <div className="space-y-1">
@@ -57,9 +56,9 @@ export default async function BackupSettingsPage() {
           <div className="bg-card ring-foreground/8 space-y-4 rounded-xl p-5 shadow-xs ring-1 md:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-muted-foreground text-sm text-pretty">
-                {hasPassword ? t("manual.where", { folder: "backup/" }) : t("manual.needPassword")}
+                {t("manual.where", { folder: "backup/" })}
               </p>
-              <ManualBackupButton disabled={!hasPassword} />
+              <ManualBackupButton />
             </div>
             {cdn.provider === "local" && <p className="bg-warning/10 rounded-lg p-3 text-sm text-pretty">{t("manual.localStorage")}</p>}
           </div>
