@@ -33,7 +33,7 @@
     "unauthorized": "Your session has ended. Please sign in again, then try once more.",
     "bad_request": "Something went wrong with this upload. Please try again.",
     "too_large": "This file is too big. The limit is {size}.",
-    "unsupported_type": "{kind, select, webVideo {This video can't be used here. Please choose an MP4 or WebM video (a MOV video from an iPhone needs to be saved as MP4 first).} video {This file isn't a video we can use. Please choose an MP4, MOV or WebM video.} other {This file isn't a photo we can use. Please choose a JPG, PNG, WebP or HEIC photo.}}",
+    "unsupported_type": "{kind, select, webVideo {This video can't be used here. Please choose an MP4 or WebM video (a MOV video from an iPhone needs to be saved as MP4 first).} video {This file isn't a video we can use. Please choose an MP4, MOV or WebM video.} receipt {This file can't be used. Please choose a photo (JPG, PNG, WebP or HEIC) or a PDF of the receipt.} other {This file isn't a photo we can use. Please choose a JPG, PNG, WebP or HEIC photo.}}",
     "heic_unsupported": "This HEIC photo can't be opened here. Please save it as a JPG and try again (on iPhone: Settings → Camera → Formats → Most Compatible).",
     "too_many_pixels": "This photo's dimensions are too large. Please use one under {megapixels, number} megapixels.",
     "invalid_image": "This photo seems to be damaged and can't be opened. Please try another file.",

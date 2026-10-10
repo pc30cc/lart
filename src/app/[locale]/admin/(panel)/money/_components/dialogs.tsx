@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  ArmchairIcon,
   ArrowDownToLineIcon,
   ArrowUpFromLineIcon,
   BanknoteIcon,
@@ -37,12 +38,14 @@ import {
   withdrawalSchema,
   type AdvanceValues,
   type ContributionValues,
+  type ExpenseFile,
   type ExpenseValues,
   type InstructorPaymentValues,
   type WithdrawalValues,
 } from "@/features/money/schema"
 import { formatLira } from "@/lib/money"
 import { DateField, PartnerField, SourceField, todayIso, type PartnerOption } from "./fields"
+import { ReceiptFiles } from "./receipt-files"
 
 type TriggerProps = { variant?: "default" | "outline" | "ghost"; size?: "lg" | "sm"; className?: string }
 
@@ -233,68 +236,85 @@ function WithdrawalForm({ partners, onDone }: { partners: PartnerOption[]; onDon
 
 const categoryKeys = ["venue", "materials", "catering", "advertising", "transport", "printing"] as const
 
-/** Add an expense of a workshop (`courseId`) or, without it, a general expense of the business. */
+/**
+ * Add an expense of a workshop (`courseId`) or, without it, a general expense
+ * of the business; `furnishing`: furniture or equipment for the studio (a
+ * general expense, with photos of what was bought). Receipts (photo or PDF)
+ * can be kept with any of them.
+ */
 export function ExpenseDialog({
   courseId = null,
   advance,
+  furnishing = false,
   trigger,
   blocked,
 }: {
   courseId?: string | null
   /** Advance the instructor still holds (workshop expenses can be paid from it). */
   advance?: number
+  furnishing?: boolean
   trigger?: TriggerProps
   blocked?: string | null
 }) {
   const t = useTranslations("money.expense")
-  const general = courseId === null
+  const kind = furnishing ? "furnishing" : courseId === null ? "general" : "workshop"
   return (
     <FormDialog
-      icon={ReceiptTextIcon}
-      label={general ? t("generalTrigger") : t("trigger")}
-      title={general ? t("generalTitle") : t("title")}
-      description={general ? t("generalDescription") : t("description")}
+      icon={furnishing ? ArmchairIcon : ReceiptTextIcon}
+      label={t(`${kind}.trigger`)}
+      title={t(`${kind}.title`)}
+      description={t(`${kind}.description`)}
       trigger={trigger}
       blocked={blocked}
     >
-      {(close) => <ExpenseForm courseId={courseId} advance={advance} onDone={close} />}
+      {(close) => <ExpenseForm courseId={furnishing ? null : courseId} advance={advance} furnishing={furnishing} onDone={close} />}
     </FormDialog>
   )
 }
 
+const furnishingKeys = ["furniture", "tools", "kitchen", "lighting", "decor", "electronics"] as const
+
 function ExpenseForm({
   courseId,
   advance,
+  furnishing,
   onDone,
 }: {
   courseId: string | null
   advance?: number
+  furnishing: boolean
   onDone: () => void
 }) {
   const t = useTranslations("money")
   const listId = useId()
+  const [uploading, setUploading] = useState(0)
   const { form, submit, pending } = useActionForm({
     schema: expenseSchema,
     action: recordExpense,
-    defaultValues: { courseId, category: "", occurredOn: todayIso(), source: "wallet" },
-    successMessage: t("expense.done"),
+    defaultValues: { courseId, category: "", occurredOn: todayIso(), source: "wallet", furnishing, files: [] },
+    successMessage: t(furnishing ? "expense.furnishing.done" : "expense.done"),
     onSuccess: onDone,
   })
+  const files = useWatch({ control: form.control, name: "files" }) ?? []
+  const addFile = (file: ExpenseFile) => form.setValue("files", [...(form.getValues("files") ?? []), file], { shouldDirty: true })
+  const removeFile = (path: string) =>
+    form.setValue("files", (form.getValues("files") ?? []).filter((f) => f.path !== path), { shouldDirty: true })
+  const busy = (delta: number) => setUploading((n) => n + delta)
   return (
-    <DialogForm form={form} submit={submit} pending={pending} submitLabel={t("forms.save")}>
+    <DialogForm form={form} submit={submit} pending={pending || uploading > 0} submitLabel={t("forms.save")}>
       <TextField<ExpenseValues>
         name="category"
-        label={t("forms.category")}
-        description={t("forms.categoryHint")}
+        label={furnishing ? t("forms.item") : t("forms.category")}
+        description={furnishing ? t("forms.itemHint") : t("forms.categoryHint")}
         required
         maxLength={100}
         list={listId}
         autoComplete="off"
       />
       <datalist id={listId}>
-        {categoryKeys.map((k) => (
-          <option key={k} value={t(`forms.categories.${k}`)} />
-        ))}
+        {furnishing
+          ? furnishingKeys.map((k) => <option key={k} value={t(`forms.furnishingKinds.${k}`)} />)
+          : categoryKeys.map((k) => <option key={k} value={t(`forms.categories.${k}`)} />)}
       </datalist>
       <AmountField<ExpenseValues> label={t("forms.amount")} />
       <DateField<ExpenseValues> name="occurredOn" label={t("forms.date")} />
@@ -303,6 +323,26 @@ function ExpenseForm({
       ) : (
         <FromWallet text={t("forms.fromWallet")} />
       )}
+      {furnishing && (
+        <ReceiptFiles
+          role="photo"
+          label={t("receipts.field.photos")}
+          hint={t("receipts.field.photosHint")}
+          value={files}
+          onAdd={addFile}
+          onRemove={removeFile}
+          onBusy={busy}
+        />
+      )}
+      <ReceiptFiles
+        role="receipt"
+        label={t("receipts.field.receipts")}
+        hint={t("receipts.field.receiptsHint")}
+        value={files}
+        onAdd={addFile}
+        onRemove={removeFile}
+        onBusy={busy}
+      />
     </DialogForm>
   )
 }

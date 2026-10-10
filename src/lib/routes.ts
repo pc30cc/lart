@@ -68,6 +68,7 @@ const table: [path: string, area: Area, access: Access, kind?: RouteKind][] = [
   ["/admin/money", "admin", "private"],
   ["/admin/money/partners", "admin", "private"],
   ["/admin/money/refunds", "admin", "private"],
+  ["/admin/money/receipts", "admin", "private"],
   ["/admin/money/reports", "admin", "private"],
   ["/admin/money/transactions", "admin", "private"],
   ["/admin/profile", "admin", "private"],

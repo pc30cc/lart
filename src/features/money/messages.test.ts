@@ -13,7 +13,7 @@ function keys(tree: Tree, prefix = ""): string[] {
   return Object.entries(tree).flatMap(([k, v]) => (typeof v === "string" ? [`${prefix}${k}`] : keys(v, `${prefix}${k}.`)))
 }
 
-const values = { name: "Ayşe", participant: "Deniz", paid: "₺1.500", refund: "₺750", amount: "₺1.250", count: 3, date: "1 Oct", kind: "Expense", title: "Candles", what: "Clay", total: "100%", rest: "10%", advance: "₺500", owed: "₺700", quarter: "1", season: "spring", year: "2026", from: "1", to: "20", pending: 2 }
+const values = { name: "Ayşe", participant: "Deniz", paid: "₺1.500", refund: "₺750", amount: "₺1.250", count: 3, date: "1 Oct", kind: "Expense", title: "Candles", what: "Clay", total: "100%", rest: "10%", advance: "₺500", owed: "₺700", quarter: "1", season: "spring", year: "2026", from: "1", to: "20", pending: 2, max: 10 }
 
 describe("money messages", () => {
   it("have the same keys in fa, tr and en", () => {

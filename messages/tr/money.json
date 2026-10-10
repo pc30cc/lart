@@ -103,7 +103,17 @@
     },
     "save": "Kaydet",
     "fromWallet": "Ortak kasadan ödenir.",
-    "toWallet": "Ortak kasaya geri döner."
+    "toWallet": "Ortak kasaya geri döner.",
+    "item": "Ne alındı",
+    "itemHint": "Örneğin «ahşap çalışma masası» veya «seramik fırını».",
+    "furnishingKinds": {
+      "furniture": "Masa ve sandalye",
+      "tools": "Çalışma aletleri",
+      "kitchen": "Mutfak eşyası",
+      "lighting": "Aydınlatma",
+      "decor": "Dekorasyon",
+      "electronics": "Elektrikli eşya"
+    }
   },
   "capital": {
     "contribution": {
@@ -122,13 +132,23 @@
     }
   },
   "expense": {
-    "trigger": "Gider ekle",
-    "title": "Atölye gideri ekleyin",
-    "description": "Bu atölye için gereken bir harcama: salon, malzeme veya ikram gibi.",
-    "generalTrigger": "Genel gider",
-    "generalTitle": "Genel gider ekleyin",
-    "generalDescription": "Tek bir atölyeye ait olmayan bir işletme gideri: web sitesi veya muhasebe gibi.",
-    "done": "Gider kaydedildi."
+    "done": "Gider kaydedildi.",
+    "workshop": {
+      "trigger": "Gider ekle",
+      "title": "Atölye gideri ekle",
+      "description": "Bu atölyenin ihtiyacı olan şeyler: mekân, malzeme veya ikram gibi."
+    },
+    "general": {
+      "trigger": "Genel gider",
+      "title": "Genel gider ekle",
+      "description": "Belirli bir atölyeye ait olmayan gider: web sitesi veya muhasebe gibi."
+    },
+    "furnishing": {
+      "trigger": "Demirbaş gideri",
+      "title": "Demirbaş gideri ekle",
+      "description": "Atölye için alınan eşya ve ekipman: masa, sandalye veya alet gibi. Eşyanın fotoğrafını ve fişini ayrı ayrı yükleyin.",
+      "done": "Demirbaş gideri kaydedildi."
+    }
   },
   "advance": {
     "paid": {
@@ -340,7 +360,8 @@
     "registrationEntry": "Bir kaydın ödemesi veya iadesi geri alınamaz. Bir ödemeyi geri almak için kaydı atölyenin kayıtlarından iptal edin; ödenmesi gereken iade İadeler listesinde görünür.",
     "withdrawalsClosed": "Ortak kasadan para çekme şimdilik kapalı (Ayarlar → Para).",
     "noSpender": "Masrafları ortak kasadan ödeyecek ortak henüz seçilmedi. Ayarlar → Para bölümünden seçin.",
-    "notSpender": "Masrafları ortak kasadan yalnızca {name} ödeyip kaydedebilir."
+    "notSpender": "Masrafları ortak kasadan yalnızca {name} ödeyip kaydedebilir.",
+    "fileGone": "Dosyalardan biri bulunamadı. Lütfen yeniden yükleyin."
   },
   "validation": {
     "amountPositive": "Lütfen sıfırdan büyük bir tutar girin.",
@@ -443,5 +464,41 @@
   "rules": {
     "noSpender": "Masrafları ortak kasadan ödeyecek ortak henüz seçilmedi. Ayarlar → Para bölümünden seçin.",
     "onlySpender": "Masraflar ortak kasadan {name} tarafından ödenir; bunu o kaydeder."
+  },
+  "receipts": {
+    "title": "Kayıtlı fişler",
+    "description": "Giderlerle birlikte kaydedilen tüm fişler, faturalar ve fotoğraflar.",
+    "tabs": {
+      "all": "Tümü",
+      "expenses": "Giderler",
+      "furnishing": "Demirbaş"
+    },
+    "empty": {
+      "title": "Henüz fiş yok",
+      "description": "Bir gider veya demirbaş gideri kaydederken fişin fotoğrafını ya da PDF'ini eklediğinizde burada görünür."
+    },
+    "role": {
+      "receipt": "Fiş",
+      "photo": "Eşya fotoğrafı"
+    },
+    "kind": {
+      "general": "Genel gider",
+      "workshop": "Atölye gideri",
+      "furnishing": "Demirbaş"
+    },
+    "reversed": "İptal edildi",
+    "by": "Kaydeden: {name}",
+    "open": "Dosyayı aç",
+    "pdf": "PDF",
+    "unavailable": "Dosyaya ulaşılamıyor",
+    "field": {
+      "receipts": "Fiş veya fatura",
+      "receiptsHint": "Fişin fotoğrafı ya da PDF dosyası. Birden fazla dosya ekleyebilirsiniz.",
+      "photos": "Eşyanın fotoğrafı",
+      "photosHint": "Alınan şeyin fotoğrafı.",
+      "add": "Ekle",
+      "remove": "{name} kaldır",
+      "tooMany": "Bir gider için en fazla {max} dosya."
+    }
   }
 }

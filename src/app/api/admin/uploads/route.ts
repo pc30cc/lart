@@ -54,7 +54,7 @@ const fail = (code: UploadErrorCode) => Response.json({ error: code }, { status:
  */
 async function folderOf(purpose: UploadPurpose, fields: Fields, admin: AdminSession["admin"]): Promise<string | null> {
   const { courseId, instructorId, folder } = fields
-  if (purpose === "site_image" || purpose === "site_video") {
+  if (purpose === "site_image" || purpose === "site_video" || purpose === "receipt") {
     return courseId || instructorId || folder !== undefined ? null : ""
   }
   if (purpose === "admin_photo" || purpose === "partner_portrait" || purpose === "watermark_logo") {

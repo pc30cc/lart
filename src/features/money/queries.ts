@@ -4,7 +4,7 @@ import { alias } from "drizzle-orm/pg-core"
 
 import { likePattern, type TableParams } from "@/components/admin/data-table/params"
 import { db } from "@/db"
-import { admins, contracts, courses, instructors, ledgerLines, ledgerTransactions, type LocalizedText } from "@/db/schema"
+import { admins, contracts, courses, expenseFiles, instructors, ledgerLines, ledgerTransactions, type LocalizedText } from "@/db/schema"
 import { requireAdmin } from "@/lib/auth/admin"
 import { splitByShares } from "@/lib/money"
 import { getSetting } from "@/lib/settings"
@@ -393,3 +393,66 @@ export function describeEntry(entry: Entry) {
 }
 
 export type WorkshopEntry = ReturnType<typeof describeEntry>
+
+// ─── Receipts ─────────────────────────────────────────────────────────────────
+
+/** The receipts page's tabs: everything, workshop and general expenses, or furnishing. */
+export const receiptGroups = ["all", "expenses", "furnishing"] as const
+export type ReceiptGroup = (typeof receiptGroups)[number]
+export const RECEIPTS_PER_PAGE = 48
+
+/**
+ * The files kept with expenses (Money → Receipts), newest expense first, with
+ * what each expense was: its subject, amount, date, workshop, who recorded it
+ * and whether it was reversed since.
+ */
+export async function listReceipts(group: ReceiptGroup, page: number) {
+  await requireAdmin()
+  const where =
+    group === "furnishing" ? eq(t.furnishing, true) : group === "expenses" ? eq(t.furnishing, false) : undefined
+  const reversal = alias(ledgerTransactions, "reversal")
+  const [rows, [{ total }], counts, url] = await Promise.all([
+    db
+      .select({
+        id: expenseFiles.id,
+        path: expenseFiles.path,
+        contentType: expenseFiles.contentType,
+        role: expenseFiles.role,
+        transactionId: t.id,
+        subject: t.description,
+        occurredOn: t.occurredOn,
+        furnishing: t.furnishing,
+        courseId: t.courseId,
+        courseTitle: courses.title,
+        recordedBy: creator.name,
+        reversed: sql<boolean>`${reversal.id} is not null`,
+        // The expense's amount: its debit to the workshop's or the general expenses.
+        amount: sql<number>`(select coalesce(sum(l.amount), 0) from ${ledgerLines} l where l.transaction_id = ${t.id} and l.account in ('course_expenses', 'general_expenses'))`.mapWith(Number),
+      })
+      .from(expenseFiles)
+      .innerJoin(t, eq(t.id, expenseFiles.transactionId))
+      .leftJoin(courses, eq(courses.id, t.courseId))
+      .leftJoin(creator, eq(creator.id, t.createdBy))
+      .leftJoin(reversal, eq(reversal.reversalOf, t.id))
+      .where(where)
+      .orderBy(desc(t.occurredOn), desc(t.createdAt), asc(expenseFiles.role), asc(expenseFiles.createdAt))
+      .limit(RECEIPTS_PER_PAGE)
+      .offset((Math.max(1, page) - 1) * RECEIPTS_PER_PAGE),
+    db.select({ total: count() }).from(expenseFiles).innerJoin(t, eq(t.id, expenseFiles.transactionId)).where(where),
+    db
+      .select({ furnishing: t.furnishing, n: count() })
+      .from(expenseFiles)
+      .innerJoin(t, eq(t.id, expenseFiles.transactionId))
+      .groupBy(t.furnishing),
+    publicUrls(),
+  ])
+  const furnishing = counts.find((c) => c.furnishing)?.n ?? 0
+  const expenses = counts.find((c) => !c.furnishing)?.n ?? 0
+  return {
+    rows: rows.map(({ path, ...r }) => ({ ...r, url: url(path), pdf: r.contentType === "application/pdf" })),
+    total,
+    counts: { all: furnishing + expenses, expenses, furnishing } satisfies Record<ReceiptGroup, number>,
+  }
+}
+
+export type ReceiptRow = Awaited<ReturnType<typeof listReceipts>>["rows"][number]

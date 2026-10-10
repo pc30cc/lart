@@ -34,6 +34,7 @@ const VIDEO_EXT = /\.(mp4|m4v|mov|webm)$/i
 
 export const isVideoFile = (file: File) => VIDEO_TYPE.test(file.type) || VIDEO_EXT.test(file.name)
 const isImageFile = (file: File) => IMAGE_TYPE.test(file.type) || IMAGE_EXT.test(file.name)
+const isPdfFile = (file: File) => file.type === "application/pdf" || /\.pdf$/i.test(file.name)
 
 const VIDEO_EXTS: Record<VideoType, RegExp> = { mp4: /\.(mp4|m4v)$/i, mov: /\.mov$/i, webm: /\.webm$/i }
 /** Whether the video's type or name is one of `formats`. */
@@ -42,7 +43,9 @@ const isVideoOf = (file: File, formats: readonly VideoType[]) =>
 
 /** Quick checks before sending anything; the server checks the real content again. */
 export function checkFile(file: File, purpose: UploadPurpose): ClientUploadError | null {
-  const ok = isImagePurpose(purpose) ? isImageFile(file) : isVideoFile(file) && isVideoOf(file, videoFormats[purpose])
+  const ok = isImagePurpose(purpose)
+    ? isImageFile(file) || (purpose === "receipt" && isPdfFile(file))
+    : isVideoFile(file) && isVideoOf(file, videoFormats[purpose])
   if (!file.size || !ok) return "unsupported_type"
   if (file.size > maxUploadBytes(purpose)) return "too_large"
   return null
@@ -53,7 +56,7 @@ export function checkFile(file: File, purpose: UploadPurpose): ClientUploadError
  * every browser plays (MP4, WebM).
  */
 export const fileKind = (purpose: UploadPurpose) =>
-  isImagePurpose(purpose) ? "image" : videoFormats[purpose].includes("mov") ? "video" : "webVideo"
+  purpose === "receipt" ? "receipt" : isImagePurpose(purpose) ? "image" : videoFormats[purpose].includes("mov") ? "video" : "webVideo"
 
 /** Upload routes: the super-admin panel's (default) and the instructor panel's (profile photo only). */
 export type UploadEndpoint = "/api/admin/uploads" | "/api/instructor/uploads"

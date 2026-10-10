@@ -71,6 +71,19 @@ describe("uploadPath", () => {
 })
 
 describe("storeImage", () => {
+  it("keeps a receipt: a photo resized to webp, a PDF as it is, in receipts/", async () => {
+    const photo = await storeImage({ storage, purpose: "receipt", file: toStream(await jpeg(3000, 4000)), watermark: noWatermark })
+    expect(photo).toMatchObject({ width: 1800, height: 2400 })
+    expect(photo.path).toMatch(/^receipts\/[\w-]{22}\.webp$/)
+    const pdf = Buffer.from("%PDF-1.4\n1 0 obj << >> endobj\ntrailer << >>\n%%EOF\n")
+    const doc = await storeImage({ storage, purpose: "receipt", file: toStream(pdf), watermark: noWatermark })
+    expect(doc.path).toMatch(/^receipts\/[\w-]{22}\.pdf$/)
+    expect(await read(doc.path)).toEqual(pdf)
+    // Only a receipt may be a PDF, and anything else is still refused.
+    await expect(storeImage({ storage, purpose: "course_sample", file: toStream(pdf), watermark: noWatermark })).rejects.toMatchObject({ code: "unsupported_type" })
+    await expect(storeImage({ storage, purpose: "receipt", file: toStream(Buffer.from("<html>")), watermark: noWatermark })).rejects.toMatchObject({ code: "unsupported_type" })
+  })
+
   it("stores a processed image in the workshop's folder", async () => {
     const result = await storeImage({
       storage,

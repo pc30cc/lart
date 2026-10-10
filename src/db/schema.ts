@@ -424,6 +424,8 @@ export const ledgerTransactions = pgTable("ledger_transactions", {
   registrationId: uuid("registration_id").references(() => registrations.id),
   /** Set on a reversal: the transaction it cancels. */
   reversalOf: uuid("reversal_of").unique(),
+  /** A general expense spent on the studio's furniture and equipment ("Furnishing" in Money). */
+  furnishing: boolean("furnishing").notNull().default(false),
   createdBy: uuid("created_by").references(() => admins.id),
   createdAt: createdAt(),
 }, (t) => [
@@ -432,6 +434,24 @@ export const ledgerTransactions = pgTable("ledger_transactions", {
   // A registration is paid once: the app checks it under a lock, the database makes sure.
   uniqueIndex("ledger_tx_one_payment").on(t.registrationId).where(sql`${t.kind} = 'registration_payment'`),
 ])
+
+export const expenseFileRole = pgEnum("expense_file_role", ["receipt", "photo"])
+
+/**
+ * The files kept with an expense (Money → Receipts): its receipts or invoices
+ * (a photo or a PDF) and, for furnishing, photos of what was bought. Stored
+ * with the expense and never changed; they go with it only when the
+ * transactions are deleted (Settings → Danger zone).
+ */
+export const expenseFiles = pgTable("expense_files", {
+  id: id(),
+  transactionId: uuid("transaction_id").notNull().references(() => ledgerTransactions.id, { onDelete: "cascade" }),
+  role: expenseFileRole("role").notNull(),
+  path: text("path").notNull().unique(),
+  contentType: text("content_type").notNull(),
+  createdBy: uuid("created_by").references(() => admins.id),
+  createdAt: createdAt(),
+}, (t) => [index("expense_files_tx_idx").on(t.transactionId)])
 
 /** The lines of each transaction sum to zero (deferred trigger). */
 export const ledgerLines = pgTable("ledger_lines", {

@@ -23,7 +23,8 @@
     "templates": "Şablonlar",
     "settings": "Ayarlar",
     "audit": "İşlem geçmişi",
-    "students": "Öğrenciler"
+    "students": "Öğrenciler",
+    "receipts": "Kayıtlı fişler"
   },
   "shell": {
     "toggleSidebar": "Menüyü göster veya gizle",

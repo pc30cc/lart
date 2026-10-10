@@ -48,6 +48,7 @@ export default async function WalletPage() {
               <ContributionDialog partners={partners} trigger={{ variant: "default" }} />
               {rules.withdrawals && <WithdrawalDialog partners={partners} />}
               <ExpenseDialog blocked={spendBlockText(rules, t)} />
+              <ExpenseDialog furnishing blocked={spendBlockText(rules, t)} />
             </>
           )
         }

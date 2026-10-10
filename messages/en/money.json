@@ -103,7 +103,17 @@
     },
     "save": "Save",
     "fromWallet": "Paid from the shared wallet.",
-    "toWallet": "Goes back into the shared wallet."
+    "toWallet": "Goes back into the shared wallet.",
+    "item": "What was bought",
+    "itemHint": "For example \"wooden work table\" or \"pottery kiln\".",
+    "furnishingKinds": {
+      "furniture": "Tables and chairs",
+      "tools": "Tools",
+      "kitchen": "Kitchen items",
+      "lighting": "Lighting",
+      "decor": "Decoration",
+      "electronics": "Electrical items"
+    }
   },
   "capital": {
     "contribution": {
@@ -122,13 +132,23 @@
     }
   },
   "expense": {
-    "trigger": "Add expense",
-    "title": "Add a workshop expense",
-    "description": "Something this workshop needed, like the venue, materials or catering.",
-    "generalTrigger": "General expense",
-    "generalTitle": "Add a general expense",
-    "generalDescription": "A cost of the business that belongs to no single workshop, like the website or accounting.",
-    "done": "Expense saved."
+    "done": "Expense recorded.",
+    "workshop": {
+      "trigger": "Add expense",
+      "title": "Add a workshop expense",
+      "description": "Something this workshop needed, like the venue, materials or catering."
+    },
+    "general": {
+      "trigger": "General expense",
+      "title": "Add a general expense",
+      "description": "An expense not tied to one workshop, like the website or accounting."
+    },
+    "furnishing": {
+      "trigger": "Furnishing expense",
+      "title": "Add a furnishing expense",
+      "description": "Furniture and equipment bought for the studio, like a table, chairs or tools. Upload a photo of the item and its receipt separately.",
+      "done": "Furnishing expense recorded."
+    }
   },
   "advance": {
     "paid": {
@@ -340,7 +360,8 @@
     "registrationEntry": "A registration’s payment or refund can’t be reversed. To undo a payment, cancel the registration in the workshop’s registrations: the refund it is owed then appears in Refunds.",
     "withdrawalsClosed": "Taking money out of the shared wallet is closed for now (Settings → Money).",
     "noSpender": "No partner has been chosen yet to pay costs from the shared wallet. Choose one in Settings → Money.",
-    "notSpender": "Only {name} can pay and record costs from the shared wallet."
+    "notSpender": "Only {name} can pay and record costs from the shared wallet.",
+    "fileGone": "One of the files could not be found. Please upload it again."
   },
   "validation": {
     "amountPositive": "Please enter an amount above zero.",
@@ -443,5 +464,41 @@
   "rules": {
     "noSpender": "No partner has been chosen yet to pay costs from the shared wallet. Choose one in Settings → Money.",
     "onlySpender": "Costs are paid from the shared wallet by {name}; they record this."
+  },
+  "receipts": {
+    "title": "Receipts",
+    "description": "Every receipt, invoice and photo kept with an expense.",
+    "tabs": {
+      "all": "All",
+      "expenses": "Expenses",
+      "furnishing": "Furnishing"
+    },
+    "empty": {
+      "title": "No receipts yet",
+      "description": "When you add a photo or PDF of the receipt while recording an expense or a furnishing expense, it shows up here."
+    },
+    "role": {
+      "receipt": "Receipt",
+      "photo": "Item photo"
+    },
+    "kind": {
+      "general": "General expense",
+      "workshop": "Workshop expense",
+      "furnishing": "Furnishing"
+    },
+    "reversed": "Reversed",
+    "by": "Recorded by {name}",
+    "open": "Open file",
+    "pdf": "PDF",
+    "unavailable": "File unavailable",
+    "field": {
+      "receipts": "Receipt or invoice",
+      "receiptsHint": "A photo or PDF of the receipt. You can add several files.",
+      "photos": "Item photo",
+      "photosHint": "A photo of what was bought.",
+      "add": "Add",
+      "remove": "Remove {name}",
+      "tooMany": "At most {max} files per expense."
+    }
   }
 }

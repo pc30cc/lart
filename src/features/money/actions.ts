@@ -4,9 +4,10 @@ import { and, eq, sum } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 import { db } from "@/db"
-import { admins, ledgerLines } from "@/db/schema"
+import { admins, expenseFiles, ledgerLines } from "@/db/schema"
 import { adminAction, UserError } from "@/lib/action"
 import { getSetting } from "@/lib/settings"
+import { exists, mediaContentType } from "@/lib/storage"
 import { activePartners, closeCourse } from "./closing"
 import {
   postAdvance,
@@ -90,8 +91,11 @@ export const recordWithdrawal = adminAction(withdrawalSchema, async ({ partnerId
 })
 
 /** An expense of a workshop (`courseId`) or of the business, paid from the wallet or out of the advance; recorded by the spender. */
-export const recordExpense = adminAction(expenseSchema, async ({ courseId, category, amount, occurredOn, source }, ctx) => {
+export const recordExpense = adminAction(expenseSchema, async ({ courseId, category, amount, occurredOn, source, furnishing, files }, ctx) => {
   await assertSpender(ctx.admin.id)
+  // Only files that were really uploaded (a form left open may hold one a failed save never kept).
+  const stored = await Promise.all(files.map((f) => exists(f.path)))
+  if (stored.includes(false)) throw new UserError("money.errors.fileGone", { field: "files" })
   const id = await db.transaction(async (tx) => {
     const id = await postExpense(tx, {
       courseId,
@@ -99,14 +103,26 @@ export const recordExpense = adminAction(expenseSchema, async ({ courseId, categ
       occurredOn,
       description: category,
       source,
+      furnishing,
       createdBy: ctx.admin.id,
     })
+    if (files.length) {
+      await tx.insert(expenseFiles).values(
+        files.map((f) => ({
+          transactionId: id,
+          role: f.role,
+          path: f.path,
+          contentType: mediaContentType(f.path) ?? "application/octet-stream",
+          createdBy: ctx.admin.id,
+        })),
+      )
+    }
     await ctx.audit(
       {
         action: "money.expense",
         entity: "ledger_transaction",
         entityId: id,
-        data: { courseId, category, amount, occurredOn, paidFrom: source },
+        data: { courseId, category, amount, occurredOn, paidFrom: source, furnishing, files: files.map((f) => f.path) },
       },
       tx,
     )

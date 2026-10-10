@@ -20,6 +20,7 @@ const frames: Record<ImagePurpose, string> = {
   // The Our story page frames it 4:5.
   partner_portrait: "aspect-[4/5] w-full max-w-56",
   site_image: "aspect-[3/2] w-full",
+  receipt: "aspect-[3/4] w-full max-w-40",
 }
 
 /** Checkerboard behind transparent logos, in the current text colour (works in light and dark). */

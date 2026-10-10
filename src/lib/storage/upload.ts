@@ -35,6 +35,7 @@ const layouts: Record<UploadPurpose, (name: string) => [dir: string, prefix: str
   // The home page's photos and video (Settings → Home page).
   site_image: () => ["site", "img-"],
   site_video: () => ["site", "video-"],
+  receipt: () => ["receipts", ""],
 }
 
 /**
@@ -68,12 +69,21 @@ export async function storeImage({
   folder?: string
 }): Promise<UploadResult> {
   const input = Buffer.from(await new Response(file).arrayBuffer())
+  // A receipt may be a PDF: kept as it is (a document, not a picture), recognised by its header.
+  if (purpose === "receipt" && isPdf(input)) {
+    const path = uploadPath(purpose, folder, "pdf")
+    await storage.put(path, input, "application/pdf")
+    return { path, url: storage.publicUrl(path) }
+  }
   const mark = purpose === "gallery_photo" ? { settings: watermark, logo: await readLogo(storage, watermark.logoPath) } : null
   const image = await processImage(input, purpose, mark)
   const path = uploadPath(purpose, folder, image.ext)
   await storage.put(path, image.data, image.contentType)
   return { path, url: storage.publicUrl(path), width: image.width, height: image.height }
 }
+
+/** A PDF starts with "%PDF-" (a few bytes of junk before it are allowed by readers, not here). */
+export const isPdf = (input: Buffer) => input.subarray(0, 5).toString("latin1") === "%PDF-"
 
 async function readLogo(storage: Storage, logoPath: string | null): Promise<Buffer> {
   if (!logoPath) throw new UploadError("watermark_missing")

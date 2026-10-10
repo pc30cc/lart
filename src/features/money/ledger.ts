@@ -160,7 +160,7 @@ export const booksClosed = (course: { status: string; closedAt: Date | null }) =
  * Post one balanced transaction. Must run inside `db.transaction`: the
  * database checks the balance at commit. Returns the transaction id.
  */
-export async function postTransaction(tx: Tx, p: Posting & { reversalOf?: string }): Promise<string> {
+export async function postTransaction(tx: Tx, p: Posting & { reversalOf?: string; furnishing?: boolean }): Promise<string> {
   checkPosting(p)
 
   const partnerIds = [...new Set(p.lines.flatMap((l) => (l.partnerId ? [l.partnerId] : [])))]
@@ -190,6 +190,7 @@ export async function postTransaction(tx: Tx, p: Posting & { reversalOf?: string
       courseId: p.courseId ?? null,
       registrationId: p.registrationId ?? null,
       reversalOf: p.reversalOf ?? null,
+      furnishing: p.furnishing ?? false,
       createdBy: p.createdBy,
     })
     .returning({ id: ledgerTransactions.id })
@@ -259,7 +260,7 @@ export function postWithdrawal(tx: Tx, input: Common & { partnerId: string; amou
  */
 export async function postExpense(
   tx: Tx,
-  input: Common & { courseId?: string | null; amount: number; source: "wallet" | "advance" },
+  input: Common & { courseId?: string | null; amount: number; source: "wallet" | "advance"; furnishing?: boolean },
 ) {
   positive(input.amount)
   const { source, courseId = null } = input
@@ -269,6 +270,7 @@ export async function postExpense(
     const { advance } = await courseBalances(tx, courseId)
     if (input.amount > advance) throw new UserError("money.errors.moreThanAdvance", { field: "amount" })
   }
+  if (input.furnishing && (courseId || source !== "wallet")) throw new LedgerError("furnishing is a general expense from the wallet")
   return postTransaction(tx, {
     ...input,
     kind: "expense",

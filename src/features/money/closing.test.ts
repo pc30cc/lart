@@ -3,7 +3,7 @@ import { and, desc, eq, inArray, ne, sql } from "drizzle-orm"
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { db } from "@/db"
-import { admins, auditLog, ledgerLines, ledgerTransactions, registrations } from "@/db/schema"
+import { admins, auditLog, expenseFiles, ledgerLines, ledgerTransactions, registrations } from "@/db/schema"
 import { cancelRegistration, recordPayment } from "@/features/registrations/admin/payments"
 import { splitByShares } from "@/lib/money"
 import en from "../../../messages/en/money.json"
@@ -11,7 +11,7 @@ import { setSetting } from "@/lib/settings"
 import { closeWorkshop, payInstructor, recordAdvance, recordContribution, recordExpense, recordWithdrawal, reverseEntry } from "./actions"
 import { closingPlan, instructorFee, prepareClosing, projectedFees, workshopsToClose, type Partner } from "./closing"
 import { courseBalances, partnerCapitals, postRegistrationPayment, postRegistrationRefund, today } from "./ledger"
-import { isReversible, listPartnerAccounts, listTransactions } from "./queries"
+import { isReversible, listPartnerAccounts, listReceipts, listTransactions } from "./queries"
 import { partnerStatement, profitAndLoss, workshopResults } from "./reports"
 import { addRegistration, courseRow, makeAdmin, makeCourse, makeWorld, retireAdmins, type World } from "./testing"
 
@@ -28,6 +28,11 @@ vi.mock("next-intl/server", async () => {
   }
 })
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn(), refresh: vi.fn() }))
+// Receipts: a path with "missing" in it was never uploaded.
+vi.mock("@/lib/storage", async (original) => ({
+  ...(await original<typeof import("@/lib/storage")>()),
+  exists: async (path: string) => !path.includes("missing"),
+}))
 
 const session = vi.hoisted(() => ({
   sessionId: "test",
@@ -252,6 +257,40 @@ describe("money rules (Settings → Money)", () => {
       session.admin.id = p1.id
       await setSetting("money", { withdrawals: false, spenderId: p1.id })
     }
+  })
+})
+
+describe("receipts and furnishing", () => {
+  const entry = () => ({ amount: 2500, occurredOn: yesterday(), source: "wallet" as const, courseId: null })
+  const file = (name: string, role: "receipt" | "photo" = "receipt", ext = "webp") => ({ path: `receipts/${name}-${randomUUID().slice(0, 8)}.${ext}`, role })
+
+  it("keeps receipts (photo or PDF) with an expense, and photos with furnishing", async () => {
+    const receipt = file("r1", "receipt", "pdf")
+    const { id } = ok(await recordExpense({ ...entry(), category: "Printer ink", files: [receipt] }))
+    expect(await db.select({ path: expenseFiles.path, role: expenseFiles.role, contentType: expenseFiles.contentType }).from(expenseFiles).where(eq(expenseFiles.transactionId, id))).toEqual([
+      { path: receipt.path, role: "receipt", contentType: "application/pdf" },
+    ])
+
+    const photo = file("p1", "photo")
+    const bill = file("b1")
+    const furnished = ok(await recordExpense({ ...entry(), category: "Work table", furnishing: true, files: [photo, bill] }))
+    const [row] = await db.select({ furnishing: ledgerTransactions.furnishing }).from(ledgerTransactions).where(eq(ledgerTransactions.id, furnished.id))
+    expect(row.furnishing).toBe(true)
+
+    const gallery = await listReceipts("furnishing", 1)
+    expect(gallery.rows.filter((r) => r.transactionId === furnished.id).map((r) => [r.role, r.subject, r.amount])).toEqual([
+      ["receipt", "Work table", 2500],
+      ["photo", "Work table", 2500],
+    ])
+    expect((await listReceipts("expenses", 1)).rows.some((r) => r.transactionId === furnished.id)).toBe(false)
+  })
+
+  it("refuses files that were never uploaded, item photos without furnishing, and furnishing of a workshop", async () => {
+    expect(await recordExpense({ ...entry(), category: "Ink", files: [file("missing")] })).toMatchObject({ ok: false, error: en.errors.fileGone })
+    expect((await recordExpense({ ...entry(), category: "Ink", files: [file("p", "photo")] })).ok).toBe(false)
+    expect((await recordExpense({ ...entry(), category: "Ink", files: [{ path: "workshops/x/cover-a.webp", role: "receipt" }] })).ok).toBe(false)
+    const courseId = await makeCourse(world, p1.id, { status: "published" })
+    expect((await recordExpense({ ...entry(), courseId, category: "Chairs", furnishing: true })).ok).toBe(false)
   })
 })
 

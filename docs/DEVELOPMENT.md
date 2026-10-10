@@ -114,6 +114,16 @@ drizzle/                        SQL migrations (generated + custom guards)
   or closes withdrawals (closed by default: `recordCapital` refuses one and
   the Withdraw buttons are hidden). The pages show a locked dialog
   (`blocked`, `spendBlockText`) to anyone else.
+- Receipts: an expense keeps its files in `expense_files` (role `receipt`:
+  a receipt or invoice, photo or PDF; `photo`: what was bought, furnishing
+  only), uploaded with purpose `receipt` (`receipts/<random>.webp|pdf`: a
+  photo is resized to 2400 px, a PDF is kept as it is, checked by its
+  `%PDF-` header) and saved by `recordExpense` (only paths that exist in
+  storage). Furnishing (`ledger_transactions.furnishing`, the "Furnishing
+  expense" button) is a general expense from the wallet, kept apart in Money →
+  Receipts (`listReceipts`, tabs All / Expenses / Furnishing). The files go
+  with their transaction only in a factory reset (cascade); the stored files
+  stay.
 - Closing a workshop credits each partner's share of its result to their
   capital. Money → Partners lists it per workshop on each card
   (`listPartnerAccounts` → `workshops`, latest first, a reversed closing
@@ -278,6 +288,7 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 | `/admin/money` | admin | private | |
 | `/admin/money/partners` | admin | private | |
 | `/admin/money/refunds` | admin | private | |
+| `/admin/money/receipts` | admin | private | |
 | `/admin/money/reports` | admin | private | |
 | `/admin/money/transactions` | admin | private | |
 | `/admin/profile` | admin | private | |
@@ -1473,6 +1484,7 @@ holds a seat, not paid yet; `confirmed` = paid (or a free workshop);
 | `/admin/workshops/[id]/registrations` | record a payment, cancel, change refund, CSV export (`features/registrations/admin`) |
 | `/admin/registrations` | every workshop's registrations: tabs not paid yet (default) / paid / cancelled / all, search by participant / member / email / phone, record a payment, cancel, change refund |
 | `/admin/money/refunds` | refunds owed / paid back; "Change refund", "Mark as refunded" |
+| `/admin/money/receipts` | the receipts gallery: every file kept with an expense (receipts, invoices, item photos), tabs All / Expenses / Furnishing |
 | `/admin/settings/payments` | which ways are on (cash, transfer with holder / bank / IBAN / note, online with a note) |
 
 - **Counting.** "Registered" is everyone with an active registration, paid or

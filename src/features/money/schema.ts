@@ -74,6 +74,16 @@ export const withdrawalSchema = z.object({
 })
 export type WithdrawalValues = z.input<typeof withdrawalSchema>
 
+/** Files kept with one expense, at most. */
+export const MAX_EXPENSE_FILES = 10
+
+/** A receipt (photo or PDF) or a photo of what was bought, uploaded with purpose "receipt". */
+export const expenseFileSchema = z.object({
+  path: z.string().regex(/^receipts\/[A-Za-z0-9_-]{1,64}\.(webp|pdf)$/),
+  role: z.enum(["receipt", "photo"]),
+})
+export type ExpenseFile = z.infer<typeof expenseFileSchema>
+
 export const expenseSchema = z
   .object({
     /** null: a general expense of the business. */
@@ -83,8 +93,15 @@ export const expenseSchema = z
     occurredOn: entryDate(),
     /** "wallet", or "advance": spent by the instructor out of the advance (workshop expenses only). */
     source: z.enum(["wallet", "advance"], { error: "money.validation.chooseSource" }),
+    /** Furniture or equipment for the studio: a general expense, from the wallet. */
+    furnishing: z.boolean().default(false),
+    files: z.array(expenseFileSchema).max(MAX_EXPENSE_FILES).default([]),
   })
   .refine((v) => v.source !== "advance" || v.courseId, { path: ["source"], error: "money.validation.chooseSource" })
+  .refine((v) => !v.furnishing || (v.courseId === null && v.source === "wallet"), { path: ["furnishing"] })
+  // Photos of the thing bought belong to furnishing; every expense can keep receipts.
+  .refine((v) => v.furnishing || v.files.every((f) => f.role === "receipt"), { path: ["files"] })
+  .refine((v) => new Set(v.files.map((f) => f.path)).size === v.files.length, { path: ["files"] })
 export type ExpenseValues = z.input<typeof expenseSchema>
 
 export const advanceSchema = z.object({

@@ -23,7 +23,8 @@
     "templates": "Templates",
     "settings": "Settings",
     "audit": "Activity log",
-    "students": "Students"
+    "students": "Students",
+    "receipts": "Receipts"
   },
   "shell": {
     "toggleSidebar": "Show or hide the menu",

@@ -14,6 +14,8 @@ export const imagePurposes = [
   "admin_photo",
   "partner_portrait",
   "site_image",
+  // A receipt or invoice kept with an expense (Money → Receipts): a photo, or a PDF stored as it is.
+  "receipt",
 ] as const
 export type ImagePurpose = (typeof imagePurposes)[number]
 
@@ -53,6 +55,8 @@ export const VIDEO_PART_BYTES = 8 * MB
 
 /** For `<input accept>`. The server checks the real type from the content. */
 export const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,.heic,.heif"
+/** A receipt: a photo, or a PDF. */
+export const RECEIPT_ACCEPT = `${IMAGE_ACCEPT},application/pdf,.pdf`
 export const VIDEO_ACCEPT = "video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
 /** `<input accept>` of each video purpose. */
 export const videoAccept: Record<VideoPurpose, string> = {
@@ -144,6 +148,7 @@ export function isSafePath(path: unknown): path is string {
 
 const contentTypes: Record<string, string> = {
   webp: "image/webp",
+  pdf: "application/pdf",
   png: "image/png",
   jpg: "image/jpeg",
   avif: "image/avif",
