@@ -3,6 +3,8 @@ import { getTranslations } from "next-intl/server"
 
 import { LocaleSwitcher } from "@/components/locale-switcher"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { getSetting } from "@/lib/settings"
+import { LogoPicture } from "@/themes/logo"
 
 /** The calm, centred card shared by the sign-in pages (sign in, forgot password, new password). */
 export async function AuthShell({
@@ -16,7 +18,7 @@ export async function AuthShell({
   subtitle?: React.ReactNode
   children: React.ReactNode
 }) {
-  const t = await getTranslations("auth.login")
+  const [t, logo] = await Promise.all([getTranslations("auth.login"), getSetting("logo")])
 
   return (
     <main className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden px-4 py-12">
@@ -32,9 +34,13 @@ export async function AuthShell({
 
       <div className="animate-in fade-in-0 zoom-in-95 relative w-full max-w-sm duration-500">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <span className="from-primary to-chart-5 text-primary-foreground flex size-12 items-center justify-center rounded-2xl bg-linear-to-br text-lg font-bold shadow-md">
-            {brand.trim().charAt(0).toUpperCase()}
-          </span>
+          {logo ? (
+            <LogoPicture logo={logo} className="text-foreground mb-2 h-12 w-auto max-w-[70%]" />
+          ) : (
+            <span className="from-primary to-chart-5 text-primary-foreground flex size-12 items-center justify-center rounded-2xl bg-linear-to-br text-lg font-bold shadow-md">
+              {brand.trim().charAt(0).toUpperCase()}
+            </span>
+          )}
           <div className="space-y-1">
             <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
             {subtitle && <p className="text-muted-foreground text-sm text-balance">{subtitle}</p>}

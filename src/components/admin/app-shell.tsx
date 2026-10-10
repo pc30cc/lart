@@ -26,7 +26,9 @@ import {
 } from "@/components/ui/sidebar"
 import { Link, usePathname } from "@/i18n/navigation"
 import { isRtl } from "@/i18n/routing"
+import type { LogoData } from "@/lib/logo"
 import { cn } from "@/lib/utils"
+import { LogoPicture } from "@/themes/logo"
 
 /** The signed-in partner in the header: `photoUrl` is the photo's CDN URL (`publicUrls()`), null for initials. */
 export type ShellAdmin = { name: string; email: string; photoUrl: string | null }
@@ -38,11 +40,14 @@ const insetRtl =
 /** The super-admin frame: collapsible sidebar (right side in Persian), header, content. */
 export function AppShell({
   brand,
+  logo,
   admin,
   defaultOpen,
   children,
 }: {
   brand: string
+  /** The site's logo (Settings → Appearance), or null: the brand's first letter instead. */
+  logo: LogoData | null
   admin: ShellAdmin
   defaultOpen: boolean
   children: React.ReactNode
@@ -60,7 +65,7 @@ export function AppShell({
         >
           {t("skipToContent")}
         </a>
-        <AdminSidebar brand={brand} side={rtl ? "right" : "left"} />
+        <AdminSidebar brand={brand} logo={logo} side={rtl ? "right" : "left"} />
         <SidebarInset className={cn("min-w-0", rtl && insetRtl)}>
           <header className="bg-background/85 supports-backdrop-filter:backdrop-blur-md sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b px-3 md:rounded-t-xl md:px-5">
             <SidebarToggle rtl={rtl} label={t("toggleSidebar")} />
@@ -95,7 +100,7 @@ function SidebarToggle({ rtl, label }: { rtl: boolean; label: string }) {
   )
 }
 
-function AdminSidebar({ brand, side }: { brand: string; side: "left" | "right" }) {
+function AdminSidebar({ brand, logo, side }: { brand: string; logo: LogoData | null; side: "left" | "right" }) {
   const t = useTranslations("admin")
   const pathname = usePathname()
   const { isMobile, setOpenMobile } = useSidebar()
@@ -107,14 +112,28 @@ function AdminSidebar({ brand, side }: { brand: string; side: "left" | "right" }
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild className="text-start">
-              <Link href="/admin" onClick={close}>
-                <span className="from-primary to-chart-5 text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg bg-linear-to-br text-sm font-bold shadow-sm">
-                  {brand.trim().charAt(0).toUpperCase()}
-                </span>
-                <span className="grid flex-1 leading-tight">
-                  <span className="truncate font-semibold">{brand}</span>
-                  <span className="text-muted-foreground truncate text-xs">{t("brandSubtitle")}</span>
-                </span>
+              <Link href="/admin" onClick={close} aria-label={logo ? brand : undefined}>
+                {logo ? (
+                  <>
+                    {/* Folded to icons: the site's leaf icon; open: the logo over "Admin panel". */}
+                    {/* eslint-disable-next-line @next/next/no-img-element -- a tiny static SVG, nothing to optimise */}
+                    <img src="/icon.svg" alt="" className="hidden size-8 shrink-0 rounded-lg group-data-[collapsible=icon]:block" />
+                    <span className="grid flex-1 gap-1 leading-tight group-data-[collapsible=icon]:hidden">
+                      <LogoPicture logo={logo} className="h-6! w-auto! max-w-full justify-self-start" />
+                      <span className="text-muted-foreground truncate text-xs">{t("brandSubtitle")}</span>
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="from-primary to-chart-5 text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg bg-linear-to-br text-sm font-bold shadow-sm">
+                      {brand.trim().charAt(0).toUpperCase()}
+                    </span>
+                    <span className="grid flex-1 leading-tight">
+                      <span className="truncate font-semibold">{brand}</span>
+                      <span className="text-muted-foreground truncate text-xs">{t("brandSubtitle")}</span>
+                    </span>
+                  </>
+                )}
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

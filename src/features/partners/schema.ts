@@ -75,7 +75,7 @@ export const isPartnerPortraitPath = (path: unknown): path is string =>
 
 export const ABOUT_NAME_MAX = 80
 export const ABOUT_ROLE_MAX = 80
-export const ABOUT_BIO_MAX = 1500
+export const ABOUT_BIO_MAX = 3000
 
 /**
  * My profile → "On the Our story page": whether I am shown on the public Our story

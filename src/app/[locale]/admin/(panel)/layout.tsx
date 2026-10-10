@@ -6,7 +6,7 @@ import { Suspense } from "react"
 import { AppShell } from "@/components/admin/app-shell"
 import { AdminNoticeToast } from "@/components/admin/notice-toast"
 import { requireAdmin } from "@/lib/auth/admin"
-import { getBrand } from "@/lib/settings"
+import { getBrand, getSetting } from "@/lib/settings"
 import { publicUrls } from "@/lib/storage"
 
 export async function generateMetadata({ params }: LayoutProps<"/[locale]/admin">): Promise<Metadata> {
@@ -24,11 +24,18 @@ export async function generateMetadata({ params }: LayoutProps<"/[locale]/admin"
  */
 export default async function PanelLayout({ children, params }: LayoutProps<"/[locale]/admin">) {
   const { locale } = await params
-  const [{ admin }, brand, store, url] = await Promise.all([requireAdmin(), getBrand(locale), cookies(), publicUrls()])
+  const [{ admin }, brand, store, url, logo] = await Promise.all([
+    requireAdmin(),
+    getBrand(locale),
+    cookies(),
+    publicUrls(),
+    getSetting("logo"),
+  ])
 
   return (
     <AppShell
       brand={brand}
+      logo={logo}
       admin={{ name: admin.name, email: admin.email, photoUrl: url(admin.photoPath) }}
       defaultOpen={store.get("sidebar_state")?.value !== "false"}
     >
