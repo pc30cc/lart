@@ -120,6 +120,13 @@
       "when": 1791497103610,
       "tag": "0016_one_registration_payment",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1791614899134,
+      "tag": "0017_lili_altin_story",
+      "breakpoints": true
     }
   ]
 }
