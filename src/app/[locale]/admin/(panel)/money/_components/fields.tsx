@@ -119,6 +119,43 @@ export function SourceField<T extends FieldValues>({
   )
 }
 
+export type WorkshopOption = { id: string; label: string; advance: number }
+
+/** Choose the workshop an expense belongs to (those whose books are still open). */
+export function WorkshopField<T extends FieldValues>({ name, label, workshops }: { name: Path<T>; label: string; workshops: WorkshopOption[] }) {
+  const t = useTranslations("money.forms")
+  return (
+    <FormField<T> name={name} label={label} required>
+      {(field) => (
+        <Select
+          value={(field.value as string) || undefined}
+          onValueChange={(v) => {
+            field.onChange(v)
+            field.onBlur()
+          }}
+        >
+          <SelectTrigger
+            id={field.id}
+            ref={field.ref}
+            aria-invalid={field["aria-invalid"]}
+            aria-describedby={field["aria-describedby"]}
+            className="w-full"
+          >
+            <SelectValue placeholder={t("chooseWorkshop")} />
+          </SelectTrigger>
+          <SelectContent>
+            {workshops.map((w) => (
+              <SelectItem key={w.id} value={w.id}>
+                {w.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+    </FormField>
+  )
+}
+
 /** Choose one partner: large, tappable choices (there are at most three). */
 export function PartnerField<T extends FieldValues>({
   name,

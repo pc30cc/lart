@@ -160,7 +160,16 @@ export async function getWalletOverview() {
   const workshops = all.reduce((s, c) => s + c.profitShares, 0) + open + overhead
   const remaining = putIn - overhead
   const capital = { putIn, overhead, remaining, workshops, other: balances.wallet - remaining - workshops }
-  return { balances, openResult: open, recent, toClose, withInstructors: instructorsOpen, partners, capital }
+  // The workshops an expense can still be recorded for (books not closed), latest first.
+  const heldBy = new Map(instructorsOpen.map((r) => [r.courseId, r.advance]))
+  const openWorkshops = (
+    await db
+      .select({ id: courses.id, title: courses.title, startsAt: courses.startsAt })
+      .from(courses)
+      .where(and(sql`${courses.closedAt} is null`, sql`${courses.status} <> 'closed'`))
+      .orderBy(desc(courses.startsAt))
+  ).map((w) => ({ ...w, advance: Math.max(0, heldBy.get(w.id) ?? 0) }))
+  return { balances, openResult: open, recent, toClose, withInstructors: instructorsOpen, partners, capital, openWorkshops }
 }
 
 /** Active partners for the forms (who puts money in). */

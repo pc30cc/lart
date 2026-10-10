@@ -51,7 +51,6 @@
   },
   "wallet": {
     "title": "Wallet",
-    "description": "The shared wallet of the business: what is in it, what is owed, and what happened lately.",
     "balance": "In the wallet",
     "balanceHint": "Cash in the shared wallet right now.",
     "negative": "The wallet is below zero: more has been paid out than it held. If a partner put money in, record it as a contribution.",
@@ -123,7 +122,9 @@
       "lighting": "Lighting",
       "decor": "Decoration",
       "electronics": "Electrical items"
-    }
+    },
+    "workshop": "Workshop",
+    "chooseWorkshop": "Choose a workshop"
   },
   "capital": {
     "contribution": {
@@ -158,6 +159,11 @@
       "title": "Add a furnishing expense",
       "description": "Furniture and equipment bought for the studio, like a table, chairs or tools. Upload a photo of the item and its receipt separately.",
       "done": "Furnishing expense recorded."
+    },
+    "pick": {
+      "trigger": "Workshop expense",
+      "title": "Add a workshop expense",
+      "description": "Choose the workshop and record its expense with the details and receipt. It comes off that workshop's income."
     }
   },
   "advance": {
@@ -379,7 +385,8 @@
     "date": "Please choose a date.",
     "notInFuture": "The date can’t be in the future.",
     "chooseSource": "Please choose who paid.",
-    "choosePartner": "Please choose a partner."
+    "choosePartner": "Please choose a partner.",
+    "chooseWorkshop": "Please choose a workshop."
   },
   "close": {
     "panelTitle": "Close the workshop",

@@ -41,12 +41,19 @@ export default async function WalletPage() {
     <>
       <PageHeader
         title={t("wallet.title")}
-        description={t("wallet.description")}
         actions={
           partners.length > 0 && (
             <>
               <ContributionDialog partners={partners} trigger={{ variant: "default" }} />
               {rules.withdrawals && <WithdrawalDialog partners={partners} />}
+              <ExpenseDialog
+                workshops={data.openWorkshops.map((w) => ({
+                  id: w.id,
+                  label: `${localized(w.title, locale)} · ${formatDate(w.startsAt, locale, "medium")}`,
+                  advance: w.advance,
+                }))}
+                blocked={spendBlockText(rules, t)}
+              />
               <ExpenseDialog blocked={spendBlockText(rules, t)} />
               <ExpenseDialog furnishing blocked={spendBlockText(rules, t)} />
             </>

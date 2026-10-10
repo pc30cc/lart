@@ -35,6 +35,7 @@ import {
   contributionSchema,
   expenseSchema,
   instructorPaymentSchema,
+  workshopExpenseSchema,
   withdrawalSchema,
   type AdvanceValues,
   type ContributionValues,
@@ -44,7 +45,7 @@ import {
   type WithdrawalValues,
 } from "@/features/money/schema"
 import { formatLira } from "@/lib/money"
-import { DateField, PartnerField, SourceField, todayIso, type PartnerOption } from "./fields"
+import { DateField, PartnerField, SourceField, todayIso, WorkshopField, type PartnerOption, type WorkshopOption } from "./fields"
 import { ReceiptFiles } from "./receipt-files"
 
 type TriggerProps = { variant?: "default" | "outline" | "ghost"; size?: "lg" | "sm"; className?: string }
@@ -246,6 +247,7 @@ export function ExpenseDialog({
   courseId = null,
   advance,
   furnishing = false,
+  workshops,
   trigger,
   blocked,
 }: {
@@ -253,11 +255,13 @@ export function ExpenseDialog({
   /** Advance the instructor still holds (workshop expenses can be paid from it). */
   advance?: number
   furnishing?: boolean
+  /** The wallet page's "Workshop expense": the workshop is chosen in the form, from these. */
+  workshops?: WorkshopOption[]
   trigger?: TriggerProps
   blocked?: string | null
 }) {
   const t = useTranslations("money.expense")
-  const kind = furnishing ? "furnishing" : courseId === null ? "general" : "workshop"
+  const kind = furnishing ? "furnishing" : workshops ? "pick" : courseId === null ? "general" : "workshop"
   return (
     <FormDialog
       icon={furnishing ? ArmchairIcon : ReceiptTextIcon}
@@ -267,7 +271,9 @@ export function ExpenseDialog({
       trigger={trigger}
       blocked={blocked}
     >
-      {(close) => <ExpenseForm courseId={furnishing ? null : courseId} advance={advance} furnishing={furnishing} onDone={close} />}
+      {(close) => (
+        <ExpenseForm courseId={furnishing ? null : courseId} advance={advance} furnishing={furnishing} workshops={workshops} onDone={close} />
+      )}
     </FormDialog>
   )
 }
@@ -278,30 +284,36 @@ function ExpenseForm({
   courseId,
   advance,
   furnishing,
+  workshops,
   onDone,
 }: {
   courseId: string | null
   advance?: number
   furnishing: boolean
+  workshops?: WorkshopOption[]
   onDone: () => void
 }) {
   const t = useTranslations("money")
   const listId = useId()
   const [uploading, setUploading] = useState(0)
   const { form, submit, pending } = useActionForm({
-    schema: expenseSchema,
+    schema: workshops ? workshopExpenseSchema : expenseSchema,
     action: recordExpense,
     defaultValues: { courseId, category: "", occurredOn: todayIso(), source: "wallet", furnishing, files: [] },
     successMessage: t(furnishing ? "expense.furnishing.done" : "expense.done"),
     onSuccess: onDone,
   })
   const files = useWatch({ control: form.control, name: "files" }) ?? []
+  const chosen = useWatch({ control: form.control, name: "courseId" })
+  // The advance the chosen workshop's instructor holds (an expense can come out of it).
+  const held = workshops ? (workshops.find((w) => w.id === chosen)?.advance ?? 0) : advance
   const addFile = (file: ExpenseFile) => form.setValue("files", [...(form.getValues("files") ?? []), file], { shouldDirty: true })
   const removeFile = (path: string) =>
     form.setValue("files", (form.getValues("files") ?? []).filter((f) => f.path !== path), { shouldDirty: true })
   const busy = (delta: number) => setUploading((n) => n + delta)
   return (
     <DialogForm form={form} submit={submit} pending={pending || uploading > 0} submitLabel={t("forms.save")}>
+      {workshops && <WorkshopField<ExpenseValues> name="courseId" label={t("forms.workshop")} workshops={workshops} />}
       <TextField<ExpenseValues>
         name="category"
         label={furnishing ? t("forms.item") : t("forms.category")}
@@ -318,8 +330,8 @@ function ExpenseForm({
       </datalist>
       <AmountField<ExpenseValues> label={t("forms.amount")} />
       <DateField<ExpenseValues> name="occurredOn" label={t("forms.date")} />
-      {courseId && advance ? (
-        <SourceField<ExpenseValues> name="source" label={t("forms.paidFrom")} advance={advance} description={t("forms.advanceHint")} />
+      {(workshops ? chosen : courseId) && held ? (
+        <SourceField<ExpenseValues> name="source" label={t("forms.paidFrom")} advance={held} description={t("forms.advanceHint")} />
       ) : (
         <FromWallet text={t("forms.fromWallet")} />
       )}

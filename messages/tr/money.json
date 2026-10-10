@@ -51,7 +51,6 @@
   },
   "wallet": {
     "title": "Ortak kasa",
-    "description": "İşletmenin ortak kasası: içinde ne var, kime ne borçluyuz ve son hareketler.",
     "balance": "Kasadaki para",
     "balanceHint": "Şu anda ortak kasada bulunan nakit.",
     "negative": "Kasa sıfırın altına düştü: içindekinden fazla ödeme kaydedildi. Bir ortak para koyduysa bunu sermaye girişi olarak kaydedin.",
@@ -123,7 +122,9 @@
       "lighting": "Aydınlatma",
       "decor": "Dekorasyon",
       "electronics": "Elektrikli eşya"
-    }
+    },
+    "workshop": "Atölye",
+    "chooseWorkshop": "Atölye seçin"
   },
   "capital": {
     "contribution": {
@@ -158,6 +159,11 @@
       "title": "Demirbaş gideri ekle",
       "description": "Atölye için alınan eşya ve ekipman: masa, sandalye veya alet gibi. Eşyanın fotoğrafını ve fişini ayrı ayrı yükleyin.",
       "done": "Demirbaş gideri kaydedildi."
+    },
+    "pick": {
+      "trigger": "Atölye gideri",
+      "title": "Atölye gideri ekle",
+      "description": "Atölyeyi seçin ve giderini ayrıntıları ve fişiyle kaydedin. O atölyenin gelirinden düşülür."
     }
   },
   "advance": {
@@ -379,7 +385,8 @@
     "date": "Lütfen bir tarih seçin.",
     "notInFuture": "Tarih ileri bir gün olamaz.",
     "chooseSource": "Lütfen kimin ödediğini seçin.",
-    "choosePartner": "Lütfen bir ortak seçin."
+    "choosePartner": "Lütfen bir ortak seçin.",
+    "chooseWorkshop": "Lütfen bir atölye seçin."
   },
   "close": {
     "panelTitle": "Atölyeyi kapat",

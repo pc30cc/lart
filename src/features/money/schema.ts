@@ -104,6 +104,12 @@ export const expenseSchema = z
   .refine((v) => new Set(v.files.map((f) => f.path)).size === v.files.length, { path: ["files"] })
 export type ExpenseValues = z.input<typeof expenseSchema>
 
+/** The same expense, from the wallet page's "Workshop expense": a workshop must be chosen. */
+export const workshopExpenseSchema = expenseSchema.refine((v) => v.courseId !== null, {
+  path: ["courseId"],
+  error: "money.validation.chooseWorkshop",
+})
+
 export const advanceSchema = z.object({
   courseId: uuid(),
   direction: z.enum(["paid", "returned"]),
