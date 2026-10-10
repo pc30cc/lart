@@ -77,6 +77,12 @@
       "description": "Advances out and fees still to pay.",
       "holds": "Holds",
       "owed": "Owed"
+    },
+    "capital": {
+      "remaining": "Capital remaining",
+      "remainingHint": "What both partners would get if settled today",
+      "putIn": "Capital the partners put in",
+      "result": "Profit or loss so far"
     }
   },
   "forms": {

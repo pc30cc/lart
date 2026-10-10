@@ -141,15 +141,22 @@ async function withInstructors() {
 
 export async function getWalletOverview() {
   await requireAdmin()
-  const [balances, open, recent, toClose, instructorsOpen, partners] = await Promise.all([
+  const [balances, open, recent, toClose, instructorsOpen, partners, capitals] = await Promise.all([
     accountBalances(db),
     notSharedOut(),
     loadEntries({ limit: 8 }),
     workshopsToClose(db),
     withInstructors(),
     activePartners(db),
+    partnerCapitals(db),
   ])
-  return { balances, openResult: open, recent, toClose, withInstructors: instructorsOpen, partners }
+  // What is left of the partners' capital: what they put in (less what they took out),
+  // plus every result so far, shared out or not.
+  const all = [...capitals.values()]
+  const putIn = all.reduce((s, c) => s + c.contributions - c.withdrawals, 0)
+  const remaining = all.reduce((s, c) => s + c.capital, 0) + open
+  const capital = { putIn, remaining, result: remaining - putIn }
+  return { balances, openResult: open, recent, toClose, withInstructors: instructorsOpen, partners, capital }
 }
 
 /** Active partners for the forms (who puts money in). */

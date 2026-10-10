@@ -77,6 +77,12 @@
       "description": "Verilen ön ödemeler ve henüz ödenmemiş ücretler.",
       "holds": "Eğitmendeki ön ödeme",
       "owed": "Borcumuz"
+    },
+    "capital": {
+      "remaining": "Kalan sermaye",
+      "remainingHint": "Bugün hesap kapatılsa iki ortağın payı",
+      "putIn": "Ortakların yatırdığı sermaye",
+      "result": "Bugüne kadar kâr veya zarar"
     }
   },
   "forms": {
