@@ -24,7 +24,13 @@ const ciphertext = new RegExp(CIPHERTEXT_PATTERN)
 /** Whether a stored value looks like `encrypt` output (it may still fail to decrypt with another key). */
 export const isCiphertext = (value: string) => ciphertext.test(value)
 
+/**
+ * The plain text of `encrypt` output. A value without the "v1." prefix is
+ * plain text and returned as it is: a database restored from a backup holds
+ * these values as plain text (features/backup), so it works with any key.
+ */
 export function decrypt(payload: string): string {
+  if (!payload.startsWith("v1.")) return payload
   const [version, iv, tag, data] = payload.split(".")
   if (version !== "v1" || !iv || !tag || !data) throw new Error("Invalid ciphertext")
   // The full 16-byte tag only: a shortened one would make a forged value far cheaper to find.

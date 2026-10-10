@@ -1568,15 +1568,18 @@ when another failed; exit code 1 when one failed or did not finish.
 
 Settings → Backup (`/admin/settings/backup`, `features/backup/`):
 
-- **Database backups.** `pg_dump --format=custom` of the whole database plus a
-  restore README, kept in the storage at
+- **Database backups.** The whole database as SQL (`pg_dump --format=plain`)
+  plus a restore README, kept in the storage at
   `backup/<Istanbul day>/<db-daily|db-manual|month>-<HHMM>-<random>.zip` and
-  listed in the `backups` table. The random part makes the name unguessable
-  (the CDN is public). Several on one day share
-  the day's folder. Restore with
-  `pg_restore --no-owner --no-privileges --dbname <url> limer.dump`, then run
-  the site with the same `ENCRYPTION_KEY`. The image installs
-  `postgresql-client-18` (pg_dump must not be older than the server).
+  listed in the `backups` table. The random part makes the name unguessable.
+  Several on one day share the day's folder. By the owner's choice nothing in a
+  backup is encrypted: `decryptDump` writes every value the app keeps encrypted
+  (ID numbers, signed contract texts, email and CDN keys) as plain text, and
+  `decrypt` returns a value without the `v1.` prefix as it is, so a backup
+  restores completely on any server with any `ENCRYPTION_KEY`:
+  `psql --dbname <url> --file limer-<day>-<HHMM>.sql` into an empty database.
+  The image installs `postgresql-client-18` (pg_dump must not be older than the
+  server).
 - **Schedule.** `runScheduledBackups` makes the day's backup from 03:00
   Istanbul time and, once a Solar Hijri month is over, that month's Excel report
   (`kind = monthly`), while automatic backups are on. It is idempotent and holds

@@ -1,10 +1,11 @@
-import { BlobWriter, TextWriter, Uint8ArrayReader, ZipReader, type FileEntry } from "@zip.js/zip.js"
+import { TextWriter, Uint8ArrayReader, ZipReader, type FileEntry } from "@zip.js/zip.js"
 import ExcelJS from "exceljs"
 import { eq, inArray } from "drizzle-orm"
 import { afterAll, describe, expect, it, vi } from "vitest"
 
 import { db } from "@/db"
 import { backups } from "@/db/schema"
+import { CIPHERTEXT_PATTERN, decrypt, encrypt } from "@/lib/crypto"
 
 const files = vi.hoisted(() => new Map<string, Buffer>())
 const backupSetting = vi.hoisted(() => ({ value: { auto: true } }))
@@ -26,7 +27,7 @@ vi.mock("@/lib/settings", async (load) => {
   return { ...real, getSetting: async (key: string) => (key === "backup" ? backupSetting.value : real.getSetting(key as never)) }
 })
 
-const { createBackup, zipFiles, runScheduledBackups, backupFile, monthFileName } = await import("./backup")
+const { createBackup, decryptDump, zipFiles, runScheduledBackups, backupFile, monthFileName } = await import("./backup")
 const { expensesWorkbook, financeWorkbook, monthWorkbook } = await import("./excel")
 const { invoiceEntries, safeName } = await import("./invoices")
 
@@ -52,6 +53,26 @@ describe("zipFiles", () => {
   })
 })
 
+describe("decryptDump", () => {
+  it("writes encrypted fields and JSON strings as plain text, escaped for COPY", () => {
+    const field = encrypt("12345\tline\nnext \\ end")
+    const inJson = encrypt('pass"word\\')
+    const dump = [
+      "COPY public.instructors (id, id_number_enc) FROM stdin;",
+      `1\t${field}`,
+      "\\.",
+      "COPY public.settings (key, value) FROM stdin;",
+      `cdn\t{"provider": "bunny", "publicZoneKeyEnc": "${inJson}"}`,
+      "\\.",
+    ].join("\n")
+    const out = decryptDump(dump).split("\n")
+    expect(out[1]).toBe("1\t12345\\tline\\nnext \\\\ end")
+    // The JSON string escapes " and \ (JSON), then COPY doubles the backslashes.
+    expect(out[4]).toBe('cdn\t{"provider": "bunny", "publicZoneKeyEnc": "pass\\\\"word\\\\\\\\"}')
+    expect(decrypt("plain value")).toBe("plain value")
+  })
+})
+
 describe("createBackup", () => {
   it("keeps a dump of the whole database in backup/<day>/, several a day side by side", async () => {
     const a = await createBackup("manual", null)
@@ -63,12 +84,14 @@ describe("createBackup", () => {
 
     const { list } = await entries(files.get(a.path)!)
     expect(list.map((e) => e.filename).sort()).toEqual(expect.arrayContaining(["README.txt"]))
-    const dump = list.find((e) => e.filename.endsWith(".dump"))!
+    const dump = list.find((e) => e.filename.endsWith(".sql"))!
     const readme = await list.find((e) => e.filename === "README.txt")!.getData(new TextWriter())
     expect(readme).toContain(dump.filename)
-    const blob = await dump.getData(new BlobWriter())
-    // pg_dump's custom format starts with "PGDMP".
-    expect(new TextDecoder().decode(new Uint8Array(await blob.slice(0, 5).arrayBuffer()))).toBe("PGDMP")
+    expect(readme).not.toContain("ENCRYPTION_KEY")
+    const sqlText = await dump.getData(new TextWriter())
+    expect(sqlText).toContain("PostgreSQL database dump")
+    // Nothing is left encrypted: the backup restores without the key.
+    expect(sqlText).not.toMatch(new RegExp(CIPHERTEXT_PATTERN.slice(1, -1)))
 
     const [row] = await db.select().from(backups).where(eq(backups.id, a.id))
     expect(row).toMatchObject({ kind: "manual", path: a.path, size: files.get(a.path)!.length })

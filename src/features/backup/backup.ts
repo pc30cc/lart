@@ -8,6 +8,7 @@ import { and, desc, eq, sql } from "drizzle-orm"
 import { db } from "@/db"
 import { admins, backups, courses, ledgerTransactions } from "@/db/schema"
 import { addPeriods, calendarFields, dayBefore, periodStart } from "@/lib/calendar"
+import { CIPHERTEXT_PATTERN, decrypt } from "@/lib/crypto"
 import { env } from "@/lib/env"
 import { UserError } from "@/lib/errors"
 import { formatDate, formatMonthYear, localized, zonedParts } from "@/lib/format"
@@ -18,7 +19,8 @@ import { monthWorkbook } from "./excel"
 /**
  * Backups (Settings → Backup). Each is a ZIP kept in the storage under
  * backup/<Istanbul day>/ with an unguessable name:
- *   - the whole database (`pg_dump --format=custom`, restored with pg_restore),
+ *   - the whole database as SQL with nothing left encrypted (`dumpDatabase`,
+ *     restored with psql on any server, no key needed),
  *     by itself once a day and by hand at any time (several a day go in the same folder);
  *   - the financial report of each Solar Hijri month, made once that month is over.
  * Each file is listed in the `backups` table (Settings → Backup lists them).
@@ -28,10 +30,43 @@ configure({ useWebWorkers: false })
 
 export type BackupKind = (typeof backups.kind.enumValues)[number]
 
-/** The whole database as a pg_dump archive (custom format, compressed). */
-export function dumpDatabase(url: string = env.DATABASE_URL): Promise<Buffer> {
+/**
+ * The whole database as SQL (pg_dump, plain format), with every value the app
+ * keeps encrypted written as plain text (`decryptDump`): the backup restores
+ * completely on any server, with no ENCRYPTION_KEY needed.
+ */
+export async function dumpDatabase(url: string = env.DATABASE_URL): Promise<string> {
+  return decryptDump((await pgDump(url)).toString("utf8"))
+}
+
+/** An encrypted value in a dump's COPY data: a whole field, or a string inside a JSON field. */
+const ENCRYPTED_IN_DUMP = new RegExp(`(^|[\\t"])(${CIPHERTEXT_PATTERN.slice(1, -1)})(?=$|[\\t"])`, "gm")
+
+const COPY_ESCAPES: Record<string, string> = { "\\": "\\\\", "\n": "\\n", "\r": "\\r", "\t": "\\t" }
+
+/** Text as a field of COPY's text format. */
+const copyField = (text: string) => text.replace(/[\\\n\r\t]/g, (c) => COPY_ESCAPES[c])
+
+/**
+ * A plain-format dump with each encrypted value replaced by its plain text,
+ * escaped for where it sits (a COPY field, or a JSON string in one). A value
+ * this key cannot decrypt stays as it is.
+ */
+export function decryptDump(dump: string): string {
+  return dump.replace(ENCRYPTED_IN_DUMP, (match, before: string, value: string) => {
+    let plain: string
+    try {
+      plain = decrypt(value)
+    } catch {
+      return match
+    }
+    return before + copyField(before === '"' ? JSON.stringify(plain).slice(1, -1) : plain)
+  })
+}
+
+function pgDump(url: string): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const child = spawn("pg_dump", ["--format=custom", "--no-owner", "--no-privileges", "--dbname", url], {
+    const child = spawn("pg_dump", ["--format=plain", "--no-owner", "--no-privileges", "--dbname", url], {
       stdio: ["ignore", "pipe", "pipe"],
     })
     const out: Buffer[] = []
@@ -63,22 +98,20 @@ export function restoreReadme(dumpName: string) {
 
 ${dumpName}
 یک نسخهٔ کامل از همهٔ اطلاعات سایت است: ورکشاپ‌ها، ثبت‌نام‌ها، مدرس‌ها،
-هنرجوها، امور مالی، قراردادها و تنظیمات. این فایل با Excel باز نمی‌شود؛
-مخصوص دیتابیس سایت (PostgreSQL) است.
+هنرجوها، امور مالی، قراردادها و تنظیمات.
 
 برای برگرداندن (کار برنامه‌نویس)، روی یک دیتابیس خالی PostgreSQL (نسخهٔ ۱۸ یا بالاتر):
 
-   pg_restore --no-owner --no-privileges --dbname "postgres://USER:PASSWORD@HOST:5432/DBNAME" ${dumpName}
+   psql --dbname "postgres://USER:PASSWORD@HOST:5432/DBNAME" --file ${dumpName}
 
-روی همین سرور همه چیز کامل برمی‌گردد. روی سرور تازه، مقدار ENCRYPTION_KEY
-را از تنظیمات Coolify سرور قبلی بردارید.
+همه چیز کامل برمی‌گردد، روی هر سروری، بدون نیاز به هیچ کلید یا تنظیم دیگری.
 
 ----------------------------------------------------------------
 Limer database backup. Restore into an empty PostgreSQL 18+ database:
 
-   pg_restore --no-owner --no-privileges --dbname "<connection url>" ${dumpName}
+   psql --dbname "<connection url>" --file ${dumpName}
 
-On a new server, use the previous server's ENCRYPTION_KEY.
+Everything comes back, on any server; nothing else is needed.
 `
 }
 
@@ -101,7 +134,7 @@ export async function createBackup(kind: BackupKind, by: string | null, month?: 
     entries = [{ name: `${monthFileName(month)}.xlsx`, data: report.file }]
   } else {
     const dump = await dumpDatabase()
-    const dumpName = `limer-${now.date}-${now.time.replace(":", "")}.dump`
+    const dumpName = `limer-${now.date}-${now.time.replace(":", "")}.sql`
     entries = [
       { name: dumpName, data: dump },
       { name: "README.txt", data: restoreReadme(dumpName) },
