@@ -64,6 +64,8 @@ describe("createBackup", () => {
     const { list } = await entries(files.get(a.path)!)
     expect(list.map((e) => e.filename).sort()).toEqual(expect.arrayContaining(["README.txt"]))
     const dump = list.find((e) => e.filename.endsWith(".dump"))!
+    const readme = await list.find((e) => e.filename === "README.txt")!.getData(new TextWriter())
+    expect(readme).toContain(dump.filename)
     const blob = await dump.getData(new BlobWriter())
     // pg_dump's custom format starts with "PGDMP".
     expect(new TextDecoder().decode(new Uint8Array(await blob.slice(0, 5).arrayBuffer()))).toBe("PGDMP")

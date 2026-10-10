@@ -56,22 +56,31 @@ export async function zipFiles(entries: { name: string; data: Buffer | string }[
   return Buffer.from(await (await zip.close()).arrayBuffer())
 }
 
-const RESTORE_README = `بازگردانی پشتیبان دیتابیس لیمر
+/** The restore guide kept next to the dump, naming the dump file itself. */
+export function restoreReadme(dumpName: string) {
+  return `بازگردانی پشتیبان دیتابیس لیمر
 ================================
 
-این فایل یک نسخهٔ کامل از دیتابیس سایت است (pg_dump، قالب custom).
+${dumpName}
+یک نسخهٔ کامل از همهٔ اطلاعات سایت است: ورکشاپ‌ها، ثبت‌نام‌ها، مدرس‌ها،
+هنرجوها، امور مالی، قراردادها و تنظیمات. این فایل با Excel باز نمی‌شود؛
+مخصوص دیتابیس سایت (PostgreSQL) است.
 
-برای بازگردانی روی یک دیتابیس خالی PostgreSQL (نسخهٔ ۱۸ یا بالاتر):
+برای برگرداندن (کار برنامه‌نویس)، روی یک دیتابیس خالی PostgreSQL (نسخهٔ ۱۸ یا بالاتر):
 
-  pg_restore --no-owner --no-privileges --dbname "postgres://USER:PASSWORD@HOST:5432/DBNAME" limer.dump
+   pg_restore --no-owner --no-privileges --dbname "postgres://USER:PASSWORD@HOST:5432/DBNAME" ${dumpName}
 
-بعد از بازگردانی، سایت را با همان ENCRYPTION_KEY قبلی اجرا کنید؛ بدون آن، اطلاعات رمزشده
-(کد ملی مدرس‌ها، متن قراردادها، رمز ایمیل و CDN) خوانده نمی‌شوند.
+روی همین سرور همه چیز کامل برمی‌گردد. روی سرور تازه، مقدار ENCRYPTION_KEY
+را از تنظیمات Coolify سرور قبلی بردارید.
 
-Limer database backup — restore into an empty PostgreSQL 18+ database:
-  pg_restore --no-owner --no-privileges --dbname "<connection url>" limer.dump
-Run the site with the same ENCRYPTION_KEY, or encrypted fields cannot be read.
+----------------------------------------------------------------
+Limer database backup. Restore into an empty PostgreSQL 18+ database:
+
+   pg_restore --no-owner --no-privileges --dbname "<connection url>" ${dumpName}
+
+On a new server, use the previous server's ENCRYPTION_KEY.
 `
+}
 
 /** Where a backup goes: backup/<day>/<kind>-<HHMM>-<random>.zip (unguessable, so never linked publicly). */
 function backupPath(day: string, time: string, kind: BackupKind) {
@@ -92,9 +101,10 @@ export async function createBackup(kind: BackupKind, by: string | null, month?: 
     entries = [{ name: `${monthFileName(month)}.xlsx`, data: report.file }]
   } else {
     const dump = await dumpDatabase()
+    const dumpName = `limer-${now.date}-${now.time.replace(":", "")}.dump`
     entries = [
-      { name: `limer-${now.date}-${now.time.replace(":", "")}.dump`, data: dump },
-      { name: "README.txt", data: RESTORE_README },
+      { name: dumpName, data: dump },
+      { name: "README.txt", data: restoreReadme(dumpName) },
     ]
   }
   const file = await zipFiles(entries)
