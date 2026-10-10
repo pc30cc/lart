@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  DatabaseBackupIcon,
   DatabaseIcon,
   HouseIcon,
   LandmarkIcon,
@@ -25,10 +26,11 @@ const tabs = [
   { href: "/admin/settings/email", label: "email", icon: MailIcon },
   { href: "/admin/settings/storage", label: "storage", icon: DatabaseIcon },
   { href: "/admin/settings/watermark", label: "watermark", icon: StampIcon },
+  { href: "/admin/settings/backup", label: "backup", icon: DatabaseBackupIcon },
   { href: "/admin/settings/danger", label: "danger", icon: TriangleAlertIcon },
 ] as const
 
-/** General · Appearance · Home page · Payments · Money · Email · Storage · Watermark · Danger zone. */
+/** General · Appearance · Home page · Payments · Money · Email · Storage · Watermark · Backup · Danger zone. */
 export function SettingsNav() {
   const t = useTranslations("settings.tabs")
   const pathname = usePathname()

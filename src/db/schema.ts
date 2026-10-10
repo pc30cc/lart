@@ -473,6 +473,26 @@ export const ledgerLines = pgTable("ledger_lines", {
 
 // ─── Site ──────────────────────────────────────────────────────────────────
 
+export const backupKind = pgEnum("backup_kind", ["auto", "manual", "monthly"])
+
+/**
+ * Backup files kept in the storage, under backup/<day>/ (Settings → Backup):
+ * the whole database (daily by itself, or by hand) or a month's financial
+ * report, each in a ZIP locked with the backup password.
+ */
+export const backups = pgTable("backups", {
+  id: id(),
+  kind: backupKind("kind").notNull(),
+  path: text("path").notNull().unique(),
+  size: integer("size").notNull(),
+  /** The Istanbul day of the folder, "YYYY-MM-DD". */
+  day: date("day", { mode: "string" }).notNull(),
+  /** A monthly report's month: its first day, "YYYY-MM-DD" (Solar Hijri month). */
+  month: date("month", { mode: "string" }),
+  createdBy: uuid("created_by").references(() => admins.id),
+  createdAt: createdAt(),
+}, (t) => [index("backups_day_idx").on(t.day)])
+
 /** Key/value site settings (brand, default locale, SEO, CDN, watermark, ...). */
 export const settings = pgTable("settings", {
   key: text("key").primaryKey(),

@@ -301,6 +301,7 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 | `/admin/settings/money` | admin | private | |
 | `/admin/settings/storage` | admin | private | |
 | `/admin/settings/watermark` | admin | private | |
+| `/admin/settings/backup` | admin | private | |
 | `/admin/settings/danger` | admin | private | |
 | `/admin/students` | admin | private | |
 | `/admin/students/[id]` | admin | private | |
@@ -320,7 +321,8 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 | `/admin/[...rest]` | admin | private | not-found page |
 <!-- routes:end -->
 
-Never localized (`UNLOCALIZED_HANDLERS`): `/api/admin/media/watermark-preview`,
+Never localized (`UNLOCALIZED_HANDLERS`): `/api/admin/backups/[id]`,
+`/api/admin/exports/[kind]`, `/api/admin/media/watermark-preview`,
 `/api/admin/money/export/[report]`, `/api/admin/uploads`,
 `/api/instructor/uploads`, `/media/[...path]`, `/og.png` (the site's share
 picture), and the metadata routes `/sitemap.xml` and `/robots.txt`.
@@ -1560,3 +1562,36 @@ when another failed; exit code 1 when one failed or did not finish.
   the registrations it covers (a short sha256 of their ids), so a retry is
   deduplicated, a registration added later gets its own reminder, and a
   reminder for a new date is not blocked by the one for the old date.
+- `backup` (`features/backup/backup.ts`): see [Backups and exports](#backups-and-exports).
+
+## Backups and exports
+
+Settings → Backup (`/admin/settings/backup`, `features/backup/`):
+
+- **Password.** Every backup is a ZIP locked with AES-256 (zip.js), with the
+  password from `settings.backup.passwordEnc` (encrypted with `ENCRYPTION_KEY`,
+  never shown again, never in the audit log). No password, no backup. A new
+  password only applies to later backups.
+- **Database backups.** `pg_dump --format=custom` of the whole database plus a
+  restore README, kept in the storage at
+  `backup/<Istanbul day>/<db-daily|db-manual|month>-<HHMM>-<random>.zip` and
+  listed in the `backups` table. The random part makes the name unguessable
+  (the CDN is public), and the ZIP is locked anyway. Several on one day share
+  the day's folder. Restore with
+  `pg_restore --no-owner --no-privileges --dbname <url> limer.dump`, then run
+  the site with the same `ENCRYPTION_KEY`. The image installs
+  `postgresql-client-18` (pg_dump must not be older than the server).
+- **Schedule.** `runScheduledBackups` makes the day's backup from 03:00
+  Istanbul time and, once a Solar Hijri month is over, that month's Excel report
+  (`kind = monthly`), while automatic backups are on. It is idempotent and holds
+  a transaction-scoped advisory lock, so it runs from both the site's own timer
+  (`src/instrumentation.ts` → `features/backup/timer.ts`, every 15 minutes in
+  production; `BACKUP_TIMER=off` stops it) and `pnpm jobs` without doubling up.
+- **Downloads** (`/api/admin/exports/[kind]`, audited `backup.export`):
+  Persian right-to-left Excel files (exceljs; Solar Hijri dates, lira amounts,
+  totals rows): `expenses`, `finance` (wallet, partners, workshops, expenses,
+  journal), `workshop?id=`, `month?m=<first day of a Solar Hijri month>`; and
+  `invoices`, every file kept with an expense as a ZIP streamed as it is made,
+  in folders `ورکشاپ‌ها/<start> - <title>/`, `هزینه‌های عمومی/`, `اثاثیه/`.
+  A backup itself downloads through `/api/admin/backups/[id]` (audited
+  `backup.download`), read from the storage with its key.

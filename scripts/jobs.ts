@@ -13,6 +13,10 @@
  *   and workshop; an unpaid registration's email also says how much is
  *   still to pay and shows the ways to pay that are switched on
  *   (src/features/registrations/admin/reminders.ts).
+ * - backup: the day's locked backup of the whole database (from 03:00
+ *   Istanbul time) and the report of a Solar Hijri month that is over, when
+ *   Settings → Backup has a password and automatic backups on
+ *   (src/features/backup/backup.ts; the running site does the same by itself).
  */
 import "dotenv/config"
 
@@ -28,6 +32,7 @@ load.cache[marker] = Object.assign(new Module(marker), { filename: marker, loade
 async function main() {
   const { notifyDueDecisions } = await import("../src/features/workshops/decisions")
   const { sendDayBeforeReminders } = await import("../src/features/registrations/admin/reminders")
+  const { runScheduledBackups } = await import("../src/features/backup/backup")
   const { db } = await import("../src/db")
   const { errorForLog } = await import("../src/lib/errors")
   let failed = false
@@ -53,6 +58,10 @@ async function main() {
     await job("workshop_reminder", async () => {
       const r = await sendDayBeforeReminders()
       return { done: r.sent, due: r.due, what: "member(s) reminded" }
+    })
+    await job("backup", async () => {
+      const r = await runScheduledBackups()
+      return { done: r.made, due: r.due, what: "backup(s) made" }
     })
   } finally {
     await db.$client.end()

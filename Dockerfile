@@ -20,7 +20,13 @@ RUN DATABASE_URL=postgres://build:build@127.0.0.1:5432/build \
 FROM base AS run
 ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0
 # curl: for Coolify's health check, so a new version only goes live once it answers.
+# pg_dump 18 (PostgreSQL's own apt repository, signed): Settings → Backup dumps the
+# database with it, and pg_dump must not be older than the server.
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
+    && install -d /usr/share/postgresql-common/pgdg \
+    && curl -fsSo /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+    && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update && apt-get install -y --no-install-recommends postgresql-client-18 \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=build --chown=node:node /app /app
 # Local uploads (until a CDN is set in the settings) live in a persistent volume here.

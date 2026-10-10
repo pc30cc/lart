@@ -10,6 +10,7 @@
     "email": "E-posta",
     "storage": "Depolama",
     "watermark": "Filigran",
+    "backup": "Yedekleme",
     "danger": "Tehlikeli bölge",
     "money": "Para"
   },
@@ -454,6 +455,89 @@
     "shares": {
       "title": "Kâr payları",
       "description": "Her atölyenin kârı ya da zararı, hesabı kapatılırken ortaklar arasında bu oranlarla bölünür. Paylar sabit ve kilitlidir; panelden değiştirilemez."
+    }
+  },
+  "backup": {
+    "saved": "Yedekleme ayarları kaydedildi.",
+    "password": {
+      "title": "Yedek şifresi",
+      "description": "Her yedek bu şifreyle kilitlenmiş bir ZIP dosyasıdır (AES-256); 7-Zip, WinRAR veya macOS Arşiv İzlencesi ile açılır. Şifre yoksa yedek alınmaz.",
+      "label": "Şifre",
+      "confirm": "Şifre (tekrar)",
+      "show": "Şifreyi göster",
+      "hide": "Şifreyi gizle",
+      "warning": "Bu şifreyi güvenli bir yerde saklayın (ör. bir şifre yöneticisinde). Kaybolursa yedekleri açmanın hiçbir yolu yoktur. Şifre değişikliği yalnızca sonraki yedekleri etkiler; eskiler eski şifreyle açılır.",
+      "saved": "Yedek şifresi ayarlandı.",
+      "change": "Şifreyi değiştir",
+      "keep": "Eski şifre kalsın"
+    },
+    "auto": {
+      "title": "Otomatik yedek",
+      "description": "Her gün saat 03:00'ten (İstanbul saati) sonra veritabanının tam bir kopyası alınır; her Hicri Şemsi ay bittiğinde o ayın mali raporu da yedeklerin yanına kaydedilir.",
+      "label": "Günlük otomatik yedek",
+      "hint": "Depolamadaki backup/ klasöründe, her gün o günün adını taşıyan bir klasörde."
+    },
+    "manual": {
+      "title": "Elle yedek",
+      "description": "İstediğiniz zaman veritabanının tam bir kopyasını alın. Bir günde birden fazla yedek alınırsa hepsi o günün klasöründe yan yana durur.",
+      "action": "Şimdi yedek al",
+      "running": "Yedek alınıyor…",
+      "done": "Veritabanının tam yedeği kaydedildi.",
+      "where": "Yedek {folder} klasöründe, bugünün alt klasörüne kaydedilir.",
+      "needPassword": "Önce yedek şifresini ayarlayın.",
+      "localStorage": "Depolama hâlâ bu sunucuda. Yedeklerin bir sunucu arızasında kaybolmaması için «Depolama» bölümünden bir CDN ayarlayın."
+    },
+    "downloads": {
+      "title": "Excel çıktıları ve faturalar",
+      "description": "Farsça, sağdan sola Excel dosyaları; Hicri Şemsi tarihler ve sütun toplamlarıyla. Her düğme dosyayı hazırlar ve indirir.",
+      "excel": "Excel indir",
+      "zip": "ZIP indir",
+      "preparing": "Hazırlanıyor…",
+      "failed": "Dosya hazırlanamadı. Tekrar deneyin.",
+      "expenses": {
+        "title": "Tüm giderler",
+        "hint": "Atölye, genel ve mobilya giderleri, her biri kendi sayfasında, toplamlarıyla."
+      },
+      "finance": {
+        "title": "Tam mali rapor",
+        "hint": "Kasa özeti, ortak hesapları, her atölyenin sonucu, giderler ve tüm defter kayıtları."
+      },
+      "workshop": {
+        "title": "Atölye raporu",
+        "hint": "Bir atölyenin geliri, giderleri, eğitmen ücreti ve kârı; kayıtlar ve ödemelerle.",
+        "none": "Henüz atölye yok"
+      },
+      "month": {
+        "title": "Ay sonu raporu",
+        "hint": "Bir Hicri Şemsi ayın geliri ve gideri, o ay kapanan atölyeler ve kasa hareketi. Her ay bitince otomatik olarak da kaydedilir.",
+        "none": "Henüz kayıt yok",
+        "current": "{month} (bu ay, bugüne kadar)"
+      },
+      "invoices": {
+        "title": "Tüm faturalar ve fişler",
+        "hint": "Her dosya kendi klasöründe: her atölye ayrı, genel giderler ve mobilya."
+      }
+    },
+    "list": {
+      "title": "Kayıtlı yedekler",
+      "description": "Güne göre, en yenisi üstte. Her dosyayı açmak için yedek şifresi gerekir.",
+      "empty": "Henüz yedek alınmadı.",
+      "by": "{name} tarafından alındı",
+      "byItself": "Otomatik",
+      "monthReport": "Ay raporu ({name})",
+      "download": "İndir",
+      "count": "{n} yedek dosyası"
+    },
+    "kind": {
+      "auto": "Günlük",
+      "manual": "Elle",
+      "monthly": "Ay raporu"
+    },
+    "errors": {
+      "noPassword": "Önce yedek şifresini ayarlayın.",
+      "passwordShort": "Şifre en az 10 karakter olmalı.",
+      "passwordMismatch": "İki şifre aynı değil.",
+      "noPgDump": "Veritabanı yedekleme aracı (pg_dump) sunucuda kurulu değil."
     }
   }
 }

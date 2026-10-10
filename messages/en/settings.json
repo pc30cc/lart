@@ -10,6 +10,7 @@
     "email": "Email",
     "storage": "Storage",
     "watermark": "Watermark",
+    "backup": "Backup",
     "danger": "Danger zone",
     "money": "Money"
   },
@@ -454,6 +455,89 @@
     "shares": {
       "title": "Profit shares",
       "description": "Each workshop's profit or loss is split between the partners in these shares when its books are closed. The shares are fixed and locked: they cannot be changed in the panel."
+    }
+  },
+  "backup": {
+    "saved": "Backup settings saved.",
+    "password": {
+      "title": "Backup password",
+      "description": "Every backup is a ZIP locked with this password (AES-256); it opens in 7-Zip, WinRAR or the macOS Archive Utility. Without a password nothing is backed up.",
+      "label": "Password",
+      "confirm": "Password again",
+      "show": "Show password",
+      "hide": "Hide password",
+      "warning": "Keep this password somewhere safe (a password manager, for example). If it is lost, there is no way to open the backups. A new password only applies to later backups; earlier ones keep opening with the old one.",
+      "saved": "The backup password is set.",
+      "change": "Change password",
+      "keep": "Keep the current password"
+    },
+    "auto": {
+      "title": "Automatic backup",
+      "description": "Every day after 03:00 (Istanbul time) a full copy of the database is made, and once a Solar Hijri month is over, its financial report is kept next to the backups too.",
+      "label": "Daily automatic backup",
+      "hint": "In the storage's backup/ folder, each day in a folder named after it."
+    },
+    "manual": {
+      "title": "Backup by hand",
+      "description": "Make a full copy of the database whenever you like. Several backups on the same day go side by side in that day's folder.",
+      "action": "Back up now",
+      "running": "Backing up…",
+      "done": "A full database backup was saved.",
+      "where": "The backup goes in the {folder} folder, under today's folder.",
+      "needPassword": "Set the backup password first.",
+      "localStorage": "The storage is still on this server. So that backups survive a server failure, set up a CDN under Storage."
+    },
+    "downloads": {
+      "title": "Excel exports and invoices",
+      "description": "Persian, right-to-left Excel files with Solar Hijri dates and column totals. Each button makes the file and downloads it.",
+      "excel": "Download Excel",
+      "zip": "Download ZIP",
+      "preparing": "Preparing…",
+      "failed": "The file could not be made. Try again.",
+      "expenses": {
+        "title": "All expenses",
+        "hint": "Workshop, general and furnishing expenses, each on its own sheet, with totals."
+      },
+      "finance": {
+        "title": "Full financial report",
+        "hint": "Wallet summary, partners' accounts, each workshop's result, expenses and every ledger entry."
+      },
+      "workshop": {
+        "title": "One workshop",
+        "hint": "A workshop's income, costs, instructor fee and profit, with its registrations and payments.",
+        "none": "No workshops yet"
+      },
+      "month": {
+        "title": "Month-end report",
+        "hint": "A Solar Hijri month's income and costs, the workshops closed in it and the wallet's movements. Also kept by itself once each month is over.",
+        "none": "No entries yet",
+        "current": "{month} (this month, so far)"
+      },
+      "invoices": {
+        "title": "All invoices and receipts",
+        "hint": "Each file in its own folder: one per workshop, general expenses and furnishing."
+      }
+    },
+    "list": {
+      "title": "Backups kept",
+      "description": "By day, newest first. Opening a file needs the backup password.",
+      "empty": "No backups yet.",
+      "by": "Made by {name}",
+      "byItself": "Automatic",
+      "monthReport": "Month report ({name})",
+      "download": "Download",
+      "count": "{n} backup files"
+    },
+    "kind": {
+      "auto": "Daily",
+      "manual": "By hand",
+      "monthly": "Month report"
+    },
+    "errors": {
+      "noPassword": "Set the backup password first.",
+      "passwordShort": "The password must be at least 10 characters.",
+      "passwordMismatch": "The two passwords differ.",
+      "noPgDump": "The database backup tool (pg_dump) is not installed on the server."
     }
   }
 }
