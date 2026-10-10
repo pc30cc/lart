@@ -487,7 +487,8 @@
     "description": "Every receipt, invoice and photo kept with an expense.",
     "tabs": {
       "all": "All",
-      "expenses": "Expenses",
+      "workshops": "Workshops",
+      "general": "General expenses",
       "furnishing": "Furnishing"
     },
     "empty": {
@@ -516,6 +517,7 @@
       "add": "Add",
       "remove": "Remove {name}",
       "tooMany": "At most {max} files per expense."
-    }
+    },
+    "allWorkshops": "All workshops"
   }
 }

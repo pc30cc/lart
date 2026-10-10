@@ -282,7 +282,15 @@ describe("receipts and furnishing", () => {
       ["receipt", "Work table", 2500],
       ["photo", "Work table", 2500],
     ])
-    expect((await listReceipts("expenses", 1)).rows.some((r) => r.transactionId === furnished.id)).toBe(false)
+    expect((await listReceipts("general", 1)).rows.some((r) => r.transactionId === furnished.id)).toBe(false)
+
+    // A workshop's receipts: in "workshops", and alone when that workshop is chosen.
+    const courseId = await makeCourse(world, p1.id, { status: "published" })
+    const clay = ok(await recordExpense({ ...entry(), courseId, category: "Clay", files: [file("w1")] }))
+    const mine = await listReceipts("workshops", 1, courseId)
+    expect(mine.rows.map((r) => r.transactionId)).toEqual([clay.id])
+    expect(mine.workshops.find((w) => w.id === courseId)?.n).toBe(1)
+    expect((await listReceipts("general", 1)).rows.some((r) => r.transactionId === clay.id)).toBe(false)
   })
 
   it("refuses files that were never uploaded, item photos without furnishing, and furnishing of a workshop", async () => {

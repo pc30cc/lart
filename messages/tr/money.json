@@ -487,7 +487,8 @@
     "description": "Giderlerle birlikte kaydedilen tüm fişler, faturalar ve fotoğraflar.",
     "tabs": {
       "all": "Tümü",
-      "expenses": "Giderler",
+      "workshops": "Atölyeler",
+      "general": "Genel giderler",
       "furnishing": "Demirbaş"
     },
     "empty": {
@@ -516,6 +517,7 @@
       "add": "Ekle",
       "remove": "{name} kaldır",
       "tooMany": "Bir gider için en fazla {max} dosya."
-    }
+    },
+    "allWorkshops": "Tüm atölyeler"
   }
 }

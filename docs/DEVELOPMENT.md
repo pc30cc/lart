@@ -121,7 +121,7 @@ drizzle/                        SQL migrations (generated + custom guards)
   `%PDF-` header) and saved by `recordExpense` (only paths that exist in
   storage). Furnishing (`ledger_transactions.furnishing`, the "Furnishing
   expense" button) is a general expense from the wallet, kept apart in Money →
-  Receipts (`listReceipts`, tabs All / Expenses / Furnishing). The files go
+  Receipts (`listReceipts`, tabs All / Workshops (one workshop at a time) / General / Furnishing). The files go
   with their transaction only in a factory reset (cascade); the stored files
   stay.
 - Closing a workshop credits each partner's share of its result to their
@@ -1484,7 +1484,7 @@ holds a seat, not paid yet; `confirmed` = paid (or a free workshop);
 | `/admin/workshops/[id]/registrations` | record a payment, cancel, change refund, CSV export (`features/registrations/admin`) |
 | `/admin/registrations` | every workshop's registrations: tabs not paid yet (default) / paid / cancelled / all, search by participant / member / email / phone, record a payment, cancel, change refund |
 | `/admin/money/refunds` | refunds owed / paid back; "Change refund", "Mark as refunded" |
-| `/admin/money/receipts` | the receipts gallery: every file kept with an expense (receipts, invoices, item photos), tabs All / Expenses / Furnishing |
+| `/admin/money/receipts` | the receipts gallery: every file kept with an expense (receipts, invoices, item photos), tabs All / Workshops / General / Furnishing |
 | `/admin/settings/payments` | which ways are on (cash, transfer with holder / bank / IBAN / note, online with a note) |
 
 - **Counting.** "Registered" is everyone with an active registration, paid or

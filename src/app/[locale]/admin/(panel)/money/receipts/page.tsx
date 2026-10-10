@@ -20,6 +20,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 type T = Awaited<ReturnType<typeof getTranslations<"money.receipts">>>
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 /**
  * Money → Receipts: a gallery of every file kept with an expense (receipts and
  * invoices, photos or PDFs, and photos of furnishing), newest expense first,
@@ -30,15 +32,17 @@ export default async function ReceiptsPage({ searchParams }: PageProps<"/[locale
   const query = await searchParams
   const group: ReceiptGroup = receiptGroups.find((g) => g === query.group) ?? "all"
   const page = Math.max(1, Math.min(10_000, Number.parseInt(String(query.page ?? "1"), 10) || 1))
-  const [{ rows, total, counts }, t, locale] = await Promise.all([
-    listReceipts(group, page),
+  const workshopId = group === "workshops" && typeof query.workshop === "string" && UUID.test(query.workshop) ? query.workshop : undefined
+  const [{ rows, total, counts, workshops }, t, locale] = await Promise.all([
+    listReceipts(group, page, workshopId),
     getTranslations("money.receipts"),
     getLocale(),
   ])
   const pages = Math.max(1, Math.ceil(total / RECEIPTS_PER_PAGE))
-  const href = (g: ReceiptGroup, p = 1) => {
+  const href = (g: ReceiptGroup, p = 1, w = g === group ? workshopId : undefined) => {
     const sp = new URLSearchParams()
     if (g !== "all") sp.set("group", g)
+    if (w) sp.set("workshop", w)
     if (p > 1) sp.set("page", String(p))
     const s = sp.toString()
     return `/admin/money/receipts${s ? `?${s}` : ""}`
@@ -67,6 +71,25 @@ export default async function ReceiptsPage({ searchParams }: PageProps<"/[locale
           </Link>
         ))}
       </nav>
+
+      {group === "workshops" && workshops.length > 0 && (
+        <nav aria-label={t("tabs.workshops")} className="-mt-2 mb-6 flex flex-wrap gap-2">
+          {[{ id: undefined, label: t("allWorkshops"), n: counts.workshops }, ...workshops.map((w) => ({ id: w.id, label: localized(w.title, locale), n: w.n }))].map((w) => (
+            <Link
+              key={w.id ?? "all"}
+              href={href("workshops", 1, w.id)}
+              aria-current={w.id === workshopId ? "page" : undefined}
+              className={cn(
+                "hover:border-foreground/30 focus-visible:ring-ring/50 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs outline-none focus-visible:ring-3",
+                w.id === workshopId && "bg-foreground text-background border-transparent hover:border-transparent",
+              )}
+            >
+              {w.label}
+              <span className="tabular-nums opacity-70">{formatNumber(w.n, locale)}</span>
+            </Link>
+          ))}
+        </nav>
+      )}
 
       {rows.length === 0 ? (
         <EmptyState icon={ReceiptTextIcon} title={t("empty.title")} description={t("empty.description")} />

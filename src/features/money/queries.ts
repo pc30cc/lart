@@ -416,22 +416,26 @@ export type WorkshopEntry = ReturnType<typeof describeEntry>
 
 // ─── Receipts ─────────────────────────────────────────────────────────────────
 
-/** The receipts page's tabs: everything, workshop and general expenses, or furnishing. */
-export const receiptGroups = ["all", "expenses", "furnishing"] as const
+/** The receipts page's tabs: everything, workshops' expenses, general expenses, or furnishing. */
+export const receiptGroups = ["all", "workshops", "general", "furnishing"] as const
 export type ReceiptGroup = (typeof receiptGroups)[number]
 export const RECEIPTS_PER_PAGE = 48
 
 /**
  * The files kept with expenses (Money → Receipts), newest expense first, with
  * what each expense was: its subject, amount, date, workshop, who recorded it
- * and whether it was reversed since.
+ * and whether it was reversed since. `workshopId` narrows "workshops" to one;
+ * `workshops` lists those with receipts, for that choice.
  */
-export async function listReceipts(group: ReceiptGroup, page: number) {
+export async function listReceipts(group: ReceiptGroup, page: number, workshopId?: string) {
   await requireAdmin()
+  const kind = sql<ReceiptGroup>`case when ${t.furnishing} then 'furnishing' when ${t.courseId} is not null then 'workshops' else 'general' end`
   const where =
-    group === "furnishing" ? eq(t.furnishing, true) : group === "expenses" ? eq(t.furnishing, false) : undefined
+    group === "all"
+      ? undefined
+      : and(sql`${kind} = ${group}`, group === "workshops" && workshopId ? eq(t.courseId, workshopId) : undefined)
   const reversal = alias(ledgerTransactions, "reversal")
-  const [rows, [{ total }], counts, url] = await Promise.all([
+  const [rows, [{ total }], counts, workshops, url] = await Promise.all([
     db
       .select({
         id: expenseFiles.id,
@@ -460,18 +464,31 @@ export async function listReceipts(group: ReceiptGroup, page: number) {
       .offset((Math.max(1, page) - 1) * RECEIPTS_PER_PAGE),
     db.select({ total: count() }).from(expenseFiles).innerJoin(t, eq(t.id, expenseFiles.transactionId)).where(where),
     db
-      .select({ furnishing: t.furnishing, n: count() })
+      .select({ kind, n: count() })
       .from(expenseFiles)
       .innerJoin(t, eq(t.id, expenseFiles.transactionId))
-      .groupBy(t.furnishing),
+      .groupBy(kind),
+    db
+      .select({ id: courses.id, title: courses.title, startsAt: courses.startsAt, n: count() })
+      .from(expenseFiles)
+      .innerJoin(t, eq(t.id, expenseFiles.transactionId))
+      .innerJoin(courses, eq(courses.id, t.courseId))
+      .where(eq(t.furnishing, false))
+      .groupBy(courses.id)
+      .orderBy(desc(courses.startsAt)),
     publicUrls(),
   ])
-  const furnishing = counts.find((c) => c.furnishing)?.n ?? 0
-  const expenses = counts.find((c) => !c.furnishing)?.n ?? 0
+  const n = (g: ReceiptGroup) => counts.find((c) => c.kind === g)?.n ?? 0
   return {
     rows: rows.map(({ path, ...r }) => ({ ...r, url: url(path), pdf: r.contentType === "application/pdf" })),
     total,
-    counts: { all: furnishing + expenses, expenses, furnishing } satisfies Record<ReceiptGroup, number>,
+    counts: {
+      all: n("workshops") + n("general") + n("furnishing"),
+      workshops: n("workshops"),
+      general: n("general"),
+      furnishing: n("furnishing"),
+    } satisfies Record<ReceiptGroup, number>,
+    workshops,
   }
 }
 
