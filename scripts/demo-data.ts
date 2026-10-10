@@ -1,11 +1,11 @@
 /**
  * Sample data for trying the site out: a few workshops (three held and closed,
  * two coming up and full, so no visitor can register), their instructors,
- * students, photos and a whole month of money (capital, rent, materials,
- * payments, closings, instructor payments, a withdrawal).
+ * students, photos and a whole month of money (capital from both partners,
+ * rent, furnishing, materials, payments, closings, instructor payments).
  * Costs are recorded by the first partner and paid from the wallet.
  *
- *   pnpm tsx scripts/demo-data.ts seed <photos-dir> <manifest.json>
+ *   pnpm tsx scripts/demo-data.ts seed <photos-dir | -> <manifest.json>   ("-": no photos at all)
  *   pnpm tsx scripts/demo-data.ts remove <manifest.json>
  *
  * Against a database whose APP_URL is not on this computer (the live site),
@@ -198,12 +198,14 @@ async function seed(photosDir: string, manifestPath: string) {
   const save = () => writeFileSync(manifestPath, JSON.stringify(m, null, 2))
   save()
 
-  const partners = await activePartners(db)
+  const partners = (await activePartners(db)).filter((p) => p.shareBp > 0)
   if (partners.length === 0) throw new Error("no active partner")
-  const admin = partners[0].adminId
+  // Costs are recorded by the partner chosen in Settings → Money, as in the panel.
+  const { spenderId } = await getSetting("money")
+  const admin = partners.find((p) => p.adminId === spenderId)?.adminId ?? partners[0].adminId
   const storage = await getStorage()
   const watermark = await getSetting("watermark")
-  const photos = readdirSync(photosDir)
+  const photos = photosDir === "-" ? [] : readdirSync(photosDir)
 
   async function photo(file: string, purpose: "course_cover" | "course_sample" | "gallery_photo", folder: string) {
     const bytes = readFileSync(path.join(photosDir, file))
@@ -281,15 +283,23 @@ async function seed(photosDir: string, manifestPath: string) {
     save()
     return id
   }
-  for (const [i, p] of partners.entries()) {
-    await db.transaction((tx) =>
-      post(() => L.postContribution(tx, { partnerId: p.adminId, amount: lira(50_000), occurredOn: L.today(at(-40 + i, 12)), description: "Başlangıç sermayesi", createdBy: p.adminId })),
-    )
+  // Capital goes in from both partners at once, the same amount each.
+  await db.transaction((tx) =>
+    post(() => L.postJointContribution(tx, { partnerIds: partners.map((p) => p.adminId), amountEach: lira(50_000), occurredOn: L.today(at(-40, 12)), description: "Başlangıç sermayesi", createdBy: admin })),
+  )
+  const costs: [days: number, amount: number, what: string, furnishing?: boolean][] = [
+    [-35, 9_000, "Atölye kirası (Eylül)"],
+    [-34, 6_500, "Masa, sandalye ve raflar", true],
+    [-30, 3_800, "Seramik çarkı", true],
+    [-28, 1_450, "Aydınlatma ve uzatma kabloları", true],
+    [-26, 850, "Web sitesi alan adı ve barındırma"],
+    [-20, 1_200, "Instagram reklamı"],
+    [-12, 2_300, "Muhasebe (Eylül)"],
+    [-5, 9_000, "Atölye kirası (Ekim)"],
+  ]
+  for (const [days, amount, description, furnishing] of costs) {
+    await db.transaction((tx) => post(() => L.postExpense(tx, { amount: lira(amount), source: "wallet", furnishing, occurredOn: L.today(at(days, 12)), description, createdBy: admin })))
   }
-  await db.transaction((tx) => post(() => L.postExpense(tx, { amount: lira(9_000), source: "wallet", occurredOn: L.today(at(-35, 12)), description: "Atölye kirası (Eylül)", createdBy: admin })))
-  await db.transaction((tx) => post(() => L.postExpense(tx, { amount: lira(6_500), source: "wallet", occurredOn: L.today(at(-33, 12)), description: "Masa, sandalye ve raflar", createdBy: admin })))
-  await db.transaction((tx) => post(() => L.postExpense(tx, { amount: lira(1_200), source: "wallet", occurredOn: L.today(at(-20, 12)), description: "Instagram reklamı", createdBy: admin })))
-  await db.transaction((tx) => post(() => L.postExpense(tx, { amount: lira(9_000), source: "wallet", occurredOn: L.today(at(-5, 12)), description: "Atölye kirası (Ekim)", createdBy: admin })))
 
   // ── Workshops ──
   let nextStudent = 0
@@ -433,12 +443,6 @@ async function seed(photosDir: string, manifestPath: string) {
     console.info(`[demo] ${w.slug}: ${w.students} students`)
   }
 
-  // One partner takes some money out.
-  const taker = partners[partners.length - 1]
-  await db.transaction((tx) =>
-    post(() => L.postWithdrawal(tx, { partnerId: taker.adminId, amount: lira(4_000), occurredOn: L.today(at(-3, 12)), description: "Kişisel çekim", createdBy: taker.adminId })),
-  )
-
   console.info(`[demo] done: ${m.courses.length} workshops, ${m.members.length} students, ${m.transactions.length} transactions, ${m.files.length} files`)
 }
 
@@ -493,7 +497,7 @@ const [mode, a, b] = args.filter((arg) => arg !== "--production")
 const local = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/.test(process.env.APP_URL ?? "")
 const run = !local && !production
   ? Promise.reject(new Error(`APP_URL is ${process.env.APP_URL ?? "not set"}, not this computer: add --production if this is meant for the live site`))
-  : mode === "seed" && a && b ? seed(a, b) : mode === "remove" && a ? remove(a) : Promise.reject(new Error("usage: seed <photos-dir> <manifest> | remove <manifest>"))
+  : mode === "seed" && a && b ? seed(a, b) : mode === "remove" && a ? remove(a) : Promise.reject(new Error("usage: seed <photos-dir | -> <manifest> | remove <manifest>"))
 run.then(
   () => process.exit(0),
   (err) => {
