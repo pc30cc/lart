@@ -52,7 +52,7 @@ async function register(page: Page, locale: Locale, slug: string, participant?: 
   const t = tr(locale)
   await page.goto(at(locale, `/workshops/${slug}/register`))
   if (participant !== undefined) await page.getByLabel(t("registration.register.participant")).fill(participant)
-  // Both boxes start ticked; one box for photos and videos together.
+  // One box for photos and videos together.
   await page.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).check()
   await page.getByRole("checkbox", { name: t("registration.register.consent.both") }).setChecked(Boolean(consent.photo || consent.video))
   await page.getByRole("button", { name: t("registration.register.submit"), exact: true }).click()
@@ -212,7 +212,7 @@ test.describe.serial("phase 2 · students", () => {
     await expect(page.locator("main")).toContainText("72")
     for (const way of ["cash", "transfer", "online"]) await expect(page.locator("main").getByText(t(`registration.register.pay.${way}`), { exact: true })).toBeVisible()
 
-    // Without the terms box (it starts ticked: untick it): refused on the box.
+    // Without the terms box: refused on the box.
     const submit = page.getByRole("button", { name: t("registration.register.submit"), exact: true })
     await page.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).uncheck()
     await submit.click()
@@ -231,7 +231,7 @@ test.describe.serial("phase 2 · students", () => {
       "select status, amount, photo_consent, video_consent, terms_sha256, participant_name from registrations where id = $1",
       [id],
     )
-    expect(reg).toMatchObject({ status: "pending", photo_consent: true, video_consent: true, participant_name: P2.ayla.name })
+    expect(reg).toMatchObject({ status: "pending", photo_consent: false, video_consent: false, participant_name: P2.ayla.name })
     expect(Number(reg.amount)).toBe(100_000)
     expect(reg.terms_sha256).toMatch(/^[0-9a-f]{64}$/)
 

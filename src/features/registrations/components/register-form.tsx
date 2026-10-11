@@ -23,7 +23,7 @@ const wayIcons: Record<PaymentWayName, LucideIcon> = { cash: BanknoteIcon, trans
  * The registration form: who attends (the member's name to start with; a
  * parent writes their child's name), the terms box (its link opens the terms
  * and what the photo / video box means in a dialog) and one box for photos and
- * videos, both ticked to start with, the price with the ways to pay (in plain
+ * videos, both unticked to start with, the price with the ways to pay (in plain
  * words), and one big "Register" button. The server checks it all
  * again (seats, deadline, the terms text) and opens the "you're registered" page.
  */
@@ -52,8 +52,8 @@ export function RegisterForm({
   const { form, submit, pending, error } = useSiteForm({
     schema: registerSchema,
     action: registerAction,
-    // Both boxes start ticked, as the owner asked; the person can untick them.
-    defaultValues: { courseId, locale, participantName: defaultName, termsSha256: terms.sha256, acceptTerms: true, photoConsent: true, videoConsent: true },
+    // Both boxes start unticked (the terms box left out): ticking them is the person's own act.
+    defaultValues: { courseId, locale, participantName: defaultName, termsSha256: terms.sha256, photoConsent: false, videoConsent: false },
   })
   const dialog = (chunks: React.ReactNode) => (
     <TermsDialog
