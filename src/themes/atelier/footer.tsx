@@ -13,10 +13,10 @@ import type { FooterContent, HeaderMember, LogoSize } from "../types"
 import { Wordmark } from "./wordmark"
 
 /**
- * Atelier's footer, in dark brown: link columns (Explore, My account,
+ * Atelier's footer, in dark brown: link columns (Explore, the legal pages,
  * Contact: only the ways in that are set), "About us", then the brand as a
  * giant wordmark (its logo when there is one) cut off by a light bar with the
- * copyright, the legal pages and the light / dark switch.
+ * copyright and the light / dark switch.
  */
 export async function Footer({
   brand,
@@ -31,11 +31,7 @@ export async function Footer({
   member: HeaderMember | null
   footer: FooterContent
 }) {
-  const [t, th, tf] = await Promise.all([
-    getTranslations("home.footer"),
-    getTranslations("site.header"),
-    getTranslations("site.footer"),
-  ])
+  const [t, tf] = await Promise.all([getTranslations("home.footer"), getTranslations("site.footer")])
   // This year in the language's calendar (۱۴۰۵ in Persian).
   const year = formatYear(new Date(), locale)
 
@@ -56,12 +52,12 @@ export async function Footer({
               </FooterLink>
             ))}
           </Column>
-          <Column title={t("account")}>
-            {member ? (
-              <FooterLink href="/account">{th("myWorkshops")}</FooterLink>
-            ) : (
-              <FooterLink href="/account/login">{th("logInOrSignUp")}</FooterLink>
-            )}
+          <Column title={tf("legal")}>
+            {footer.legal.map((item) => (
+              <FooterLink key={item.href} href={item.href}>
+                {item.label}
+              </FooterLink>
+            ))}
           </Column>
           {(footer.emailCode || footer.phoneCode || instagram) && (
             // On a phone the whole row: an email address in half of it would break mid-domain.
@@ -112,17 +108,6 @@ export async function Footer({
       <div className="bg-at-bar text-foreground relative">
         <div className="at-container flex min-h-16 flex-wrap items-center justify-between gap-x-6 gap-y-2 py-3 text-sm">
           <p>{tf("rights", { brand, year })}</p>
-          <nav aria-label={tf("legal")} className="flex flex-wrap gap-x-5 gap-y-1">
-            {footer.legal.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-foreground/75 hover:text-foreground focus-visible:ring-ring/50 rounded-sm outline-none focus-visible:ring-3"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
           <div className="flex items-center gap-5">
             <LanguageLinks signedIn={member !== null} linkClassName="text-foreground/75 hover:text-foreground" />
             <ThemeToggle />
