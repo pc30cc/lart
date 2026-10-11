@@ -36,11 +36,38 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/workshop
 }
 
 /**
- * Register for a workshop. Signed out: log in or create an account (both
- * come back here). Email not confirmed yet: a friendly prompt with "send it
- * again". Not open any more: says so. Otherwise the form.
+ * Register for a workshop, over the workshop's cover photo (the whole page,
+ * faded so the form stays easy to read). Signed out: log in or create an
+ * account (both come back here). Email not confirmed yet: a friendly prompt
+ * with "send it again". Not open any more: says so. Otherwise the form.
  */
-export default async function RegisterPage({ params }: PageProps<"/[locale]/workshops/[slug]/register">) {
+export default async function RegisterPage(props: PageProps<"/[locale]/workshops/[slug]/register">) {
+  const { locale: raw, slug } = await props.params
+  const w = await getPublicWorkshop(slug, pageLocale(raw))
+  if (!w) notFound()
+  return (
+    <CoverBackdrop url={w.coverUrl}>
+      <RegisterView {...props} />
+    </CoverBackdrop>
+  )
+}
+
+/** The workshop's photo behind the whole page, softened and faded into the page colour. */
+function CoverBackdrop({ url, children }: { url: string | null; children: React.ReactNode }) {
+  if (!url) return children
+  return (
+    <div className="relative isolate flex-1">
+      <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element -- the workshop's cover on the CDN, already resized */}
+        <img src={url} alt="" className="size-full scale-105 object-cover opacity-45 blur-[2px]" />
+        <div className="from-background/55 via-background/40 to-background/80 absolute inset-0 bg-linear-to-b" />
+      </div>
+      {children}
+    </div>
+  )
+}
+
+async function RegisterView({ params }: PageProps<"/[locale]/workshops/[slug]/register">) {
   const { locale: raw, slug } = await params
   const locale = pageLocale(raw)
   const w = await getPublicWorkshop(slug, locale)

@@ -210,7 +210,7 @@ function CheckField({
         <label
           htmlFor={id}
           className={cn(
-            "has-data-[state=checked]:border-primary/60 has-data-[state=checked]:bg-primary/5 flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors",
+            "bg-card/85 has-data-[state=checked]:border-primary/60 has-data-[state=checked]:bg-primary/5 flex cursor-pointer items-start gap-3 rounded-xl border p-4 backdrop-blur-sm transition-colors",
             aria["aria-invalid"] && "border-destructive/60",
           )}
         >

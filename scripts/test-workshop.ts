@@ -3,13 +3,14 @@
  * payment on the live site, and removing it all afterwards.
  *
  *   pnpm tsx scripts/test-workshop.ts add <manifest.json> [--production]
+ *   pnpm tsx scripts/test-workshop.ts cover <manifest.json> <photo.jpg> [--production]
  *   pnpm tsx scripts/test-workshop.ts remove <manifest.json> [--production]
  *
  * `add` creates a published workshop two weeks ahead (its own instructor, at
  * an address that cannot receive mail, with a signed contract; an existing
- * category). `remove` deletes the workshop with everything recorded on it
+ * category). `cover` gives it a cover photo (stored like an upload). `remove` deletes the workshop with everything recorded on it
  * while testing: registrations, payments and refunds in the books (through the
- * factory-reset switch of drizzle/0013), its contract and its instructor.
+ * factory-reset switch of drizzle/0013), its contract, its instructor and its photo.
  * Student accounts made while testing are people's own and stay.
  */
 import "dotenv/config"
@@ -21,7 +22,7 @@ const load = createRequire(__filename)
 const marker = load.resolve("server-only")
 load.cache[marker] = Object.assign(new Module(marker), { filename: marker, loaded: true, exports: {} })
 
-type Manifest = { createdAt: string; course: string; instructor: string; category: string | null }
+type Manifest = { createdAt: string; course: string; instructor: string; category: string | null; files?: string[] }
 
 const DAY = 86_400_000
 const DOMAIN = "test.limer.invalid"
@@ -120,6 +121,30 @@ async function add(manifestPath: string) {
   console.info(`[test-workshop] added: workshop ${m.course}`)
 }
 
+async function cover(manifestPath: string, photo: string) {
+  const m: Manifest = JSON.parse(readFileSync(manifestPath, "utf8"))
+  const { db } = await import("../src/db")
+  const { eq } = await import("drizzle-orm")
+  const S = await import("../src/db/schema")
+  const { getSetting } = await import("../src/lib/settings")
+  const { getStorage } = await import("../src/lib/storage")
+  const { storeImage } = await import("../src/lib/storage/upload")
+
+  const [course] = await db.select({ slug: S.courses.slug }).from(S.courses).where(eq(S.courses.id, m.course))
+  if (!course) throw new Error("the test workshop is not there")
+  const stored = await storeImage({
+    storage: await getStorage(),
+    purpose: "course_cover",
+    file: new Blob([readFileSync(photo)]).stream(),
+    watermark: await getSetting("watermark"),
+    folder: course.slug,
+  })
+  m.files = [...(m.files ?? []), stored.path]
+  writeFileSync(manifestPath, JSON.stringify(m, null, 2))
+  await db.update(S.courses).set({ coverPath: stored.path }).where(eq(S.courses.id, m.course))
+  console.info(`[test-workshop] cover: ${stored.path}`)
+}
+
 async function remove(manifestPath: string) {
   const m: Manifest = JSON.parse(readFileSync(manifestPath, "utf8"))
   const { db } = await import("../src/db")
@@ -148,16 +173,24 @@ async function remove(manifestPath: string) {
     await tx.execute(sql`select set_config('lart.factory_reset', 'off', true)`)
     return { registrations: regs.length, transactions: ids.length }
   })
-  console.info(`[test-workshop] removed: the workshop, ${counts.registrations} registration(s), ${counts.transactions} transaction(s)`)
+  const { remove: removeFile } = await import("../src/lib/storage")
+  for (const f of m.files ?? []) await removeFile(f).catch((err) => console.warn(`[test-workshop] file not removed: ${f}`, err?.message))
+  console.info(`[test-workshop] removed: the workshop, ${counts.registrations} registration(s), ${counts.transactions} transaction(s), ${(m.files ?? []).length} file(s)`)
 }
 
 const args = process.argv.slice(2)
 const production = args.includes("--production")
-const [mode, file] = args.filter((arg) => arg !== "--production")
+const [mode, file, photo] = args.filter((arg) => arg !== "--production")
 const local = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/.test(process.env.APP_URL ?? "")
 const run = !local && !production
   ? Promise.reject(new Error(`APP_URL is ${process.env.APP_URL ?? "not set"}, not this computer: add --production if this is meant for the live site`))
-  : mode === "add" && file ? add(file) : mode === "remove" && file ? remove(file) : Promise.reject(new Error("usage: add <manifest> | remove <manifest>"))
+  : mode === "add" && file
+    ? add(file)
+    : mode === "cover" && file && photo
+      ? cover(file, photo)
+      : mode === "remove" && file
+        ? remove(file)
+        : Promise.reject(new Error("usage: add <manifest> | cover <manifest> <photo> | remove <manifest>"))
 run.then(
   () => process.exit(0),
   (err) => {
