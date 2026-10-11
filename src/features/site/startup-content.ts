@@ -23,6 +23,7 @@ import { uploadPath } from "@/lib/storage/upload"
 export const PORTRAITS = [
   // 2026-10-11
   { id: "86a8d97e-293c-4563-85f6-6e2ad4b35911", name: "Lili Altin", file: "lili-altin.jpg", folder: "lili-altin" },
+  { id: "a2cf679d-5fd0-4322-99b8-331495653593", name: "مریم کارامد", file: "maryam-karamad.jpg", folder: "maryam-karamad" },
 ]
 const ACTION = "content.portrait"
 
