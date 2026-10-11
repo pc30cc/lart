@@ -31,6 +31,8 @@ const values = {
   max: 12,
   n: 3,
   percent: 50,
+  // The link around "the terms" in the register box's label.
+  terms: (chunks: string) => chunks,
 }
 
 describe("registration messages", () => {

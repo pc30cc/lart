@@ -99,8 +99,8 @@
     "participantHint": "Adı ve soyadı; onu adıyla karşılayabilmemiz için.",
     "childNote": "Bu atölye {min, number}–{max, number} yaş arası çocuklar için. Velisi olarak lütfen buraya çocuğunuzun adını yazın.",
     "terms": "Kayıt koşulları",
-    "termsIntro": "Kaydolmadan önce lütfen koşulları okuyun.",
     "acceptTerms": "Kayıt ve iptal koşullarını okudum, kabul ediyorum.",
+    "acceptTermsRich": "<terms>Kayıt ve iptal koşullarını</terms> okudum, kabul ediyorum.",
     "consent": {
       "title": "Fotoğraf ve videolar",
       "optional": "isteğe bağlı",
