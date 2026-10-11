@@ -12,7 +12,7 @@ import { ProtectedContact } from "./protected-contact"
 /**
  * The classic theme's quiet footer: the menu's links (a phone's header has
  * room for the first only) and the ways in touch (the email and phone kept
- * from spam harvesters), the brand and the year, the page in the other
+ * from spam harvesters), the brand and the year, the legal pages, the page in the other
  * languages, and the light / dark switch.
  */
 export async function SiteFooter({
@@ -69,6 +69,13 @@ export async function SiteFooter({
       </div>
       <div className="text-muted-foreground mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-6 text-sm">
         <p>{t("rights", { brand, year })}</p>
+        <nav aria-label={t("legal")} className="flex flex-wrap gap-x-4 gap-y-1">
+          {footer.legal.map((item) => (
+            <Link key={item.href} href={item.href} className="hover:text-foreground focus-visible:ring-ring/50 rounded-sm outline-none focus-visible:ring-3">
+              {item.label}
+            </Link>
+          ))}
+        </nav>
         <div className="flex items-center gap-4">
           <LanguageLinks signedIn={signedIn} linkClassName="hover:text-foreground" />
           <ThemeToggle />

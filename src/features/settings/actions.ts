@@ -13,18 +13,21 @@ import { getBrand, getSetting, setSetting, type SettingKey, type SettingValue } 
 import { remove, testStorage } from "@/lib/storage"
 import { buildCdnConfig, cdnView } from "./cdn"
 import { buildEmailSetting, emailView } from "./email"
-import { cdnSettingsSchema, emailSettingsSchema, generalSettingsSchema, watermarkSettingsSchema } from "./schema"
+import { cdnSettingsSchema, emailSettingsSchema, generalSettingsSchema, siteLocales as siteLocaleOrder, watermarkSettingsSchema } from "./schema"
 
 /** Every change of a setting is one audit entry: "setting.update" with the setting's key as id. */
 const settingAudit = (key: SettingKey, data: Record<string, unknown>) =>
   ({ action: "setting.update", entity: "setting", entityId: key, data }) as const
 
 /**
- * Brand, main language and SEO defaults: only the settings that changed are
- * written. (The theme is on the Appearance page: appearance-actions.ts.)
+ * Brand, main language, the site's languages and SEO defaults: only the
+ * settings that changed are written. (The theme is on the Appearance page:
+ * appearance-actions.ts.)
  */
 export const saveGeneralSettings = adminAction(generalSettingsSchema, async (input, ctx) => {
-  const keys = ["brand", "defaultLocale", "seo"] as const
+  // In the usual order, so a reordered choice is no change.
+  input = { ...input, siteLocales: siteLocaleOrder.filter((l) => input.siteLocales.includes(l)) }
+  const keys = ["brand", "defaultLocale", "siteLocales", "seo"] as const
   const before = await Promise.all(keys.map((key) => getSetting(key)))
   const changed = keys.filter((key, i) => Object.keys(changes({ value: before[i] }, { value: input[key] })).length > 0)
   if (changed.length === 0) return { changed }
@@ -38,7 +41,7 @@ export const saveGeneralSettings = adminAction(generalSettingsSchema, async (inp
   })
   // The addresses follow the main language: at once in this process, within
   // the cache time (30 s) in the others.
-  if (changed.includes("defaultLocale")) setMainLocale(input.defaultLocale)
+  if (changed.includes("defaultLocale") || changed.includes("siteLocales")) setMainLocale(input.defaultLocale, input.siteLocales)
   refresh() // the brand is in the panel header too
   return { changed }
 })

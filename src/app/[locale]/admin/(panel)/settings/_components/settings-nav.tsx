@@ -7,6 +7,7 @@ import {
   LandmarkIcon,
   MailIcon,
   PaletteIcon,
+  ScaleIcon,
   SlidersHorizontalIcon,
   StampIcon,
   TriangleAlertIcon,
@@ -23,6 +24,7 @@ const tabs = [
   { href: "/admin/settings/home", label: "home", icon: HouseIcon },
   { href: "/admin/settings/payments", label: "payments", icon: WalletCardsIcon },
   { href: "/admin/settings/money", label: "money", icon: LandmarkIcon },
+  { href: "/admin/settings/legal", label: "legal", icon: ScaleIcon },
   { href: "/admin/settings/email", label: "email", icon: MailIcon },
   { href: "/admin/settings/storage", label: "storage", icon: DatabaseIcon },
   { href: "/admin/settings/watermark", label: "watermark", icon: StampIcon },
@@ -30,7 +32,7 @@ const tabs = [
   { href: "/admin/settings/danger", label: "danger", icon: TriangleAlertIcon },
 ] as const
 
-/** General · Appearance · Home page · Payments · Money · Email · Storage · Watermark · Backup · Danger zone. */
+/** General · Appearance · Home page · Payments · Money · Legal details · Email · Storage · Watermark · Backup · Danger zone. */
 export function SettingsNav() {
   const t = useTranslations("settings.tabs")
   const pathname = usePathname()

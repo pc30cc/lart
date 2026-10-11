@@ -1,6 +1,6 @@
 import "server-only"
 
-import { mainLocale } from "@/i18n/links"
+import { mainLocale, siteLocales } from "@/i18n/links"
 import { localePath } from "@/i18n/paths"
 import { locales } from "@/i18n/routing"
 import { env } from "@/lib/env"
@@ -33,13 +33,14 @@ export function openGraphOf(locale: string, url: string, images?: { url: string;
  * Canonical URL and hreflang alternates of a page that exists in every
  * language: `path` without the language, e.g. "/workshops/candle-making".
  * The main language's address has no prefix, and it is the x-default too.
+ * Only the languages the site is shown in (Settings → General).
  */
 export async function alternates(path: string, locale: string) {
-  const main = await mainLocale()
+  const [main, site] = await Promise.all([mainLocale(), siteLocales()])
   return {
     canonical: absoluteUrl(localePath(locale, path, main)),
     languages: {
-      ...Object.fromEntries(locales.map((l) => [l, absoluteUrl(localePath(l, path, main))])),
+      ...Object.fromEntries(site.map((l) => [l, absoluteUrl(localePath(l, path, main))])),
       "x-default": absoluteUrl(localePath(main, path, main)),
     },
   }

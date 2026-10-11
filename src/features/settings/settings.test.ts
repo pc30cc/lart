@@ -4,7 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 
 import { db } from "@/db"
 import { admins, auditLog, settings } from "@/db/schema"
-import { getMainLocale, resetMainLocaleCache } from "@/i18n/main-locale"
+import { getMainLocale, getSiteLocales, resetMainLocaleCache } from "@/i18n/main-locale"
 import { decrypt, encrypt } from "@/lib/crypto"
 import { getSetting, settingSchemas, type SettingValue } from "@/lib/settings"
 import { getStorage } from "@/lib/storage"
@@ -47,7 +47,7 @@ const session = vi.hoisted(() => ({
 }))
 vi.mock("@/lib/auth/admin", () => ({ requireAdmin: async () => session, getAdmin: async () => session }))
 
-const KEYS = ["brand", "defaultLocale", "seo", "cdn", "watermark", "email"] as const
+const KEYS = ["brand", "defaultLocale", "siteLocales", "seo", "cdn", "watermark", "email"] as const
 const run = randomUUID().slice(0, 8)
 let startedAt: Date
 
@@ -240,6 +240,7 @@ describe("general settings", () => {
   const input = {
     brand: { fa: "لارت", tr: `Lart ${run}`, en: `Lart ${run}` },
     defaultLocale: "fa" as const,
+    siteLocales: ["fa", "tr", "en"] as ("fa" | "tr" | "en")[],
     seo: { title: { tr: "Atölyeler", en: "", fa: "" }, description: { fa: "", tr: "", en: "" } },
   }
 
@@ -249,7 +250,12 @@ describe("general settings", () => {
     expect(await stored("brand")).toEqual(input.brand)
     expect(await stored("seo")).toEqual({ title: { tr: "Atölyeler" }, description: {} })
     expect((await auditsOf("defaultLocale"))[0]).toMatchObject({ action: "setting.update", data: { from: "tr", to: "fa" } })
-    expect(await getGeneralSettings()).toEqual({ brand: input.brand, defaultLocale: "fa", seo: { title: { tr: "Atölyeler" }, description: {} } })
+    expect(await getGeneralSettings()).toEqual({
+      brand: input.brand,
+      defaultLocale: "fa",
+      siteLocales: ["fa", "tr", "en"],
+      seo: { title: { tr: "Atölyeler" }, description: {} },
+    })
 
     expect(await saveGeneralSettings(input)).toEqual({ ok: true, data: { changed: [] } })
     expect(await auditsOf("brand")).toHaveLength(1)
@@ -263,6 +269,15 @@ describe("general settings", () => {
     // Changed behind the cache's back: the saved value is served without reading the database again.
     await db.update(settings).set({ value: "fa" }).where(eq(settings.key, "defaultLocale"))
     expect(await getMainLocale()).toBe("en")
+  })
+
+  it("turns site languages off, never the main one, and takes them at once", async () => {
+    const off = await saveGeneralSettings({ ...input, siteLocales: ["tr", "en"] })
+    expect(off).toMatchObject({ ok: false, fieldErrors: { siteLocales: expect.any(String) } })
+    expect(await saveGeneralSettings({ ...input, siteLocales: ["en", "fa"] })).toEqual({ ok: true, data: { changed: ["siteLocales"] } })
+    expect(await stored("siteLocales")).toEqual(["fa", "en"])
+    expect(await getSiteLocales()).toEqual(["fa", "en"])
+    expect(await saveGeneralSettings(input)).toEqual({ ok: true, data: { changed: ["siteLocales"] } })
   })
 
   it("needs the brand name in all three languages and a known language", async () => {

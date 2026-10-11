@@ -2,7 +2,7 @@ import "server-only"
 import { cache } from "react"
 
 import { env } from "@/lib/env"
-import { getMainLocale } from "./main-locale"
+import { getMainLocale, getSiteLocales } from "./main-locale"
 import { localePath } from "./paths"
 
 /**
@@ -13,6 +13,9 @@ import { localePath } from "./paths"
 
 /** The main language, read once per render (the same value for every link of a page). */
 export const mainLocale = cache(getMainLocale)
+
+/** The languages the public site is shown in (Settings → General), read once per render. */
+export const siteLocales = cache(getSiteLocales)
 
 /** `path` (without a language, may carry ?query) in `locale`: "/workshops" → "/workshops" or "/fa/workshops". */
 export async function localeHref(locale: string, path: string): Promise<string> {

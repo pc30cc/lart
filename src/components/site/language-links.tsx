@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 
 import { Link, usePathname } from "@/i18n/navigation"
-import { locales } from "@/i18n/routing"
+import { useSiteLocales } from "@/i18n/main-locale-context"
 import { cn } from "@/lib/utils"
 import { useSwitchLocale } from "./use-switch-locale"
 
@@ -21,10 +21,11 @@ export function LanguageLinks({ signedIn, className, linkClassName }: { signedIn
   // The query goes along (a reset link's token, ?next=…); a page with one is not indexed anyway.
   const query = Object.fromEntries(useSearchParams())
   const { switchTo } = useSwitchLocale(signedIn)
+  const site = useSiteLocales()
 
   return (
     <nav aria-label={t("language")} className={cn("flex flex-wrap items-center gap-x-4 gap-y-1", className)}>
-      {locales
+      {site
         .filter((l) => l !== locale)
         .map((l) => (
           <Link

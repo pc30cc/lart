@@ -5,7 +5,7 @@ import { hasLocale, NextIntlClientProvider } from "next-intl"
 import { setRequestLocale } from "next-intl/server"
 
 import { LocaleProviders } from "@/components/providers"
-import { mainLocale } from "@/i18n/links"
+import { mainLocale, siteLocales } from "@/i18n/links"
 import { routing } from "@/i18n/routing"
 import { getBrand } from "@/lib/settings"
 
@@ -23,11 +23,11 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
   setRequestLocale(locale)
   // Client links need the main language (it has no prefix). Read here, not in
   // the root layout: the global error page is prerendered without a database.
-  const main = await mainLocale()
+  const [main, site] = await Promise.all([mainLocale(), siteLocales()])
 
   return (
     <NextIntlClientProvider>
-      <LocaleProviders locale={locale} mainLocale={main}>
+      <LocaleProviders locale={locale} mainLocale={main} siteLocales={site}>
         {children}
       </LocaleProviders>
     </NextIntlClientProvider>

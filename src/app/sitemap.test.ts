@@ -16,7 +16,7 @@ vi.mock("@/features/site/about", () => ({ storyHasPartners: async () => story.ha
 const url = (path: string) => new URL(path, env.APP_URL).href
 
 describe("sitemap.xml", () => {
-  it("lists the home page, the workshops page and each open workshop in every language, the main one without a prefix", async () => {
+  it("lists the home page, the workshops page and each open workshop, About, Our story, Contact and the legal pages in every language, the main one without a prefix", async () => {
     const entries = await sitemap()
     expect(entries.map((e) => e.url)).toEqual([
       url("/fa"),
@@ -34,6 +34,7 @@ describe("sitemap.xml", () => {
       url("/fa/story"),
       url("/story"),
       url("/en/story"),
+      ...["/contact", "/privacy", "/distance-sales", "/cancellation"].flatMap((p) => [url(`/fa${p}`), url(p), url(`/en${p}`)]),
     ])
     expect(entries[1]).toMatchObject({
       priority: 1,
@@ -65,7 +66,7 @@ describe("sitemap.xml", () => {
     story.hasPartners = true
     expect(entries.some((e) => new URL(e.url).pathname.endsWith("/story"))).toBe(false)
     expect(entries.filter((e) => new URL(e.url).pathname.endsWith("/about"))).toHaveLength(3)
-    expect(entries).toHaveLength(12)
+    expect(entries).toHaveLength(24)
   })
 })
 

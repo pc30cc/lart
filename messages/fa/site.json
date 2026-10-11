@@ -46,6 +46,7 @@
     "home": "رفتن به صفحهٔ اصلی"
   },
   "footer": {
-    "rights": "© {year} {brand}"
+    "rights": "© {year} {brand}",
+    "legal": "صفحه‌های حقوقی"
   }
 }

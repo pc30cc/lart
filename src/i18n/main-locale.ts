@@ -1,8 +1,8 @@
 import "server-only"
-import { eq } from "drizzle-orm"
+import { inArray } from "drizzle-orm"
 
 import { errorForLog } from "@/lib/errors"
-import { FALLBACK_LOCALE, isAppLocale, type AppLocale } from "./locales"
+import { FALLBACK_LOCALE, isAppLocale, locales, type AppLocale } from "./locales"
 
 /**
  * The site's main language: the `defaultLocale` setting (Settings → General).
@@ -21,6 +21,10 @@ import { FALLBACK_LOCALE, isAppLocale, type AppLocale } from "./locales"
  * (`known: false`), and the proxy then sends no permanent redirect that
  * depends on it.
  *
+ * The site's languages (the `siteLocales` setting: which languages the public
+ * site is shown in) are read and cached with it, the main language always
+ * among them; while nothing was read, every language counts as on.
+ *
  * The cache lives on `globalThis`: the proxy and the app are bundled
  * separately and get their own copy of this module, but run in one process.
  */
@@ -28,11 +32,17 @@ export const MAIN_LOCALE_TTL_MS = 30_000
 const RETRY_MS = 5_000
 const COLD_WAIT_MS = 1_500
 
-/** The main language, and whether it was read from the setting (`known`) or is the fallback guessed while the database did not answer. */
-export type MainLocaleState = { locale: AppLocale; known: boolean }
+/**
+ * The main language, and whether it was read from the setting (`known`) or is
+ * the fallback guessed while the database did not answer; with the site's
+ * languages (`site`, the main one included).
+ */
+export type MainLocaleState = { locale: AppLocale; known: boolean; site: readonly AppLocale[] }
 
 type Store = {
   value: AppLocale | null
+  /** The site's languages read with `value` (null: none read, every language is on). */
+  site: AppLocale[] | null
   /** `value` came from a successful read (or a save), not from the fallback. */
   known: boolean
   expiresAt: number
@@ -42,15 +52,24 @@ type Store = {
 
 const store = ((globalThis as { [key: symbol]: Store })[Symbol.for("lart.mainLocale")] ??= {
   value: null,
+  site: null,
   known: false,
   expiresAt: 0,
   inflight: null,
   version: 0,
 })
 
-const GUESS: MainLocaleState = { locale: FALLBACK_LOCALE, known: false }
+const GUESS: MainLocaleState = { locale: FALLBACK_LOCALE, known: false, site: locales }
+
+/** The site's languages as stored, in the usual order, always with the main language (none valid: all of them). */
+export function siteLocalesOf(raw: unknown, main: AppLocale): AppLocale[] {
+  const picked = Array.isArray(raw) ? locales.filter((l) => raw.includes(l)) : []
+  return picked.length ? locales.filter((l) => l === main || picked.includes(l)) : [...locales]
+}
+
 /** The cached value, if any. (`=== true`: a store left by an older copy of this module, in development, has no `known`.) */
-const cached = (): MainLocaleState | null => (store.value ? { locale: store.value, known: store.known === true } : null)
+const cached = (): MainLocaleState | null =>
+  store.value ? { locale: store.value, known: store.known === true, site: siteLocalesOf(store.site ?? locales, store.value) } : null
 
 async function load(): Promise<MainLocaleState> {
   const version = store.version
@@ -58,12 +77,19 @@ async function load(): Promise<MainLocaleState> {
     // Imported here, not at the top: the proxy and `next build` load this
     // module without touching the environment or the connection pool.
     const [{ db }, { settings }] = await Promise.all([import("@/db"), import("@/db/schema")])
-    const [row] = await db.select({ value: settings.value }).from(settings).where(eq(settings.key, "defaultLocale")).limit(1)
+    const rows = await db
+      .select({ key: settings.key, value: settings.value })
+      .from(settings)
+      .where(inArray(settings.key, ["defaultLocale", "siteLocales"]))
+      .limit(2)
+    const raw = (key: string) => rows.find((r) => r.key === key)?.value
     // No row or an unknown value: the setting's own default, a real answer.
-    const value = isAppLocale(row?.value) ? row.value : FALLBACK_LOCALE
+    const main = raw("defaultLocale")
+    const value = isAppLocale(main) ? main : FALLBACK_LOCALE
+    const site = siteLocalesOf(raw("siteLocales"), value)
     // A save in this process while the query ran wins over what it read.
-    if (store.version === version) Object.assign(store, { value, known: true, expiresAt: Date.now() + MAIN_LOCALE_TTL_MS })
-    return cached() ?? { locale: value, known: true }
+    if (store.version === version) Object.assign(store, { value, site, known: true, expiresAt: Date.now() + MAIN_LOCALE_TTL_MS })
+    return cached() ?? { locale: value, known: true, site }
   } catch (err) {
     console.warn("[i18n] main language not read", errorForLog(err))
     // The last value read stays (still known); without one, the fallback is a guess.
@@ -104,10 +130,16 @@ export async function getMainLocale(): Promise<AppLocale> {
   return (await getMainLocaleState()).locale
 }
 
+/** The languages the public site is shown in, the main one included (cached; see above). */
+export async function getSiteLocales(): Promise<readonly AppLocale[]> {
+  return (await getMainLocaleState()).site
+}
+
 /** After the setting was saved (committed): this process switches at once. */
-export function setMainLocale(locale: AppLocale): void {
+export function setMainLocale(locale: AppLocale, site?: readonly AppLocale[]): void {
   store.version++
   store.value = locale
+  if (site) store.site = [...site]
   store.known = true
   store.expiresAt = Date.now() + MAIN_LOCALE_TTL_MS
 }
@@ -116,6 +148,7 @@ export function setMainLocale(locale: AppLocale): void {
 export function resetMainLocaleCache(): void {
   store.version++
   store.value = null
+  store.site = null
   store.known = false
   store.expiresAt = 0
   store.inflight = null

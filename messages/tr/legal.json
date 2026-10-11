@@ -1,0 +1,30 @@
+{
+  "links": {
+    "privacy": "Gizlilik ve KVKK",
+    "distanceSales": "Mesafeli Satış Sözleşmesi",
+    "cancellation": "İptal ve İade",
+    "contact": "İletişim"
+  },
+  "descriptions": {
+    "privacy": "{brand} kişisel verilerinizi nasıl işler: hangi veriler, neden, ne kadar süre ve KVKK kapsamındaki haklarınız.",
+    "distanceSales": "{brand} atölyelerine kayıt için mesafeli hizmet sözleşmesi ve ön bilgilendirme formu.",
+    "cancellation": "{brand} atölyelerinde kayıt iptali ve ücret iadesi koşulları.",
+    "contact": "{brand} adresi, telefonu ve e-posta adresi."
+  },
+  "otherPages": "Diğer yasal sayfalar",
+  "contact": {
+    "title": "İletişim",
+    "intro": "Atölyeler, kayıt, ödeme veya iptal hakkındaki sorularınız için bize bu yollardan ulaşabilirsiniz.",
+    "company": "Resmî bilgiler",
+    "legalName": "Unvan",
+    "address": "Adres",
+    "phone": "Telefon",
+    "email": "E-posta",
+    "kep": "KEP adresi",
+    "tax": "Vergi dairesi ve numarası",
+    "mersis": "MERSİS numarası",
+    "instagram": "Instagram",
+    "reach": "Bize ulaşın",
+    "empty": "İletişim bilgileri yakında burada olacak."
+  }
+}

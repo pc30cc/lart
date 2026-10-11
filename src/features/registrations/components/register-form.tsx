@@ -10,6 +10,7 @@ import { useSiteForm } from "@/components/site/auth/use-site-form"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Link } from "@/i18n/navigation"
 import type { AppLocale } from "@/i18n/routing"
 import { formatLira } from "@/lib/money"
 import { cn } from "@/lib/utils"
@@ -22,7 +23,8 @@ const wayIcons: Record<PaymentWayName, LucideIcon> = { cash: BanknoteIcon, trans
 /**
  * The registration form: who attends (the member's name to start with; a
  * parent writes their child's name), the terms box (its link opens the terms
- * and what the photo / video box means in a dialog) and one box for photos and
+ * and what the photo / video box means in a dialog; a second one, the distance
+ * sales agreement, in a new tab) and one box for photos and
  * videos, both unticked to start with, the price with the ways to pay (in plain
  * words), and one big "Register" button. The server checks it all
  * again (seats, deadline, the terms text) and opens the "you're registered" page.
@@ -64,6 +66,18 @@ export function RegisterForm({
     />
   )
 
+  // The agreement on its own page, in a new tab (the form keeps what was typed).
+  const salesLink = (chunks: React.ReactNode) => (
+    <Link
+      href="/distance-sales"
+      target="_blank"
+      onClick={(e) => e.stopPropagation()}
+      className="text-primary decoration-primary/40 hover:decoration-primary underline underline-offset-4 transition-colors"
+    >
+      {chunks}
+    </Link>
+  )
+
   return (
     <Form form={form} onSubmit={submit} className="space-y-8">
       <section className="space-y-3">
@@ -83,7 +97,7 @@ export function RegisterForm({
       </section>
 
       <section className="space-y-2.5">
-        <CheckField name="acceptTerms" ariaLabel={t("acceptTerms")} label={t.rich("acceptTermsRich", { terms: dialog })} strong />
+        <CheckField name="acceptTerms" ariaLabel={t("acceptTerms")} label={t.rich("acceptTermsRich", { terms: dialog, sales: salesLink })} strong />
         <MediaConsentField label={t("consent.both")} />
       </section>
 

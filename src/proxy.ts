@@ -17,6 +17,8 @@ import { areaOf, canonicalPath, isOpenPath } from "@/lib/routes"
  *   (`canonicalPath` in lib/routes). While the main language is only guessed
  *   (a cold start with the database slow or down), no prefix is removed: the
  *   prefixed page is served as it is,
+ * - a language turned off for the site (the `siteLocales` setting): its
+ *   public and account pages redirect (307) to the main language,
  * - language routing by next-intl ("/" and every unprefixed path are the main
  *   language; nothing is guessed from the browser),
  * - a strict Content Security Policy with a fresh nonce per request,
@@ -95,7 +97,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return withHeaders(NextResponse.next({ request: { headers: requestHeaders } }), csp, PRIVATE_API.test(pathname))
   }
 
-  const { locale: main, known } = await getMainLocaleState()
+  const { locale: main, known, site } = await getMainLocaleState()
   const path = routerPath(pathname)
 
   // An old address: one permanent redirect to today's, before the gate (an
@@ -110,6 +112,17 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { locale: prefix, rest } = splitLocale(path)
   const area = areaOf(rest)
   const noindex = Boolean(area)
+
+  // A language that is off for the site (Settings → General): its public and
+  // account pages go to the main language (not permanent: it can be turned
+  // on again). The panels keep every language; a guess decides nothing.
+  if (readOnly && known && prefix && !site.includes(prefix) && (!area || area === "account")) {
+    const url = request.nextUrl.clone()
+    url.pathname = localePath(main, rest, main)
+    const response = NextResponse.redirect(url, 307)
+    response.headers.set("Cache-Control", "no-store")
+    return withHeaders(response, null, noindex)
+  }
 
   // Optimistic check only: no cookie at all means "not signed in".
   if (area && readOnly && !isOpenPath(rest) && !request.cookies.has(sessionCookieName(cookieOf[area]))) {

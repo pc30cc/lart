@@ -45,7 +45,7 @@ Next.js 16 differs from older versions: read the relevant guide in
 src/
   app/
     icon.svg, favicon.ico, apple-icon.png   the site's icons, a white autumn leaf on clay (`pnpm icons` draws them again from scripts/favicons.ts)
-    sitemap.ts, robots.ts       /sitemap.xml (home, workshops list + open workshop pages, /about, /story while a partner is on it, fa/tr/en with hreflang), /robots.txt (disallows only /admin, /<l>/admin and /api)
+    sitemap.ts, robots.ts       /sitemap.xml (home, workshops list + open workshop pages, /about, /story while a partner is on it, /contact and the legal pages, fa/tr/en with hreflang), /robots.txt (disallows only /admin, /<l>/admin and /api)
     og.png/route.tsx            /og.png: the site's share picture (its logo on paper, 1200×630) for pages without their own
     [locale]/                   every page (URL rules: the main language has no prefix, the proxy rewrites it here)
       (site)/                   the public site: the active theme's Frame (src/themes) around the page, the "confirm your email" banner and the notice toast
@@ -53,6 +53,9 @@ src/
         workshops/              list, /[slug] page, /[slug]/register
         about/                  the About page (/about): the active theme's About with getAboutData(locale, "about") (the brand's own words, no partners)
         story/                  the Our story page (/story): the same theme's About with getAboutData(locale, "story") (the partners who chose to be on it)
+        contact/                the Contact page (/contact): the ways to reach the seller and its official details (Settings → Legal details)
+        privacy/, distance-sales/, cancellation/
+                                the legal pages (features/legal: fa/tr/en texts, filled from Settings → Legal details; the Turkish text binds)
         account/                My workshops (page.tsx), registrations/[id], signup, login, verify, forgot, reset
       instructor/(auth)/        instructor sign in, sign up, invite, forgot, reset, verify (no panel chrome)
       instructor/(panel)/       the instructor panel: home, contracts, workshops, earnings, profile
@@ -250,6 +253,10 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 | `/workshops/[slug]/register` | site | public | |
 | `/about` | site | public | |
 | `/story` | site | public | |
+| `/contact` | site | public | |
+| `/privacy` | site | public | |
+| `/distance-sales` | site | public | |
+| `/cancellation` | site | public | |
 | `/[...rest]` | site | public | not-found page |
 | `/account` | account | private | |
 | `/account/login` | account | open | |
@@ -299,6 +306,7 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 | `/admin/settings/email` | admin | private | |
 | `/admin/settings/payments` | admin | private | |
 | `/admin/settings/money` | admin | private | |
+| `/admin/settings/legal` | admin | private | |
 | `/admin/settings/storage` | admin | private | |
 | `/admin/settings/watermark` | admin | private | |
 | `/admin/settings/backup` | admin | private | |

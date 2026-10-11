@@ -27,10 +27,12 @@ export function ThemeProvider({ nonce, children }: { nonce?: string; children: R
 export function LocaleProviders({
   locale,
   mainLocale,
+  siteLocales,
   children,
 }: {
   locale: string
   mainLocale: AppLocale
+  siteLocales: readonly AppLocale[]
   children: React.ReactNode
 }) {
   const dir = isRtl(locale) ? "rtl" : "ltr"
@@ -41,7 +43,7 @@ export function LocaleProviders({
   }, [locale, dir])
 
   return (
-    <MainLocaleProvider value={mainLocale}>
+    <MainLocaleProvider value={mainLocale} site={siteLocales}>
       <Direction.Provider dir={dir}>
         <TooltipProvider delayDuration={300}>
           {children}

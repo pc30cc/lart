@@ -8,6 +8,13 @@ import type { FooterContent, NavItem } from "@/themes/types"
 
 type Localized = { fa?: string; tr?: string; en?: string }
 
+/** The legal pages in the footer: what payment providers look for on every page. */
+const legalLinks = [
+  ["/privacy", "privacy"],
+  ["/distance-sales", "distanceSales"],
+  ["/cancellation", "cancellation"],
+] as const
+
 /**
  * The site's menu and footer content in `locale` (Settings → Home page, else
  * the bundled texts; the email and phone concealed) and its logo (Settings →
@@ -16,9 +23,10 @@ type Localized = { fa?: string; tr?: string; en?: string }
 export async function getSiteFrame(
   locale: string,
 ): Promise<{ nav: NavItem[]; footer: FooterContent; logo: LogoData | null }> {
-  const [th, t, home, logo] = await Promise.all([
+  const [th, t, tl, home, logo] = await Promise.all([
     getTranslations({ locale, namespace: "site.header" }),
     getTranslations({ locale, namespace: "home.footer" }),
+    getTranslations({ locale, namespace: "legal.links" }),
     getSetting("home"),
     getSetting("logo"),
   ])
@@ -34,7 +42,9 @@ export async function getSiteFrame(
         { href: "/workshops", label: th("workshops") },
         { href: "/about", label: th("about") },
         { href: "/story", label: th("story") },
+        { href: "/contact", label: tl("contact") },
       ],
+      legal: legalLinks.map(([href, key]) => ({ href, label: tl(key) })),
       about,
       instagram: home.footer.instagram,
       // Never as text in the page: spam harvesters read it (themes/types `FooterContent`).

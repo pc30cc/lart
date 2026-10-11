@@ -46,6 +46,7 @@
     "home": "Go to the home page"
   },
   "footer": {
-    "rights": "© {year} {brand}"
+    "rights": "© {year} {brand}",
+    "legal": "Legal"
   }
 }

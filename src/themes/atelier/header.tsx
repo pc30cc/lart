@@ -11,7 +11,7 @@ import { useSwitchLocale } from "@/components/site/use-switch-locale"
 import { Spinner } from "@/components/ui/spinner"
 import { memberLogoutAction } from "@/features/accounts/actions"
 import { Link, usePathname } from "@/i18n/navigation"
-import { locales } from "@/i18n/routing"
+import { useSiteLocales } from "@/i18n/main-locale-context"
 import { cn } from "@/lib/utils"
 import { BrandLogo } from "../logo"
 import type { HeaderMember, LogoSize, NavItem } from "../types"
@@ -170,6 +170,7 @@ function MobileMenu({
   const loginHref = useLoginHref()
   const [open, setOpen] = useState(false)
   const { switchTo, pending: switching } = useSwitchLocale(Boolean(member))
+  const site = useSiteLocales()
   const [leaving, startLeaving] = useTransition()
 
   const links = [{ href: "/", label: th("home") }, ...nav]
@@ -230,12 +231,13 @@ function MobileMenu({
           </nav>
 
           <div className="at-container mt-auto space-y-8 pt-12 pb-10">
+            {site.length > 1 && (
             <section aria-labelledby="at-menu-language">
               <h2 id="at-menu-language" className="at-caps text-at-cream/65 font-sans! text-xs! font-medium! rtl:text-sm!">
                 {tc("language")}
               </h2>
               <div className="mt-3 flex flex-wrap gap-2">
-                {locales.map((l) => (
+                {site.map((l) => (
                   <button
                     key={l}
                     type="button"
@@ -257,6 +259,7 @@ function MobileMenu({
                 ))}
               </div>
             </section>
+            )}
 
             <section aria-labelledby="at-menu-account">
               <h2 id="at-menu-account" className="at-caps text-at-cream/65 font-sans! text-xs! font-medium! rtl:text-sm!">

@@ -7,11 +7,16 @@ import { cdnView } from "./cdn"
 import { emailView } from "./email"
 import type { CdnView, EmailView } from "./schema"
 
-/** Brand, default language and SEO defaults. */
+/** Brand, default language, the site's languages and SEO defaults. */
 export async function getGeneralSettings() {
   await requireAdmin()
-  const [brand, defaultLocale, seo] = await Promise.all([getSetting("brand"), getSetting("defaultLocale"), getSetting("seo")])
-  return { brand, defaultLocale, seo }
+  const [brand, defaultLocale, siteLocales, seo] = await Promise.all([
+    getSetting("brand"),
+    getSetting("defaultLocale"),
+    getSetting("siteLocales"),
+    getSetting("seo"),
+  ])
+  return { brand, defaultLocale, siteLocales, seo }
 }
 
 /** The storage setting without any key (see `cdnView`). */

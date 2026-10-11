@@ -27,6 +27,10 @@ const table: [path: string, area: Area, access: Access, kind?: RouteKind][] = [
   ["/workshops/[slug]/register", "site", "public"],
   ["/about", "site", "public"],
   ["/story", "site", "public"],
+  ["/contact", "site", "public"],
+  ["/privacy", "site", "public"],
+  ["/distance-sales", "site", "public"],
+  ["/cancellation", "site", "public"],
   ["/[...rest]", "site", "public", "not-found"],
   // Students
   ["/account", "account", "private"],
@@ -79,6 +83,7 @@ const table: [path: string, area: Area, access: Access, kind?: RouteKind][] = [
   ["/admin/settings/email", "admin", "private"],
   ["/admin/settings/payments", "admin", "private"],
   ["/admin/settings/money", "admin", "private"],
+  ["/admin/settings/legal", "admin", "private"],
   ["/admin/settings/storage", "admin", "private"],
   ["/admin/settings/watermark", "admin", "private"],
   ["/admin/settings/backup", "admin", "private"],

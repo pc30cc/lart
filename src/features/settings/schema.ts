@@ -11,14 +11,18 @@ import { isSafePath } from "@/lib/storage/shared"
 
 export const siteLocales = ["fa", "tr", "en"] as const
 
-export const generalSettingsSchema = z.object({
-  brand: localizedText({ required: siteLocales, max: 60 }),
-  defaultLocale: z.enum(siteLocales),
-  seo: z.object({
-    title: localizedText({ max: 120 }),
-    description: localizedText({ max: 300 }),
-  }),
-})
+export const generalSettingsSchema = z
+  .object({
+    brand: localizedText({ required: siteLocales, max: 60 }),
+    defaultLocale: z.enum(siteLocales),
+    /** The languages the public site is shown in; the main language is always one of them. */
+    siteLocales: z.array(z.enum(siteLocales)),
+    seo: z.object({
+      title: localizedText({ max: 120 }),
+      description: localizedText({ max: 300 }),
+    }),
+  })
+  .refine((v) => v.siteLocales.includes(v.defaultLocale), { path: ["siteLocales"], error: "settings.general.errors.mainOff" })
 
 export type GeneralSettingsValues = z.input<typeof generalSettingsSchema>
 

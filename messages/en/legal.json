@@ -1,0 +1,30 @@
+{
+  "links": {
+    "privacy": "Privacy & KVKK",
+    "distanceSales": "Distance Sales Agreement",
+    "cancellation": "Cancellation & Refunds",
+    "contact": "Contact"
+  },
+  "descriptions": {
+    "privacy": "How {brand} handles your personal data: what, why, for how long, and your rights under the KVKK.",
+    "distanceSales": "The distance sales agreement and pre-information form for registering for {brand} workshops.",
+    "cancellation": "How cancellations and refunds work for {brand} workshops.",
+    "contact": "The address, phone number and email of {brand}."
+  },
+  "otherPages": "Other legal pages",
+  "contact": {
+    "title": "Contact",
+    "intro": "For questions about workshops, registration, payment or cancellation, reach us any of these ways.",
+    "company": "Official details",
+    "legalName": "Legal name",
+    "address": "Address",
+    "phone": "Phone",
+    "email": "Email",
+    "kep": "KEP address",
+    "tax": "Tax office and number",
+    "mersis": "MERSIS number",
+    "instagram": "Instagram",
+    "reach": "Reach us",
+    "empty": "Our contact details will be here soon."
+  }
+}

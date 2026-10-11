@@ -46,6 +46,7 @@
     "home": "Ana sayfaya git"
   },
   "footer": {
-    "rights": "© {year} {brand}"
+    "rights": "© {year} {brand}",
+    "legal": "Yasal"
   }
 }

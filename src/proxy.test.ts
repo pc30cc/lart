@@ -46,7 +46,7 @@ const served = (res: Response) => res.status === 200 && (rewrite(res) !== null |
 
 const mainLocaleState = vi.mocked(getMainLocaleState)
 /** The main language of the next requests: read from the setting, or (`known` false) only guessed. */
-const setMain = (locale: AppLocale, known = true) => mainLocaleState.mockResolvedValue({ locale, known })
+const setMain = (locale: AppLocale, known = true, site: readonly AppLocale[] = locales) => mainLocaleState.mockResolvedValue({ locale, known, site })
 const others = (main: AppLocale) => locales.filter((l) => l !== main)
 
 beforeEach(() => setMain("tr"))
@@ -340,5 +340,32 @@ describe("proxy: APIs", () => {
     expect(matcher.test("/fa/instructor/profile")).toBe(true)
     expect(matcher.test("/favicon.ico")).toBe(false)
     expect(matcher.test("/sitemap.xml")).toBe(false)
+  })
+})
+
+describe("proxy: the site's languages (Settings → General)", () => {
+  it("sends a public or account page in a language that is off to the main language, query kept", async () => {
+    setMain("tr", true, ["tr", "fa"])
+    for (const [from, to] of [
+      ["/en", "/"],
+      ["/en/workshops/candles?x=1", "/workshops/candles?x=1"],
+      ["/en/account/login", "/account/login"],
+    ]) {
+      const res = await proxy(request(from))
+      expect(res.status, from).toBe(307)
+      const url = new URL(res.headers.get("location")!)
+      expect(url.pathname + url.search, from).toBe(to)
+      expect(res.headers.get("cache-control"), from).toBe("no-store")
+    }
+    // A language that is on stays.
+    expect(served(await proxy(request("/fa/workshops")))).toBe(true)
+  })
+
+  it("keeps every language in the panels, and decides nothing while the main language is only guessed", async () => {
+    setMain("tr", true, ["tr"])
+    const admin = await proxy(request("/en/admin/login"))
+    expect(admin.status).toBe(200)
+    setMain("tr", false, ["tr"])
+    expect(served(await proxy(request("/en/workshops")))).toBe(true)
   })
 })

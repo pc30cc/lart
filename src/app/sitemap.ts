@@ -3,15 +3,14 @@ import { connection } from "next/server"
 
 import { sitemapWorkshops } from "@/features/registrations/public"
 import { storyHasPartners } from "@/features/site/about"
-import { getMainLocale } from "@/i18n/main-locale"
+import { getMainLocaleState } from "@/i18n/main-locale"
 import { localePath } from "@/i18n/paths"
-import { locales } from "@/i18n/routing"
 import { absoluteUrl } from "@/lib/seo"
 
 /**
  * /sitemap.xml: the home page, the workshops list, every open workshop page,
  * the About page and the Our story page (while a partner is on it; else it is
- * not indexed), in each language, each with its hreflang alternates (fa, tr, en, and
+ * not indexed), the Contact and legal pages, in each language the site is shown in (Settings → General), each with its hreflang alternates (fa, tr, en, and
  * x-default: the main language), as the pages' own metadata gives them. The
  * main language's addresses have no prefix (docs/DEVELOPMENT.md, "URL
  * rules"). Built on each request, so a workshop appears as soon as it is
@@ -23,7 +22,7 @@ import { absoluteUrl } from "@/lib/seo"
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   await connection()
-  const [workshops, main, story] = await Promise.all([sitemapWorkshops(), getMainLocale(), storyHasPartners()])
+  const [workshops, { locale: main, site }, story] = await Promise.all([sitemapWorkshops(), getMainLocaleState(), storyHasPartners()])
   const latest = workshops.reduce<Date | undefined>((a, w) => (!a || w.updatedAt > a ? w.updatedAt : a), undefined)
   const pages = [
     { path: "/", lastModified: latest, priority: 1 },
@@ -31,14 +30,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...workshops.map((w) => ({ path: `/workshops/${w.slug}`, lastModified: w.updatedAt, priority: 0.8 })),
     { path: "/about", lastModified: undefined, priority: 0.6 },
     ...(story ? [{ path: "/story", lastModified: undefined, priority: 0.5 }] : []),
+    ...["/contact", "/privacy", "/distance-sales", "/cancellation"].map((path) => ({ path, lastModified: undefined, priority: 0.3 })),
   ]
   const url = (locale: string, path: string) => absoluteUrl(localePath(locale, path, main))
   return pages.flatMap(({ path, lastModified, priority }) => {
     const languages = {
-      ...Object.fromEntries(locales.map((l) => [l, url(l, path)])),
+      ...Object.fromEntries(site.map((l) => [l, url(l, path)])),
       "x-default": url(main, path),
     }
-    return locales.map((locale) => ({
+    return site.map((locale) => ({
       url: url(locale, path),
       ...(lastModified ? { lastModified } : {}),
       changeFrequency: "daily" as const,

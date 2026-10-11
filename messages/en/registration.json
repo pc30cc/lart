@@ -99,8 +99,8 @@
     "participantHint": "Their full name, so we can welcome them.",
     "childNote": "This workshop is for children aged {min, number}–{max, number}. As their parent, please write your child’s name here.",
     "terms": "Registration terms",
-    "acceptTerms": "I have read and accept the registration and cancellation terms.",
-    "acceptTermsRich": "I have read and accept the <terms>registration and cancellation terms</terms>.",
+    "acceptTerms": "I have read and accept the registration and cancellation terms and the distance sales agreement.",
+    "acceptTermsRich": "I have read and accept the <terms>registration and cancellation terms</terms> and the <sales>distance sales agreement</sales>.",
     "consent": {
       "title": "Photos and videos",
       "optional": "optional",

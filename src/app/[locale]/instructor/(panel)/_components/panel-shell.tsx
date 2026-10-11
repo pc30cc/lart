@@ -28,6 +28,7 @@ import {
 import { Spinner } from "@/components/ui/spinner"
 import { instructorLogoutAction } from "@/features/accounts/actions"
 import { Link, usePathname } from "@/i18n/navigation"
+import { locales } from "@/i18n/routing"
 import { formatNumber } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { usePanelLocale } from "./use-panel-locale"
@@ -219,7 +220,7 @@ function LanguageMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-auto min-w-40">
         <DropdownMenuLabel className="text-muted-foreground text-xs">{t("language")}</DropdownMenuLabel>
-        <LocaleChoices value={locale} onChange={switchTo} />
+        <LocaleChoices value={locale} onChange={switchTo} options={locales} />
       </DropdownMenuContent>
     </DropdownMenu>
   )

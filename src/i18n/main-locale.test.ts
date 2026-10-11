@@ -17,9 +17,10 @@ vi.mock("@/db", () => {
   return { db: { select: () => chain } }
 })
 
-const { getMainLocale, getMainLocaleState, MAIN_LOCALE_TTL_MS, resetMainLocaleCache, setMainLocale } = await import("./main-locale")
+const { getMainLocale, getMainLocaleState, getSiteLocales, MAIN_LOCALE_TTL_MS, resetMainLocaleCache, setMainLocale, siteLocalesOf } = await import("./main-locale")
 
-const row = (value: unknown) => () => Promise.resolve([{ value }])
+const row = (value: unknown, site?: unknown) => () =>
+  Promise.resolve([{ key: "defaultLocale", value }, ...(site === undefined ? [] : [{ key: "siteLocales", value: site }])])
 const answer = (...answers: (() => Promise<unknown[]>)[]) => query.answers.push(...answers)
 
 beforeEach(() => {
@@ -34,6 +35,28 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
+describe("getSiteLocales", () => {
+  it("reads the site's languages with the main language, always including it", async () => {
+    answer(row("fa", ["tr"]))
+    expect(await getSiteLocales()).toEqual(["fa", "tr"])
+  })
+
+  it("is every language without a setting, or while nothing was read", async () => {
+    answer(row("tr"))
+    expect(await getSiteLocales()).toEqual(["fa", "tr", "en"])
+    expect(siteLocalesOf(["de"], "en")).toEqual(["fa", "tr", "en"])
+    expect(siteLocalesOf(["en", "fa"], "tr")).toEqual(["fa", "tr", "en"])
+    expect(siteLocalesOf(["en"], "en")).toEqual(["en"])
+  })
+
+  it("takes a save at once", async () => {
+    answer(row("tr"))
+    await getSiteLocales()
+    setMainLocale("en", ["en", "tr"])
+    expect(await getSiteLocales()).toEqual(["tr", "en"])
+  })
+})
+
 describe("getMainLocale", () => {
   it("reads the setting once, then serves it from the cache for 30 seconds", async () => {
     answer(row("fa"))
@@ -43,7 +66,7 @@ describe("getMainLocale", () => {
     expect(query.calls).toBe(1)
   })
 
-  it.each([["no row", []], ["an unknown language", [{ value: "de" }]], ["not a string", [{ value: { tr: 1 } }]]])(
+  it.each([["no row", []], ["an unknown language", [{ key: "defaultLocale", value: "de" }]], ["not a string", [{ key: "defaultLocale", value: { tr: 1 } }]]])(
     "falls back to tr with %s",
     async (_name, rows) => {
       answer(() => Promise.resolve(rows))
@@ -59,7 +82,7 @@ describe("getMainLocale", () => {
     answer(() => new Promise((r) => (resolve = r)))
     expect(await Promise.all([getMainLocale(), getMainLocale()])).toEqual(["fa", "fa"])
     await vi.waitFor(() => expect(query.calls).toBe(2)) // one refresh for both
-    resolve([{ value: "en" }])
+    resolve([{ key: "defaultLocale", value: "en" }])
     await vi.waitFor(async () => expect(await getMainLocale()).toBe("en"))
     expect(query.calls).toBe(2)
   })
@@ -98,7 +121,7 @@ describe("getMainLocale", () => {
     const first = getMainLocale()
     await vi.waitFor(() => expect(query.calls).toBe(1))
     setMainLocale("en")
-    resolve([{ value: "fa" }])
+    resolve([{ key: "defaultLocale", value: "fa" }])
     expect(await first).toBe("en")
     expect(await getMainLocale()).toBe("en")
     expect(query.calls).toBe(1)
@@ -114,8 +137,8 @@ describe("getMainLocale", () => {
 })
 
 describe("getMainLocaleState: known or only guessed", () => {
-  const known = (locale: string) => ({ locale, known: true })
-  const guessed = { locale: "tr", known: false }
+  const known = (locale: string) => ({ locale, known: true, site: ["fa", "tr", "en"] })
+  const guessed = { locale: "tr", known: false, site: ["fa", "tr", "en"] }
 
   it("is known once the setting was read, also when it has no value (the default)", async () => {
     answer(row("fa"))
@@ -132,7 +155,7 @@ describe("getMainLocaleState: known or only guessed", () => {
     await vi.waitFor(() => expect(query.calls).toBe(1))
     vi.advanceTimersByTime(1_500)
     expect(await result).toEqual(guessed)
-    resolve([{ value: "fa" }])
+    resolve([{ key: "defaultLocale", value: "fa" }])
     await vi.waitFor(async () => expect(await getMainLocaleState()).toEqual(known("fa")))
   })
 

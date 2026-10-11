@@ -12,7 +12,8 @@
     "watermark": "Filigran",
     "backup": "Yedekleme",
     "danger": "Tehlikeli bölge",
-    "money": "Para"
+    "money": "Para",
+    "legal": "Yasal bilgiler"
   },
   "toast": {
     "saved": "Ayarlar kaydedildi."
@@ -24,12 +25,18 @@
     "languageTitle": "Ana dil",
     "languageDescription": "Sitenin kendi dili: sayfalarının adresinde dil yoktur (örneğin /workshops); diğer diller adresin başına kendi kısaltmasını ekler. Birinin dili bilinmediğinde e-postalar da bu dilde gönderilir. Değiştirmek bütün sayfaların adresini değiştirir ve arama motorlarının yeni adresleri öğrenmesi haftalar sürer; bu yüzden bir kez ve dikkatle seçin.",
     "defaultLocale": "Dil",
+    "siteLocales": "Web sitesinin dilleri",
+    "siteLocalesHint": "Web sitesi yalnızca açık dillerde gösterilir. Ana dil her zaman açıktır. Kapalı bir dildeki sayfalar ana dile yönlenir. Yönetim ve eğitmen panelleri tüm dillerde kalır.",
+    "mainLocale": "ana dil",
     "seoTitle": "Arama motorları",
     "seoDescription": "Ana sayfanın Google sonuçlarında ve bağlantı paylaşıldığında görünen başlığı ve açıklaması. Başlığı marka adıyla birlikte tam yazın; diğer sayfaların kendi başlığı ve açıklaması vardır.",
     "seoPageTitle": "Başlık",
     "seoPageTitleHint": "50–60 karakter civarı en iyi sonucu verir.",
     "seoPageDescription": "Açıklama",
-    "seoPageDescriptionHint": "Bir iki cümle, 150–160 karakter civarı. Klasik temada ana sayfada markanın altında görünen cümle de budur."
+    "seoPageDescriptionHint": "Bir iki cümle, 150–160 karakter civarı. Klasik temada ana sayfada markanın altında görünen cümle de budur.",
+    "errors": {
+      "mainOff": "Ana dil açık kalmalı."
+    }
   },
   "email": {
     "providerTitle": "E-postalar nasıl gönderilsin",
@@ -522,6 +529,32 @@
     },
     "errors": {
       "noPgDump": "Veritabanı yedekleme aracı (pg_dump) sunucuda kurulu değil."
+    }
+  },
+  "legal": {
+    "business": {
+      "title": "İşletme",
+      "description": "Satıcının resmî bilgileri. Yasal sayfalarda (gizlilik, mesafeli satış sözleşmesi, iptal ve iade koşulları) ve İletişim sayfasında gösterilir; PayTR gibi ödeme kuruluşları bunları ister."
+    },
+    "legalName": "Resmî ad (ticari unvan)",
+    "legalNameHint": "Şirket için tescilli unvan (ör. «Limer Sanat Atölyesi Ltd. Şti.»); şahıs işletmesi için işletme sahibinin adı soyadı.",
+    "taxOffice": "Vergi dairesi",
+    "taxNumber": "Vergi numarası",
+    "taxNumberHint": "10 haneli VKN ya da şahıs işletmesi için 11 haneli TCKN.",
+    "mersis": "MERSİS numarası",
+    "contact": {
+      "title": "Adres ve iletişim",
+      "description": "Müşteriler için resmî adres ve iletişim yolları. İletişim sayfasında ve yasal sayfalarda yer alır."
+    },
+    "address": "Açık adres",
+    "phone": "Telefon",
+    "email": "E-posta",
+    "kep": "KEP adresi",
+    "optional": "İsteğe bağlı",
+    "errors": {
+      "taxNumber": "Vergi numarası 10 ya da 11 haneli olmalı.",
+      "mersis": "MERSİS numarası 16 haneli olmalı.",
+      "email": "Bu e-posta adresi geçerli değil."
     }
   }
 }

@@ -12,7 +12,8 @@
     "watermark": "Watermark",
     "backup": "Backup",
     "danger": "Danger zone",
-    "money": "Money"
+    "money": "Money",
+    "legal": "Legal details"
   },
   "toast": {
     "saved": "Settings saved."
@@ -24,12 +25,18 @@
     "languageTitle": "Main language",
     "languageDescription": "The site’s own language: its pages have no language in their address (for example /workshops); the other languages add theirs in front. Emails also use it when someone’s language isn’t known. Changing it changes every page’s address, and search engines take weeks to learn the new ones, so choose it once, with care.",
     "defaultLocale": "Language",
+    "siteLocales": "Website languages",
+    "siteLocalesHint": "The website is shown only in the languages that are on. The main language is always on. Pages in a language that is off go to the main language. The admin and instructor panels keep every language.",
+    "mainLocale": "main language",
     "seoTitle": "Search engines",
     "seoDescription": "The home page’s title and description in Google’s results and when a link to it is shared. Write the title in full, with the brand’s name; the other pages have their own title and description.",
     "seoPageTitle": "Title",
     "seoPageTitleHint": "Around 50–60 characters works best.",
     "seoPageDescription": "Description",
-    "seoPageDescriptionHint": "One or two sentences, around 150–160 characters. With the Classic template it is also the sentence under the brand on the home page."
+    "seoPageDescriptionHint": "One or two sentences, around 150–160 characters. With the Classic template it is also the sentence under the brand on the home page.",
+    "errors": {
+      "mainOff": "The main language must stay on."
+    }
   },
   "email": {
     "providerTitle": "How emails are sent",
@@ -522,6 +529,32 @@
     },
     "errors": {
       "noPgDump": "The database backup tool (pg_dump) is not installed on the server."
+    }
+  },
+  "legal": {
+    "business": {
+      "title": "Business",
+      "description": "The seller's official details. Shown on the legal pages (privacy, distance sales agreement, cancellation and refunds) and the Contact page; payment providers such as PayTR ask for them."
+    },
+    "legalName": "Legal name (trade name)",
+    "legalNameHint": "For a company, its registered name (e.g. “Limer Sanat Atölyesi Ltd. Şti.”); for a sole proprietorship, the owner's full name.",
+    "taxOffice": "Tax office",
+    "taxNumber": "Tax number",
+    "taxNumberHint": "10 digits (VKN), or 11 digits (TCKN) for a sole proprietorship.",
+    "mersis": "MERSIS number",
+    "contact": {
+      "title": "Address and contact",
+      "description": "The official address and the ways customers can reach you. Shown on the Contact page and the legal pages."
+    },
+    "address": "Full address",
+    "phone": "Phone",
+    "email": "Email",
+    "kep": "KEP address",
+    "optional": "Optional",
+    "errors": {
+      "taxNumber": "The tax number must have 10 or 11 digits.",
+      "mersis": "The MERSIS number must have 16 digits.",
+      "email": "This email address is not valid."
     }
   }
 }

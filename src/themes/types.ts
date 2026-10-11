@@ -35,8 +35,10 @@ export type NavItem = { href: string; label: string }
 
 /** The footer's editable content (Settings → Home page); empty strings are left out by themes. */
 export type FooterContent = {
-  /** The footer's links (Workshops, About us, Our story), in order. */
+  /** The footer's links (Workshops, About us, Our story, Contact), in order. */
   links: NavItem[]
+  /** The legal pages (privacy, distance sales, cancellation and refunds), in order. */
+  legal: NavItem[]
   /** A few sentences about the brand (bundled text when not set). */
   about: string
   /** An Instagram address (https://instagram.com/…) or "" */

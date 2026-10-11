@@ -62,6 +62,13 @@ export const settingSchemas = {
    * also the language of emails when none is known.
    */
   defaultLocale: locale,
+  /**
+   * The languages the public site (and the members' account pages) is shown
+   * in (Settings → General); the main language is always one of them. A page
+   * in another language redirects to the main language (src/proxy.ts); the
+   * panels keep every language. Read through `getSiteLocales()` (src/i18n/main-locale).
+   */
+  siteLocales: z.array(locale).min(1),
   seo: z.object({ title: localized, description: localized }),
   /** Active public-site theme: an id of src/themes/ids.ts (an unknown one shows the default theme). */
   theme: z.string().regex(/^[a-z0-9-]+$/),
@@ -216,6 +223,21 @@ export const settingSchemas = {
     spenderId: z.uuid().nullable(),
   }),
   /**
+   * The business behind the site (Settings → Legal details): shown on the
+   * legal pages (privacy, distance sales, cancellation and refunds) and the
+   * Contact page, as the law and payment providers ask. Empty: not set yet.
+   */
+  legal: z.object({
+    legalName: z.string().trim().max(200).default(""),
+    taxOffice: z.string().trim().max(100).default(""),
+    taxNumber: z.string().trim().max(20).default(""),
+    mersis: z.string().trim().max(20).default(""),
+    address: z.string().trim().max(500).default(""),
+    phone: z.string().trim().max(40).default(""),
+    email: z.string().trim().max(254).default(""),
+    kep: z.string().trim().max(254).default(""),
+  }),
+  /**
    * Backups (Settings → Backup): whether a backup is made by itself every day
    * (and the month's report at its end).
    */
@@ -246,6 +268,7 @@ export type SettingValue<K extends SettingKey> = z.infer<(typeof settingSchemas)
 export const settingDefaults: { [K in SettingKey]: SettingValue<K> } = {
   brand: { fa: "لارت", tr: "Lart", en: "Lart" },
   defaultLocale: FALLBACK_LOCALE,
+  siteLocales: ["fa", "tr", "en"],
   seo: { title: {}, description: {} },
   theme: "default",
   logo: null,
@@ -275,6 +298,7 @@ export const settingDefaults: { [K in SettingKey]: SettingValue<K> } = {
   },
   money: { withdrawals: false, spenderId: null },
   backup: { auto: true },
+  legal: { legalName: "", taxOffice: "", taxNumber: "", mersis: "", address: "", phone: "", email: "", kep: "" },
   email: {
     provider: "env",
     fromAddress: "",

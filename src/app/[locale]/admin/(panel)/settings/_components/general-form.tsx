@@ -8,11 +8,13 @@ import { useActionForm } from "@/components/admin/form/use-action-form"
 import type { LocalizedText } from "@/db/schema"
 import { saveGeneralSettings } from "@/features/settings/actions"
 import { generalSettingsSchema, siteLocales, type GeneralSettingsValues } from "@/features/settings/schema"
+import { Switch } from "@/components/ui/switch"
 import { ChoiceCards } from "./fields"
 
 type Saved = {
   brand: LocalizedText
   defaultLocale: (typeof siteLocales)[number]
+  siteLocales: (typeof siteLocales)[number][]
   seo: { title: LocalizedText; description: LocalizedText }
 }
 
@@ -30,6 +32,7 @@ export function GeneralSettingsForm({ saved }: { saved: Saved }) {
     defaultValues: {
       brand: full(saved.brand),
       defaultLocale: saved.defaultLocale,
+      siteLocales: saved.siteLocales,
       seo: { title: full(saved.seo.title), description: full(saved.seo.description) },
     },
     successMessage: ts("toast.saved"),
@@ -53,6 +56,32 @@ export function GeneralSettingsForm({ saved }: { saved: Saved }) {
               choices={siteLocales.map((l) => ({ value: l, title: tc(`locales.${l}`), lang: l }))}
             />
           )}
+        </FormField>
+        <FormField<GeneralSettingsValues> name="siteLocales" label={t("siteLocales")} description={t("siteLocalesHint")}>
+          {(field) => {
+            const on = (field.value as string[]) ?? []
+            const main = form.watch("defaultLocale")
+            return (
+              <div id={field.id} aria-describedby={field["aria-describedby"]} className="grid gap-2 sm:grid-cols-3">
+                {siteLocales.map((l) => (
+                  <label key={l} className="flex items-center justify-between gap-3 rounded-xl border p-3.5">
+                    <span lang={l} className="text-sm font-medium">
+                      {tc(`locales.${l}`)}
+                      {l === main && <span className="text-muted-foreground ms-1.5 text-xs font-normal">({t("mainLocale")})</span>}
+                    </span>
+                    <Switch
+                      checked={on.includes(l) || l === main}
+                      disabled={l === main}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked ? [...on, l] : on.filter((x) => x !== l))
+                        field.onBlur()
+                      }}
+                    />
+                  </label>
+                ))}
+              </div>
+            )
+          }}
         </FormField>
       </FormSection>
 

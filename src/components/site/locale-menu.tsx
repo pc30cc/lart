@@ -12,16 +12,26 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { locales, type AppLocale } from "@/i18n/routing"
+import { useSiteLocales } from "@/i18n/main-locale-context"
+import { type AppLocale } from "@/i18n/routing"
 import { cn } from "@/lib/utils"
 import { useSwitchLocale } from "./use-switch-locale"
 
-/** The language choices, each written in its own language. */
-export function LocaleChoices({ value, onChange }: { value: string; onChange: (locale: AppLocale) => void }) {
+/** The language choices, each written in its own language (`options`: the site's languages by default; the instructor panel passes all). */
+export function LocaleChoices({
+  value,
+  onChange,
+  options,
+}: {
+  value: string
+  onChange: (locale: AppLocale) => void
+  options?: readonly AppLocale[]
+}) {
   const t = useTranslations("common")
+  const site = useSiteLocales()
   return (
     <DropdownMenuRadioGroup value={value} onValueChange={(next) => next !== value && onChange(next as AppLocale)}>
-      {locales.map((l) => (
+      {(options ?? site).map((l) => (
         <DropdownMenuRadioItem key={l} value={l} className="py-2">
           <span lang={l} className={cn(l === "fa" && "font-(family-name:--font-iransans)")}>
             {t(`locales.${l}`)}
@@ -41,6 +51,8 @@ export function LocaleMenu({ signedIn, className }: { signedIn: boolean; classNa
   const t = useTranslations("common")
   const locale = useLocale()
   const { switchTo, pending } = useSwitchLocale(signedIn)
+  // One language on the site: nothing to choose.
+  if (useSiteLocales().length < 2) return null
 
   return (
     <DropdownMenu>
