@@ -10,11 +10,14 @@ import { LogoPicture } from "@/themes/logo"
 export async function AuthShell({
   brand,
   title,
+  hideTitle,
   subtitle,
   children,
 }: {
   brand: string
   title: string
+  /** Keep the heading for screen readers only (the sign-in page shows just the logo and the form). */
+  hideTitle?: boolean
   subtitle?: React.ReactNode
   children: React.ReactNode
 }) {
@@ -42,7 +45,7 @@ export async function AuthShell({
             </span>
           )}
           <div className="space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+            <h1 className={hideTitle ? "sr-only" : "text-2xl font-semibold tracking-tight"}>{title}</h1>
             {subtitle && <p className="text-muted-foreground text-sm text-balance">{subtitle}</p>}
           </div>
         </div>

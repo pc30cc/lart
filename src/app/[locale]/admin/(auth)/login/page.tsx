@@ -21,7 +21,7 @@ export default async function AdminLoginPage({ params, searchParams }: PageProps
   const next = typeof query.next === "string" ? query.next : undefined
 
   return (
-    <AuthShell brand={brand} title={t("title")} subtitle={t("subtitle", { brand })}>
+    <AuthShell brand={brand} title={t("metaTitle")} hideTitle>
       <LoginForm next={next} notice={query.reset === "done" ? t("resetDone") : undefined} />
     </AuthShell>
   )
