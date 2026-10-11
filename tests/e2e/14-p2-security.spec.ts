@@ -81,7 +81,7 @@ test.describe("phase 2 · security: members", () => {
     const page = await context.newPage()
     await page.goto(`/workshops/${P2.wB.slug}/register`)
     await page.getByLabel(t("registration.register.participant")).fill(`Forged ${RUN}`)
-    await page.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).click()
+    await page.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).check()
     await forgeNextAction(page, b, c)
     await page.getByRole("button", { name: t("registration.register.submit"), exact: true }).click()
     await expect(page.getByRole("alert").filter({ hasText: t("registration.errors.cancelled") })).toBeVisible()
@@ -170,7 +170,7 @@ test.describe("phase 2 · security: server actions replayed with someone else's 
     const form = await ayla.newPage()
     await form.goto(`/workshops/${P2.wB.slug}/register`)
     await form.getByLabel(t("registration.register.participant")).fill(`Captured ${RUN}`)
-    await form.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).click()
+    await form.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).check()
     const action = await captureAction(form, () => form.getByRole("button", { name: t("registration.register.submit"), exact: true }).click())
     expect(action.body).toContain(`Captured ${RUN}`)
 

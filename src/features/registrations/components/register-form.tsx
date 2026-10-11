@@ -2,6 +2,7 @@
 
 import { BanknoteIcon, CreditCardIcon, InfoIcon, LandmarkIcon, type LucideIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
+import { useFormContext } from "react-hook-form"
 
 import { Form, FormField } from "@/components/admin/form/form"
 import { BigSubmit, BigTextField, FormAlert } from "@/components/site/auth/fields"
@@ -20,9 +21,10 @@ const wayIcons: Record<PaymentWayName, LucideIcon> = { cash: BanknoteIcon, trans
 
 /**
  * The registration form: who attends (the member's name to start with; a
- * parent writes their child's name), the one required box (its link opens the
- * terms in a dialog), the two optional photo / video choices, the price with the ways to pay
- * (in plain words), and one big "Register" button. The server checks it all
+ * parent writes their child's name), the terms box (its link opens the terms
+ * and what the photo / video box means in a dialog) and one box for photos and
+ * videos, both ticked to start with, the price with the ways to pay (in plain
+ * words), and one big "Register" button. The server checks it all
  * again (seats, deadline, the terms text) and opens the "you're registered" page.
  */
 export function RegisterForm({
@@ -50,9 +52,17 @@ export function RegisterForm({
   const { form, submit, pending, error } = useSiteForm({
     schema: registerSchema,
     action: registerAction,
-    // The terms box starts unticked (left out): ticking it is the person's own act.
-    defaultValues: { courseId, locale, participantName: defaultName, termsSha256: terms.sha256, photoConsent: false, videoConsent: false },
+    // Both boxes start ticked, as the owner asked; the person can untick them.
+    defaultValues: { courseId, locale, participantName: defaultName, termsSha256: terms.sha256, acceptTerms: true, photoConsent: true, videoConsent: true },
   })
+  const dialog = (chunks: React.ReactNode) => (
+    <TermsDialog
+      text={terms.text}
+      title={t("terms")}
+      trigger={chunks}
+      consent={{ title: t("consent.title"), optional: t("consent.optional"), text: t("consent.text", { brand }), guardian: t("consent.guardian") }}
+    />
+  )
 
   return (
     <Form form={form} onSubmit={submit} className="space-y-8">
@@ -72,28 +82,9 @@ export function RegisterForm({
         )}
       </section>
 
-      <section>
-        <CheckField
-          name="acceptTerms"
-          ariaLabel={t("acceptTerms")}
-          label={t.rich("acceptTermsRich", { terms: (chunks) => <TermsDialog text={terms.text} title={t("terms")} trigger={chunks} /> })}
-          strong
-        />
-      </section>
-
-      <section className="space-y-3" aria-labelledby="register-consent">
-        <h2 id="register-consent" className="text-lg font-semibold">
-          {t("consent.title")}{" "}
-          <span className="text-muted-foreground text-sm font-normal">({t("consent.optional")})</span>
-        </h2>
-        <div className="text-muted-foreground space-y-2 text-sm leading-relaxed text-pretty">
-          <p>{t("consent.text", { brand })}</p>
-          <p>{t("consent.guardian")}</p>
-        </div>
-        <div className="space-y-2.5">
-          <CheckField name="photoConsent" label={t("consent.photo")} />
-          <CheckField name="videoConsent" label={t("consent.video")} />
-        </div>
+      <section className="space-y-2.5">
+        <CheckField name="acceptTerms" ariaLabel={t("acceptTerms")} label={t.rich("acceptTermsRich", { terms: dialog })} strong />
+        <MediaConsentField label={t("consent.both")} />
       </section>
 
       <section className="bg-card ring-foreground/8 space-y-3 rounded-2xl p-4 shadow-xs ring-1 sm:p-5" aria-labelledby="register-pay">
@@ -137,9 +128,20 @@ export function RegisterForm({
 
 /**
  * The terms as a link inside the box's label: it opens them in a dialog (and
- * does not tick the box). The text is the exact one the person accepts.
+ * does not tick the box), with what the photo and video box means under them.
+ * The terms text is the exact one the person accepts.
  */
-function TermsDialog({ text, title, trigger }: { text: string; title: string; trigger: React.ReactNode }) {
+function TermsDialog({
+  text,
+  title,
+  trigger,
+  consent,
+}: {
+  text: string
+  title: string
+  trigger: React.ReactNode
+  consent: { title: string; optional: string; text: string; guardian: string }
+}) {
   const tc = useTranslations("common")
   return (
     <Dialog>
@@ -156,8 +158,17 @@ function TermsDialog({ text, title, trigger }: { text: string; title: string; tr
         <DialogHeader className="border-b px-5 py-4">
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <div className="overflow-y-auto px-5 py-4">
+        <div className="space-y-6 overflow-y-auto px-5 py-4">
           <TermsText text={text} />
+          <section className="space-y-2 border-t pt-5">
+            <h3 className="font-semibold">
+              {consent.title} <span className="text-muted-foreground text-sm font-normal">({consent.optional})</span>
+            </h3>
+            <div className="text-muted-foreground space-y-2 text-sm leading-relaxed text-pretty">
+              <p>{consent.text}</p>
+              <p>{consent.guardian}</p>
+            </div>
+          </section>
         </div>
         <div className="flex justify-end border-t px-5 py-3">
           <DialogClose asChild>
@@ -171,18 +182,27 @@ function TermsDialog({ text, title, trigger }: { text: string; title: string; tr
   )
 }
 
+/** One box for photos and videos together: it sets both consents (still kept apart on the registration). */
+function MediaConsentField({ label }: { label: string }) {
+  const { setValue } = useFormContext<RegisterValues>()
+  return <CheckField name="photoConsent" label={label} onChange={(checked) => setValue("videoConsent", checked)} />
+}
+
 /** A whole-row checkbox: easy to tap, the label is part of it. */
 function CheckField({
   name,
   label,
   ariaLabel,
   strong,
+  onChange: also,
 }: {
   name: "acceptTerms" | "photoConsent" | "videoConsent"
   label: React.ReactNode
   /** The box's name when the label holds a link. */
   ariaLabel?: string
   strong?: boolean
+  /** Called with the new state after the field changes. */
+  onChange?: (checked: boolean) => void
 }) {
   return (
     <FormField<RegisterValues> name={name}>
@@ -198,7 +218,10 @@ function CheckField({
             id={id}
             ref={ref}
             checked={value === true}
-            onCheckedChange={(checked) => onChange(checked === true)}
+            onCheckedChange={(checked) => {
+              onChange(checked === true)
+              also?.(checked === true)
+            }}
             onBlur={onBlur}
             // A square with a clear border (rounded-md would make a 20px box a circle, like a radio button).
             className="border-foreground/50 mt-0.5 size-5 rounded-[5px] border-2 [&_svg]:size-4!"

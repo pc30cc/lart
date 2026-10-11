@@ -330,7 +330,7 @@ test.describe.serial("phase 2 · admin: registrations, payments, refunds", () =>
       const context = await personContext(browser, who)
       const p = await context.newPage()
       await p.goto(at(locale, `/workshops/${P2.wD.slug}/register`))
-      await p.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).click()
+      await p.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).check()
       await p.getByRole("button", { name: t("registration.register.submit"), exact: true }).click()
       await expect(p).toHaveURL(/\/account\/registrations\/[0-9a-f-]{36}\?welcome=1$/)
       await context.close()

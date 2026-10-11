@@ -52,9 +52,9 @@ async function register(page: Page, locale: Locale, slug: string, participant?: 
   const t = tr(locale)
   await page.goto(at(locale, `/workshops/${slug}/register`))
   if (participant !== undefined) await page.getByLabel(t("registration.register.participant")).fill(participant)
-  await page.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).click()
-  if (consent.photo) await page.getByRole("checkbox", { name: t("registration.register.consent.photo") }).click()
-  if (consent.video) await page.getByRole("checkbox", { name: t("registration.register.consent.video") }).click()
+  // Both boxes start ticked; one box for photos and videos together.
+  await page.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).check()
+  await page.getByRole("checkbox", { name: t("registration.register.consent.both") }).setChecked(Boolean(consent.photo || consent.video))
   await page.getByRole("button", { name: t("registration.register.submit"), exact: true }).click()
   await expect(page).toHaveURL(/\/account\/registrations\/[0-9a-f-]{36}\?welcome=1$/)
   return /registrations\/([0-9a-f-]{36})/.exec(page.url())![1]
@@ -212,15 +212,15 @@ test.describe.serial("phase 2 · students", () => {
     await expect(page.locator("main")).toContainText("72")
     for (const way of ["cash", "transfer", "online"]) await expect(page.locator("main").getByText(t(`registration.register.pay.${way}`), { exact: true })).toBeVisible()
 
-    // Without the terms box: refused on the box.
+    // Without the terms box (it starts ticked: untick it): refused on the box.
     const submit = page.getByRole("button", { name: t("registration.register.submit"), exact: true })
+    await page.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).uncheck()
     await submit.click()
     await expect(page.locator("main").getByText(t("registration.register.errors.acceptTerms"))).toBeVisible()
     await expect(page).toHaveURL(/\/register$/)
     expect(await sql("select 1 from registrations r join members m on m.id = r.member_id where m.email = $1", [P2.ayla.email])).toHaveLength(0)
 
-    await page.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).click()
-    await page.getByRole("checkbox", { name: t("registration.register.consent.photo") }).click()
+    await page.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).check()
     await submit.click()
     await expect(page).toHaveURL(/localhost:3100\/account\/registrations\/[0-9a-f-]{36}\?welcome=1$/)
     const id = /registrations\/([0-9a-f-]{36})/.exec(page.url())![1]
@@ -231,7 +231,7 @@ test.describe.serial("phase 2 · students", () => {
       "select status, amount, photo_consent, video_consent, terms_sha256, participant_name from registrations where id = $1",
       [id],
     )
-    expect(reg).toMatchObject({ status: "pending", photo_consent: true, video_consent: false, participant_name: P2.ayla.name })
+    expect(reg).toMatchObject({ status: "pending", photo_consent: true, video_consent: true, participant_name: P2.ayla.name })
     expect(Number(reg.amount)).toBe(100_000)
     expect(reg.terms_sha256).toMatch(/^[0-9a-f]{64}$/)
 
@@ -365,7 +365,7 @@ test.describe.serial("phase 2 · students", () => {
     await a.getByRole("link", { name: tr("tr")("registration.workshop.registered.another") }).click()
     await expect(a.getByLabel(tr("tr")("registration.register.participant"))).toHaveValue("")
     await a.getByLabel(tr("tr")("registration.register.participant")).fill(`  ${P2.ayla.name.toUpperCase()} `)
-    await a.getByRole("checkbox", { name: tr("tr")("registration.register.acceptTerms") }).click()
+    await a.getByRole("checkbox", { name: tr("tr")("registration.register.acceptTerms") }).check()
     await a.getByRole("button", { name: tr("tr")("registration.register.submit"), exact: true }).click()
     await expect(a.locator("main").getByText(tr("tr")("registration.errors.duplicate", { name: P2.ayla.name.toUpperCase() }))).toBeVisible()
     await expect(a).toHaveURL(/\/register$/)

@@ -106,8 +106,7 @@
       "optional": "isteğe bağlı",
       "text": "Atölye sırasında fotoğraf ve video çekilebilir. Bu seçimler yalnızca, {brand} etkinliklerini tanıtmak amacıyla katılımcının tanınabilir görüntülerinin {brand} web sitesinde ve resmî sayfalarında yayımlanmasıyla ilgilidir. İsteğe bağlıdır; kaydı ve atölyeye katılımı etkilemez. Eğitmenin kişisel sayfaları bu kapsamda değildir.",
       "guardian": "Katılımcı çocuksa bu seçimleri ebeveyni veya yasal vasisi yapar.",
-      "photo": "Katılımcının tanınabilir fotoğraflarının yayımlanmasına izin veriyorum.",
-      "video": "Katılımcının tanınabilir videolarının yayımlanmasına izin veriyorum."
+      "both": "Katılımcının tanınabilir fotoğraf ve videolarının yayınlanmasını kabul ediyorum."
     },
     "pay": {
       "title": "Ücret",

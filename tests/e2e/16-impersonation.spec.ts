@@ -127,7 +127,7 @@ test.describe.serial("students, set password, viewing as someone", () => {
     await expect(p).toHaveURL(/\/en\/workshops/)
     // The student's own register form: capture the "Register" post (aborted) to replay it while viewing.
     await p.goto(`/en/workshops/${slug}/register`)
-    await p.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).click()
+    await p.getByRole("checkbox", { name: t("registration.register.acceptTerms") }).check()
     registerCapture = await captureAction(p, () =>
       p.getByRole("button", { name: t("registration.register.submit"), exact: true }).click(),
     )

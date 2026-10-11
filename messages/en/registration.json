@@ -106,8 +106,7 @@
       "optional": "optional",
       "text": "Photos and videos may be taken during the workshop. These choices are only about publishing identifiable images of the participant on the {brand} website and official pages, to show what {brand} does. They are optional and don’t affect registration or attendance. They don’t cover the instructor’s personal pages.",
       "guardian": "If the participant is a child, a parent or legal guardian makes these choices.",
-      "photo": "I agree to the publication of identifiable photos of the participant.",
-      "video": "I agree to the publication of identifiable videos of the participant."
+      "both": "I agree to the publication of identifiable photos and videos of the participant."
     },
     "pay": {
       "title": "Price",
