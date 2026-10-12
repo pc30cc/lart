@@ -1,8 +1,9 @@
 import type { CSSProperties } from "react"
-import { Body, Button, Column, Container, Head, Heading, Hr, Html, Link, Preview, Row, Section, Text } from "react-email"
+import { Body, Button, Column, Container, Head, Heading, Hr, Html, Img, Link, Preview, Row, Section, Text } from "react-email"
 
 /**
- * The one branded layout every email uses: brand wordmark, a calm card with a
+ * The one branded layout every email uses: the brand's logo (its name when
+ * there is none), a calm card with a
  * heading, short paragraphs, an optional details box, optional small blocks
  * (e.g. the ways to pay) and one main button, then a small footer. When a
  * block has its own button (e.g. "Pay online"), the main button is drawn as
@@ -14,6 +15,11 @@ import { Body, Button, Column, Container, Head, Heading, Hr, Html, Link, Preview
 export type EmailLayoutProps = {
   locale: "fa" | "tr" | "en"
   brand: string
+  /**
+   * The logo on a light and on a dark page (absolute PNG addresses: mail
+   * clients show no SVG), shown in place of the brand's name; null: the name.
+   */
+  logo: { light: string; dark: string; width: number; height: number } | null
   /** Site home page, linked in the footer. */
   siteUrl: string
   preview: string
@@ -55,7 +61,10 @@ const light = {
 
 const css = `
 :root{color-scheme:light dark;supported-color-schemes:light dark}
+.e-logo-dark{display:none}
 @media (prefers-color-scheme:dark){
+.e-logo-light{display:none!important}
+.e-logo-dark{display:block!important;max-height:none!important;overflow:visible!important}
 .e-page,.e-page>table>tbody>tr>td{background-color:#151110!important}
 .e-card{background-color:#211b18!important;border-color:#3a2f29!important}
 .e-box{background-color:#2a221e!important}
@@ -101,6 +110,7 @@ function styles(rtl: boolean) {
       textAlign: "center",
       margin: 0,
     },
+    logo: { display: "block", margin: "0 auto", border: 0, outline: "none" },
     wordmarkRule: { width: 28, border: "none", borderTop: `2px solid ${light.accent}`, margin: "10px auto 0" },
     card: {
       backgroundColor: light.card,
@@ -175,10 +185,27 @@ export function EmailLayout(props: EmailLayoutProps) {
         <Preview>{props.preview}</Preview>
         <Container dir={dir} style={s.container}>
           <Section style={s.header}>
-            <Text className="e-text" style={s.wordmark}>
-              {props.brand}
-            </Text>
-            <Hr style={s.wordmarkRule} />
+            {props.logo ? (
+              <Link href={props.siteUrl} style={{ display: "inline-block" }}>
+                <Img className="e-logo-light" src={props.logo.light} alt={props.brand} width={props.logo.width} height={props.logo.height} style={s.logo} />
+                {/* Hidden unless the client follows a dark page (and never in Outlook). */}
+                <Img
+                  className="e-logo-dark"
+                  src={props.logo.dark}
+                  alt={props.brand}
+                  width={props.logo.width}
+                  height={props.logo.height}
+                  style={{ ...s.logo, display: "none", maxHeight: 0, overflow: "hidden", msoHide: "all" } as CSSProperties}
+                />
+              </Link>
+            ) : (
+              <>
+                <Text className="e-text" style={s.wordmark}>
+                  {props.brand}
+                </Text>
+                <Hr style={s.wordmarkRule} />
+              </>
+            )}
           </Section>
 
           <Section className="e-card" tdClassName="e-card-td" dir={dir} style={s.card}>

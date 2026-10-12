@@ -70,6 +70,9 @@ export async function renderEmail<T extends EmailTemplate>(
   }
 }
 
+/** The Limer logo at the top of every email (public/brand; 1000 × 331, shown 160 wide). */
+const EMAIL_LOGO = { light: "/brand/limer-logo-brown.png", dark: "/brand/limer-logo-white.png", width: 160, height: 53 }
+
 async function build(
   template: EmailTemplate,
   def: EmailDefinition,
@@ -114,6 +117,7 @@ async function build(
     <EmailLayout
       locale={locale}
       brand={brand}
+      logo={EMAIL_LOGO && { ...EMAIL_LOGO, light: new URL(EMAIL_LOGO.light, home).href, dark: new URL(EMAIL_LOGO.dark, home).href }}
       siteUrl={home}
       preview={msg("preview")}
       heading={msg("heading")}
@@ -135,6 +139,8 @@ async function build(
       // Upper-casing breaks Turkish ("Yeriniz" → "YERINIZ") and means nothing in Persian.
       { selector: "h1", options: { uppercase: false } },
       { selector: "a.e-footer", format: "anchor", options: { ignoreHref: true } },
+      // The logo's two images: one line with the brand's name, not two.
+      { selector: "img.e-logo-dark", format: "skip" },
     ],
   })
   // One line, no control characters: user-entered titles end up in the subject.
