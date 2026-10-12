@@ -203,11 +203,16 @@
     "hasAdvanceHint": "Part of the fee paid before the workshop, deducted at settlement.",
     "advanceAmount": "Advance amount",
     "advanceMax": "At most {amount}.",
-    "extraDates": "Other days (a workshop on several days)",
-    "extraDatesHint": "If the workshop runs on more than one day, add the following days. Each day is held at the first day's hours; the price and places are for all the days together.",
     "dayNumber": "Day {n, number}",
     "addDay": "Add a day",
-    "removeDay": "Remove this day"
+    "removeDay": "Remove this day",
+    "extraDays": "Other days (a workshop on several days)",
+    "extraDaysHint": "If the workshop runs on more than one day, add the following days. Each day has its own hours and number of participants (a new day starts with the previous day's); these go into the instructor's contract. The price is for all the days together, and the workshop's places limit the registrations.",
+    "dayDate": "Date",
+    "dayStart": "From",
+    "dayEnd": "To",
+    "dayMin": "Min. participants",
+    "dayMax": "Max. participants"
   },
   "validation": {
     "chooseCategory": "Please choose a category.",
@@ -219,7 +224,9 @@
     "advanceRequired": "Please enter the advance amount, or turn off the advance payment.",
     "advanceTooBig": "The advance can’t be more than the total fee (for a per-participant fee: the amount times the maximum participants).",
     "startInFuture": "Please choose a date and time in the future.",
-    "daysAfterFirst": "The other days must come after the first one, each only once."
+    "daysAfterFirst": "The other days must come after the first one, each only once.",
+    "dayEndAfterStart": "Each day must end after it starts.",
+    "dayMaxBelowMin": "A day's maximum participants can't be below its minimum."
   },
   "toast": {
     "created": "Workshop created. The contract is on its way to {name}.",
@@ -272,7 +279,8 @@
     "instructor": "Instructor",
     "privateHint": "Private details, only for admins.",
     "photos": "Photos",
-    "noCover": "No cover photo yet"
+    "noCover": "No cover photo yet",
+    "dayParticipants": "participants {range}"
   },
   "next": {
     "viewContract": "View contract",

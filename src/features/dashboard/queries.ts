@@ -171,6 +171,7 @@ function upcomingWorkshops(exec: Exec, now: Date) {
       title: courses.title,
       startsAt: courses.startsAt,
       endsAt: courses.endsAt,
+      days: courses.days,
       decisionAt: courses.decisionAt,
       minCapacity: courses.minCapacity,
       maxCapacity: courses.maxCapacity,

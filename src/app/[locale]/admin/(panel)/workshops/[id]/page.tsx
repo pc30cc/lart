@@ -26,13 +26,13 @@ import { getWorkshop, type Workshop } from "@/features/workshops/queries"
 import { displayStatus, isCancelled } from "@/features/workshops/schema"
 import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
-import { formatDate, formatDateTime, formatNumber, formatTimeRange, localized } from "@/lib/format"
+import { formatDate, formatDateTime, formatNumber, localized } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { CancelWorkshopButton, ConfirmWorkshopButton, RaiseFinalButton, ResendContractButton } from "../_components/lifecycle-actions"
 import { WorkshopHeader } from "../_components/workshop-header"
 import { QrCard, TelegramCard } from "../_components/share-cards"
 import { FillMeter } from "../_components/workshop-status"
-import { formatWorkshopDates } from "@/features/workshops/days"
+import { formatWorkshopDates, workshopHours, formatDayCapacity, workshopDays, workshopSchedule } from "@/features/workshops/days"
 
 async function load(id: string) {
   if (!z.uuid().safeParse(id).success) notFound()
@@ -76,10 +76,26 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/admi
           <Card title={t("overview.details")}>
             <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
               <Fact label={t("overview.when")}>
-                {formatWorkshopDates(w, locale, "full")}
-                <Sub>
-                  <bdi className="tabular-nums">{formatTimeRange(w.startsAt, w.endsAt, locale)}</bdi>
-                </Sub>
+                {workshopDays(w).length > 1 ? (
+                  // Several days: each with its hours and participants (as in the contract).
+                  <ul className="space-y-1">
+                    {workshopSchedule(w, locale, "full").map((d) => (
+                      <li key={d.date}>
+                        {d.date}
+                        <Sub>
+                          <bdi className="tabular-nums">{d.hours}</bdi> · {t("overview.dayParticipants", { range: formatDayCapacity(d, locale) })}
+                        </Sub>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <>
+                    {formatWorkshopDates(w, locale, "full")}
+                    <Sub>
+                      <bdi className="tabular-nums">{workshopHours(w, locale)}</bdi>
+                    </Sub>
+                  </>
+                )}
               </Fact>
               <Fact label={t("fields.venue")}>{localized(w.venue, locale)}</Fact>
               <Fact label={t("fields.registrationDeadline")}>{formatDateTime(w.registrationDeadline, locale, "long")}</Fact>

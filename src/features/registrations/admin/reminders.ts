@@ -7,12 +7,12 @@ import { courses, members, registrations } from "@/db/schema"
 import { paymentWays } from "@/emails/payment"
 import { localeHref } from "@/i18n/links"
 import { sendEmail } from "@/lib/email"
-import { formatTimeRange, localized } from "@/lib/format"
+import { localized } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { getSetting } from "@/lib/settings"
 import { safePaymentUrl } from "../schema"
 import { memberLocale } from "./notify"
-import { formatWorkshopDates } from "@/features/workshops/days"
+import { formatWorkshopDates, workshopHours } from "@/features/workshops/days"
 
 /**
  * The day-before reminder (scheduled job, `pnpm jobs`): every member with an
@@ -125,7 +125,7 @@ export async function sendDayBeforeReminders(now: Date = new Date()): Promise<{ 
           name: member.name,
           workshopTitle: localized(course.title, locale),
           date: formatWorkshopDates(course, locale, "full"),
-          time: formatTimeRange(course.startsAt, course.endsAt, locale),
+          time: workshopHours(course, locale),
           venue: localized(course.venue, locale),
           ...(bring ? { bring: bring.slice(0, 500) } : {}),
           workshopUrl: await localeHref(locale, `/workshops/${course.slug}`),

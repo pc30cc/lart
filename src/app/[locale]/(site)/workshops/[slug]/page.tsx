@@ -21,13 +21,13 @@ import { getPublicWorkshop, myActiveRegistrations, type PublicWorkshop } from "@
 import { Link } from "@/i18n/navigation"
 import { isRtl } from "@/i18n/locales"
 import { absoluteLocaleUrl, localeHref } from "@/i18n/links"
-import { formatDateTime, formatTimeRange } from "@/lib/format"
+import { formatDateTime } from "@/lib/format"
 import { absoluteUrl, alternates, jsonLdText, openGraphOf } from "@/lib/seo"
 import { getBrand } from "@/lib/settings"
 import { cn } from "@/lib/utils"
 import { AgeLabel, AvailabilityBadge, Price } from "@/components/site/workshop-labels"
 import { pageLocale } from "@/i18n/page-locale"
-import { formatWorkshopDates } from "@/features/workshops/days"
+import { formatWorkshopDates, workshopHours, sameHours, workshopSchedule } from "@/features/workshops/days"
 
 /** Search engines get a summary of at most this many characters. */
 const DESCRIPTION_MAX = 160
@@ -242,8 +242,27 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/work
 async function Facts({ workshop: w, locale }: { workshop: PublicWorkshop; locale: string }) {
   const t = await getTranslations("registration.workshop.facts")
   const rows: { icon: LucideIcon; label: string; value: React.ReactNode }[] = [
-    { icon: CalendarDaysIcon, label: t("date"), value: formatWorkshopDates(w, locale, "full") },
-    { icon: ClockIcon, label: t("time"), value: <bdi>{formatTimeRange(w.startsAt, w.endsAt, locale)}</bdi> },
+    // Several days at different hours: each day with its own hours, on its own line.
+    ...(sameHours(w)
+      ? [
+          { icon: CalendarDaysIcon, label: t("date"), value: formatWorkshopDates(w, locale, "full") },
+          { icon: ClockIcon, label: t("time"), value: <bdi>{workshopHours(w, locale)}</bdi> },
+        ]
+      : [
+          {
+            icon: CalendarDaysIcon,
+            label: t("date"),
+            value: (
+              <ul className="space-y-0.5">
+                {workshopSchedule(w, locale, "full").map((d) => (
+                  <li key={d.date}>
+                    {d.date} · <bdi className="tabular-nums">{d.hours}</bdi>
+                  </li>
+                ))}
+              </ul>
+            ),
+          },
+        ]),
     { icon: MapPinIcon, label: t("venue"), value: <span {...langProps(w.textLang.venue)}>{w.venue}</span> },
     { icon: UsersRoundIcon, label: t("age"), value: <AgeLabel ageMin={w.ageMin} ageMax={w.ageMax} /> },
   ]

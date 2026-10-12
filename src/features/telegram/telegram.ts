@@ -9,11 +9,11 @@ import { seatsLeft, seatsTaken } from "@/features/registrations/public"
 import { absoluteLocaleUrl } from "@/i18n/links"
 import { decrypt } from "@/lib/crypto"
 import { UserError } from "@/lib/errors"
-import { formatTimeRange, localized } from "@/lib/format"
+import { localized } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { getBrand, getSetting } from "@/lib/settings"
 import { publicUrls } from "@/lib/storage"
-import { formatWorkshopDates } from "@/features/workshops/days"
+import { formatWorkshopDates, workshopHours } from "@/features/workshops/days"
 
 /** Telegram allows 1024 characters in a photo's caption. */
 const CAPTION_MAX = 1024
@@ -78,7 +78,7 @@ export async function workshopPost(courseId: string, locale: "fa" | "tr" | "en")
     "INTRO",
     `🗓  ${escape(formatWorkshopDates(c, locale, "full"))}`,
     // Isolated: "14:00–17:00" keeps its order in a right-to-left line.
-    `⏰  \u2068${escape(formatTimeRange(c.startsAt, c.endsAt, locale))}\u2069`,
+    `⏰  \u2068${escape(workshopHours(c, locale))}\u2069`,
     `📍  ${escape(localized(c.venue, locale))}`,
     `🎨  ${escape(t("instructor", { name: localized(row.instructor.displayName, locale) }))}`,
     `💳  ${escape(c.price > 0 ? t("price", { price: formatLira(c.price, locale) }) : t("free"))}`,

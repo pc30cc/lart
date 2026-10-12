@@ -6,12 +6,12 @@ import { admins, courses, members, registrations } from "@/db/schema"
 import { localeHref } from "@/i18n/links"
 import { locales, type AppLocale } from "@/i18n/routing"
 import { sendEmail } from "@/lib/email"
-import { formatTimeRange, localized } from "@/lib/format"
+import { localized } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { getSetting } from "@/lib/settings"
 import type { CancelledRegistration, ChangedRefund } from "./payments"
 import type { PaymentMethod } from "./schema"
-import { formatWorkshopDates } from "@/features/workshops/days"
+import { formatWorkshopDates, workshopHours } from "@/features/workshops/days"
 
 /**
  * Emails to the member after an admin recorded a payment, cancelled a
@@ -60,7 +60,7 @@ export async function sendPaymentReceived(registrationId: string, method: Paymen
       amount: formatLira(row.amount, locale),
       method,
       date: formatWorkshopDates(course, locale, "full"),
-      time: formatTimeRange(course.startsAt, course.endsAt, locale),
+      time: workshopHours(course, locale),
       venue: localized(course.venue, locale),
       accountUrl: await localeHref(locale, `/account/registrations/${registrationId}`),
     },

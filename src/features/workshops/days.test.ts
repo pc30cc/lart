@@ -1,33 +1,54 @@
 import { describe, expect, it } from "vitest"
 
-import { buildDays, extraDatesOf, formatWorkshopDates, workshopDays, workshopHours } from "./days"
+import { buildDays, extraDaysOf, formatWorkshopDates, sameHours, workshopDays, workshopHours, type ExtraDay } from "./days"
 import { workshopEditSchema } from "./schema"
 
 // 17 October 2026, 12:00–15:00 in Istanbul (UTC+3).
 const startsAt = new Date("2026-10-17T09:00:00Z")
 const endsAt = new Date("2026-10-17T12:00:00Z")
 
+const day2: ExtraDay = { date: "2026-10-20", start: "12:00", end: "15:00", minCapacity: 1, maxCapacity: 8 }
+
 describe("workshops on several days", () => {
-  it("puts every other day at the first day's hours, and ends with the last one", () => {
-    const built = buildDays(startsAt, endsAt, ["2026-10-20"])
+  it("keeps every other day with its own hours and participants, and ends with the last one", () => {
+    const built = buildDays(startsAt, endsAt, [{ ...day2, start: "10:00", end: "13:30", maxCapacity: 6 }])
     expect(built.days).toEqual([
       { startsAt: "2026-10-17T09:00:00.000Z", endsAt: "2026-10-17T12:00:00.000Z" },
-      { startsAt: "2026-10-20T09:00:00.000Z", endsAt: "2026-10-20T12:00:00.000Z" },
+      { startsAt: "2026-10-20T07:00:00.000Z", endsAt: "2026-10-20T10:30:00.000Z", minCapacity: 1, maxCapacity: 6 },
     ])
-    expect(built.endsAt.toISOString()).toBe("2026-10-20T12:00:00.000Z")
+    expect(built.endsAt.toISOString()).toBe("2026-10-20T10:30:00.000Z")
     expect(buildDays(startsAt, endsAt, [])).toEqual({ days: null, endsAt })
   })
 
   it("reads the days back for showing and for the edit form", () => {
-    const course = { startsAt, ...buildDays(startsAt, endsAt, ["2026-10-20"]) }
+    const course = { startsAt, minCapacity: 1, maxCapacity: 8, ...buildDays(startsAt, endsAt, [day2]) }
     expect(workshopDays(course)).toHaveLength(2)
-    expect(extraDatesOf(course)).toEqual(["2026-10-20"])
+    expect(extraDaysOf(course)).toEqual([day2])
+    expect(sameHours(course)).toBe(true)
     expect(workshopHours(course, "en")).toBe("12:00–15:00")
     expect(formatWorkshopDates(course, "en", "long")).toMatch(/17 October 2026 · .*20 October 2026/)
     expect(formatWorkshopDates({ startsAt, endsAt, days: null }, "en", "long")).toBe("17 October 2026")
+
+    const other = { startsAt, minCapacity: 1, maxCapacity: 8, ...buildDays(startsAt, endsAt, [{ ...day2, start: "10:00", end: "13:00" }]) }
+    expect(sameHours(other)).toBe(false)
+    expect(workshopHours(other, "en")).toBe("12:00–15:00 · 10:00–13:00")
   })
 
-  it("wants the other days after the first, each once", () => {
+  it("reads an older day without participants as the workshop's", () => {
+    const course = {
+      startsAt,
+      endsAt: new Date("2026-10-20T12:00:00Z"),
+      minCapacity: 2,
+      maxCapacity: 9,
+      days: [
+        { startsAt: "2026-10-17T09:00:00.000Z", endsAt: "2026-10-17T12:00:00.000Z" },
+        { startsAt: "2026-10-20T09:00:00.000Z", endsAt: "2026-10-20T12:00:00.000Z" },
+      ],
+    }
+    expect(extraDaysOf(course)).toEqual([{ date: "2026-10-20", start: "12:00", end: "15:00", minCapacity: 2, maxCapacity: 9 }])
+  })
+
+  it("wants the other days after the first, each once, ending after they start, with sensible participants", () => {
     const base = {
       title: { fa: "ش", tr: "M", en: "C" },
       slug: "mum",
@@ -59,10 +80,12 @@ describe("workshops on several days", () => {
       hasAdvance: false,
       advanceAmount: null,
     } as const
-    const issues = (extraDates: string[]) =>
-      (workshopEditSchema.safeParse({ ...base, extraDates }).error?.issues ?? []).filter((i) => i.path[0] === "extraDates")
-    expect(issues(["2026-10-20"])).toHaveLength(0)
-    expect(issues(["2026-10-17"])).toHaveLength(1)
-    expect(issues(["2026-10-20", "2026-10-20"])).toHaveLength(1)
+    const issues = (extraDays: ExtraDay[]) =>
+      (workshopEditSchema.safeParse({ ...base, extraDays }).error?.issues ?? []).filter((i) => i.path[0] === "extraDays")
+    expect(issues([day2])).toHaveLength(0)
+    expect(issues([{ ...day2, date: "2026-10-17" }])).toHaveLength(1)
+    expect(issues([day2, day2])).toHaveLength(1)
+    expect(issues([{ ...day2, end: "11:00" }])).toHaveLength(1)
+    expect(issues([{ ...day2, minCapacity: 9, maxCapacity: 4 }])).toHaveLength(1)
   })
 })

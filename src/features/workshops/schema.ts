@@ -63,8 +63,18 @@ const fields = z.object({
   instructorId: z.uuid({ error: "workshops.validation.chooseInstructor" }),
   startsAt: isoDateTime(),
   endsAt: isoDateTime(),
-  /** A workshop on several days: the other days ("YYYY-MM-DD"), each at the first day's hours. */
-  extraDates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { error: "common.validation.required" })).max(13),
+  /** A workshop on several days: the other days, each with its date, hours and participants (Istanbul time). */
+  extraDays: z
+    .array(
+      z.object({
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { error: "common.validation.required" }),
+        start: z.string().regex(/^\d{2}:\d{2}$/, { error: "common.validation.required" }),
+        end: z.string().regex(/^\d{2}:\d{2}$/, { error: "common.validation.required" }),
+        minCapacity: count(1, 500),
+        maxCapacity: count(1, 500),
+      }),
+    )
+    .max(13),
   registrationDeadline: isoDateTime(),
   decisionAt: isoDateTime(),
   /** Like the title, in three languages; Turkish is required (the other languages fall back to it). */
@@ -105,11 +115,14 @@ export function maxAdvance(v: Pick<Fields, "feeType" | "feeAmount" | "maxCapacit
 function crossCheck(v: Fields, ctx: z.RefinementCtx) {
   const issue = (path: keyof Fields, message: string) => ctx.addIssue({ code: "custom", path: [path], message })
   if (v.endsAt <= v.startsAt) issue("endsAt", "common.validation.endAfterStart")
-  // The other days come after the first, each once (same hours, so a day must not be the first one again).
+  // The other days come after the first, each once, each ending after it starts, with sensible participants.
   const first = zonedParts(v.startsAt).date
-  if (v.extraDates.some((d) => d <= first) || new Set(v.extraDates).size !== v.extraDates.length) {
-    issue("extraDates", "workshops.validation.daysAfterFirst")
+  const dates = v.extraDays.map((d) => d.date)
+  if (dates.some((d) => d <= first) || new Set(dates).size !== dates.length) {
+    issue("extraDays", "workshops.validation.daysAfterFirst")
   }
+  if (v.extraDays.some((d) => d.end <= d.start)) issue("extraDays", "workshops.validation.dayEndAfterStart")
+  if (v.extraDays.some((d) => d.maxCapacity < d.minCapacity)) issue("extraDays", "workshops.validation.dayMaxBelowMin")
   if (v.maxCapacity < v.minCapacity) issue("maxCapacity", "workshops.validation.maxBelowMin")
   if (v.registrationDeadline > v.startsAt) issue("registrationDeadline", "workshops.validation.deadlineBeforeStart")
   if (v.decisionAt > v.startsAt) issue("decisionAt", "workshops.validation.decisionBeforeStart")
@@ -188,7 +201,7 @@ export function changedContractFields(
         ? true
         : translationsChanged(diff[k].from as LocalizedText | null, diff[k].to as LocalizedText | null)),
   )
-  // The days of a workshop on several days are in the contract too (its date): counted as its end.
+  // The days of a workshop on several days (dates, hours, participants) are in the contract too: counted as its end.
   return "days" in diff && !fields.includes("endsAt") ? [...fields, "endsAt"] : fields
 }
 
@@ -202,7 +215,7 @@ export function courseValues(v: WorkshopInput) {
     instructorId: v.instructorId,
     startsAt: v.startsAt,
     // Several days: the last one's end, and every day kept.
-    ...buildDays(v.startsAt, v.endsAt, v.extraDates),
+    ...buildDays(v.startsAt, v.endsAt, v.extraDays),
     registrationDeadline: v.registrationDeadline,
     decisionAt: v.decisionAt,
     venue: v.venue,

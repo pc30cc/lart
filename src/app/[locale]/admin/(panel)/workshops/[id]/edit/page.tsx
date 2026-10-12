@@ -4,7 +4,7 @@ import { getLocale, getTranslations } from "next-intl/server"
 import { z } from "zod"
 
 import { PageHeader } from "@/components/admin/page-header"
-import { extraDatesOf, workshopDays } from "@/features/workshops/days"
+import { extraDaysOf, workshopDays } from "@/features/workshops/days"
 import type { LocalizedText } from "@/db/schema"
 import { getWorkshop, getWorkshopFormOptions, type Workshop } from "@/features/workshops/queries"
 import { contractLocked, type WorkshopFormValues } from "@/features/workshops/schema"
@@ -23,10 +23,10 @@ function formValues(w: Workshop): WorkshopFormValues {
     slug: w.slug,
     categoryId: w.categoryId,
     instructorId: w.instructorId,
-    // The first day; the others as dates (each at the same hours).
+    // The first day; the others with their own hours and participants.
     startsAt: workshopDays(w)[0].startsAt.toISOString(),
     endsAt: workshopDays(w)[0].endsAt.toISOString(),
-    extraDates: extraDatesOf(w),
+    extraDays: extraDaysOf(w),
     registrationDeadline: w.registrationDeadline.toISOString(),
     decisionAt: w.decisionAt.toISOString(),
     venue: text(w.venue),

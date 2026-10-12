@@ -102,6 +102,7 @@ export async function listWorkshops(params: TableParams<Sort, Filter>, locale: s
         coverPath: courses.coverPath,
         startsAt: courses.startsAt,
         endsAt: courses.endsAt,
+        days: courses.days,
         minCapacity: courses.minCapacity,
         maxCapacity: courses.maxCapacity,
         price: courses.price,

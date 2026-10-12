@@ -12,9 +12,10 @@ import { countWorkshopViews, listWorkshops, type WorkshopRow } from "@/features/
 import { displayStatus, workshopTable, workshopViews, type WorkshopView } from "@/features/workshops/schema"
 import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
-import { formatDate, formatNumber, formatTimeRange, formatWeekday, localized } from "@/lib/format"
+import { formatDate, formatNumber, formatWeekday, localized } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { FillMeter, WorkshopStatusBadge } from "./_components/workshop-status"
+import { workshopHours } from "@/features/workshops/days"
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("workshops")
@@ -86,7 +87,7 @@ export default async function WorkshopsPage({ searchParams }: PageProps<"/[local
         <span className="block whitespace-nowrap">
           <span className="block text-sm">{formatDate(row.startsAt, locale, "medium")}</span>
           <span className="text-muted-foreground block text-xs">
-            {formatWeekday(row.startsAt, locale)} · <bdi className="tabular-nums">{formatTimeRange(row.startsAt, row.endsAt, locale)}</bdi>
+            {formatWeekday(row.startsAt, locale)} · <bdi className="tabular-nums">{workshopHours(row, locale)}</bdi>
           </span>
         </span>
       ),

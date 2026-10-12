@@ -8,6 +8,7 @@
     "workshopTitle": "Atölye: {workshop_title}",
     "date": "Tarih: {date}, {weekday}",
     "time": "Saat: {start_time} – {end_time} (İstanbul saati)",
+    "day": "{n}. gün: {date}, {weekday}, {start_time} – {end_time} (İstanbul saati); katılımcı sayısı: en az {min_participants}, en fazla {max_participants}",
     "venue": "Yer: {venue}",
     "capacity": "Katılımcı sayısı: en az {min_participants}, en fazla {max_participants}",
     "decision": "Atölyenin yapılıp yapılmayacağına dair son karar zamanı: {decision_deadline}",

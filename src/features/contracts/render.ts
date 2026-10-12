@@ -5,14 +5,14 @@ import { createTranslator } from "next-intl"
 import { db, type Db, type Tx } from "@/db"
 import { contracts, courses, instructors, templates, type Locale, type LocalizedText } from "@/db/schema"
 import { decrypt } from "@/lib/crypto"
-import { formatDateTime, formatNumber, formatTime, formatWeekday, localized } from "@/lib/format"
+import { formatDate, formatDateTime, formatNumber, formatTime, formatWeekday, localized } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { getBrand } from "@/lib/settings"
 import en from "../../../messages/en/contracts.json"
 import fa from "../../../messages/fa/contracts.json"
 import tr from "../../../messages/tr/contracts.json"
 import { fillPlaceholders, type ContractPlaceholder } from "./text"
-import { formatWorkshopDates } from "@/features/workshops/days"
+import { formatWorkshopDates, type StoredDays, workshopDays } from "@/features/workshops/days"
 
 /** Everything a contract text is made from. */
 export type ContractData = {
@@ -28,6 +28,8 @@ export type ContractData = {
     minCapacity: number
     maxCapacity: number
     decisionAt: Date
+    /** A workshop on several days: every day (`courses.days`). */
+    days?: StoredDays
   }
   fee: { feeType: "per_participant" | "fixed"; feeAmount: number; advanceAmount: number }
 }
@@ -73,6 +75,7 @@ export async function loadContractData(contractId: string, tx: Tx | Db = db): Pr
       minCapacity: row.minCapacity,
       maxCapacity: row.maxCapacity,
       decisionAt: row.decisionAt,
+      days: row.days,
     },
     fee: { feeType: row.feeType, feeAmount: row.feeAmount, advanceAmount: row.advanceAmount },
   }
@@ -119,6 +122,7 @@ export async function renderContract(
   const values = contractValues(data, locale, brand)
   const t = createTranslator({ locale, messages: messages[locale], namespace: "document" })
   const v = { ...values, version: formatNumber(data.version, locale) }
+  const days = workshopDays(data.course)
 
   const header = [
     `# ${t("title")}`,
@@ -129,10 +133,20 @@ export async function renderContract(
     "",
     `## ${t("workshop")}`,
     `- ${t("workshopTitle", v)}`,
-    `- ${t("date", v)}`,
-    `- ${t("time", v)}`,
+    // Several days: one line per day, each with its date, hours and participants.
+    ...(days.length > 1
+      ? days.map((d, i) => `- ${t("day", {
+          n: formatNumber(i + 1, locale),
+          weekday: formatWeekday(d.startsAt, locale),
+          date: formatDate(d.startsAt, locale, "long"),
+          start_time: formatTime(d.startsAt, locale),
+          end_time: formatTime(d.endsAt, locale),
+          min_participants: formatNumber(d.minCapacity ?? data.course.minCapacity, locale),
+          max_participants: formatNumber(d.maxCapacity ?? data.course.maxCapacity, locale),
+        })}`)
+      : [`- ${t("date", v)}`, `- ${t("time", v)}`]),
     `- ${t("venue", v)}`,
-    `- ${t("capacity", v)}`,
+    ...(days.length > 1 ? [] : [`- ${t("capacity", v)}`]),
     `- ${t("decision", v)}`,
     "",
     `## ${t("fee")}`,

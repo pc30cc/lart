@@ -21,11 +21,11 @@ import { paymentWayNames, sameParticipant } from "@/features/registrations/schem
 import { localeHref } from "@/i18n/links"
 import { Link } from "@/i18n/navigation"
 import { getMember } from "@/lib/auth/member"
-import { formatDate, formatTimeRange, isolate } from "@/lib/format"
+import { formatDate, isolate } from "@/lib/format"
 import { getBrand, getSetting } from "@/lib/settings"
 import { Price } from "@/components/site/workshop-labels"
 import { pageLocale } from "@/i18n/page-locale"
-import { formatWorkshopDates } from "@/features/workshops/days"
+import { formatWorkshopDates, workshopHours } from "@/features/workshops/days"
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/workshops/[slug]/register">): Promise<Metadata> {
   const { locale: raw, slug } = await params
@@ -170,7 +170,7 @@ async function RegisterView({ params }: PageProps<"/[locale]/workshops/[slug]/re
         </p>
         <p className="flex items-start gap-2.5">
           <ClockIcon className="text-primary mt-0.5 size-4.5 shrink-0" aria-hidden />
-          <bdi>{formatTimeRange(w.startsAt, w.endsAt, locale)}</bdi>
+          <bdi>{workshopHours(w, locale)}</bdi>
         </p>
         <p className="flex items-start gap-2.5">
           <MapPinIcon className="text-primary mt-0.5 size-4.5 shrink-0" aria-hidden />

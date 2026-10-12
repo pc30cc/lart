@@ -8,9 +8,10 @@ import { listContractsToSign, listMyWorkshops } from "@/features/instructor-pane
 import { profileText } from "@/features/instructors/schema"
 import { Link } from "@/i18n/navigation"
 import { requireInstructor } from "@/lib/auth/instructor"
-import { formatDate, formatTimeRange, localized } from "@/lib/format"
+import { formatDate, localized } from "@/lib/format"
 import { getBrand } from "@/lib/settings"
 import { PageTitle, Section, WorkshopCard } from "./_components/parts"
+import { workshopHours } from "@/features/workshops/days"
 
 const SHOWN = 4
 
@@ -62,7 +63,7 @@ export default async function InstructorHomePage({ params }: PageProps<"/[locale
                   <p className="text-muted-foreground text-sm">
                     {formatDate(contract.startsAt, locale, "full")}
                     <span aria-hidden> · </span>
-                    <bdi>{formatTimeRange(contract.startsAt, contract.endsAt, locale)}</bdi>
+                    <bdi>{workshopHours(contract, locale)}</bdi>
                   </p>
                 </div>
                 <Button asChild className="h-12 shrink-0 rounded-xl px-5 text-base">

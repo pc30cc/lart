@@ -1410,13 +1410,18 @@ places left; a "Register" button to its page) and a super admin sends it
 text post. "Send a test message" checks the bot and channel.
 
 **Workshops on several days** (`features/workshops/days`): the form's
-"Other days" adds dates, each held at the first day's hours, with one price
-and one set of places for all of them. Stored in `courses.days` (every day's
-start and end; null for one day) with `starts_at` the first day's start and
+"Other days" adds days, each with its own date, hours and minimum and
+maximum participants (a new day starts with the previous day's). One price
+for all of them; the workshop's own places (the first day's) limit the
+registrations, the other days' participants are for the contract. Stored in
+`courses.days` (every day's start and end, the other days with their
+participants; null for one day) with `starts_at` the first day's start and
 `ends_at` the last day's end, so "started" and "ended" (registration window,
-closing, past lists) need nothing else. Pages, emails, the contract's {date}
-and the Telegram post list every day (`formatWorkshopDates`); changing the
-days is a contract change like changing the date.
+closing, past lists) need nothing else. Pages, emails and the Telegram post
+list every day (`formatWorkshopDates`) and the hours (`workshopHours`: each
+day's when they differ; the public page and the admin overview then show one
+line per day); the contract has one line per day (date, hours,
+participants). Changing the days is a contract change like changing the date.
 
 **QR code** (the workshop page's "QR code for posters" card): the public
 workshop page's address in the main language, as PNG (1200 px) and SVG

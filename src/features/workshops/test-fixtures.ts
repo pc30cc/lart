@@ -128,7 +128,7 @@ export function workshopInput(
     instructorId: refs.instructorId,
     startsAt: iso(start),
     endsAt: iso(start + 2 * HOUR),
-    extraDates: [],
+    extraDays: [],
     registrationDeadline: iso(start - DAY),
     decisionAt: iso(start - 2 * DAY),
     venue: text({ tr: "Moda Sanat Evi", en: "Moda Art House" }),

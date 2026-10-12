@@ -29,8 +29,8 @@ import { getMyRegistration } from "@/features/registrations/member"
 import { cancelPreview, canCancel, paymentState } from "@/features/registrations/schema"
 import { Link } from "@/i18n/navigation"
 import { getMember } from "@/lib/auth/member"
-import { formatDate, formatDateTime, formatTimeRange, isolate } from "@/lib/format"
-import { formatWorkshopDates } from "@/features/workshops/days"
+import { formatDate, formatDateTime, isolate } from "@/lib/format"
+import { formatWorkshopDates, workshopHours } from "@/features/workshops/days"
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("registration.detail")
@@ -122,7 +122,7 @@ export default async function MyRegistrationPage({ params, searchParams }: PageP
             {formatWorkshopDates(r.course, locale, "full")}
           </Fact>
           <Fact icon={ClockIcon} label={t("item.time")}>
-            <bdi>{formatTimeRange(r.course.startsAt, r.course.endsAt, locale)}</bdi>
+            <bdi>{workshopHours(r.course, locale)}</bdi>
           </Fact>
           <Fact icon={MapPinIcon} label={t("item.venue")}>
             {r.course.venue}

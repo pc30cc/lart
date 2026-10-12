@@ -2,11 +2,11 @@ import { useLocale } from "next-intl"
 
 import { AvailabilityBadge, Price } from "@/components/site/workshop-labels"
 import { Link } from "@/i18n/navigation"
-import { formatTimeRange } from "@/lib/format"
+import { } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import type { WorkshopCardProps } from "../types"
 import { atelierPhotos } from "./photos"
-import { formatWorkshopDates } from "@/features/workshops/days"
+import { formatWorkshopDates, workshopHours } from "@/features/workshops/days"
 
 /**
  * One workshop in a list, like a framed print in a gallery: the cover in a
@@ -58,7 +58,7 @@ export function WorkshopCard({ workshop: w, priority, headingAs: Heading = "h2" 
         {/* Date and time on one line when there is room, else one under the other (never split). */}
         <p className="text-muted-foreground flex flex-wrap justify-center gap-x-3 text-[13px] leading-relaxed sm:text-sm">
           <span className="whitespace-nowrap">{formatWorkshopDates(w, locale, "medium")}</span>
-          <bdi className="whitespace-nowrap">{formatTimeRange(w.startsAt, w.endsAt, locale)}</bdi>
+          <bdi className="whitespace-nowrap">{workshopHours(w, locale)}</bdi>
         </p>
         <Price value={w.price} className="text-primary text-[15px] sm:text-base" />
       </div>

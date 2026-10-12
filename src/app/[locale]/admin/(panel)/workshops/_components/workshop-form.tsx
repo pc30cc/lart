@@ -30,6 +30,7 @@ import { Switch } from "@/components/ui/switch"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import type { WorkshopStatus } from "@/features/workshops/schema"
 import { createWorkshop, updateWorkshop } from "@/features/workshops/actions"
+import type { ExtraDay } from "@/features/workshops/days"
 import type { WorkshopFormOptions } from "@/features/workshops/queries"
 import {
   ageGroups,
@@ -42,7 +43,7 @@ import {
   type WorkshopFormValues,
 } from "@/features/workshops/schema"
 import { Link, useRouter } from "@/i18n/navigation"
-import { formatDate, formatNumber, localized, slugify } from "@/lib/format"
+import { formatDate, formatNumber, localized, slugify, zonedParts } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { cn } from "@/lib/utils"
 
@@ -70,7 +71,7 @@ export function emptyWorkshopValues(): DefaultValues<Values> {
     instructorId: "",
     startsAt: "",
     endsAt: "",
-    extraDates: [],
+    extraDays: [],
     registrationDeadline: "",
     decisionAt: "",
     venue: text(),
@@ -111,8 +112,8 @@ const trimmed = (t: Record<string, string | undefined> | undefined) =>
 /** The part of the form that appears in the contract, except the translated texts (see `reissues`). */
 function contractPart(v: Partial<Values>) {
   const course: Record<string, unknown> = Object.fromEntries(contractCourseFields.flatMap((k) => (k === "title" || k === "venue" ? [] : [[k, v[k]]])))
-  // The other days are in the contract's date too.
-  course.extraDates = [...(v.extraDates ?? [])].sort().join(",")
+  // The other days (dates, hours, participants) are in the contract too.
+  course.extraDays = [...(v.extraDays ?? [])].sort((a, b) => (a?.date ?? "").localeCompare(b?.date ?? ""))
   return stable({ ...course, feeType: v.feeType, feeAmount: v.feeAmount, advance: v.hasAdvance ? v.advanceAmount : 0 })
 }
 
@@ -249,7 +250,7 @@ export function WorkshopForm({
           endName="endsAt"
           required
         />
-        <ExtraDatesField />
+        <ExtraDaysField />
         <DateTimeFields
           label={t("fields.registrationDeadline")}
           description={t("fields.registrationDeadlineHint")}
@@ -787,43 +788,92 @@ function ContractFields() {
  * A workshop on several days: the other days' dates, each held at the first
  * day's hours ("Add a day" adds the day after the last one).
  */
-function ExtraDatesField() {
+function ExtraDaysField() {
   const t = useTranslations("workshops")
   const locale = useLocale()
   const { getValues } = useFormContext<Values>()
   return (
-    <FormField<Values> name="extraDates" label={<ContractLabel>{t("fields.extraDates")}</ContractLabel>} description={t("fields.extraDatesHint")}>
+    <FormField<Values> name="extraDays" label={<ContractLabel>{t("fields.extraDays")}</ContractLabel>} description={t("fields.extraDaysHint")}>
       {({ value, onChange, id }) => {
-        const dates = (value as string[] | undefined) ?? []
-        const next = () => {
-          const last = dates[dates.length - 1] ?? (getValues("startsAt") as string | undefined)?.slice(0, 10)
-          const d = last ? new Date(`${last.slice(0, 10)}T12:00:00Z`) : new Date()
+        const days = (value as ExtraDay[] | undefined) ?? []
+        const set = (i: number, patch: Partial<ExtraDay>) => onChange(days.map((d, j) => (j === i ? { ...d, ...patch } : d)))
+        // A new day: the day after the last one, at its hours and with its participants (the first day's to begin with).
+        const next = (): ExtraDay => {
+          const last = days[days.length - 1]
+          const startsAt = getValues("startsAt") as string | undefined
+          const endsAt = getValues("endsAt") as string | undefined
+          const first = {
+            date: startsAt ? zonedParts(startsAt).date : "",
+            start: startsAt ? zonedParts(startsAt).time : "",
+            end: endsAt ? zonedParts(endsAt).time : "",
+            minCapacity: Number(getValues("minCapacity")) || 1,
+            maxCapacity: Number(getValues("maxCapacity")) || 1,
+          }
+          const base = last ?? first
+          const d = base.date ? new Date(`${base.date}T12:00:00Z`) : new Date()
           d.setUTCDate(d.getUTCDate() + 1)
-          return d.toISOString().slice(0, 10)
+          return { ...base, date: d.toISOString().slice(0, 10) }
         }
         return (
-          <div id={id} className="space-y-2">
-            {dates.map((date, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <span className="text-muted-foreground w-14 shrink-0 text-sm">{t("fields.dayNumber", { n: i + 2 })}</span>
-                <Input
-                  type="date"
-                  dir="ltr"
-                  value={date}
-                  onChange={(e) => onChange(dates.map((d, j) => (j === i ? e.target.value : d)))}
-                  className="max-w-48"
-                  aria-label={t("fields.dayNumber", { n: i + 2 })}
-                />
-                {/^\d{4}-\d{2}-\d{2}$/.test(date) && (
-                  <span className="text-muted-foreground text-sm">{formatDate(`${date}T12:00:00Z`, locale, "full")}</span>
-                )}
-                <Button type="button" variant="ghost" size="icon-sm" aria-label={t("fields.removeDay")} onClick={() => onChange(dates.filter((_, j) => j !== i))}>
-                  <XIcon />
-                </Button>
-              </div>
-            ))}
-            {dates.length < 13 && (
-              <Button type="button" variant="outline" size="sm" onClick={() => onChange([...dates, next()])}>
+          <div id={id} className="space-y-3">
+            {days.map((day, i) => {
+              const label = t("fields.dayNumber", { n: i + 2 })
+              return (
+                <div key={i} className="ring-foreground/10 space-y-3 rounded-xl p-3 ring-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium">
+                      {label}
+                      {/^\d{4}-\d{2}-\d{2}$/.test(day.date) && (
+                        <span className="text-muted-foreground font-normal"> · {formatDate(`${day.date}T12:00:00Z`, locale, "full")}</span>
+                      )}
+                    </span>
+                    <Button type="button" variant="ghost" size="icon-sm" aria-label={t("fields.removeDay")} onClick={() => onChange(days.filter((_, j) => j !== i))}>
+                      <XIcon />
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                    <label className="col-span-2 space-y-1 sm:col-span-1">
+                      <span className="text-muted-foreground text-xs">{t("fields.dayDate")}</span>
+                      <Input type="date" dir="ltr" value={day.date} onChange={(e) => set(i, { date: e.target.value })} />
+                    </label>
+                    <label className="space-y-1">
+                      <span className="text-muted-foreground text-xs">{t("fields.dayStart")}</span>
+                      <Input type="time" dir="ltr" value={day.start} onChange={(e) => set(i, { start: e.target.value })} />
+                    </label>
+                    <label className="space-y-1">
+                      <span className="text-muted-foreground text-xs">{t("fields.dayEnd")}</span>
+                      <Input type="time" dir="ltr" value={day.end} onChange={(e) => set(i, { end: e.target.value })} />
+                    </label>
+                    <label className="space-y-1">
+                      <span className="text-muted-foreground text-xs">{t("fields.dayMin")}</span>
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        dir="ltr"
+                        min={1}
+                        max={500}
+                        value={Number.isFinite(day.minCapacity) ? day.minCapacity : ""}
+                        onChange={(e) => set(i, { minCapacity: e.target.valueAsNumber })}
+                      />
+                    </label>
+                    <label className="space-y-1">
+                      <span className="text-muted-foreground text-xs">{t("fields.dayMax")}</span>
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        dir="ltr"
+                        min={1}
+                        max={500}
+                        value={Number.isFinite(day.maxCapacity) ? day.maxCapacity : ""}
+                        onChange={(e) => set(i, { maxCapacity: e.target.valueAsNumber })}
+                      />
+                    </label>
+                  </div>
+                </div>
+              )
+            })}
+            {days.length < 13 && (
+              <Button type="button" variant="outline" size="sm" onClick={() => onChange([...days, next()])}>
                 <CalendarPlusIcon />
                 {t("fields.addDay")}
               </Button>

@@ -38,7 +38,6 @@ import {
   formatMonthYear,
   formatNumber,
   formatPercent,
-  formatTimeRange,
   formatWeekday,
   intlLocale,
   localized,
@@ -50,6 +49,7 @@ import { cn } from "@/lib/utils"
 import { getDashboard, type Dashboard, type UpcomingWorkshop } from "../queries"
 import { PartnersChart, ProfitPanel, RevenueChart, SeatsChart, type MonthPoint, type RankPoint, type SeatPoint } from "./charts"
 import { enter, Panel } from "./panel"
+import { workshopHours } from "@/features/workshops/days"
 
 /** The dashboard below the page header (streams in; `DashboardSkeleton` shows meanwhile). */
 export async function DashboardContent() {
@@ -508,7 +508,7 @@ function UpcomingRow({ w, today }: { w: UpcomingWorkshop; today: string }) {
           <span className="text-muted-foreground block truncate text-xs">
             <span className="sr-only">{formatDate(w.startsAt, locale, "full")} · </span>
             <span aria-hidden>{w.running ? t("now") : day} · </span>
-            <bdi>{formatTimeRange(w.startsAt, w.endsAt, locale)}</bdi> · {localized(w.instructor, locale)}
+            <bdi>{workshopHours(w, locale)}</bdi> · {localized(w.instructor, locale)}
           </span>
           {alert && (
             <span

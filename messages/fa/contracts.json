@@ -8,6 +8,7 @@
     "workshopTitle": "عنوان ورکشاپ: {workshop_title}",
     "date": "تاریخ: {weekday} {date}",
     "time": "ساعت: از {start_time} تا {end_time} (به وقت استانبول)",
+    "day": "روز {n}: {weekday} {date}، از ساعت {start_time} تا {end_time} (به وقت استانبول)؛ تعداد شرکت‌کنندگان: حداقل {min_participants} و حداکثر {max_participants} نفر",
     "venue": "محل برگزاری: {venue}",
     "capacity": "تعداد شرکت‌کنندگان: حداقل {min_participants} و حداکثر {max_participants} نفر",
     "decision": "آخرین زمان تصمیم‌گیری دربارهٔ برگزاری: {decision_deadline}",

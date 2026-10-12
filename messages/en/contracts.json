@@ -8,6 +8,7 @@
     "workshopTitle": "Workshop: {workshop_title}",
     "date": "Date: {weekday}, {date}",
     "time": "Time: {start_time} to {end_time} (Istanbul time)",
+    "day": "Day {n}: {weekday}, {date}, {start_time} to {end_time} (Istanbul time); participants: at least {min_participants}, at most {max_participants}",
     "venue": "Venue: {venue}",
     "capacity": "Participants: at least {min_participants}, at most {max_participants}",
     "decision": "Go / no-go decision: {decision_deadline}",

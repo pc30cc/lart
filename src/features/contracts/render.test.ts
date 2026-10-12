@@ -45,6 +45,17 @@ describe("renderContract", () => {
     expect(text.indexOf("## Ücret ve hesap")).toBeGreaterThan(text.indexOf("## Ön ödeme"))
   })
 
+  it("lists every day of a workshop on several days, with its hours and participants", async () => {
+    const days = [
+      { startsAt: "2026-10-14T15:00:00.000Z", endsAt: "2026-10-14T17:30:00.000Z" },
+      { startsAt: "2026-10-17T07:00:00.000Z", endsAt: "2026-10-17T10:00:00.000Z", minCapacity: 3, maxCapacity: 6 },
+    ]
+    const text = await renderContract({ ...data, course: { ...data.course, endsAt: new Date(days[1].endsAt), days } }, "en", { brand: "Lart" })
+    expect(text).toContain("- Day 1: Wednesday, 14 October 2026, 18:00 to 20:30 (Istanbul time); participants: at least 4, at most 12")
+    expect(text).toContain("- Day 2: Saturday, 17 October 2026, 10:00 to 13:00 (Istanbul time); participants: at least 3, at most 6")
+    expect(text).not.toContain("- Time:")
+  })
+
   it("writes Persian with Persian digits and the Persian title", async () => {
     const text = await renderContract(data, "fa", { brand: "لارت" })
     expect(text).toContain("# قرارداد همکاری مدرس")

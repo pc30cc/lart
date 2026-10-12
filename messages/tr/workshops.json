@@ -203,11 +203,16 @@
     "hasAdvanceHint": "Ücretin bir kısmı atölyeden önce ödenir ve hesap kapatılırken düşülür.",
     "advanceAmount": "Ön ödeme tutarı",
     "advanceMax": "En fazla {amount}.",
-    "extraDates": "Diğer günler (birkaç günlük atölye)",
-    "extraDatesHint": "Atölye birden fazla gün sürüyorsa sonraki günleri ekleyin. Her gün ilk günün saatlerinde yapılır; ücret ve kontenjan tüm günler için aynıdır.",
     "dayNumber": "{n, number}. gün",
     "addDay": "Gün ekle",
-    "removeDay": "Bu günü kaldır"
+    "removeDay": "Bu günü kaldır",
+    "extraDays": "Diğer günler (birkaç günlük atölye)",
+    "extraDaysHint": "Atölye birden fazla gün sürüyorsa sonraki günleri ekleyin. Her günün kendi saatleri ve katılımcı sayısı vardır (yeni gün bir önceki günün değerleriyle başlar); bunlar eğitmen sözleşmesine yazılır. Ücret tüm günler içindir; kayıtları atölyenin kontenjanı sınırlar.",
+    "dayDate": "Tarih",
+    "dayStart": "Başlangıç",
+    "dayEnd": "Bitiş",
+    "dayMin": "En az katılımcı",
+    "dayMax": "En çok katılımcı"
   },
   "validation": {
     "chooseCategory": "Lütfen bir kategori seçin.",
@@ -219,7 +224,9 @@
     "advanceRequired": "Lütfen ön ödeme tutarını girin ya da ön ödemeyi kapatın.",
     "advanceTooBig": "Ön ödeme toplam ücreti geçemez (katılımcı başına ücrette: tutar × en fazla katılımcı).",
     "startInFuture": "Lütfen ileri bir tarih ve saat seçin.",
-    "daysAfterFirst": "Diğer günler ilk günden sonra olmalı ve her biri bir kez yer almalı."
+    "daysAfterFirst": "Diğer günler ilk günden sonra olmalı ve her biri bir kez yer almalı.",
+    "dayEndAfterStart": "Her gün başladıktan sonra bitmeli.",
+    "dayMaxBelowMin": "Bir günün en çok katılımcı sayısı en azından küçük olamaz."
   },
   "toast": {
     "created": "Atölye oluşturuldu. Sözleşme e-postayla gönderildi: {name}",
@@ -272,7 +279,8 @@
     "instructor": "Eğitmen",
     "privateHint": "Gizli bilgiler; yalnızca yöneticiler görür.",
     "photos": "Fotoğraflar",
-    "noCover": "Henüz kapak fotoğrafı yok"
+    "noCover": "Henüz kapak fotoğrafı yok",
+    "dayParticipants": "{range} katılımcı"
   },
   "next": {
     "viewContract": "Sözleşmeyi gör",

@@ -5,9 +5,9 @@ import { StatusBadge, type StatusTone } from "@/components/admin/status-badge"
 import type { ContractState, WorkshopCard as Workshop } from "@/features/instructor-panel/queries"
 import { panelStatus, type PanelStatus } from "@/features/instructor-panel/schema"
 import { Link } from "@/i18n/navigation"
-import { formatTimeRange, localized } from "@/lib/format"
+import { localized } from "@/lib/format"
 import { cn } from "@/lib/utils"
-import { formatWorkshopDates } from "@/features/workshops/days"
+import { formatWorkshopDates, workshopHours } from "@/features/workshops/days"
 
 /**
  * Small building blocks of the instructor panel's pages (server or client):
@@ -114,7 +114,7 @@ export function WorkshopCard({ workshop, now }: { workshop: Workshop; now?: Date
             <span>
               {formatWorkshopDates(workshop, locale, "full")}
               <span aria-hidden> · </span>
-              <bdi>{formatTimeRange(workshop.startsAt, workshop.endsAt, locale)}</bdi>
+              <bdi>{workshopHours(workshop, locale)}</bdi>
             </span>
           </li>
           <li className="flex items-start gap-2">

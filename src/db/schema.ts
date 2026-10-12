@@ -262,10 +262,11 @@ export const courses = pgTable("courses", {
   publishedAt: timestamp("published_at", { withTimezone: true }),
   /**
    * A workshop on several days: every day's start and end (ISO), the first
-   * being `starts_at`, the last ending at `ends_at` (each day at the same
-   * hours). Null for a one-day workshop.
+   * being `starts_at`, the last ending at `ends_at`; the other days also with
+   * their own participants (for the contract; the first day's are the
+   * workshop's). Null for a one-day workshop.
    */
-  days: jsonb("days").$type<{ startsAt: string; endsAt: string }[]>(),
+  days: jsonb("days").$type<{ startsAt: string; endsAt: string; minCapacity?: number; maxCapacity?: number }[]>(),
   /** When a super admin last sent it to the Telegram channel (Settings → Telegram), and that post's message id. */
   telegramPostedAt: timestamp("telegram_posted_at", { withTimezone: true }),
   telegramMessageId: integer("telegram_message_id"),
