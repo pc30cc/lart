@@ -13,7 +13,8 @@
     "backup": "Yedekleme",
     "danger": "Tehlikeli bölge",
     "money": "Para",
-    "legal": "Yasal bilgiler"
+    "legal": "Yasal bilgiler",
+    "telegram": "Telegram"
   },
   "toast": {
     "saved": "Ayarlar kaydedildi."
@@ -348,7 +349,8 @@
         "cancel": "Atölye iptal edildi",
         "close": "Atölye kapatıldı",
         "gallery": "Galeri güncellendi",
-        "raiseFinal": "Kesin katılımcı sayısı artırıldı"
+        "raiseFinal": "Kesin katılımcı sayısı artırıldı",
+        "telegram": "Telegram'a gönderildi"
       },
       "member": {
         "password_set": "Şifre bir yönetici tarafından belirlendi",
@@ -555,6 +557,39 @@
       "taxNumber": "Vergi numarası 10 ya da 11 haneli olmalı.",
       "mersis": "MERSİS numarası 16 haneli olmalı.",
       "email": "Bu e-posta adresi geçerli değil."
+    }
+  },
+  "telegram": {
+    "setup": {
+      "title": "Kurulum",
+      "description": "Bir kez yapılır; sonra her atölyeyi tek tuşla kanala gönderirsiniz.",
+      "step1": "Telegram'da ‎@BotFather'a yazın, ‎/newbot gönderin ve bir bot oluşturun. Botun “token”ını kopyalayın.",
+      "step2": "Botu kanalınıza ekleyin ve mesaj gönderme izniyle kanal yöneticisi yapın.",
+      "step3": "Token'ı ve kanal adını (ör. ‎@limer_atolye) buraya girip kaydedin.",
+      "step4": "Mesajın kanala ulaştığını görmek için “Deneme mesajı gönder”e basın."
+    },
+    "bot": {
+      "title": "Bot ve kanal",
+      "description": "Gönderiler bu botla bu kanalda yayımlanır."
+    },
+    "token": "Bot token'ı",
+    "tokenHint": "‎@BotFather'dan; ör. 123456789:AA…",
+    "tokenSaved": "Token kayıtlı. Değiştirmek için yenisini girin.",
+    "chat": "Kanal",
+    "chatHint": "Kanalın @ ile başlayan genel adı veya özel kanalın sayısal kimliği (‎-100…).",
+    "locale": "Gönderilerin dili",
+    "localeHint": "Gönderi metni ve kayıt bağlantısı bu dilde olur.",
+    "test": {
+      "action": "Deneme mesajı gönder",
+      "running": "Gönderiliyor…",
+      "sent": "Deneme mesajı kanala gönderildi."
+    },
+    "errors": {
+      "token": "Bu token doğru görünmüyor. ‎@BotFather'dan yeniden kopyalayın.",
+      "chat": "Kanal adını @ ile yazın (ör. ‎@limer_atolye) ya da sayısal kimliğini girin.",
+      "notSet": "Önce Ayarlar → Telegram'da botu ve kanalı girin.",
+      "unreachable": "Telegram'a bağlanılamadı. Biraz sonra tekrar deneyin.",
+      "refused": "Telegram kabul etmedi: {reason}. Botun kanal yöneticisi olduğundan emin olun."
     }
   }
 }

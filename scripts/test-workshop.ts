@@ -166,6 +166,7 @@ async function remove(manifestPath: string) {
     }
     const regIds = tx.select({ id: S.registrations.id }).from(S.registrations).where(eq(S.registrations.courseId, m.course))
     await tx.delete(S.adminNotifications).where(inArray(S.adminNotifications.registrationId, regIds))
+    await tx.delete(S.adminNotifications).where(eq(S.adminNotifications.courseId, m.course))
     const regs = await tx.delete(S.registrations).where(eq(S.registrations.courseId, m.course)).returning({ id: S.registrations.id })
     await tx.delete(S.media).where(eq(S.media.courseId, m.course))
     await tx.delete(S.contracts).where(eq(S.contracts.courseId, m.course))

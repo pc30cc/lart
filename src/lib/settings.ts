@@ -238,6 +238,16 @@ export const settingSchemas = {
     kep: z.string().trim().max(254).default(""),
   }),
   /**
+   * The Telegram channel workshops are sent to (Settings → Telegram): the bot's
+   * token (encrypted; the bot is an admin of the channel), the channel
+   * ("@name" or its numeric id) and the language of the posts.
+   */
+  telegram: z.object({
+    botTokenEnc: z.string(),
+    chatId: z.string().trim().max(100),
+    locale: z.enum(["fa", "tr", "en"]),
+  }),
+  /**
    * Backups (Settings → Backup): whether a backup is made by itself every day
    * (and the month's report at its end).
    */
@@ -299,6 +309,7 @@ export const settingDefaults: { [K in SettingKey]: SettingValue<K> } = {
   money: { withdrawals: false, spenderId: null },
   backup: { auto: true },
   legal: { legalName: "", taxOffice: "", taxNumber: "", mersis: "", address: "", phone: "", email: "", kep: "" },
+  telegram: { botTokenEnc: "", chatId: "", locale: "fa" },
   email: {
     provider: "env",
     fromAddress: "",

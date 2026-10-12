@@ -2,7 +2,7 @@ import { and, desc, eq, inArray, sql } from "drizzle-orm"
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { db } from "@/db"
-import { admins, auditLog, categories, contracts, courses, instructors, templates } from "@/db/schema"
+import { adminNotifications, admins, auditLog, categories, contracts, courses, instructors, templates } from "@/db/schema"
 import {
   createAdmin,
   createCategory,
@@ -42,6 +42,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await db.delete(contracts).where(inArray(contracts.courseId, courseIds))
+  await db.delete(adminNotifications).where(inArray(adminNotifications.courseId, courseIds))
   await db.delete(courses).where(inArray(courses.id, courseIds))
   await db.delete(instructors).where(inArray(instructors.id, instructorIds))
   await db.delete(categories).where(eq(categories.id, categoryId))
@@ -94,6 +95,8 @@ describe("signContract", () => {
     const expected = await renderContract(contract.id, "tr")
     const result = await signContract(contract.id, instructorId, "  Zeynep Yılmaz ", "203.0.113.7", "Mozilla/5.0 Test", "tr")
     expect(result).toMatchObject({ contractId: contract.id, courseId: course.id, sha256: sha256(expected) })
+    // Public for the first time: the panel's bell asks for its Telegram post.
+    expect(await db.$count(adminNotifications, and(eq(adminNotifications.courseId, course.id), eq(adminNotifications.kind, "workshop")))).toBe(1)
 
     const [row] = await db.select().from(contracts).where(eq(contracts.id, contract.id))
     expect(row).toMatchObject({

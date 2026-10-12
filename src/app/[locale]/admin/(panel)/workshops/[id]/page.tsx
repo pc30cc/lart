@@ -30,6 +30,7 @@ import { formatDate, formatDateTime, formatNumber, formatTimeRange, localized } 
 import { cn } from "@/lib/utils"
 import { CancelWorkshopButton, ConfirmWorkshopButton, RaiseFinalButton, ResendContractButton } from "../_components/lifecycle-actions"
 import { WorkshopHeader } from "../_components/workshop-header"
+import { QrCard, TelegramCard } from "../_components/share-cards"
 import { FillMeter } from "../_components/workshop-status"
 
 async function load(id: string) {
@@ -174,6 +175,14 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/admi
             <Button asChild variant="link" className="mt-2 h-auto px-0">
               <Link href={`/admin/workshops/${w.id}/registrations`}>{t("overview.seeRegistrations")}</Link>
             </Button>
+          </Card>
+
+          <Card title={t("telegram.title")}>
+            <TelegramCard workshop={{ id: w.id, slug: w.slug, telegramPostedAt: w.telegramPostedAt }} />
+          </Card>
+
+          <Card title={t("qr.title")}>
+            <QrCard workshop={{ id: w.id, slug: w.slug, telegramPostedAt: w.telegramPostedAt }} />
           </Card>
 
           <Card title={t("overview.contract")}>

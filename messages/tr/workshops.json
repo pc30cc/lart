@@ -562,5 +562,23 @@
       "text": "Önce bir filigran logosu ekleyin: galeri fotoğrafları her zaman filigranla yayınlanır, logo olmadan yüklenemez.",
       "action": "Filigran ayarlarını aç"
     }
+  },
+  "telegram": {
+    "title": "Telegram kanalı",
+    "notSet": "Henüz bir Telegram kanalı bağlanmadı.",
+    "setUp": "Ayarlardan kurun",
+    "postedAt": "{date} tarihinde kanala gönderildi.",
+    "notPublic": "Sözleşme imzalanıp atölye yayımlandıktan sonra kanala gönderebilirsiniz.",
+    "send": "Kanala gönder",
+    "sendAgain": "Kanala yeniden gönder",
+    "confirmTitle": "Bu atölye Telegram'a gönderilsin mi?",
+    "confirmText": "Bu gönderi {chat} kanalında yayımlanacak.",
+    "sent": "Atölye Telegram kanalında yayımlandı.",
+    "notPublicError": "Bu atölye henüz yayımlanmadı."
+  },
+  "qr": {
+    "title": "Afiş için QR kod",
+    "alt": "Atölye sayfasının QR kodu",
+    "hint": "Bu kod okutulunca atölye sayfası ve kayıt açılır. Baskı için PNG veya SVG indirin."
   }
 }

@@ -260,6 +260,9 @@ export const courses = pgTable("courses", {
   closedTotals: jsonb("closed_totals").$type<ClosedTotals>(),
   /** First signature; kept when a later contract version sends it back to awaiting_signature. */
   publishedAt: timestamp("published_at", { withTimezone: true }),
+  /** When a super admin last sent it to the Telegram channel (Settings → Telegram), and that post's message id. */
+  telegramPostedAt: timestamp("telegram_posted_at", { withTimezone: true }),
+  telegramMessageId: integer("telegram_message_id"),
   /** When it was cancelled. Also set on older rows that were later closed as status "closed". */
   cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
   /** When its books were closed: status "closed", or "cancelled" for a cancelled workshop (see courseStatus). */
@@ -379,17 +382,21 @@ export const registrations = pgTable("registrations", {
 
 /**
  * The panel's notifications (the bell in its header), for every super admin:
- * a new registration, or a bank transfer receipt a member sent. Unread for an
- * admin while newer than their `notificationsSeenAt`.
+ * a new registration, or a bank transfer receipt a member sent (with the
+ * registration); a workshop that just went public, to send to the Telegram
+ * channel (with the workshop). Unread for an admin while newer than their
+ * `notificationsSeenAt`.
  */
 export const adminNotifications = pgTable("admin_notifications", {
   id: id(),
   kind: text("kind").notNull(),
-  registrationId: uuid("registration_id").notNull().references(() => registrations.id),
+  registrationId: uuid("registration_id").references(() => registrations.id),
+  courseId: uuid("course_id").references(() => courses.id),
   createdAt: createdAt(),
 }, (t) => [
   index("admin_notifications_created_idx").on(t.createdAt),
-  check("admin_notifications_kind", sql`${t.kind} in ('registration', 'receipt')`),
+  check("admin_notifications_kind", sql`${t.kind} in ('registration', 'receipt', 'workshop')`),
+  check("admin_notifications_subject", sql`(${t.registrationId} is not null) <> (${t.courseId} is not null)`),
 ])
 
 export const mediaKind = pgEnum("media_kind", ["sample", "gallery_photo", "gallery_video"])

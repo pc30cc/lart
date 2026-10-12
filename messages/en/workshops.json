@@ -562,5 +562,23 @@
       "text": "Add a watermark logo first: gallery photos are always published with it, so they can’t be uploaded until there is one.",
       "action": "Open watermark settings"
     }
+  },
+  "telegram": {
+    "title": "Telegram channel",
+    "notSet": "No Telegram channel is connected yet.",
+    "setUp": "Set it up in Settings",
+    "postedAt": "Sent to the channel on {date}.",
+    "notPublic": "Once the contract is signed and the workshop is public, you can send it to the channel.",
+    "send": "Send to the channel",
+    "sendAgain": "Send to the channel again",
+    "confirmTitle": "Send this workshop to Telegram?",
+    "confirmText": "This post will be published in {chat}.",
+    "sent": "The workshop was posted in the Telegram channel.",
+    "notPublicError": "This workshop isn’t public yet."
+  },
+  "qr": {
+    "title": "QR code for posters",
+    "alt": "QR code of the workshop page",
+    "hint": "Scanning it opens the workshop page and registration. Download a PNG or SVG to print."
   }
 }

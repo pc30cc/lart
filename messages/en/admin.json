@@ -95,6 +95,8 @@
     "registration": "{name} registered · {way, select, cash {cash} transfer {bank transfer} online {online} other {nothing to pay}}",
     "receipt": "{name} sent a transfer receipt",
     "paid": "Paid",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "workshop": "A new workshop is public · approve its Telegram post",
+    "posted": "On Telegram"
   }
 }

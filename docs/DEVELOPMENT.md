@@ -307,6 +307,7 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 | `/admin/settings/payments` | admin | private | |
 | `/admin/settings/money` | admin | private | |
 | `/admin/settings/legal` | admin | private | |
+| `/admin/settings/telegram` | admin | private | |
 | `/admin/settings/storage` | admin | private | |
 | `/admin/settings/watermark` | admin | private | |
 | `/admin/settings/backup` | admin | private | |
@@ -1392,6 +1393,22 @@ choice); the registrations lists show "Will pay: …" and the receipt link.
 registration and each receipt sent (written in the same transaction), shown
 to every super admin; unread are those newer than their own
 `admins.notifications_seen_at`, set when they open it. It reads every minute.
+
+**Telegram channel** (`features/telegram`, Settings → Telegram): a bot
+(@BotFather token, stored encrypted, never sent back to the page) that is an
+admin of the channel (`@name` or numeric id), and the posts' language. When a
+workshop goes public for the first time (the instructor signs,
+`contracts/sign.ts`) the bell gets a "workshop" notification; on the
+workshop's page the "Telegram channel" card shows the post as it will look
+(cover, caption with title, intro, date, time, place, instructor, price,
+places left; a "Register" button to its page) and a super admin sends it
+(`postWorkshopToTelegramAction`, audited `workshop.telegram`;
+`courses.telegram_posted_at` / `telegram_message_id`). Without a cover it is a
+text post. "Send a test message" checks the bot and channel.
+
+**QR code** (the workshop page's "QR code for posters" card): the public
+workshop page's address in the main language, as PNG (1200 px) and SVG
+(`qrcode`, made on the server).
 
 Links in emails must be on `APP_URL`, with one exception: `paymentUrl` of
 `registration_received` may be any `https` link without user name or password

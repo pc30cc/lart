@@ -95,6 +95,8 @@
     "registration": "{name} ثبت‌نام کرد · {way, select, cash {پرداخت نقدی} transfer {انتقال بانکی} online {پرداخت آنلاین} other {بدون پرداخت}}",
     "receipt": "{name} فیش واریز فرستاد",
     "paid": "پرداخت شد",
-    "cancelled": "لغو شد"
+    "cancelled": "لغو شد",
+    "workshop": "ورکشاپ تازه منتشر شد · برای ارسال به تلگرام تأیید کنید",
+    "posted": "در تلگرام"
   }
 }

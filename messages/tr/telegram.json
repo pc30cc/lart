@@ -1,0 +1,10 @@
+{
+  "test": "✅ {brand} botu bu kanala bağlı.",
+  "instructor": "Eğitmen: {name}",
+  "price": "Ücret: {price}",
+  "free": "Ücretsiz",
+  "seats": "{count, plural, one {# boş yer} other {# boş yer}}",
+  "full": "Kontenjan doldu",
+  "signoff": "{brand}'da görüşmek üzere",
+  "register": "✨ Atölyeye kaydol"
+}

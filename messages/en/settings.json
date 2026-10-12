@@ -13,7 +13,8 @@
     "backup": "Backup",
     "danger": "Danger zone",
     "money": "Money",
-    "legal": "Legal details"
+    "legal": "Legal details",
+    "telegram": "Telegram"
   },
   "toast": {
     "saved": "Settings saved."
@@ -348,7 +349,8 @@
         "cancel": "Workshop cancelled",
         "close": "Workshop closed",
         "gallery": "Gallery updated",
-        "raiseFinal": "Final number of participants raised"
+        "raiseFinal": "Final number of participants raised",
+        "telegram": "Sent to Telegram"
       },
       "member": {
         "password_set": "Password set by an admin",
@@ -555,6 +557,39 @@
       "taxNumber": "The tax number must have 10 or 11 digits.",
       "mersis": "The MERSIS number must have 16 digits.",
       "email": "This email address is not valid."
+    }
+  },
+  "telegram": {
+    "setup": {
+      "title": "Setting up",
+      "description": "Done once; then you send each workshop to the channel with one button.",
+      "step1": "In Telegram, message ‎@BotFather, send ‎/newbot and create a bot. Copy the bot’s “token”.",
+      "step2": "Add the bot to your channel and make it an admin that may post messages.",
+      "step3": "Enter the token and the channel’s name (e.g. ‎@limer_atolye) here and save.",
+      "step4": "Press “Send a test message” to see that it reaches the channel."
+    },
+    "bot": {
+      "title": "Bot and channel",
+      "description": "Posts are published in this channel by this bot."
+    },
+    "token": "Bot token",
+    "tokenHint": "From ‎@BotFather, like 123456789:AA…",
+    "tokenSaved": "A token is saved. Enter a new one to change it.",
+    "chat": "Channel",
+    "chatHint": "The channel’s public name with @, or a private channel’s numeric id (‎-100…).",
+    "locale": "Language of the posts",
+    "localeHint": "The post’s text and its registration link are in this language.",
+    "test": {
+      "action": "Send a test message",
+      "running": "Sending…",
+      "sent": "A test message was sent to the channel."
+    },
+    "errors": {
+      "token": "This token doesn’t look right. Copy it again from ‎@BotFather.",
+      "chat": "Write the channel’s name with @ (e.g. ‎@limer_atolye) or its numeric id.",
+      "notSet": "First enter the bot and the channel in Settings → Telegram.",
+      "unreachable": "Couldn’t reach Telegram. Please try again a little later.",
+      "refused": "Telegram refused: {reason}. Make sure the bot is an admin of the channel."
     }
   }
 }

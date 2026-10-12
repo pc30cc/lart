@@ -3,7 +3,7 @@ import { eq, sql } from "drizzle-orm"
 import { z } from "zod"
 
 import { db } from "@/db"
-import { contracts, courses } from "@/db/schema"
+import { adminNotifications, contracts, courses } from "@/db/schema"
 import { audit } from "@/lib/audit"
 import { errorForLog, UserError } from "@/lib/errors"
 import { sendContractSigned } from "./notify"
@@ -64,7 +64,7 @@ export async function signContract(
       .where(eq(contracts.id, v.contractId))
     if (!courseId) throw new UserError("contracts.errors.notFound")
     const [course] = await tx
-      .select({ status: courses.status, finalParticipants: courses.finalParticipants })
+      .select({ status: courses.status, finalParticipants: courses.finalParticipants, publishedAt: courses.publishedAt })
       .from(courses)
       .where(eq(courses.id, courseId))
       .for("update")
@@ -99,6 +99,8 @@ export async function signContract(
         updatedAt: now,
       })
       .where(eq(courses.id, courseId))
+    // Public for the first time: the panel's bell asks a super admin to send it to the Telegram channel.
+    if (course.publishedAt === null) await tx.insert(adminNotifications).values({ kind: "workshop", courseId })
     await audit(
       {
         adminId: null,

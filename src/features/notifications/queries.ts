@@ -10,8 +10,9 @@ export const NOTIFICATION_LIST = 15
 
 export type AdminNotification = {
   id: string
-  kind: "registration" | "receipt"
+  kind: "registration" | "receipt" | "workshop"
   createdAt: Date
+  /** The registration's participant ("" for a workshop's notification). */
   participantName: string
   workshopTitle: string
   courseId: string
@@ -42,10 +43,12 @@ export async function listAdminNotifications(adminId: string, locale: string) {
         status: registrations.status,
         courseId: courses.id,
         title: courses.title,
+        telegramPostedAt: courses.telegramPostedAt,
       })
       .from(adminNotifications)
-      .innerJoin(registrations, eq(registrations.id, adminNotifications.registrationId))
-      .innerJoin(courses, eq(courses.id, registrations.courseId))
+      .leftJoin(registrations, eq(registrations.id, adminNotifications.registrationId))
+      // The registration's workshop, or the notification's own.
+      .innerJoin(courses, eq(courses.id, sql`coalesce(${registrations.courseId}, ${adminNotifications.courseId})`))
       .orderBy(desc(adminNotifications.createdAt))
       .limit(NOTIFICATION_LIST),
     db
@@ -57,11 +60,12 @@ export async function listAdminNotifications(adminId: string, locale: string) {
     id: r.id,
     kind: r.kind as AdminNotification["kind"],
     createdAt: r.createdAt,
-    participantName: r.participantName,
+    participantName: r.participantName ?? "",
     workshopTitle: localized(r.title, locale),
     courseId: r.courseId,
     paymentChoice: r.paymentChoice,
-    paid: r.paidAt !== null,
+    // A workshop's: "done" once sent to the channel.
+    paid: r.kind === "workshop" ? r.telegramPostedAt !== null : r.paidAt !== null,
     cancelled: r.status === "cancelled",
   }))
   return { unread, items }

@@ -27,4 +27,5 @@ export const namespaces = [
   "homeEditor",
   "about",
   "legal",
+  "telegram",
 ] as const

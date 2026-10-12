@@ -1,6 +1,6 @@
 "use client"
 
-import { BanknoteIcon, BellIcon, FileUpIcon, LandmarkIcon, TicketIcon } from "lucide-react"
+import { BanknoteIcon, BellIcon, FileUpIcon, LandmarkIcon, SendIcon, TicketIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { useCallback, useEffect, useState } from "react"
 
@@ -17,7 +17,8 @@ const POLL_MS = 60_000
 
 /**
  * The panel's bell: a red count of what came since it was last opened (a new
- * registration with how they will pay, a transfer receipt sent), the latest
+ * registration with how they will pay, a transfer receipt sent, a workshop
+ * that went public, to send to the Telegram channel), the latest
  * ones in a list, each opening that workshop's registrations. Opening it
  * marks everything read.
  */
@@ -80,21 +81,23 @@ export function NotificationBell() {
             {state.items.map((n) => (
               <li key={n.id}>
                 <Link
-                  href={`/admin/workshops/${n.courseId}/registrations`}
+                  href={n.kind === "workshop" ? `/admin/workshops/${n.courseId}` : `/admin/workshops/${n.courseId}/registrations`}
                   onClick={() => setOpen(false)}
                   className="hover:bg-muted/60 focus-visible:bg-muted/60 flex gap-3 px-4 py-3 text-sm outline-none"
                 >
                   <Icon n={n} />
                   <span className="min-w-0 space-y-0.5">
                     <span className="block leading-snug">
-                      {n.kind === "receipt"
-                        ? t("receipt", { name: isolate(n.participantName) })
-                        : t("registration", { name: isolate(n.participantName), way: n.paymentChoice ?? "none" })}
+                      {n.kind === "workshop"
+                        ? t("workshop")
+                        : n.kind === "receipt"
+                          ? t("receipt", { name: isolate(n.participantName) })
+                          : t("registration", { name: isolate(n.participantName), way: n.paymentChoice ?? "none" })}
                     </span>
                     <span className="text-muted-foreground block truncate text-xs">{n.workshopTitle}</span>
                     <span className="text-muted-foreground flex flex-wrap gap-x-2 text-xs">
                       {formatDateTime(n.createdAt, locale, "medium")}
-                      {n.paid && <span className="text-success">{t("paid")}</span>}
+                      {n.paid && <span className="text-success">{n.kind === "workshop" ? t("posted") : t("paid")}</span>}
                       {n.cancelled && <span>{t("cancelled")}</span>}
                     </span>
                   </span>
@@ -109,7 +112,7 @@ export function NotificationBell() {
 }
 
 function Icon({ n }: { n: AdminNotification }) {
-  const Glyph = n.kind === "receipt" ? FileUpIcon : n.paymentChoice === "cash" ? BanknoteIcon : n.paymentChoice === "transfer" ? LandmarkIcon : TicketIcon
+  const Glyph = n.kind === "workshop" ? SendIcon : n.kind === "receipt" ? FileUpIcon : n.paymentChoice === "cash" ? BanknoteIcon : n.paymentChoice === "transfer" ? LandmarkIcon : TicketIcon
   return (
     <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg", n.kind === "receipt" ? "bg-success/12 text-success" : "bg-primary/10 text-primary")}>
       <Glyph className="size-4" aria-hidden />

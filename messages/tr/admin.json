@@ -95,6 +95,8 @@
     "registration": "{name} kayıt oldu · {way, select, cash {nakit} transfer {havale} online {çevrim içi} other {ödemesiz}}",
     "receipt": "{name} dekont gönderdi",
     "paid": "Ödendi",
-    "cancelled": "İptal edildi"
+    "cancelled": "İptal edildi",
+    "workshop": "Yeni atölye yayımlandı · Telegram'a göndermek için onaylayın",
+    "posted": "Telegram'da"
   }
 }

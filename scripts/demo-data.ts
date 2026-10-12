@@ -478,6 +478,7 @@ async function remove(manifestPath: string) {
     await tx
       .delete(S.adminNotifications)
       .where(inArray(S.adminNotifications.registrationId, tx.select({ id: S.registrations.id }).from(S.registrations).where(inArray(S.registrations.courseId, courseIds))))
+    await tx.delete(S.adminNotifications).where(inArray(S.adminNotifications.courseId, courseIds))
     await tx.delete(S.registrations).where(inArray(S.registrations.courseId, courseIds))
     await tx.delete(S.contracts).where(inArray(S.contracts.courseId, courseIds))
     await tx.delete(S.courses).where(inArray(S.courses.id, courseIds))
