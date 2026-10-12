@@ -10,7 +10,8 @@ import type { AdminRegistrationRow } from "../queries"
  * still change. Server components: `t` is `workshops.registrations`.
  */
 
-type PaymentRow = Pick<AdminRegistrationRow, "status" | "amount" | "paymentMethod" | "paidAt" | "refundAmount" | "refundedAt">
+type PaymentRow = Pick<AdminRegistrationRow, "status" | "amount" | "paymentMethod" | "paidAt" | "refundAmount" | "refundedAt"> &
+  Partial<Pick<AdminRegistrationRow, "paymentChoice" | "receiptAt">>
 type Translate = (key: string, values?: Record<string, string | number>) => string
 
 const tones = { unpaid: "warning", paid: "success", free: "success", cancelled: "neutral" } as const satisfies Record<
@@ -18,13 +19,26 @@ const tones = { unpaid: "warning", paid: "success", free: "success", cancelled: 
   StatusTone
 >
 
-/** "Not paid yet" / "Paid · Cash · 3 Oct" / "Free" / "Cancelled" with its refund. */
-export function PaymentCell({ row: r, t, locale }: { row: PaymentRow; t: Translate; locale: string }) {
+/**
+ * "Not paid yet" (with how they said they will pay, and the transfer receipt
+ * they sent: "Receipt sent · see") / "Paid · Cash · 3 Oct" / "Free" /
+ * "Cancelled" with its refund.
+ */
+export function PaymentCell({ row: r, t, locale, receiptUrl }: { row: PaymentRow; t: Translate; locale: string; receiptUrl?: string | null }) {
   const state = paymentState(r)
   const refund = state === "cancelled" ? refundState(r) : "none"
   return (
     <span className="flex flex-col items-start gap-1">
       <StatusBadge tone={tones[state]}>{t(`state.${state}`)}</StatusBadge>
+      {state === "unpaid" && r.paymentChoice && (
+        <span className="text-muted-foreground text-xs whitespace-nowrap">{t("state.willPay", { method: r.paymentChoice })}</span>
+      )}
+      {receiptUrl && state !== "cancelled" && (
+        <a href={receiptUrl} target="_blank" rel="noopener noreferrer" className="text-primary text-xs font-medium whitespace-nowrap underline underline-offset-4">
+          {t("state.receipt")}
+          {r.receiptAt && ` · ${formatDate(r.receiptAt, locale, "medium")}`}
+        </a>
+      )}
       {state === "paid" && r.paidAt && (
         <span className="text-muted-foreground text-xs whitespace-nowrap">
           {t("state.paidVia", { method: r.paymentMethod ?? "other", date: formatDate(r.paidAt, locale, "medium") })}

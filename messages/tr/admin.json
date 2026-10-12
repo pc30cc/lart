@@ -86,5 +86,15 @@
         "confirm": "Hesabına gir"
       }
     }
+  },
+  "notifications": {
+    "label": "Bildirimler",
+    "labelUnread": "Bildirimler: {count, plural, one {# yeni} other {# yeni}}",
+    "title": "Bildirimler",
+    "empty": "Henüz bildirim yok.",
+    "registration": "{name} kayıt oldu · {way, select, cash {nakit} transfer {havale} online {çevrim içi} other {ödemesiz}}",
+    "receipt": "{name} dekont gönderdi",
+    "paid": "Ödendi",
+    "cancelled": "İptal edildi"
   }
 }

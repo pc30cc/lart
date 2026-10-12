@@ -336,6 +336,7 @@ describe("proxy: APIs", () => {
     expect(matcher.test("/media/courses/a.webp")).toBe(false)
     expect(matcher.test("/api/admin/uploads")).toBe(false)
     expect(matcher.test("/api/instructor/uploads")).toBe(false)
+    expect(matcher.test("/api/account/receipts")).toBe(false)
     expect(matcher.test("/api/instructor/other")).toBe(true)
     expect(matcher.test("/fa/instructor/profile")).toBe(true)
     expect(matcher.test("/favicon.ico")).toBe(false)

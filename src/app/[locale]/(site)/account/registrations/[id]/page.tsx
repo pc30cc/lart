@@ -22,10 +22,12 @@ import { Button } from "@/components/ui/button"
 import { CancelRegistration } from "@/features/registrations/components/cancel-registration"
 import { PaymentBadge } from "@/features/registrations/components/payment-badge"
 import { PaymentInstructions } from "@/features/registrations/components/payment-instructions"
+import { ReceiptUpload } from "@/features/registrations/components/receipt-upload"
 import { TermsText } from "@/features/registrations/components/terms-text"
 import { getMyRegistration } from "@/features/registrations/member"
 import { cancelPreview, canCancel, paymentState } from "@/features/registrations/schema"
 import { Link } from "@/i18n/navigation"
+import { getMember } from "@/lib/auth/member"
 import { formatDate, formatDateTime, formatTimeRange, isolate } from "@/lib/format"
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -35,15 +37,18 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /**
  * One of the member's own registrations: after registering (`?welcome=1`) a
- * happy "you're registered" with how to pay; later its payment status, the
+ * happy "you're registered" with how to pay (the way they chose; for a bank
+ * transfer, sending the receipt); later its payment status, the
  * details, the photo / video choices and "Cancel my registration".
  * Someone else's registration is simply not found.
  */
 export default async function MyRegistrationPage({ params, searchParams }: PageProps<"/[locale]/account/registrations/[id]">) {
   const { locale, id } = await params
   const welcome = (await searchParams).welcome === "1"
-  const r = await getMyRegistration(id, locale)
+  const [r, session] = await Promise.all([getMyRegistration(id, locale), getMember()])
   if (!r) notFound()
+  // A super admin viewing as the member sends nothing in their name.
+  const impersonating = Boolean(session?.impersonatedBy)
   const t = await getTranslations("registration")
   const now = new Date()
   const state = paymentState(r)
@@ -81,6 +86,8 @@ export default async function MyRegistrationPage({ params, searchParams }: PageP
             {t("payment.title")}
           </h2>
           <PaymentInstructions ways={r.ways} amount={r.amount} participantName={r.participantName} />
+          {/* A bank transfer: they can send the receipt here. */}
+          {r.ways.transfer && !impersonating && <ReceiptUpload registrationId={r.id} receiptUrl={r.receiptUrl} receiptAt={r.receiptAt} />}
         </section>
       )}
 

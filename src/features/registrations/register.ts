@@ -3,13 +3,15 @@ import { and, eq, inArray } from "drizzle-orm"
 import type { z } from "zod"
 
 import { db } from "@/db"
-import { courses, registrations } from "@/db/schema"
+import { adminNotifications, courses, registrations } from "@/db/schema"
 import { UserError } from "@/lib/errors"
+import { getSetting } from "@/lib/settings"
 import { seatsTaken, workshopTerms } from "./public"
 import {
   activeStatuses,
   cancelPreview,
   MAX_ACTIVE_PER_MEMBER,
+  paymentWayNames,
   registrationWindow,
   sameParticipant,
   seatLimit,
@@ -48,7 +50,8 @@ const closedReason = {
  *
  * The amount is the workshop's price; the registration is "pending"
  * (registered, holds a seat, not paid yet), or "confirmed" right away for a
- * free workshop (nothing to pay). The accepted terms (template, SHA-256 of
+ * free workshop (nothing to pay). A paid workshop keeps how they will pay
+ * (`paymentChoice`, one of the ways on). The accepted terms (template, SHA-256 of
  * the exact text shown, time) and the photo / video choices are stored.
  */
 export async function registerForWorkshop(
@@ -69,6 +72,7 @@ export async function registerForWorkshop(
         finalParticipants: courses.finalParticipants,
         price: courses.price,
         termsTemplateId: courses.termsTemplateId,
+        paymentUrl: courses.paymentUrl,
         publishedAt: courses.publishedAt,
       })
       .from(courses)
@@ -105,6 +109,11 @@ export async function registerForWorkshop(
     if (!terms) throw new UserError("registration.errors.notOpen")
     if (terms.sha256 !== input.termsSha256) throw new UserError("registration.errors.termsChanged")
 
+    // How they will pay: one of the ways on (the only one needs no choice); none for a free workshop.
+    const ways = course.price > 0 ? paymentWayNames(await getSetting("payment"), course.paymentUrl) : []
+    const paymentChoice = ways.length === 1 ? ways[0] : ways.find((w) => w === input.paymentChoice)
+    if (ways.length > 1 && !paymentChoice) throw new UserError("registration.register.errors.paymentChoice", { field: "paymentChoice" })
+
     const status = course.price > 0 ? "pending" : "confirmed"
     const [row] = await tx
       .insert(registrations)
@@ -119,8 +128,11 @@ export async function registerForWorkshop(
         termsAcceptedAt: now,
         photoConsent: input.photoConsent,
         videoConsent: input.videoConsent,
+        paymentChoice: paymentChoice ?? null,
       })
       .returning({ id: registrations.id })
+    // The bell in the panel: someone registered.
+    await tx.insert(adminNotifications).values({ kind: "registration", registrationId: row.id })
     return { id: row.id, status }
   })
 }

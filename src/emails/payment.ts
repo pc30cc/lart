@@ -35,3 +35,14 @@ export function paymentWays(
     ...(online.enabled && paymentUrl ? { paymentUrl, onlineNote: note(online.note) } : {}),
   }
 }
+
+/**
+ * Only the way the member chose when registering (`registrations.payment_choice`),
+ * while it is still on; else every way (nothing to pay with is worse).
+ */
+export function chosenWay(ways: PaymentWays, choice: string | null | undefined): PaymentWays {
+  if (choice === "cash" && ways.cash) return { cash: true }
+  if (choice === "transfer" && ways.transfer) return { transfer: ways.transfer }
+  if (choice === "online" && ways.paymentUrl) return { paymentUrl: ways.paymentUrl, onlineNote: ways.onlineNote }
+  return ways
+}

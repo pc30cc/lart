@@ -20,6 +20,7 @@ import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
 import { formatDate, formatNumber, localized } from "@/lib/format"
 import { getSetting } from "@/lib/settings"
+import { publicUrls } from "@/lib/storage"
 import { cn } from "@/lib/utils"
 import { WorkshopHeader } from "../../_components/workshop-header"
 
@@ -63,6 +64,7 @@ export default async function WorkshopRegistrationsPage({
   const n = (v: number) => formatNumber(v, locale)
   // A cancelled workshop's registrations are all cancelled; closed books can't change.
   const locked = isCancelled(workshop) || workshop.closedAt !== null || workshop.status === "closed"
+  const url = await publicUrls()
   const defaultMethod: PaymentMethod =
     paymentMethods.find((m) => (m === "cash" ? payment.cash : payment[m].enabled)) ?? "cash"
   const startsAt = workshop.startsAt.toISOString()
@@ -112,7 +114,7 @@ export default async function WorkshopRegistrationsPage({
     {
       key: "payment",
       header: t("table.payment"),
-      cell: (r) => <PaymentCell row={r} t={t} locale={locale} />,
+      cell: (r) => <PaymentCell row={r} t={t} locale={locale} receiptUrl={url(r.receiptPath)} />,
     },
     {
       key: "amount",
@@ -161,7 +163,7 @@ export default async function WorkshopRegistrationsPage({
                   refundOwed: refundOwed(r),
                 }}
                 startsAt={startsAt}
-                defaultMethod={defaultMethod}
+                defaultMethod={(r.paymentChoice as PaymentMethod | null) ?? defaultMethod}
               />
             ),
           },

@@ -61,7 +61,7 @@ src/
       instructor/(panel)/       the instructor panel: home, contracts, workshops, earnings, profile
       admin/(auth)/             super-admin sign in, forgot, reset, invite (no panel chrome)
       admin/(panel)/<module>/   super-admin pages, one folder per module
-    api/admin/…, api/instructor/uploads   route handlers (uploads, watermark preview, CSV exports)
+    api/admin/…, api/instructor/uploads, api/account/receipts   route handlers (uploads, a member's transfer receipt, watermark preview, CSV exports)
   components/
     ui/                         shadcn/ui primitives (do not edit casually)
     admin/                      shared admin building blocks (shell, page header, forms, uploads)
@@ -329,7 +329,7 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 | `/admin/[...rest]` | admin | private | not-found page |
 <!-- routes:end -->
 
-Never localized (`UNLOCALIZED_HANDLERS`): `/api/admin/backups/[id]`,
+Never localized (`UNLOCALIZED_HANDLERS`): `/api/account/receipts`, `/api/admin/backups/[id]`,
 `/api/admin/exports/[kind]`, `/api/admin/media/watermark-preview`,
 `/api/admin/money/export/[report]`, `/api/admin/uploads`,
 `/api/instructor/uploads`, `/media/[...path]`, `/og.png` (the site's share
@@ -441,7 +441,7 @@ no private storage. The database stores only the storage path, e.g.
   old private fields are dropped). Never rename them or make the schema
   strict: a stored value that does not parse falls back to local storage
   without any error.
-- The proxy must not run on `/api/admin/uploads` or `/api/instructor/uploads`:
+- The proxy must not run on `/api/admin/uploads`, `/api/instructor/uploads` or `/api/account/receipts`:
   Next.js would buffer the body there and cut it at 10 MB (see the matcher in
   `src/proxy.ts`).
 - **Another upload route**: `uploadFile(file, purpose, { endpoint })` and
@@ -1357,7 +1357,7 @@ observer; with reduced motion everything simply shows).
 | Email | Sent by | When |
 | --- | --- | --- |
 | `welcome_verify`, `password_reset`, `member_exists` | accounts | sign-up, "send again", forgot password |
-| `registration_received` | registrations | registered, not paid yet: "your place is reserved; please pay {amount}", one block per payment way switched on in the `payment` setting (`cash: true`, `transfer: { accountHolder, bankName, iban, note }`, `paymentUrl`: the workshop's `courses.payment_url`) |
+| `registration_received` | registrations | registered, not paid yet: "your place is reserved; please pay {amount}", the way they chose when registering (`registrations.payment_choice`; older ones: one block per payment way switched on) from the `payment` setting (`cash: true`, `transfer: { accountHolder, bankName, iban, note }`, `paymentUrl`: the workshop's `courses.payment_url`) |
 | `payment_received` | registrations | an admin recorded the payment (`method`: cash, transfer, online): paid, place confirmed |
 | `registration_confirmed` | registrations | a registration that needs no payment (a free workshop); kept for that and for admins' saved texts |
 | `registration_cancelled` | registrations | a registration was cancelled; `refundPercent` 100 / 50 / 0; leave out `refundAmount` when nothing was paid; `byUs: true` when an admin cancelled it (neutral wording instead of "as you asked") |
@@ -1374,6 +1374,24 @@ observer; with reduced motion everything simply shows).
 (`@/emails/payment`) builds the payment props of `registration_received`: only
 the ways that are on and usable (a transfer needs an IBAN, online payment the
 workshop's link), with the admin's notes in the email's language.
+
+**Paying a registration.** The registration form asks how they will pay when
+more than one way is on (cash on the day / bank transfer / online; the first
+chosen to start with), kept in `registrations.payment_choice` (checked against
+the ways on; one way needs no choice; none for a free workshop). Either way
+the seat is held at once (`pending`). Their registration page and email then
+show only that way; for a bank transfer they can send the receipt there
+(`ReceiptUpload` → `POST /api/account/receipts`: their own pending, unpaid
+registration only, never while viewed as; a photo kept as WebP or a PDF as it
+is, in `receipts/`; a new one replaces the old: `receipt_path`, `receipt_at`).
+A super admin still marks it paid (`RecordPaymentDialog`, preselected to their
+choice); the registrations lists show "Will pay: …" and the receipt link.
+
+**The panel's bell** (`NotificationBell` in the header,
+`features/notifications`): an `admin_notifications` row for each new
+registration and each receipt sent (written in the same transaction), shown
+to every super admin; unread are those newer than their own
+`admins.notifications_seen_at`, set when they open it. It reads every minute.
 
 Links in emails must be on `APP_URL`, with one exception: `paymentUrl` of
 `registration_received` may be any `https` link without user name or password

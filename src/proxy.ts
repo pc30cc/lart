@@ -166,7 +166,8 @@ function withHeaders(response: NextResponse, csp: string | null, noindex: boolea
 
 export const config = {
   // Everything except Next internals, local media files, files with an extension
-  // and the upload endpoints of the admin and instructor panels (Next.js would
+  // and the upload endpoints of the admin and instructor panels and of members'
+  // receipts (Next.js would
   // buffer upload bodies through the proxy and cut them at 10 MB).
-  matcher: ["/((?!_next|_vercel|media/|api/admin/uploads|api/instructor/uploads|.*\\..*).*)"],
+  matcher: ["/((?!_next|_vercel|media/|api/admin/uploads|api/instructor/uploads|api/account/receipts|.*\\..*).*)"],
 }

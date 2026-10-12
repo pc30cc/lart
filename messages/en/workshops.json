@@ -438,7 +438,9 @@
       "paidVia": "{method, select, cash {Cash} transfer {Bank transfer} online {Online link} other {Paid}} · {date}",
       "refundOwed": "Refund owed:",
       "refundSent": "Refunded on {date}:",
-      "noRefund": "No refund"
+      "noRefund": "No refund",
+      "willPay": "Will pay: {method, select, cash {cash} transfer {bank transfer} online {online} other {—}}",
+      "receipt": "Receipt"
     },
     "methods": {
       "cash": "Cash",

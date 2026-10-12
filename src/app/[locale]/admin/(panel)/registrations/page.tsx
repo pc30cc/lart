@@ -22,6 +22,7 @@ import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
 import { formatDate, formatNumber, localized } from "@/lib/format"
 import { getSetting } from "@/lib/settings"
+import { publicUrls } from "@/lib/storage"
 import { cn } from "@/lib/utils"
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -53,6 +54,7 @@ export default async function RegistrationsPage({ searchParams }: PageProps<"/[l
     getLocale(),
   ])
 
+  const url = await publicUrls()
   const defaultMethod: PaymentMethod =
     paymentMethods.find((m) => (m === "cash" ? payment.cash : payment[m].enabled)) ?? "cash"
   // As on the workshop's tab: a cancelled workshop's registrations are all cancelled; closed books can't change.
@@ -122,7 +124,7 @@ export default async function RegistrationsPage({ searchParams }: PageProps<"/[l
     {
       key: "payment",
       header: t("table.payment"),
-      cell: (r) => <PaymentCell row={r} t={t} locale={locale} />,
+      cell: (r) => <PaymentCell row={r} t={t} locale={locale} receiptUrl={url(r.receiptPath)} />,
     },
     {
       key: "amount",
@@ -154,7 +156,7 @@ export default async function RegistrationsPage({ searchParams }: PageProps<"/[l
               refundOwed: refundOwed(r),
             }}
             startsAt={r.course.startsAt.toISOString()}
-            defaultMethod={defaultMethod}
+            defaultMethod={(r.paymentChoice as PaymentMethod | null) ?? defaultMethod}
           />
         ),
     },

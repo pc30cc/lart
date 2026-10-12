@@ -438,7 +438,9 @@
       "paidVia": "{method, select, cash {Nakit} transfer {Banka havalesi} online {Online link} other {Ödendi}} · {date}",
       "refundOwed": "Ödenecek iade:",
       "refundSent": "{date} tarihinde iade edildi:",
-      "noRefund": "İade yok"
+      "noRefund": "İade yok",
+      "willPay": "Ödeyecek: {method, select, cash {nakit} transfer {havale} online {çevrim içi} other {—}}",
+      "receipt": "Dekont"
     },
     "methods": {
       "cash": "Nakit",

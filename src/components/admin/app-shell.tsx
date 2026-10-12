@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl"
 
 import { AdminBreadcrumbs, BreadcrumbTitleProvider } from "@/components/admin/breadcrumbs"
 import { adminNav, isNavActive } from "@/components/admin/nav"
+import { NotificationBell } from "@/components/admin/notification-bell"
 import { UserMenu } from "@/components/admin/user-menu"
 import { LocaleSwitcher } from "@/components/locale-switcher"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -72,6 +73,7 @@ export function AppShell({
             <Separator orientation="vertical" className="me-1 data-vertical:h-4 data-vertical:self-center" />
             <AdminBreadcrumbs />
             <div className="ms-auto flex items-center gap-0.5">
+              <NotificationBell />
               <LocaleSwitcher />
               <ThemeToggle />
               <UserMenu admin={admin} />

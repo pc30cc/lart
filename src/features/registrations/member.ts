@@ -4,10 +4,11 @@ import { z } from "zod"
 
 import { db } from "@/db"
 import { courses, registrations } from "@/db/schema"
-import { paymentWays } from "@/emails/payment"
+import { chosenWay, paymentWays } from "@/emails/payment"
 import { requireMember } from "@/lib/auth/member"
 import { localized } from "@/lib/format"
 import { getSetting } from "@/lib/settings"
+import { publicUrls } from "@/lib/storage"
 import { workshopTerms } from "./public"
 import { safePaymentUrl } from "./schema"
 
@@ -23,6 +24,9 @@ const columns = {
   status: registrations.status,
   amount: registrations.amount,
   paymentMethod: registrations.paymentMethod,
+  paymentChoice: registrations.paymentChoice,
+  receiptPath: registrations.receiptPath,
+  receiptAt: registrations.receiptAt,
   paidAt: registrations.paidAt,
   cancelledAt: registrations.cancelledAt,
   refundAmount: registrations.refundAmount,
@@ -58,9 +62,11 @@ function selectMine(memberId: string, id?: string) {
 
 /** Text in the page language; the workshop page link only for a workshop that was ever public. */
 async function present(rows: Row[], locale: string) {
-  const payment = await getSetting("payment")
-  return rows.map(({ course, ...r }) => ({
+  const [payment, url] = await Promise.all([getSetting("payment"), publicUrls()])
+  return rows.map(({ course, receiptPath, ...r }) => ({
     ...r,
+    /** The transfer receipt they sent (its CDN address), or null. */
+    receiptUrl: url(receiptPath),
     course: {
       id: course.id,
       slug: course.publishedAt ? course.slug : null,
@@ -71,8 +77,8 @@ async function present(rows: Row[], locale: string) {
       endsAt: course.endsAt,
       closedAt: course.closedAt,
     },
-    /** How to pay (the ways switched on in the settings); only shown while not paid yet. */
-    ways: paymentWays(payment, safePaymentUrl(course.paymentUrl), locale),
+    /** How to pay: the way they chose when registering (else every way switched on); only shown while not paid yet. */
+    ways: chosenWay(paymentWays(payment, safePaymentUrl(course.paymentUrl), locale), r.paymentChoice),
   }))
 }
 

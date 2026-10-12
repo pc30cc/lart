@@ -110,16 +110,22 @@
     },
     "pay": {
       "title": "Price",
-      "later": "You pay after registering. Ways to pay:",
       "none": "You pay after registering: we’ll get in touch with you about how.",
       "free": "This workshop is free: nothing to pay.",
       "cash": "Cash at the workshop",
       "transfer": "Bank transfer",
-      "online": "Online by card"
+      "online": "Online by card",
+      "choose": "How will you pay?",
+      "hint": {
+        "cash": "You pay in cash on the day of the workshop.",
+        "transfer": "After registering you see the bank account and send the receipt on the same page.",
+        "online": "After registering you pay online by card."
+      }
     },
     "submit": "Register",
     "errors": {
-      "acceptTerms": "Please tick this box to register."
+      "acceptTerms": "Please tick this box to register.",
+      "paymentChoice": "Please choose a way to pay."
     },
     "impersonating": {
       "title": "Only they can register",
@@ -246,6 +252,31 @@
       "cash": "Paid in cash",
       "transfer": "Paid by bank transfer",
       "online": "Paid online"
+    }
+  },
+  "receipt": {
+    "title": "Transfer receipt",
+    "text": "Once you have paid, send a photo of the receipt here so we can confirm your payment sooner.",
+    "button": "Send the receipt",
+    "again": "Send another receipt",
+    "sending": "Sending…",
+    "sent": "We got your receipt. Thank you!",
+    "received": "We got your receipt on {date}. We’ll confirm your payment soon.",
+    "view": "See the receipt",
+    "errors": {
+      "too_large": "This file is too large (15 MB at most).",
+      "unsupported_type": "Please send a photo (JPG, PNG, …) or a PDF.",
+      "heic_unsupported": "This kind of photo isn’t supported. Please send it as a JPG.",
+      "too_many_pixels": "This photo is too large.",
+      "invalid_image": "This file couldn’t be read. Please send another photo.",
+      "rate_limited": "You sent several in a row. Please try again a little later.",
+      "not_found": "This registration is no longer waiting for payment.",
+      "impersonating": "No receipt can be sent while viewing as the member.",
+      "unauthorized": "Please log in again.",
+      "bad_request": "It wasn’t sent. Please try again.",
+      "storage": "It wasn’t sent. Please try again a little later.",
+      "server": "It wasn’t sent. Please try again a little later.",
+      "network": "Couldn’t connect. Please check your internet and try again."
     }
   }
 }

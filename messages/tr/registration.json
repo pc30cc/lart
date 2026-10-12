@@ -110,16 +110,22 @@
     },
     "pay": {
       "title": "Ücret",
-      "later": "Ödemeyi kayıttan sonra yaparsınız. Ödeme yolları:",
       "none": "Ödemeyi kayıttan sonra yaparsınız: nasıl ödeyeceğiniz konusunda sizinle iletişime geçeceğiz.",
       "free": "Bu atölye ücretsiz: ödenecek bir şey yok.",
       "cash": "Atölyede nakit",
       "transfer": "Banka havalesi / EFT",
-      "online": "Kartla online"
+      "online": "Kartla online",
+      "choose": "Nasıl ödeyeceksiniz?",
+      "hint": {
+        "cash": "Ücreti atölye günü nakit ödersiniz.",
+        "transfer": "Kayıttan sonra hesap bilgilerini görür, dekontu aynı sayfadan gönderirsiniz.",
+        "online": "Kayıttan sonra kartla çevrim içi ödersiniz."
+      }
     },
     "submit": "Kaydol",
     "errors": {
-      "acceptTerms": "Kaydolmak için lütfen bu kutuyu işaretleyin."
+      "acceptTerms": "Kaydolmak için lütfen bu kutuyu işaretleyin.",
+      "paymentChoice": "Lütfen bir ödeme yolu seçin."
     },
     "impersonating": {
       "title": "Kaydı yalnızca kendisi yapabilir",
@@ -246,6 +252,31 @@
       "cash": "Nakit ödendi",
       "transfer": "Banka havalesiyle ödendi",
       "online": "Online ödendi"
+    }
+  },
+  "receipt": {
+    "title": "Havale dekontu",
+    "text": "Ödemeyi yaptıktan sonra dekontun fotoğrafını buradan gönderin; ödemeniz daha çabuk onaylanır.",
+    "button": "Dekontu gönder",
+    "again": "Başka bir dekont gönder",
+    "sending": "Gönderiliyor…",
+    "sent": "Dekontunuz bize ulaştı. Teşekkürler!",
+    "received": "Dekontunuz {date} tarihinde bize ulaştı. Ödemenizi yakında onaylayacağız.",
+    "view": "Dekontu gör",
+    "errors": {
+      "too_large": "Bu dosya çok büyük (en fazla 15 MB).",
+      "unsupported_type": "Yalnızca fotoğraf (JPG, PNG, …) veya PDF gönderin.",
+      "heic_unsupported": "Bu fotoğraf türü desteklenmiyor. Lütfen JPG olarak gönderin.",
+      "too_many_pixels": "Bu fotoğraf çok büyük.",
+      "invalid_image": "Bu dosya okunamadı. Lütfen başka bir fotoğraf gönderin.",
+      "rate_limited": "Arka arkaya çok gönderdiniz. Lütfen biraz sonra tekrar deneyin.",
+      "not_found": "Bu kayıt artık ödeme beklemiyor.",
+      "impersonating": "Üye adına görüntülerken dekont gönderilemez.",
+      "unauthorized": "Lütfen yeniden giriş yapın.",
+      "bad_request": "Gönderilemedi. Lütfen tekrar deneyin.",
+      "storage": "Gönderilemedi. Lütfen biraz sonra tekrar deneyin.",
+      "server": "Gönderilemedi. Lütfen biraz sonra tekrar deneyin.",
+      "network": "Bağlantı kurulamadı. Lütfen internetinizi kontrol edip tekrar deneyin."
     }
   }
 }

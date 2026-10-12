@@ -110,6 +110,7 @@ export const ROUTES: readonly RouteEntry[] = table.map(([path, area, access, kin
 
 /** Route handlers outside the languages (never prefixed). /sitemap.xml and /robots.txt are metadata routes. */
 export const UNLOCALIZED_HANDLERS: readonly string[] = [
+  "/api/account/receipts",
   "/api/admin/backups/[id]",
   "/api/admin/exports/[kind]",
   "/api/admin/media/watermark-preview",

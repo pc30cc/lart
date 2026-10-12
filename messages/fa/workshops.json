@@ -438,7 +438,9 @@
       "paidVia": "{method, select, cash {نقدی} transfer {انتقال بانکی} online {لینک آنلاین} other {پرداخت‌شده}} · {date}",
       "refundOwed": "باید برگردانده شود:",
       "refundSent": "برگردانده شد، {date}:",
-      "noRefund": "بدون بازپرداخت"
+      "noRefund": "بدون بازپرداخت",
+      "willPay": "قرار است: {method, select, cash {نقدی} transfer {انتقال بانکی} online {آنلاین} other {—}}",
+      "receipt": "فیش واریز"
     },
     "methods": {
       "cash": "نقدی",

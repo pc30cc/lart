@@ -46,6 +46,8 @@ export const registerSchema = z.object({
   acceptTerms: z.literal(true, { error: "registration.register.errors.acceptTerms" }),
   photoConsent: z.boolean(),
   videoConsent: z.boolean(),
+  /** How they will pay (a paid workshop with ways to pay); the server checks it is one of the ways on. */
+  paymentChoice: z.enum(["cash", "transfer", "online"]).optional(),
 })
 export type RegisterValues = z.input<typeof registerSchema>
 

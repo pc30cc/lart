@@ -9,6 +9,7 @@ import { BigSubmit, BigTextField, FormAlert } from "@/components/site/auth/field
 import { useSiteForm } from "@/components/site/auth/use-site-form"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Link } from "@/i18n/navigation"
 import type { AppLocale } from "@/i18n/routing"
@@ -25,8 +26,8 @@ const wayIcons: Record<PaymentWayName, LucideIcon> = { cash: BanknoteIcon, trans
  * parent writes their child's name), the terms box (its link opens the terms
  * and what the photo / video box means in a dialog; a second one, the distance
  * sales agreement, in a new tab) and one box for photos and
- * videos, both unticked to start with, the price with the ways to pay (in plain
- * words), and one big "Register" button. The server checks it all
+ * videos, both unticked to start with, the price and how they will pay
+ * (cash or bank transfer, …: one of the ways on), and one big "Register" button. The server checks it all
  * again (seats, deadline, the terms text) and opens the "you're registered" page.
  */
 export function RegisterForm({
@@ -55,7 +56,16 @@ export function RegisterForm({
     schema: registerSchema,
     action: registerAction,
     // Both boxes start unticked (the terms box left out): ticking them is the person's own act.
-    defaultValues: { courseId, locale, participantName: defaultName, termsSha256: terms.sha256, photoConsent: false, videoConsent: false },
+    // The first way to pay is chosen to start with: one tap fewer for most people.
+    defaultValues: {
+      courseId,
+      locale,
+      participantName: defaultName,
+      termsSha256: terms.sha256,
+      photoConsent: false,
+      videoConsent: false,
+      paymentChoice: price > 0 ? ways[0] : undefined,
+    },
   })
   const dialog = (chunks: React.ReactNode) => (
     <TermsDialog
@@ -115,20 +125,7 @@ export function RegisterForm({
         ) : ways.length === 0 ? (
           <p className="text-muted-foreground text-sm text-pretty">{t("pay.none")}</p>
         ) : (
-          <>
-            <p className="text-muted-foreground text-sm text-pretty">{t("pay.later")}</p>
-            <ul className="flex flex-wrap gap-2">
-              {ways.map((way) => {
-                const Icon = wayIcons[way]
-                return (
-                  <li key={way} className="bg-muted inline-flex h-9 items-center gap-2 rounded-full px-3.5 text-sm">
-                    <Icon className="text-primary size-4" aria-hidden />
-                    {t(`pay.${way}`)}
-                  </li>
-                )
-              })}
-            </ul>
-          </>
+          <PaymentChoiceField ways={ways} />
         )}
       </section>
 
@@ -193,6 +190,56 @@ function TermsDialog({
         </div>
       </DialogContent>
     </Dialog>
+  )
+}
+
+/**
+ * How they will pay, as big cards to tap (the first chosen to start with):
+ * cash on the day, or a bank transfer (the account and the receipt upload
+ * come on the next page), or online. Just one way: said, nothing to choose.
+ */
+function PaymentChoiceField({ ways }: { ways: PaymentWayName[] }) {
+  const t = useTranslations("registration.register.pay")
+  if (ways.length === 1) {
+    const Icon = wayIcons[ways[0]]
+    return (
+      <p className="flex items-start gap-3 text-sm text-pretty">
+        <Icon className="text-primary mt-0.5 size-5 shrink-0" aria-hidden />
+        <span>
+          <span className="font-medium">{t(ways[0])}</span> · {t(`hint.${ways[0]}`)}
+        </span>
+      </p>
+    )
+  }
+  return (
+    <FormField<RegisterValues> name="paymentChoice">
+      {({ id, value, onChange, ...aria }) => (
+        <fieldset className="space-y-2.5">
+          <legend id={`${id}-legend`} className="mb-2.5 text-sm font-medium">
+            {t("choose")}
+          </legend>
+          <RadioGroup value={value as string} onValueChange={onChange} aria-labelledby={`${id}-legend`} className="gap-2.5" {...aria}>
+            {ways.map((way) => {
+              const Icon = wayIcons[way]
+              return (
+                <label
+                  key={way}
+                  htmlFor={`${id}-${way}`}
+                  className="has-data-[state=checked]:border-primary/60 has-data-[state=checked]:bg-primary/5 flex cursor-pointer items-start gap-3 rounded-xl border p-3.5 transition-colors"
+                >
+                  <RadioGroupItem id={`${id}-${way}`} value={way} className="mt-0.5 size-5" />
+                  <Icon className="text-primary mt-0.5 size-5 shrink-0" aria-hidden />
+                  <span className="space-y-0.5">
+                    <span className="block font-medium">{t(way)}</span>
+                    <span className="text-muted-foreground block text-sm text-pretty">{t(`hint.${way}`)}</span>
+                  </span>
+                </label>
+              )
+            })}
+          </RadioGroup>
+        </fieldset>
+      )}
+    </FormField>
   )
 }
 

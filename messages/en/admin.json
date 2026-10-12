@@ -86,5 +86,15 @@
         "confirm": "Enter their account"
       }
     }
+  },
+  "notifications": {
+    "label": "Notifications",
+    "labelUnread": "Notifications: {count, plural, one {# new} other {# new}}",
+    "title": "Notifications",
+    "empty": "No notifications yet.",
+    "registration": "{name} registered · {way, select, cash {cash} transfer {bank transfer} online {online} other {nothing to pay}}",
+    "receipt": "{name} sent a transfer receipt",
+    "paid": "Paid",
+    "cancelled": "Cancelled"
   }
 }

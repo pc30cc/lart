@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm"
 
 import { db } from "@/db"
 import { admins, courses, members, registrations } from "@/db/schema"
-import { paymentWays } from "@/emails/payment"
+import { chosenWay, paymentWays } from "@/emails/payment"
 import { localeHref } from "@/i18n/links"
 import { sendEmail } from "@/lib/email"
 import { formatDate, formatTimeRange, localized } from "@/lib/format"
@@ -25,6 +25,7 @@ async function loadRegistration(id: string) {
       participantName: registrations.participantName,
       status: registrations.status,
       amount: registrations.amount,
+      paymentChoice: registrations.paymentChoice,
       member: { name: members.name, email: members.email, locale: members.locale },
       course: {
         id: courses.id,
@@ -45,8 +46,8 @@ async function loadRegistration(id: string) {
 }
 
 /**
- * "Your place is reserved" (registration_received) with the payment ways that
- * are switched on, or for a free workshop "Registration confirmed".
+ * "Your place is reserved" (registration_received) with the way to pay they
+ * chose (else the ways switched on), or for a free workshop "Registration confirmed".
  */
 export async function sendRegistrationReceived(registrationId: string): Promise<boolean> {
   const row = await loadRegistration(registrationId)
@@ -81,7 +82,8 @@ export async function sendRegistrationReceived(registrationId: string): Promise<
       ...details,
       participantName: row.participantName,
       accountUrl: await localeHref(locale, `/account/registrations/${registrationId}`),
-      ...paymentWays(await getSetting("payment"), safePaymentUrl(course.paymentUrl), locale),
+      // The way they chose when registering.
+      ...chosenWay(paymentWays(await getSetting("payment"), safePaymentUrl(course.paymentUrl), locale), row.paymentChoice),
     },
   })
   return sent.ok

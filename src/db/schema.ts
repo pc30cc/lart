@@ -61,6 +61,8 @@ export const admins = pgTable("admins", {
   aboutRole: localized("about_role").notNull().default({}),
   aboutBio: localized("about_bio").notNull().default({}),
   portraitPath: text("portrait_path"),
+  /** When they last opened the panel's notifications (the bell): newer ones count as unread. */
+  notificationsSeenAt: timestamp("notifications_seen_at", { withTimezone: true }),
   createdAt: createdAt(),
 }, (t) => [
   check("admins_share_bp_range", sql`${t.shareBp} between 0 and 10000`),
@@ -350,6 +352,15 @@ export const registrations = pgTable("registrations", {
    * automatic confirmation comes in a later phase.
    */
   paymentMethod: text("payment_method"),
+  /**
+   * How the member said they will pay, chosen when registering (one of the
+   * ways switched on): "cash" at the workshop, "transfer" (they may then send
+   * the receipt) or "online". Null for a free workshop and older registrations.
+   */
+  paymentChoice: text("payment_choice"),
+  /** The bank transfer receipt the member sent (`receipts/<random>.webp|pdf`), and when. */
+  receiptPath: text("receipt_path"),
+  receiptAt: timestamp("receipt_at", { withTimezone: true }),
   paidAt: timestamp("paid_at", { withTimezone: true }),
   cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
   /** Owed back to the payer (set at cancellation); refunded_at once paid back. */
@@ -363,6 +374,22 @@ export const registrations = pgTable("registrations", {
   index("registrations_member_idx").on(t.memberId),
   check("registrations_amounts", sql`${t.amount} >= 0 and coalesce(${t.refundAmount}, 0) between 0 and ${t.amount}`),
   check("registrations_payment_method", sql`${t.paymentMethod} in ('cash', 'transfer', 'online')`),
+  check("registrations_payment_choice", sql`${t.paymentChoice} in ('cash', 'transfer', 'online')`),
+])
+
+/**
+ * The panel's notifications (the bell in its header), for every super admin:
+ * a new registration, or a bank transfer receipt a member sent. Unread for an
+ * admin while newer than their `notificationsSeenAt`.
+ */
+export const adminNotifications = pgTable("admin_notifications", {
+  id: id(),
+  kind: text("kind").notNull(),
+  registrationId: uuid("registration_id").notNull().references(() => registrations.id),
+  createdAt: createdAt(),
+}, (t) => [
+  index("admin_notifications_created_idx").on(t.createdAt),
+  check("admin_notifications_kind", sql`${t.kind} in ('registration', 'receipt')`),
 ])
 
 export const mediaKind = pgEnum("media_kind", ["sample", "gallery_photo", "gallery_video"])

@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto"
-import { eq } from "drizzle-orm"
+import { and, eq } from "drizzle-orm"
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { db } from "@/db"
-import { admins, courses, instructors, members, registrations, templates } from "@/db/schema"
+import { adminNotifications, admins, courses, instructors, members, registrations, templates } from "@/db/schema"
 import { createAdmin, createCategory, createInstructor, runId } from "@/features/workshops/test-fixtures"
 import { sessionCookieName } from "@/lib/auth/cookies"
 import { createSession } from "@/lib/auth/session"
@@ -14,6 +14,8 @@ import { cancelRegistrationAction, registerAction } from "./actions"
 import { sendRegistrationCancelled, sendRegistrationReceived } from "./notify"
 import { getPublicWorkshop, listOpenWorkshops, seatsLeft, seatsTaken, workshopTerms } from "./public"
 import { cancelMyRegistration, registerForWorkshop, type RegisterInput } from "./register"
+import { attachReceipt, canAttachReceipt } from "./receipt"
+import { listAdminNotifications, markNotificationsSeen } from "@/features/notifications/queries"
 import {
   cancelPreview,
   MAX_ACTIVE_PER_MEMBER,
@@ -154,6 +156,7 @@ async function input(courseId: string, values: Partial<RegisterInput> = {}): Pro
     acceptTerms: true,
     photoConsent: true,
     videoConsent: false,
+    paymentChoice: "cash",
     ...values,
   }
 }
@@ -174,6 +177,30 @@ async function paidRegistration(courseId: string, memberId: string, amount = 150
 const rejectsWith = (promise: Promise<unknown>, key: string) => expect(promise).rejects.toMatchObject({ key })
 
 describe("registerForWorkshop", () => {
+  it("keeps how they will pay (one of the ways on) and rings the panel's bell", async () => {
+    const course = await newCourse()
+    const member = await newMember()
+    const { id } = await registerForWorkshop(member.id, await input(course.id, { paymentChoice: "transfer" }))
+    expect(await registrationOf(id)).toMatchObject({ paymentChoice: "transfer" })
+    expect(await db.$count(adminNotifications, and(eq(adminNotifications.registrationId, id), eq(adminNotifications.kind, "registration")))).toBe(1)
+
+    // Several ways on: a choice is needed, and only one of them.
+    await expect(registerForWorkshop(member.id, await input(course.id, { participantName: "Ela", paymentChoice: undefined }))).rejects.toMatchObject({
+      key: "registration.register.errors.paymentChoice",
+    })
+    const noLink = await newCourse({ paymentUrl: null })
+    await expect(registerForWorkshop(member.id, await input(noLink.id, { paymentChoice: "online" }))).rejects.toMatchObject({
+      key: "registration.register.errors.paymentChoice",
+    })
+  })
+
+  it("needs no choice for a free workshop, and keeps none", async () => {
+    const course = await newCourse({ price: 0 })
+    const member = await newMember()
+    const { id } = await registerForWorkshop(member.id, await input(course.id, { paymentChoice: undefined }))
+    expect(await registrationOf(id)).toMatchObject({ status: "confirmed", paymentChoice: null })
+  })
+
   it("stores a pending registration at the workshop's price, with the terms proof and consents", async () => {
     const course = await newCourse()
     const member = await newMember()
@@ -193,6 +220,7 @@ describe("registerForWorkshop", () => {
       photoConsent: true,
       videoConsent: false,
       paymentMethod: null,
+      paymentChoice: "cash",
       paidAt: null,
     })
     expect(row.termsAcceptedAt.getTime()).toBeGreaterThanOrEqual(before.getTime() - 1000)
@@ -338,6 +366,34 @@ describe("registerForWorkshop", () => {
   })
 })
 
+describe("transfer receipts and the panel's bell", () => {
+  it("keeps the receipt of one's own registration waiting for payment, and tells the super admins", async () => {
+    const course = await newCourse()
+    const member = await newMember()
+    const other = await newMember()
+    const { id } = await registerForWorkshop(member.id, await input(course.id, { paymentChoice: "transfer" }))
+    expect(await canAttachReceipt(other.id, id)).toBe(false)
+    expect(await attachReceipt(other.id, id, "receipts/someone-else.webp")).toBeNull()
+
+    expect(await canAttachReceipt(member.id, id)).toBe(true)
+    expect(await attachReceipt(member.id, id, "receipts/first.webp")).toEqual({ previous: null })
+    expect(await attachReceipt(member.id, id, "receipts/second.pdf")).toEqual({ previous: "receipts/first.webp" })
+    expect(await registrationOf(id)).toMatchObject({ receiptPath: "receipts/second.pdf", receiptAt: expect.any(Date) })
+
+    const bell = await listAdminNotifications(admin.id, "en")
+    const mine = bell.items.filter((n) => n.participantName === "Deniz" && n.workshopTitle === "Candle making" && n.courseId === course.id)
+    expect(mine.map((n) => n.kind)).toEqual(["receipt", "receipt", "registration"])
+    expect(mine[2]).toMatchObject({ paymentChoice: "transfer", paid: false, cancelled: false })
+    expect(bell.unread).toBeGreaterThanOrEqual(3)
+    await markNotificationsSeen(admin.id)
+    expect((await listAdminNotifications(admin.id, "en")).unread).toBe(0)
+
+    // Paid: no more receipts.
+    await db.update(registrations).set({ status: "confirmed", paidAt: new Date(), paymentMethod: "transfer" }).where(eq(registrations.id, id))
+    expect(await canAttachReceipt(member.id, id)).toBe(false)
+  })
+})
+
 describe("cancelMyRegistration", () => {
   it("simply cancels an unpaid registration: no refund", async () => {
     const course = await newCourse()
@@ -406,10 +462,10 @@ describe("emails", () => {
       ([email]) => email as { to: string; template: string; locale: string; props: Record<string, unknown> },
     )
 
-  it("registration_received: in the member's language, with every payment way that is on", async () => {
+  it("registration_received: in the member's language, with the way to pay they chose", async () => {
     const course = await newCourse()
     const member = await newMember({ locale: "tr" })
-    const { id } = await registerForWorkshop(member.id, await input(course.id, { participantName: "Deniz" }))
+    const { id } = await registerForWorkshop(member.id, await input(course.id, { participantName: "Deniz", paymentChoice: "transfer" }))
     expect(await sendRegistrationReceived(id)).toBe(true)
 
     const [email] = sent()
@@ -423,11 +479,12 @@ describe("emails", () => {
         workshopTitle: "Mum Yapımı",
         venue: "Moda Sanat Evi",
         accountUrl: `/account/registrations/${id}`,
-        cash: true,
         transfer: { accountHolder: "Lart Sanat", bankName: "Ziraat Bankası", iban: "TR330006100519786457841326" },
-        paymentUrl: "https://iyzi.link/AKtest",
       },
     })
+    // Only the way they chose.
+    expect(email.props.cash).toBeUndefined()
+    expect(email.props.paymentUrl).toBeUndefined()
     expect(email.props.amount).toMatch(/1\.500/)
   })
 
