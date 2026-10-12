@@ -6,7 +6,7 @@ import path from "node:path"
 import { and, eq, sql } from "drizzle-orm"
 
 import { db } from "@/db"
-import { admins, auditLog } from "@/db/schema"
+import { admins, auditLog, templates } from "@/db/schema"
 import { processImage } from "@/lib/images"
 import { getStorage } from "@/lib/storage"
 import { uploadPath } from "@/lib/storage/upload"
@@ -18,7 +18,8 @@ import { uploadPath } from "@/lib/storage/upload"
  * file: it leaves an audit entry naming the file's SHA-256 and is skipped when
  * that entry exists (a new photo in the same file replaces the portrait).
  * Only the partner's row on the live database matches (id and name);
- * elsewhere nothing happens.
+ * elsewhere nothing happens. Also the owner's new default registration terms
+ * (OLD_TERMS).
  */
 export const PORTRAITS = [
   // 2026-10-11
@@ -30,12 +31,39 @@ const ACTION = "content.portrait"
 /** pg advisory lock key of this step ("LMRC"): two containers side by side while deploying never both run it. */
 const LOCK = 0x4c4d5243
 
-/** Place the portraits not placed yet; how many were placed. */
+/**
+ * The default registration terms the owner rewrote (2026-10-12), by the
+ * SHA-256 of each language's earlier bundled text: the default terms template
+ * is given the new text (templates/defaults/terms.<l>.md) only while its text
+ * is still exactly the earlier one, so a text edited in Templates is kept.
+ */
+const OLD_TERMS: Record<"fa" | "tr" | "en", string> = {
+  fa: "bbf99000960f9e210b6e2acc9adfe34b71eb7e6cb0aa8b30f94c5b42d4ab8388",
+  tr: "d889c3f2983ced7cbf65606bd2620b3222a766cf282f3c699ce600754e4619ba",
+  en: "d1ad5a29c82f96fe967b1f3abca7f9ffc7a8d509d9fe7aad3b3df188e1ecd15f",
+}
+const sha = (text: string) => createHash("sha256").update(text).digest("hex")
+
+/** Place the portraits not placed yet (how many were placed) and the new default terms. */
 export async function placeStartupContent(root: string = process.cwd(), portraits = PORTRAITS) {
   return db.transaction(async (tx) => {
     const [{ locked }] = (await tx.execute<{ locked: boolean }>(sql`select pg_try_advisory_xact_lock(${LOCK}) as locked`)).rows
     if (!locked) return 0
     let placed = 0
+
+    const [terms] = await tx
+      .select({ id: templates.id, body: templates.body })
+      .from(templates)
+      .where(and(eq(templates.kind, "terms"), eq(templates.isDefault, true)))
+    const body = terms?.body as Partial<Record<keyof typeof OLD_TERMS, string>> | undefined
+    if (terms && body && (Object.keys(OLD_TERMS) as (keyof typeof OLD_TERMS)[]).every((l) => sha((body[l] ?? "").trim()) === OLD_TERMS[l])) {
+      const read = async (l: string) => (await readFile(path.join(process.cwd(), "src/features/templates/defaults", `terms.${l}.md`), "utf8")).trim()
+      const next = { fa: await read("fa"), tr: await read("tr"), en: await read("en") }
+      await tx.update(templates).set({ body: next, updatedAt: new Date() }).where(eq(templates.id, terms.id))
+      await tx.insert(auditLog).values({ adminId: null, action: "template.update", entity: "template", entityId: terms.id, data: { kind: "terms", body: { from: body, to: next }, startup: true } })
+      console.info("[content] the default registration terms were updated")
+    }
+
     for (const p of portraits) {
       const [partner] = await tx
         .select({ portraitPath: admins.portraitPath })

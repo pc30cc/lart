@@ -1,5 +1,5 @@
-Photos and videos may be taken during the workshop. The choices below are only about publishing identifiable images of the participant on the {brand} website and official pages, to present the activities of {brand}.
+{brand} takes photos and videos during its classes and workshops. This content may be published on our website and official pages.
 
-They are optional and do not affect registration or attendance. Consent for the instructor's personal pages is not covered here.
+Giving this consent is entirely optional and does not affect your registration or attendance.
 
-If the participant is a child, a parent or legal guardian makes these choices.
+For participants under the legal age, a parent or legal guardian makes this choice.

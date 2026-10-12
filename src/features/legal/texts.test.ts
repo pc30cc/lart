@@ -48,7 +48,8 @@ describe("legal texts", () => {
 
   it("states the site's refund rules", () => {
     const text = legalText("cancellation", "en", values)
-    for (const rule of ["72 hours", "50%", "24 hours", "five business days"]) expect(text).toContain(rule)
+    for (const rule of ["72 hours", "50%", "five business days"]) expect(text).toContain(rule)
+    expect(text).not.toContain("24 hours")
   })
 
   it("falls back to Turkish for an unknown language", () => {

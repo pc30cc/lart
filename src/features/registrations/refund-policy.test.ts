@@ -11,7 +11,8 @@ describe("refundPercent", () => {
     [72, 100],
     [71.99, 50],
     [24, 50],
-    [23.99, 0],
+    [1, 50],
+    [0.01, 50],
     [0, 0],
     [-5, 0],
   ])("%s hours before the start → %s %%", (hours, percent) => expect(refundPercent(start, before(hours))).toBe(percent))

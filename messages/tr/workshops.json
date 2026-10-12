@@ -475,8 +475,8 @@
       "terms": "Koşullara göre: {percent} · {amount}",
       "band": {
         "100": "Başlangıçtan 72 saat ya da daha önce iptal.",
-        "50": "Başlangıçtan 72 ile 24 saat önce arasında iptal.",
-        "0": "Başlangıca 24 saatten az kaldı: iade yok."
+        "50": "Başlangıçtan 72 saatten az önce iptal.",
+        "0": "Başladıktan sonra veya katılmadı: iade yok."
       },
       "full": "Tam iade · {amount}",
       "fullHint": "Örneğin iptal sizden kaynaklanan bir nedenle yapılıyorsa.",

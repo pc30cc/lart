@@ -17,7 +17,7 @@ export type LegalTexts = Record<LegalDoc, string>
 const texts: Record<string, LegalTexts> = { fa, tr, en }
 
 /** The texts' date (written into them as "Last updated"): change it with the texts. */
-export const LEGAL_UPDATED = "2026-10-11"
+export const LEGAL_UPDATED = "2026-10-12"
 
 export type LegalValues = {
   brand: string

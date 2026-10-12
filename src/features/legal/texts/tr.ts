@@ -127,7 +127,7 @@ Sözleşmenin konusu, alıcının sitede seçtiği atölye hizmetinin sunulması
 
 ## 5. Hizmetin sunulması
 
-- Kayıt, alıcı tüm adımları tamamlayıp {brand} tarafından gönderilen onay mesajını aldığında kesinleşir.
+- Formu doldurmak ve ücreti ödemek tek başına kaydı kesinleştirmez. Kayıt, {brand}'in son onayından sonra kesinleşir ve alıcıya onay mesajı gönderilir.
 - Atölye, sayfasında yazılı tarihte, saatte ve yerde yüz yüze yapılır.
 - Atölyenin yapılması için gereken en az katılımcı sayısına ulaşılamazsa {brand} atölyeyi iptal edebilir. Bu durumda alıcıya haber verilir ve ödediği ücretin tamamı iade edilir.
 - Tarih, yer veya eğitmen değişirse alıcıya haber verilir. Alıcı yeni koşulları kabul edebilir ya da ücretin tamamını geri alabilir.
@@ -139,9 +139,9 @@ Mesafeli Sözleşmeler Yönetmeliği'nin 15. maddesinin 1. fıkrasının (ğ) be
 ## 7. İptal ve iade
 
 - Atölyenin başlangıcına 72 saat veya daha fazla süre varken yapılan iptallerde ücretin tamamı iade edilir.
-- Başlangıca 72 saatten az, ancak en az 24 saat varken yapılan iptallerde ücretin %50'si iade edilir.
-- Başlangıca 24 saatten az süre kala yapılan iptallerde veya atölyeye katılınmadığında ücret iade edilmez.
-- Katılamayacak alıcı, atölye başlamadan önce {brand} ile anlaşarak yerine başka birini gönderebilir.
+- Başlangıca 72 saatten az süre kala yapılan iptallerde ödenen tutarın %50'si kesilir, kalanı iade edilir.
+- Atölyeye katılınmadığında ücret iade edilmez.
+- Katılamayacak alıcı, önceden haber vererek ve {brand}'in onayıyla yerine başka birini gönderebilir.
 - Atölye {brand} tarafından iptal edilirse ücretin tamamı iade edilir.
 - İadeler beş iş günü içinde, ödemenin yapıldığı yolla yapılır. Karta yapılan iadelerin hesaba yansıma süresi bankaya göre değişebilir.
 
@@ -174,9 +174,9 @@ Bu koşullar {seller} tarafından {website} adresindeki sitede sunulan tüm atö
 ## Sizin iptaliniz
 
 - Atölyenin başlangıcına 72 saat veya daha fazla süre varken iptal ederseniz ücretin tamamı iade edilir.
-- Başlangıca 72 saatten az, ancak en az 24 saat varken iptal ederseniz ücretin %50'si iade edilir.
-- Başlangıca 24 saatten az süre kala iptal ederseniz veya atölyeye katılmazsanız ücret iade edilmez.
-- Katılamayacaksanız, atölye başlamadan önce {brand} ile anlaşarak yerinize başka birini gönderebilirsiniz.
+- Başlangıca 72 saatten az süre kala iptal ederseniz ödediğiniz tutarın %50'si kesilir, kalanı iade edilir.
+- Atölyeye katılmazsanız ücret iade edilmez.
+- Katılamayacaksanız, önceden haber vererek ve {brand}'in onayıyla yerinize başka birini gönderebilirsiniz.
 
 ## Nasıl iptal edilir
 

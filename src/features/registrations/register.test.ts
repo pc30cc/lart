@@ -354,7 +354,7 @@ describe("cancelMyRegistration", () => {
   it.each([
     { left: 5 * DAY, percent: 100, refund: 150_000 },
     { left: 48 * HOUR, percent: 50, refund: 75_000 },
-    { left: 10 * HOUR, percent: 0, refund: 0 },
+    { left: 10 * HOUR, percent: 50, refund: 75_000 },
   ])("refunds a paid registration $percent% when $left ms are left", async ({ left, percent, refund }) => {
     const course = await newCourse({}, left)
     const member = await newMember()
@@ -481,14 +481,12 @@ describe("emails", () => {
     })
   })
 
-  it("cancelling paid with no refund left: the member is told, no refund_due", async () => {
+  it("cancelling paid a few hours before the start: half back under the terms", async () => {
     const course = await newCourse({}, 10 * HOUR)
     const member = await newMember()
     const id = await paidRegistration(course.id, member.id)
     await sendRegistrationCancelled(await cancelMyRegistration(member.id, id))
-    expect(sent().map((e) => e.template)).toEqual(["registration_cancelled"])
-    expect(sent()[0].props).toMatchObject({ refundPercent: 0 })
-    expect(sent()[0].props.refundAmount).toMatch(/0/)
+    expect(sent().find((e) => e.template === "registration_cancelled")?.props).toMatchObject({ refundPercent: 50 })
   })
 })
 

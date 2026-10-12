@@ -1,14 +1,16 @@
 import { randomUUID } from "node:crypto"
+import { readFileSync } from "node:fs"
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
 
-import { eq } from "drizzle-orm"
+import { and, eq } from "drizzle-orm"
 import sharp from "sharp"
 import { afterAll, describe, expect, it, vi } from "vitest"
 
 import { db } from "@/db"
-import { admins } from "@/db/schema"
+import { admins, templates } from "@/db/schema"
+import { defaultText } from "@/features/templates/seed"
 
 const files = vi.hoisted(() => new Map<string, Buffer>())
 vi.mock("@/lib/storage", async (load) => ({
@@ -61,4 +63,26 @@ describe("placeStartupContent", () => {
     expect(await placeStartupContent(root, [partner])).toBe(0)
     expect(files.size).toBe(1)
   }, 30_000)
+
+  it("gives the default terms the new text while they are still the earlier bundled one, never an edited text", async () => {
+    const where = and(eq(templates.kind, "terms"), eq(templates.isDefault, true))
+    const [before] = await db.select({ body: templates.body }).from(templates).where(where)
+    // The earlier bundled texts, as the live site's default terms still were.
+    const fixture = (l: string) => readFileSync(path.join(process.cwd(), "tests/fixtures", `old-terms.${l}.md`), "utf8").trim()
+    const old = { fa: fixture("fa"), tr: fixture("tr"), en: fixture("en") }
+    try {
+      await db.update(templates).set({ body: old }).where(where)
+      await placeStartupContent(await contentRoot(), [])
+      const [now] = await db.select({ body: templates.body }).from(templates).where(where)
+      expect(now.body).toEqual(defaultText("terms"))
+
+      const edited = { ...old, fa: `${old.fa}\n- یک بند تازه` }
+      await db.update(templates).set({ body: edited }).where(where)
+      await placeStartupContent(await contentRoot(), [])
+      const [kept] = await db.select({ body: templates.body }).from(templates).where(where)
+      expect(kept.body).toEqual(edited)
+    } finally {
+      await db.update(templates).set({ body: before.body }).where(where)
+    }
+  })
 })

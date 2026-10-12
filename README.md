@@ -193,21 +193,19 @@ example when a new design reference is given:
 
 #### Default terms: registration and cancellation
 
-> Please read the workshop details and the terms below before registering.
->
-> - Your registration is final once all steps are complete and you receive
->   a confirmation message from {brand}.
+> - Registration confirmation: filling in the form and paying do not on
+>   their own make a registration final; it is final once LIMER confirms it.
 > - Cancel **72 hours or more** before the start: **full refund**.
-> - Cancel **between 72 and 24 hours** before the start: **50% refund**.
-> - **Less than 24 hours** before the start, or not attending: **no refund**.
-> - If you cannot attend, you may send someone else in your place before
->   the start, in agreement with {brand}.
-> - If {brand} cancels the workshop, you get a full refund. If the date,
->   venue or instructor changes, you can accept the new terms or receive a
->   full refund.
-> - Refunds covered by these terms are made within five business days.
->   Your statutory rights are not affected.
-> - Please arrive on time; late arrival does not change the end time.
+> - Cancel **less than 72 hours** before the start: **50% is kept**.
+> - **Not attending**: **no refund**.
+> - If you cannot attend, you may send someone else in your place, arranged
+>   in advance and approved by LIMER.
+> - If LIMER cancels the workshop, the full amount is refunded.
+> - Any change of venue, date or instructor is announced before the workshop.
+> - Refunds are made within five business days. All statutory rights are
+>   reserved.
+>
+> Thank you for your trust; please arrive on time.
 >
 > ☐ **I have read and accept the registration and cancellation terms.**
 > *(required to register)*

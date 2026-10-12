@@ -214,7 +214,7 @@ describe("cancel registration", () => {
     })
   })
 
-  it("refunds a paid registration under the terms (50 % between 72 and 24 hours) or in full", async () => {
+  it("refunds a paid registration under the terms (50 % less than 72 hours before the start) or in full", async () => {
     const w = await workshop(48)
     const person = await member()
     const [a, b] = [await register(w.id, person.id), await register(w.id, person.id)]
@@ -234,12 +234,12 @@ describe("cancel registration", () => {
     expect((await ledgerOf(a.id)).map((t) => t.kind)).toEqual(["registration_payment"])
   })
 
-  it("gives nothing back under the terms less than 24 hours before the start", async () => {
+  it("gives half back under the terms even a few hours before the start", async () => {
     const w = await workshop(10)
     const person = await member()
     const r = await register(w.id, person.id)
     await pay(r.id)
-    expect(await cancelRegistrationAction({ id: r.id, refund: "terms" })).toEqual({ ok: true, data: { id: r.id, refund: 0 } })
+    expect(await cancelRegistrationAction({ id: r.id, refund: "terms" })).toEqual({ ok: true, data: { id: r.id, refund: 75_000 } })
   })
 })
 
@@ -386,21 +386,19 @@ describe("change refund", () => {
     })
   })
 
-  it("gives a 0 % cancellation a refund, which then shows in the refunds list and tells the admins", async () => {
+  it("changes a cancellation's refund under the terms, which then shows in the refunds list and tells the person", async () => {
     const w = await workshop(10)
     const person = await member("tr", "Ece")
     const r = await register(w.id, person.id)
     await pay(r.id)
     await cancelRegistrationAction({ id: r.id, refund: "terms" })
-    expect(await registration(r.id)).toMatchObject({ refundAmount: 0 })
+    expect(await registration(r.id)).toMatchObject({ refundAmount: 75_000 })
     await Promise.all(background)
     sendEmail.mockClear()
 
     expect(await setRefundAction({ id: r.id, amount: 100_000 })).toMatchObject({ ok: true, data: { amount: 100_000, changed: true } })
     await Promise.all(background)
     expect(emails("registration_cancelled")[0]).toMatchObject({ to: person.email, props: { refundPercent: 66, byUs: true } })
-    expect(emails("refund_due").length).toBeGreaterThan(0)
-    expect(emails("refund_due")[0]).toMatchObject({ props: { amount: expect.stringContaining("1.000") } })
     const owed = await listRefunds(parseTableParams({ q: person.email }, { sort: refundTable.sort, defaultSort: "cancelledAt", filters: refundTable.filters }))
     expect(owed.rows.map((x) => [x.id, x.refundAmount])).toEqual([[r.id, 100_000]])
   })

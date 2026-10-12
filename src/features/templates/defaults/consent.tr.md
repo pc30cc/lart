@@ -1,5 +1,5 @@
-Atölye sırasında fotoğraf ve video çekilebilir. Aşağıdaki seçimler yalnızca, {brand} tarafından düzenlenen etkinlikleri tanıtmak amacıyla katılımcının tanınabilir görüntülerinin {brand} web sitesinde ve resmî sayfalarında yayımlanmasıyla ilgilidir.
+{brand}, kurs ve atölyeler sırasında fotoğraf ve video çekimi yapar. Hazırlanan içerik web sitesinde ve resmî sayfalarımızda yayımlanabilir.
 
-Bu seçimler isteğe bağlıdır; kaydı ve atölyeye katılımı etkilemez. Eğitmenin kişisel sayfaları için izin bu metin kapsamında alınmaz.
+Bu izni vermek tamamen isteğe bağlıdır; kaydınızı veya kurslara katılımınızı etkilemez.
 
-Katılımcı çocuksa bu seçimleri ebeveyni veya yasal vasisi yapar.
+Reşit olmayan katılımcılar için bu seçimi veli veya yasal temsilci yapar.

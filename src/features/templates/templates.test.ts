@@ -160,7 +160,8 @@ describe("seedDefaults", () => {
         const [row] = await db.select().from(templates).where(eq(templates.id, ids[0]))
         expect(row.body).toEqual(defaultText(kind))
         for (const l of ["fa", "tr", "en"] as const) {
-          expect(row.body[l]).toContain("{brand}")
+          // The terms name the brand as the owner wrote it ("LIMER"); the contract fills it in.
+          if (kind === "contract") expect(row.body[l]).toContain("{brand}")
           expect(unknownPlaceholders(row.body[l]!, kind)).toEqual([])
           if (kind === "contract") expect(row.body[l]).toContain("{decision_deadline}")
         }

@@ -475,8 +475,8 @@
       "terms": "Under the terms: {percent} · {amount}",
       "band": {
         "100": "Cancelled 72 hours or more before the start.",
-        "50": "Cancelled between 72 and 24 hours before the start.",
-        "0": "Less than 24 hours before the start: no refund."
+        "50": "Cancelled less than 72 hours before the start.",
+        "0": "After the start, or did not attend: no refund."
       },
       "full": "Full refund · {amount}",
       "fullHint": "For example, when you cancel for a reason of your own.",

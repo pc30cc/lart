@@ -129,7 +129,7 @@ The subject of this agreement is the workshop the buyer chooses on the website a
 
 ## 5. Provision of the service
 
-- A registration is confirmed once the buyer has completed every step and received the confirmation message from {brand}.
+- Filling in the form and paying do not on their own make a registration final. It is final once {brand} has given its final confirmation, and the buyer is sent a confirmation message.
 - The workshop takes place in person, at the date, time and place given on its page.
 - If the minimum number of participants is not reached, {brand} may cancel the workshop. The buyer is then told and gets the full amount paid back.
 - If the date, place or instructor changes, the buyer is told and may accept the new terms or take a full refund.
@@ -141,9 +141,9 @@ Under Article 15(1)(ğ) of the Distance Contracts Regulation, there is no right 
 ## 7. Cancellation and refunds
 
 - Cancelled 72 hours or more before the workshop starts: the full amount is refunded.
-- Cancelled less than 72 hours but at least 24 hours before the start: 50% is refunded.
-- Cancelled less than 24 hours before the start, or not attending: nothing is refunded.
-- A buyer who cannot come may send someone else in their place, by agreement with {brand} before the workshop starts.
+- Cancelled less than 72 hours before the start: 50% of the amount paid is kept and the rest refunded.
+- Not attending: nothing is refunded.
+- A buyer who cannot come may send someone else in their place, arranged in advance and approved by {brand}.
 - If {brand} cancels the workshop, the full amount is refunded.
 - Refunds are made within five business days, the same way the payment was made. How soon a card refund shows depends on the bank.
 
@@ -178,9 +178,9 @@ These terms apply to every workshop {seller} offers on {website}, and are the sa
 ## If you cancel
 
 - Cancel 72 hours or more before the workshop starts and you get the full amount back.
-- Cancel less than 72 hours but at least 24 hours before the start and you get 50% back.
-- Cancel less than 24 hours before the start, or do not attend, and nothing is refunded.
-- If you cannot come, you may send someone else in your place, by agreement with {brand} before the workshop starts.
+- Cancel less than 72 hours before the start and 50% of the amount paid is kept; you get the rest back.
+- If you do not attend, nothing is refunded.
+- If you cannot come, you may send someone else in your place, arranged in advance and approved by {brand}.
 
 ## How to cancel
 

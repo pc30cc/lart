@@ -98,15 +98,15 @@
     "participant": "Who will attend?",
     "participantHint": "Their full name, so we can welcome them.",
     "childNote": "This workshop is for children aged {min, number}–{max, number}. As their parent, please write your child’s name here.",
-    "terms": "Registration terms",
+    "terms": "Terms of registration and attendance for LIMER workshops and classes",
     "acceptTerms": "I have read and accept the registration and cancellation terms and the distance sales agreement.",
     "acceptTermsRich": "I have read and accept the <terms>registration and cancellation terms</terms> and the <sales>distance sales agreement</sales>.",
     "consent": {
-      "title": "Photos and videos",
+      "title": "Permission to use photos and videos",
       "optional": "optional",
-      "text": "Photos and videos may be taken during the workshop. These choices are only about publishing identifiable images of the participant on the {brand} website and official pages, to show what {brand} does. They are optional and don’t affect registration or attendance. They don’t cover the instructor’s personal pages.",
-      "guardian": "If the participant is a child, a parent or legal guardian makes these choices.",
-      "both": "I agree to the publication of identifiable photos and videos of the participant."
+      "text": "LIMER takes photos and videos during its classes and workshops. This content may be published on our website and official pages. Giving this consent is entirely optional and does not affect your registration or attendance.",
+      "guardian": "For participants under the legal age, a parent or legal guardian makes this choice.",
+      "both": "I agree to photos and videos of me being published on LIMER's website and official pages."
     },
     "pay": {
       "title": "Price",
@@ -220,7 +220,7 @@
     "free": "The place for {name} will be freed for someone else. This workshop is free, so there’s nothing else to do.",
     "full": "You paid {paid}. Under the terms you get it all back: we’ll send {refund} back to you within five business days.",
     "partial": "The workshop starts in less than 72 hours, so under the terms you get {percent, number}% back: we’ll send {refund} back to you within five business days.",
-    "none": "The workshop starts in less than 24 hours, so under the terms this payment can’t be refunded.",
+    "none": "The workshop has started, so under the terms this payment can’t be refunded.",
     "keep": "Keep my place",
     "confirm": "Yes, cancel it",
     "done": "Your registration is cancelled.",
