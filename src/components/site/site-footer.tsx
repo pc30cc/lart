@@ -1,4 +1,4 @@
-import { MailIcon, PhoneIcon } from "lucide-react"
+import { MailIcon } from "lucide-react"
 import { getTranslations } from "next-intl/server"
 
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -7,6 +7,7 @@ import { formatYear } from "@/lib/format"
 import type { FooterContent } from "@/themes/types"
 import { InstagramGlyph } from "./instagram-glyph"
 import { LanguageLinks } from "./language-links"
+import { WhatsAppGlyph } from "@/components/site/whatsapp-glyph"
 import { ProtectedContact } from "./protected-contact"
 
 /**
@@ -53,7 +54,7 @@ export async function SiteFooter({
             )}
             {footer.phoneCode && (
               <li>
-                <ProtectedContact kind="phone" code={footer.phoneCode} label={tf("showPhone")} icon={<PhoneIcon aria-hidden />} className={contact} />
+                <ProtectedContact kind="whatsapp" code={footer.phoneCode} label={tf("showPhone")} icon={<WhatsAppGlyph />} className={contact} />
               </li>
             )}
             {instagram && (

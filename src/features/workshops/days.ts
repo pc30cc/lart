@@ -105,3 +105,18 @@ export function buildDays(startsAt: Date, endsAt: Date, extraDays: ExtraDay[]): 
   const days = [{ startsAt: startsAt.toISOString(), endsAt: endsAt.toISOString() }, ...later]
   return { days, endsAt: new Date(days[days.length - 1].endsAt) }
 }
+
+/**
+ * The day a registration is for (`registrations.day`: its index, null for
+ * the first), or the first day when that index is gone.
+ */
+export function registrationDay(c: WithDays, day: number | null | undefined): WorkshopDay {
+  const days = workshopDays(c)
+  return days[day ?? 0] ?? days[0]
+}
+
+/** The workshop as seen by one registration: only its day (for dates, hours, refunds and reminders). */
+export function forDay<T extends WithDays>(c: T, day: number | null | undefined): T {
+  const d = registrationDay(c, day)
+  return { ...c, startsAt: d.startsAt, endsAt: d.endsAt, days: null }
+}

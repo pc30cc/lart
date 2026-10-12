@@ -10,6 +10,7 @@ import { contracts, courses, instructors, members, registrations, templates } fr
 import { sendContractReady } from "@/features/contracts/notify"
 import { courseBalances } from "@/features/money/ledger"
 import { memberLocale } from "@/features/registrations/admin/notify"
+import { seatsTakenByDay } from "@/features/registrations/public"
 import { localeHref } from "@/i18n/links"
 import { adminAction, UserError } from "@/lib/action"
 import { changes } from "@/lib/audit"
@@ -154,8 +155,10 @@ export const createWorkshop = adminAction(workshopSchema, async (input, ctx) => 
  * The instructor can't change while an advance is still held: the ledger keeps
  * it per workshop, not per instructor, so the new instructor would see it (and
  * have it set off against their fee) as their own. It is recorded as returned
- * (or reversed) on the finances page first. A new start time clears the
- * day-before reminders already sent, so everyone is reminded of the new date.
+ * (or reversed) on the finances page first. A new start time (or new days)
+ * clears the day-before reminders already sent, so everyone is reminded of
+ * the new date. A day with people registered on it can't be taken away nor
+ * get fewer places than them.
  */
 export const updateWorkshop = adminAction(workshopUpdateSchema, async ({ id, ...input }, ctx) => {
   const values = courseValues(input)
@@ -181,11 +184,26 @@ export const updateWorkshop = adminAction(workshopUpdateSchema, async ({ id, ...
 
       const registered = await activeRegistrations(tx, id)
       if ("price" in courseDiff && registered > 0) throw new UserError("workshops.errors.priceLocked", { field: "price" })
-      if (values.maxCapacity < registered) {
+      if (values.days) {
+        // Several days: no day below the people registered on it, and no day with people on it taken away.
+        const taken = await seatsTakenByDay(id, tx)
+        const limits = values.days.map((d, i) => (i === 0 ? values.maxCapacity : (d.maxCapacity ?? values.maxCapacity)))
+        if (taken.some((n, i) => n > 0 && i >= limits.length)) throw new UserError("workshops.errors.dayHasRegistrations", { field: "extraDays" })
+        const short = limits.findIndex((max, i) => max < (taken[i] ?? 0))
+        if (short >= 0) {
+          throw new UserError("workshops.errors.capacityBelowRegistrations", {
+            field: short === 0 ? "maxCapacity" : "extraDays",
+            values: { count: taken[short] },
+          })
+        }
+      } else if (values.maxCapacity < registered) {
         throw new UserError("workshops.errors.capacityBelowRegistrations", {
           field: "maxCapacity",
           values: { count: registered },
         })
+      } else if ((await seatsTakenByDay(id, tx)).some((n, i) => i > 0 && n > 0)) {
+        // Back to one day while people are registered on another day.
+        throw new UserError("workshops.errors.dayHasRegistrations", { field: "extraDays" })
       }
       // The workshop row is held FOR UPDATE, so no advance can be posted meanwhile (`lockCourse`).
       if (values.instructorId !== before.instructorId) {
@@ -213,7 +231,7 @@ export const updateWorkshop = adminAction(workshopUpdateSchema, async ({ id, ...
       }
       // A reminder already sent was for the old date (registrations after the workshop: lock order).
       const remindersReset =
-        "startsAt" in courseDiff
+        "startsAt" in courseDiff || "days" in courseDiff
           ? (
               await tx
                 .update(registrations)

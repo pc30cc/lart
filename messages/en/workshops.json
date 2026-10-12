@@ -252,7 +252,8 @@
     "mediaInUse": "One of these files is already used elsewhere. Please upload it again.",
     "cannotRaiseFinal": "The final number can only be raised for a confirmed workshop that hasn’t started yet.",
     "finalNotHigher": "The new number must be higher than the current final number ({count, number}).",
-    "finalAboveMax": "The new number can’t be more than the maximum of {max, number}."
+    "finalAboveMax": "The new number can’t be more than the maximum of {max, number}.",
+    "dayHasRegistrations": "A day with people registered on it can't be taken away; move or cancel their registrations first."
   },
   "overview": {
     "edit": "Edit",
@@ -442,7 +443,8 @@
       "consent": "Photo / video",
       "registeredAt": "Registered",
       "registeredOn": "Registered {date}",
-      "actions": "Actions"
+      "actions": "Actions",
+      "day": "Day {n} · {date}"
     },
     "state": {
       "unpaid": "Not paid yet",
@@ -536,14 +538,17 @@
       "videos": "Videos allowed",
       "registeredOn": "Registered on",
       "yes": "Yes",
-      "no": "No"
+      "no": "No",
+      "day": "Day"
     },
     "all": {
       "title": "Registrations",
       "description": "Everyone registered, across all workshops. To find who a bank transfer is from, search for the name in its description.",
       "workshop": "Workshop",
       "empty": "People who register for a workshop appear here."
-    }
+    },
+    "dayCount": "{taken} of {max}",
+    "byDay": "By day"
   },
   "gallery": {
     "metaTitle": "Gallery · {title}",

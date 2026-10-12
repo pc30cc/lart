@@ -252,7 +252,8 @@
     "mediaInUse": "Bu dosyalardan biri başka bir yerde kullanılıyor. Lütfen yeniden yükleyin.",
     "cannotRaiseFinal": "Kesin sayı yalnızca onaylanmış ve henüz başlamamış bir atölyede artırılabilir.",
     "finalNotHigher": "Yeni sayı şu anki kesin sayıdan ({count, number}) büyük olmalı.",
-    "finalAboveMax": "Yeni sayı en fazla katılımcı sayısından ({max, number}) fazla olamaz."
+    "finalAboveMax": "Yeni sayı en fazla katılımcı sayısından ({max, number}) fazla olamaz.",
+    "dayHasRegistrations": "Kayıtlı kişilerin olduğu bir gün kaldırılamaz; önce o günün kayıtlarını taşıyın ya da iptal edin."
   },
   "overview": {
     "edit": "Düzenle",
@@ -442,7 +443,8 @@
       "consent": "Fotoğraf / video",
       "registeredAt": "Kayıt tarihi",
       "registeredOn": "Kayıt: {date}",
-      "actions": "İşlemler"
+      "actions": "İşlemler",
+      "day": "{n}. gün · {date}"
     },
     "state": {
       "unpaid": "Henüz ödenmedi",
@@ -536,14 +538,17 @@
       "videos": "Video izni",
       "registeredOn": "Kayıt tarihi",
       "yes": "Evet",
-      "no": "Hayır"
+      "no": "Hayır",
+      "day": "Gün"
     },
     "all": {
       "title": "Kayıtlar",
       "description": "Tüm atölyelerdeki kayıtlar. Bir havalenin kimden geldiğini bulmak için açıklamadaki ismi arayın.",
       "workshop": "Atölye",
       "empty": "Bir atölyeye kaydolanlar burada görünür."
-    }
+    },
+    "dayCount": "{taken} / {max}",
+    "byDay": "Günlere göre"
   },
   "gallery": {
     "metaTitle": "Galeri · {title}",

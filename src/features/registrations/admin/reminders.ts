@@ -1,6 +1,6 @@
 import "server-only"
 import { createHash } from "node:crypto"
-import { and, eq, gt, inArray, isNull, lte, ne } from "drizzle-orm"
+import { and, eq, gt, inArray, isNull, lte, ne, sql } from "drizzle-orm"
 
 import { db } from "@/db"
 import { courses, members, registrations } from "@/db/schema"
@@ -12,12 +12,13 @@ import { formatLira } from "@/lib/money"
 import { getSetting } from "@/lib/settings"
 import { safePaymentUrl } from "../schema"
 import { memberLocale } from "./notify"
-import { formatWorkshopDates, workshopHours } from "@/features/workshops/days"
+import { forDay, formatWorkshopDates, workshopHours } from "@/features/workshops/days"
 
 /**
  * The day-before reminder (scheduled job, `pnpm jobs`): every member with an
  * active registration (paid or not yet paid) in a workshop that starts within
- * the next 24 hours gets one `workshop_reminder` in their language, then
+ * the next 24 hours (several days: whose chosen day does) gets one
+ * `workshop_reminder` in their language, about that day, then
  * those registrations get `reminder_sent_at`. One email per member and
  * workshop per batch of registrations: a parent who registered two children
  * gets one email, and a registration added after their reminder went out
@@ -39,11 +40,15 @@ import { formatWorkshopDates, workshopHours } from "@/features/workshops/days"
 
 const HOUR = 3_600_000
 
+/** A registration's day (null, a one-day workshop's, is the first) and when it starts. */
+const dayOf = sql<number>`coalesce(${registrations.day}, 0)`.mapWith(Number)
+const dayStart = sql<Date>`coalesce((${courses.days} -> coalesce(${registrations.day}, 0) ->> 'startsAt')::timestamptz, ${courses.startsAt})`
+
 export async function sendDayBeforeReminders(now: Date = new Date()): Promise<{ due: number; sent: number }> {
   const soon = new Date(now.getTime() + 24 * HOUR)
-  // Who is due: one row per member and workshop.
+  // Who is due: one row per member, workshop and day (several days: each registration's own day).
   const due = await db
-    .selectDistinct({ courseId: registrations.courseId, memberId: registrations.memberId })
+    .selectDistinct({ courseId: registrations.courseId, memberId: registrations.memberId, day: dayOf })
     .from(registrations)
     .innerJoin(courses, eq(courses.id, registrations.courseId))
     .where(
@@ -52,15 +57,15 @@ export async function sendDayBeforeReminders(now: Date = new Date()): Promise<{ 
         isNull(registrations.reminderSentAt),
         inArray(courses.status, ["published", "confirmed", "awaiting_signature"]),
         isNull(courses.cancelledAt),
-        gt(courses.startsAt, now),
-        lte(courses.startsAt, soon),
+        gt(dayStart, now),
+        lte(dayStart, soon),
       ),
     )
   if (!due.length) return { due: 0, sent: 0 }
 
   const [payment, fallback] = await Promise.all([getSetting("payment"), getSetting("defaultLocale")])
   let sent = 0
-  for (const { courseId, memberId } of due) {
+  for (const { courseId, memberId, day } of due) {
     const done = await db.transaction(async (tx) => {
       // One run at a time handles a member: a parallel run skips them (their row is the lock).
       const [member] = await tx
@@ -82,6 +87,7 @@ export async function sendDayBeforeReminders(now: Date = new Date()): Promise<{ 
           and(
             eq(registrations.courseId, courseId),
             eq(registrations.memberId, memberId),
+            eq(dayOf, day),
             inArray(registrations.status, ["pending", "confirmed"]),
             isNull(registrations.reminderSentAt),
           ),
@@ -89,7 +95,7 @@ export async function sendDayBeforeReminders(now: Date = new Date()): Promise<{ 
         .for("update")
       if (!mine.length) return false // reminded meanwhile, or cancelled
 
-      const [course] = await tx
+      const [row] = await tx
         .select({
           slug: courses.slug,
           title: courses.title,
@@ -101,8 +107,10 @@ export async function sendDayBeforeReminders(now: Date = new Date()): Promise<{ 
           paymentUrl: courses.paymentUrl,
         })
         .from(courses)
-        .where(and(eq(courses.id, courseId), ne(courses.status, "cancelled"), isNull(courses.cancelledAt), gt(courses.startsAt, now)))
-      if (!course) return false
+        .where(and(eq(courses.id, courseId), ne(courses.status, "cancelled"), isNull(courses.cancelledAt)))
+      // The day these registrations are for (the whole workshop for one day).
+      const course = row && forDay(row, day)
+      if (!course || course.startsAt <= now) return false
 
       const locale = memberLocale(member.locale, fallback)
       const unpaid = mine.filter((r) => r.status === "pending" && r.amount > 0)

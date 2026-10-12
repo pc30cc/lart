@@ -378,9 +378,15 @@ export const registrations = pgTable("registrations", {
   refundedAt: timestamp("refunded_at", { withTimezone: true }),
   /** When the day-before reminder email was sent (the job sends it once). */
   reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
+  /**
+   * A workshop on several days: the day chosen (its index in `courses.days`,
+   * 0 the first). Null for a one-day workshop, read as the first day.
+   */
+  day: smallint("day"),
   createdAt: createdAt(),
 }, (t) => [
   index("registrations_course_idx").on(t.courseId, t.status),
+  check("registrations_day", sql`${t.day} between 0 and 13`),
   index("registrations_member_idx").on(t.memberId),
   check("registrations_amounts", sql`${t.amount} >= 0 and coalesce(${t.refundAmount}, 0) between 0 and ${t.amount}`),
   check("registrations_payment_method", sql`${t.paymentMethod} in ('cash', 'transfer', 'online')`),

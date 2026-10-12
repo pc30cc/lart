@@ -24,6 +24,7 @@ import { formatDate, formatNumber, localized } from "@/lib/format"
 import { getSetting } from "@/lib/settings"
 import { publicUrls } from "@/lib/storage"
 import { cn } from "@/lib/utils"
+import { registrationDay } from "@/features/workshops/days"
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("workshops.registrations.all")
@@ -94,7 +95,7 @@ export default async function RegistrationsPage({ searchParams }: PageProps<"/[l
           >
             {localized(r.course.title, locale)}
           </Link>
-          <span className="text-muted-foreground block text-xs">{formatDate(r.course.startsAt, locale, "medium")}</span>
+          <span className="text-muted-foreground block text-xs">{formatDate(registrationDay(r.course, r.day).startsAt, locale, "medium")}</span>
         </span>
       ),
     },
@@ -155,7 +156,7 @@ export default async function RegistrationsPage({ searchParams }: PageProps<"/[l
               amount: r.amount,
               refundOwed: refundOwed(r),
             }}
-            startsAt={r.course.startsAt.toISOString()}
+            startsAt={registrationDay(r.course, r.day).startsAt.toISOString()}
             defaultMethod={(r.paymentChoice as PaymentMethod | null) ?? defaultMethod}
           />
         ),

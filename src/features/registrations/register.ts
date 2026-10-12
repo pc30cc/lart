@@ -6,15 +6,16 @@ import { db } from "@/db"
 import { adminNotifications, courses, registrations } from "@/db/schema"
 import { UserError } from "@/lib/errors"
 import { getSetting } from "@/lib/settings"
-import { seatsTaken, workshopTerms } from "./public"
+import { forDay, workshopDays } from "@/features/workshops/days"
+import { seatsTakenByDay, workshopTerms } from "./public"
 import {
   activeStatuses,
   cancelPreview,
+  daySeatsLeft,
   MAX_ACTIVE_PER_MEMBER,
   paymentWayNames,
   registrationWindow,
   sameParticipant,
-  seatLimit,
   type CancelPreview,
   type registerSchema,
 } from "./schema"
@@ -51,7 +52,9 @@ const closedReason = {
  * The amount is the workshop's price; the registration is "pending"
  * (registered, holds a seat, not paid yet), or "confirmed" right away for a
  * free workshop (nothing to pay). A paid workshop keeps how they will pay
- * (`paymentChoice`, one of the ways on). The accepted terms (template, SHA-256 of
+ * (`paymentChoice`, one of the ways on). A workshop on several days needs
+ * one of its days (`day`): not started, with a place left (`daySeatsLeft`).
+ * The accepted terms (template, SHA-256 of
  * the exact text shown, time) and the photo / video choices are stored.
  */
 export async function registerForWorkshop(
@@ -68,6 +71,7 @@ export async function registerForWorkshop(
         startsAt: courses.startsAt,
         endsAt: courses.endsAt,
         registrationDeadline: courses.registrationDeadline,
+        days: courses.days,
         maxCapacity: courses.maxCapacity,
         finalParticipants: courses.finalParticipants,
         price: courses.price,
@@ -81,9 +85,17 @@ export async function registerForWorkshop(
     if (!course || !course.publishedAt) throw new UserError("registration.errors.notFound")
 
     // The seat count is read under the lock: whoever comes second sees the first one's seat.
-    const left = seatLimit(course) - (await seatsTaken(course.id, tx))
-    const window = registrationWindow({ ...course, seatsLeft: left }, now)
+    const seats = daySeatsLeft(course, await seatsTakenByDay(course.id, tx))
+    const window = registrationWindow({ ...course, seatsLeft: seats.total }, now)
     if (window !== "open") throw new UserError(closedReason[window])
+    // Several days: the day chosen must be one of them, not started, with a place left.
+    const several = workshopDays(course).length > 1
+    const day = several ? input.day : undefined
+    if (several) {
+      if (day === undefined || day >= seats.days.length) throw new UserError("registration.register.errors.day", { field: "day" })
+      if (workshopDays(course)[day].startsAt <= now) throw new UserError("registration.errors.dayStarted", { field: "day" })
+      if (seats.days[day] <= 0) throw new UserError("registration.errors.dayFull", { field: "day" })
+    }
 
     const mine = await tx
       .select({ participantName: registrations.participantName })
@@ -129,6 +141,7 @@ export async function registerForWorkshop(
         photoConsent: input.photoConsent,
         videoConsent: input.videoConsent,
         paymentChoice: paymentChoice ?? null,
+        day: day ?? null,
       })
       .returning({ id: registrations.id })
     // The bell in the panel: someone registered.
@@ -141,7 +154,7 @@ export type Cancelled = CancelPreview & { id: string; courseId: string }
 
 /**
  * The member cancels one of their own active registrations, until the
- * workshop starts. Unpaid (or free): simply cancelled, refund 0. Paid: the
+ * workshop (several days: the day chosen) starts. Unpaid (or free): simply cancelled, refund 0. Paid: the
  * refund of the terms (100 / 50 / 0 % by the time left, `refund-policy.ts`)
  * is stored as `refund_amount`, to be paid back by hand by an admin.
  * Someone else's registration is "not found", never a different message.
@@ -149,15 +162,17 @@ export type Cancelled = CancelPreview & { id: string; courseId: string }
 export async function cancelMyRegistration(memberId: string, id: string, now: Date = new Date()): Promise<Cancelled> {
   return db.transaction(async (tx) => {
     const mine = and(eq(registrations.id, id), eq(registrations.memberId, memberId))
-    const [ref] = await tx.select({ courseId: registrations.courseId }).from(registrations).where(mine)
+    const [ref] = await tx.select({ courseId: registrations.courseId, day: registrations.day }).from(registrations).where(mine)
     if (!ref) throw new UserError("registration.errors.notFound")
 
     // Workshop first, then the registration: the lock order of payments (features/money/ledger).
-    const [course] = await tx
-      .select({ status: courses.status, startsAt: courses.startsAt, closedAt: courses.closedAt })
+    const [row] = await tx
+      .select({ status: courses.status, startsAt: courses.startsAt, endsAt: courses.endsAt, days: courses.days, closedAt: courses.closedAt })
       .from(courses)
       .where(eq(courses.id, ref.courseId))
       .for("no key update")
+    // Several days: the time left is counted to the day chosen.
+    const course = row && forDay(row, ref.day)
     const [reg] = await tx
       .select({ status: registrations.status, amount: registrations.amount })
       .from(registrations)

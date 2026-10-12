@@ -11,7 +11,7 @@ import { formatLira } from "@/lib/money"
 import { getSetting } from "@/lib/settings"
 import type { Cancelled } from "./register"
 import { safePaymentUrl } from "./schema"
-import { formatWorkshopDates, workshopHours } from "@/features/workshops/days"
+import { forDay, formatWorkshopDates, workshopHours } from "@/features/workshops/days"
 
 /**
  * The emails of registering and cancelling, sent after the commit (never
@@ -24,6 +24,7 @@ async function loadRegistration(id: string) {
   const [row] = await db
     .select({
       participantName: registrations.participantName,
+      day: registrations.day,
       status: registrations.status,
       amount: registrations.amount,
       paymentChoice: registrations.paymentChoice,
@@ -44,7 +45,8 @@ async function loadRegistration(id: string) {
     .innerJoin(courses, eq(courses.id, registrations.courseId))
     .where(eq(registrations.id, id))
     .limit(1)
-  return row ?? null
+  // Several days: the workshop as their day.
+  return row ? { ...row, course: forDay(row.course, row.day) } : null
 }
 
 /**

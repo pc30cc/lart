@@ -41,6 +41,7 @@ const registration: MyRegistration = {
   id: "11111111-1111-4111-8111-111111111111",
   participantName: "Deniz",
   status: "pending",
+  day: null,
   amount: 150_000,
   paymentMethod: null,
   paymentChoice: null,

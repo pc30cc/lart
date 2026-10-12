@@ -2,6 +2,8 @@ import { LandmarkIcon, MailIcon, MapPinIcon, PhoneIcon } from "lucide-react"
 import type { Metadata } from "next"
 import { getTranslations } from "next-intl/server"
 
+import { whatsappHref } from "@/components/site/whatsapp"
+import { WhatsAppGlyph } from "@/components/site/whatsapp-glyph"
 import { InstagramGlyph } from "@/components/site/instagram-glyph"
 import { LegalShell } from "@/features/legal/components/legal-page"
 import { getLegalValues } from "@/features/legal/data"
@@ -46,6 +48,7 @@ export default async function ContactPage({ params }: PageProps<"/[locale]/conta
   const reach: { icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>; label: string; value: string; href?: string; ltr?: boolean }[] = [
     { icon: MapPinIcon, label: t("address"), value: v.address },
     { icon: PhoneIcon, label: t("phone"), value: v.phone, href: `tel:${v.phone.replace(/[^\d+]/g, "")}`, ltr: true },
+    { icon: () => <span className="text-primary mt-0.5 size-5 shrink-0 [&_svg]:size-5"><WhatsAppGlyph /></span>, label: t("whatsapp"), value: whatsappHref(v.phone) ? v.phone : "", href: whatsappHref(v.phone), ltr: true },
     { icon: MailIcon, label: t("email"), value: v.email, href: `mailto:${v.email}`, ltr: true },
     { icon: () => <span className="text-primary mt-0.5 size-5 shrink-0 [&_svg]:size-5"><InstagramGlyph /></span>, label: t("instagram"), value: instagram.replace(/^https:\/\/(www\.)?/i, "").replace(/\/$/, ""), href: instagram, ltr: true },
   ].filter((r) => r.value)

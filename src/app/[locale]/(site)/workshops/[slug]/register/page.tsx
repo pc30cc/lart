@@ -25,7 +25,7 @@ import { formatDate, isolate } from "@/lib/format"
 import { getBrand, getSetting } from "@/lib/settings"
 import { Price } from "@/components/site/workshop-labels"
 import { pageLocale } from "@/i18n/page-locale"
-import { formatWorkshopDates, workshopHours } from "@/features/workshops/days"
+import { formatWorkshopDates, workshopHours, workshopSchedule } from "@/features/workshops/days"
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/workshops/[slug]/register">): Promise<Metadata> {
   const { locale: raw, slug } = await params
@@ -189,6 +189,11 @@ async function RegisterView({ params }: PageProps<"/[locale]/workshops/[slug]/re
         ageRange={w.ageMin !== null && w.ageMax !== null ? { min: w.ageMin, max: w.ageMax } : null}
         price={w.price}
         ways={paymentWayNames(payment, w.paymentUrl)}
+        days={
+          w.daySeatsLeft.length > 1
+            ? workshopSchedule(w, locale, "full").map((d, i) => ({ date: d.date, hours: d.hours, left: w.daySeatsLeft[i] ?? 0 }))
+            : undefined
+        }
       />
     </div>
   )

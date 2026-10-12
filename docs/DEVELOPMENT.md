@@ -1409,19 +1409,35 @@ places left; a "Register" button to its page) and a super admin sends it
 `courses.telegram_posted_at` / `telegram_message_id`). Without a cover it is a
 text post. "Send a test message" checks the bot and channel.
 
-**Workshops on several days** (`features/workshops/days`): the form's
-"Other days" adds days, each with its own date, hours and minimum and
-maximum participants (a new day starts with the previous day's). One price
-for all of them; the workshop's own places (the first day's) limit the
-registrations, the other days' participants are for the contract. Stored in
-`courses.days` (every day's start and end, the other days with their
-participants; null for one day) with `starts_at` the first day's start and
-`ends_at` the last day's end, so "started" and "ended" (registration window,
-closing, past lists) need nothing else. Pages, emails and the Telegram post
-list every day (`formatWorkshopDates`) and the hours (`workshopHours`: each
-day's when they differ; the public page and the admin overview then show one
-line per day); the contract has one line per day (date, hours,
-participants). Changing the days is a contract change like changing the date.
+**Workshops on several days** (`features/workshops/days`): each day is a
+session of the same workshop, and a person registering chooses one of them.
+The form's "Other days" adds days, each with its own date, hours and minimum
+and maximum participants (a new day starts with the previous day's); one
+price for all. Stored in `courses.days` (every day's start and end, the
+other days with their participants; null for one day) with `starts_at` the
+first day's start and `ends_at` the last day's end, so the registration
+window, closing and the past lists need nothing else; the first day's
+places are the workshop's own (`min_capacity`, `max_capacity`).
+`registrations.day` is the day chosen (its index; null for a one-day
+workshop, read as the first). Places are counted per day (`daySeatsLeft`:
+each day up to its maximum, and after the go decision no more than the
+final number in all); the register form shows the days as cards with their
+places left (a full one can't be chosen) and the server checks the day
+again under the workshop's lock. Everything about one registration follows
+its day (`forDay`, `registrationDay`): My workshops, its page and emails,
+cancelling and the refund band, the day-before reminder (per day), the
+admin's lists, cancel dialog and CSV (a "Day" column). The admin's
+registrations tab counts each day. A day with people registered on it can't
+be removed or get fewer places than them. Pages, emails and the Telegram
+post list every day (`formatWorkshopDates`, `workshopHours`); the public
+page lists each day with its hours and places left; the contract has one
+line per day (date, hours, participants). Changing the days is a contract
+change like changing the date, and clears the reminders already sent.
+
+**WhatsApp** (`components/site/whatsapp`): the footer's phone number opens
+a WhatsApp chat (wa.me, in a new tab; a Turkish 05xx number is read as
++90), still hidden from harvesters (`ProtectedContact` kind "whatsapp");
+the Contact page has a WhatsApp line under the phone.
 
 **QR code** (the workshop page's "QR code for posters" card): the public
 workshop page's address in the main language, as PNG (1200 px) and SVG

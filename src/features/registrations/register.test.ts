@@ -18,6 +18,7 @@ import { attachReceipt, canAttachReceipt, changePaymentChoice } from "./receipt"
 import { listAdminNotifications, markNotificationsSeen } from "@/features/notifications/queries"
 import {
   cancelPreview,
+  daySeatsLeft,
   MAX_ACTIVE_PER_MEMBER,
   paymentWayNames,
   registrationWindow,
@@ -366,6 +367,55 @@ describe("registerForWorkshop", () => {
   })
 })
 
+describe("workshops on several days", () => {
+  /** Day 1 in two days (10 places), day 2 three days later at other hours (1 place). */
+  async function severalDays() {
+    const start = Date.now() + 2 * DAY
+    const second = start + 3 * DAY
+    return newCourse(
+      {
+        days: [
+          { startsAt: new Date(start).toISOString(), endsAt: new Date(start + 2 * HOUR).toISOString() },
+          { startsAt: new Date(second).toISOString(), endsAt: new Date(second + 3 * HOUR).toISOString(), minCapacity: 1, maxCapacity: 1 },
+        ],
+        endsAt: new Date(second + 3 * HOUR),
+      },
+      2 * DAY,
+    )
+  }
+
+  it("needs a day, keeps it, and fills each day on its own", async () => {
+    const course = await severalDays()
+    const [a, b] = [await newMember(), await newMember()]
+    await rejectsWith(registerForWorkshop(a.id, await input(course.id)), "registration.register.errors.day")
+    await rejectsWith(registerForWorkshop(a.id, await input(course.id, { day: 2 })), "registration.register.errors.day")
+
+    const { id } = await registerForWorkshop(a.id, await input(course.id, { day: 1 }))
+    expect(await registrationOf(id)).toMatchObject({ day: 1 })
+    await rejectsWith(registerForWorkshop(b.id, await input(course.id, { day: 1 })), "registration.errors.dayFull")
+    await registerForWorkshop(b.id, await input(course.id, { day: 0 }))
+
+    const page = await getPublicWorkshop(course.slug, "en")
+    expect(page).toMatchObject({ daySeatsLeft: [9, 0], seatsLeft: 9, window: "open" })
+  })
+
+  it("counts the time left for a refund to the day chosen", async () => {
+    const course = await severalDays()
+    const member = await newMember()
+    const { id } = await registerForWorkshop(member.id, await input(course.id, { day: 1 }))
+    await db.update(registrations).set({ status: "confirmed", paymentMethod: "cash", paidAt: new Date() }).where(eq(registrations.id, id))
+    // Day 1 is two days away (50 %), day 2 five days away: all of it back.
+    expect(await cancelMyRegistration(member.id, id)).toMatchObject({ paid: 150_000, percent: 100, refund: 150_000 })
+  })
+
+  it("a one-day workshop keeps no day", async () => {
+    const course = await newCourse()
+    const member = await newMember()
+    const { id } = await registerForWorkshop(member.id, await input(course.id, { day: 1 }))
+    expect(await registrationOf(id)).toMatchObject({ day: null })
+  })
+})
+
 describe("transfer receipts and the panel's bell", () => {
   it("keeps the receipt of one's own registration waiting for payment, and tells the super admins", async () => {
     const course = await newCourse()
@@ -644,6 +694,18 @@ describe("public pages", () => {
 })
 
 describe("rules", () => {
+  it("daySeatsLeft: each day up to its own maximum, and no more than the final number in all", () => {
+    const at = (d: number) => new Date(Date.UTC(2026, 9, d, 9)).toISOString()
+    const days = [
+      { startsAt: at(17), endsAt: at(17) },
+      { startsAt: at(20), endsAt: at(20), maxCapacity: 4 },
+    ]
+    const course = { maxCapacity: 8, finalParticipants: null, startsAt: new Date(at(17)), endsAt: new Date(at(20)), days }
+    expect(daySeatsLeft(course, [3, 4])).toEqual({ days: [5, 0], total: 5 })
+    expect(daySeatsLeft({ ...course, finalParticipants: 9 }, [3, 4])).toEqual({ days: [2, 0], total: 2 })
+    expect(daySeatsLeft({ ...course, days: null }, [3])).toEqual({ days: [5], total: 5 })
+  })
+
   it("sameParticipant ignores spacing and case, Turkish letters too", () => {
     expect(sameParticipant("  İPEK   yılmaz", "ipek YILMAZ")).toBe(true)
     expect(sameParticipant("Deniz", "Denize")).toBe(false)

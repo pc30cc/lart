@@ -41,7 +41,10 @@
       "age": "Kimler için",
       "price": "Ücret",
       "seats": "Yerler",
-      "deadline": "Son kayıt"
+      "deadline": "Son kayıt",
+      "days": "Günler (kayıtta birini seçin)",
+      "dayLeft": "{count} yer kaldı",
+      "dayFull": "Dolu"
     },
     "register": "Kaydol",
     "registerHint": "Bir dakika sürer. Ödemeyi kayıttan sonra yaparsınız.",
@@ -125,12 +128,18 @@
     "submit": "Kaydol",
     "errors": {
       "acceptTerms": "Kaydolmak için lütfen bu kutuyu işaretleyin.",
-      "paymentChoice": "Lütfen bir ödeme yolu seçin."
+      "paymentChoice": "Lütfen bir ödeme yolu seçin.",
+      "day": "Lütfen bir gün seçin."
     },
     "impersonating": {
       "title": "Kaydı yalnızca kendisi yapabilir",
       "text": "Bu kişinin hesabını görüntülüyorsunuz. Kayıt olurken koşullar ile fotoğraf ve video izni kabul edilir; bu yüzden bunu yalnızca kişinin kendisi yapabilir.",
       "account": "Atölyelerini gör"
+    },
+    "day": {
+      "choose": "Hangi gün geleceksiniz?",
+      "left": "{count} yer kaldı",
+      "full": "Dolu"
     }
   },
   "errors": {
@@ -146,7 +155,9 @@
     "alreadyCancelled": "Bu kayıt zaten iptal edilmiş.",
     "cannotCancel": "Bu kayıt artık iptal edilemiyor.",
     "startedCancel": "Atölye başladı, bu yüzden bu kayıt artık iptal edilemiyor.",
-    "cannotChangeWay": "Bu kaydın ödeme yolu artık değiştirilemez."
+    "cannotChangeWay": "Bu kaydın ödeme yolu artık değiştirilemez.",
+    "dayFull": "O gün şimdi doldu. Lütfen başka bir gün seçin.",
+    "dayStarted": "O gün başladı. Lütfen başka bir gün seçin."
   },
   "status": {
     "unpaid": "Henüz ödenmedi",
@@ -253,7 +264,8 @@
       "cash": "Nakit ödendi",
       "transfer": "Banka havalesiyle ödendi",
       "online": "Online ödendi"
-    }
+    },
+    "chosenDay": "Gününüz"
   },
   "receipt": {
     "title": "Havale dekontu",

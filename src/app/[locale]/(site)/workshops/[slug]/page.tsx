@@ -27,7 +27,7 @@ import { getBrand } from "@/lib/settings"
 import { cn } from "@/lib/utils"
 import { AgeLabel, AvailabilityBadge, Price } from "@/components/site/workshop-labels"
 import { pageLocale } from "@/i18n/page-locale"
-import { formatWorkshopDates, workshopHours, sameHours, workshopSchedule } from "@/features/workshops/days"
+import { formatWorkshopDates, workshopHours, workshopSchedule } from "@/features/workshops/days"
 
 /** Search engines get a summary of at most this many characters. */
 const DESCRIPTION_MAX = 160
@@ -242,8 +242,8 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/work
 async function Facts({ workshop: w, locale }: { workshop: PublicWorkshop; locale: string }) {
   const t = await getTranslations("registration.workshop.facts")
   const rows: { icon: LucideIcon; label: string; value: React.ReactNode }[] = [
-    // Several days at different hours: each day with its own hours, on its own line.
-    ...(sameHours(w)
+    // Several days (people choose one): each day with its hours and places left, on its own line.
+    ...(w.daySeatsLeft.length <= 1
       ? [
           { icon: CalendarDaysIcon, label: t("date"), value: formatWorkshopDates(w, locale, "full") },
           { icon: ClockIcon, label: t("time"), value: <bdi>{workshopHours(w, locale)}</bdi> },
@@ -251,12 +251,17 @@ async function Facts({ workshop: w, locale }: { workshop: PublicWorkshop; locale
       : [
           {
             icon: CalendarDaysIcon,
-            label: t("date"),
+            label: t("days"),
             value: (
-              <ul className="space-y-0.5">
-                {workshopSchedule(w, locale, "full").map((d) => (
+              <ul className="space-y-1">
+                {workshopSchedule(w, locale, "full").map((d, i) => (
                   <li key={d.date}>
                     {d.date} · <bdi className="tabular-nums">{d.hours}</bdi>
+                    {w.window === "open" && (
+                      <span className="text-muted-foreground block text-xs font-normal">
+                        {(w.daySeatsLeft[i] ?? 0) > 0 ? t("dayLeft", { count: w.daySeatsLeft[i] }) : t("dayFull")}
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>

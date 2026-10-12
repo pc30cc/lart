@@ -162,6 +162,13 @@
       "when": 1791824482299,
       "tag": "0022_workshop_days",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791827949641,
+      "tag": "0023_registration_day",
+      "breakpoints": true
     }
   ]
 }

@@ -8,6 +8,7 @@ import { UserError } from "@/lib/errors"
 import { zonedToIso } from "@/lib/format"
 import { refundAmount, refundPercent, type RefundPercent } from "../refund-policy"
 import type { PaymentMethod } from "./schema"
+import { registrationDay } from "@/features/workshops/days"
 
 /**
  * The money side of one registration, in ONE place: a payment is recorded
@@ -140,7 +141,13 @@ export async function cancelRegistration(
   const { course, reg } = await lock(tx, input.registrationId)
   if (reg.status === "cancelled") throw new UserError(`${E}.alreadyCancelled`)
   if (booksClosed(course)) throw new UserError("money.errors.workshopClosed")
-  const [{ startsAt }] = await tx.select({ startsAt: courses.startsAt }).from(courses).where(eq(courses.id, reg.courseId))
+  // Several days: the time left is counted to the day chosen.
+  const [row] = await tx
+    .select({ startsAt: courses.startsAt, endsAt: courses.endsAt, days: courses.days, day: registrations.day })
+    .from(registrations)
+    .innerJoin(courses, eq(courses.id, registrations.courseId))
+    .where(eq(registrations.id, input.registrationId))
+  const { startsAt } = registrationDay(row, row.day)
 
   const paid = reg.status === "confirmed" ? reg.amount : 0
   const full = input.refund === "full"

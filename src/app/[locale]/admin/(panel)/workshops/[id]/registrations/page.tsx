@@ -13,6 +13,8 @@ import { RegistrationActions } from "@/features/registrations/admin/components/d
 import { PaymentCell, refundOwed } from "@/features/registrations/admin/components/payment-cell"
 import { listWorkshopRegistrations, registrationSummary, type AdminRegistrationRow } from "@/features/registrations/admin/queries"
 import { paymentMethods, registrationTable, registrationViews, type PaymentMethod } from "@/features/registrations/admin/schema"
+import { seatsTakenByDay } from "@/features/registrations/public"
+import { registrationDay, workshopDays } from "@/features/workshops/days"
 import { getWorkshop } from "@/features/workshops/queries"
 import { isCancelled } from "@/features/workshops/schema"
 import { localeHref } from "@/i18n/links"
@@ -50,13 +52,14 @@ export default async function WorkshopRegistrationsPage({
     pageSize: 50,
     filters: registrationTable.filters,
   })
-  const [workshop, summary, { rows, total }, payment, t, locale] = await Promise.all([
+  const [workshop, summary, { rows, total }, payment, t, locale, takenByDay] = await Promise.all([
     getWorkshop(id),
     registrationSummary(id),
     listWorkshopRegistrations(id, tableParams),
     getSetting("payment"),
     getTranslations("workshops.registrations"),
     getLocale(),
+    seatsTakenByDay(id),
   ])
   if (!workshop) notFound()
   const exportHref = await localeHref(locale, `/admin/workshops/${workshop.id}/registrations/export`)
@@ -67,7 +70,10 @@ export default async function WorkshopRegistrationsPage({
   const url = await publicUrls()
   const defaultMethod: PaymentMethod =
     paymentMethods.find((m) => (m === "cash" ? payment.cash : payment[m].enabled)) ?? "cash"
-  const startsAt = workshop.startsAt.toISOString()
+  // Several days: each registration's day (cancelling and refunds count to it).
+  const days = workshopDays(workshop)
+  const dayLabel = (day: number | null) =>
+    t("table.day", { n: n((day ?? 0) + 1), date: formatDate(registrationDay(workshop, day).startsAt, locale, "medium") })
 
   const columns: Column<AdminRegistrationRow>[] = [
     {
@@ -78,6 +84,7 @@ export default async function WorkshopRegistrationsPage({
       cell: (r) => (
         <span className={cn("block min-w-0", r.status === "cancelled" && "opacity-70")}>
           <span className="block truncate font-medium">{r.participantName}</span>
+          {days.length > 1 && <span className="text-primary block truncate text-xs font-medium">{dayLabel(r.day)}</span>}
           <span className="text-muted-foreground block truncate text-xs">
             {t("table.registeredOn", { date: formatDate(r.createdAt, locale, "medium") })}
           </span>
@@ -162,7 +169,7 @@ export default async function WorkshopRegistrationsPage({
                   amount: r.amount,
                   refundOwed: refundOwed(r),
                 }}
-                startsAt={startsAt}
+                startsAt={registrationDay(workshop, r.day).startsAt.toISOString()}
                 defaultMethod={(r.paymentChoice as PaymentMethod | null) ?? defaultMethod}
               />
             ),
@@ -239,6 +246,18 @@ export default async function WorkshopRegistrationsPage({
               </div>
             ))}
           </dl>
+          {days.length > 1 && (
+            <ul className="flex flex-wrap gap-2" aria-label={t("byDay")}>
+              {days.map((d, i) => (
+                <li key={i} className="bg-card ring-foreground/8 rounded-lg px-3 py-1.5 text-sm shadow-xs ring-1">
+                  {dayLabel(i)}:{" "}
+                  <span className="font-semibold tabular-nums">
+                    {t("dayCount", { taken: n(takenByDay[i] ?? 0), max: n(i === 0 ? workshop.maxCapacity : (d.maxCapacity ?? workshop.maxCapacity)) })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
 
           <DataTable
             columns={columns}

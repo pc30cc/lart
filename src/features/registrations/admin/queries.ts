@@ -34,6 +34,8 @@ const columns = {
   photoConsent: registrations.photoConsent,
   videoConsent: registrations.videoConsent,
   createdAt: registrations.createdAt,
+  /** Several days: the day chosen (index; null = the first). */
+  day: registrations.day,
   member: { id: members.id, name: members.name, email: members.email, phone: members.phone },
 }
 
@@ -153,6 +155,8 @@ export async function listRegistrations(params: AllRegistrationParams) {
           title: courses.title,
           slug: courses.slug,
           startsAt: courses.startsAt,
+          endsAt: courses.endsAt,
+          days: courses.days,
           status: courses.status,
           closedAt: courses.closedAt,
           cancelledAt: courses.cancelledAt,

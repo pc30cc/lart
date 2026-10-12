@@ -1,8 +1,9 @@
-import { MailIcon, PhoneIcon } from "lucide-react"
+import { MailIcon } from "lucide-react"
 import { getTranslations } from "next-intl/server"
 
 import { LanguageLinks } from "@/components/site/language-links"
 import { InstagramGlyph } from "@/components/site/instagram-glyph"
+import { WhatsAppGlyph } from "@/components/site/whatsapp-glyph"
 import { ProtectedContact } from "@/components/site/protected-contact"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Link } from "@/i18n/navigation"
@@ -76,10 +77,10 @@ export async function Footer({
               {footer.phoneCode && (
                 <li>
                   <ProtectedContact
-                    kind="phone"
+                    kind="whatsapp"
                     code={footer.phoneCode}
                     label={t("showPhone")}
-                    icon={<PhoneIcon aria-hidden />}
+                    icon={<WhatsAppGlyph />}
                     className={contactLink}
                     // Whole on wide screens; the narrow column of a tablet lets it break at its spaces.
                     valueClassName="lg:whitespace-nowrap"

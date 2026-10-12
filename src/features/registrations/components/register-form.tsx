@@ -38,6 +38,7 @@ export function RegisterForm({
   ageRange,
   price,
   ways,
+  days,
 }: {
   courseId: string
   defaultName: string
@@ -48,6 +49,8 @@ export function RegisterForm({
   /** In kuruş; 0 for a free workshop. */
   price: number
   ways: PaymentWayName[]
+  /** A workshop on several days: each day (written out) and its places left, to choose one. */
+  days?: { date: string; hours: string; left: number }[]
 }) {
   const t = useTranslations("registration.register")
   const tp = useTranslations("registration.price")
@@ -65,6 +68,8 @@ export function RegisterForm({
       photoConsent: false,
       videoConsent: false,
       paymentChoice: price > 0 ? ways[0] : undefined,
+      // The first day with a place left, to start with.
+      day: days ? Math.max(0, days.findIndex((d) => d.left > 0)) : undefined,
     },
   })
   const dialog = (chunks: React.ReactNode) => (
@@ -105,6 +110,8 @@ export function RegisterForm({
           </p>
         )}
       </section>
+
+      {days && <DayChoiceField days={days} />}
 
       <section className="space-y-2.5">
         <CheckField name="acceptTerms" ariaLabel={t("acceptTerms")} label={t.rich("acceptTermsRich", { terms: dialog, sales: salesLink })} strong />
@@ -190,6 +197,51 @@ function TermsDialog({
         </div>
       </DialogContent>
     </Dialog>
+  )
+}
+
+/** A workshop on several days: which day, as big cards to tap (a full day can't be chosen). */
+function DayChoiceField({ days }: { days: { date: string; hours: string; left: number }[] }) {
+  const t = useTranslations("registration.register.day")
+  return (
+    <FormField<RegisterValues> name="day">
+      {({ id, value, onChange, ...aria }) => (
+        <fieldset className="space-y-2.5">
+          <legend id={`${id}-legend`} className="mb-2.5 text-base font-semibold">
+            {t("choose")}
+          </legend>
+          <RadioGroup
+            value={value === undefined ? "" : String(value)}
+            onValueChange={(v) => onChange(Number(v))}
+            aria-labelledby={`${id}-legend`}
+            className="gap-2.5"
+            {...aria}
+          >
+            {days.map((d, i) => (
+              <label
+                key={i}
+                htmlFor={`${id}-${i}`}
+                className={cn(
+                  "has-data-[state=checked]:border-primary/60 has-data-[state=checked]:bg-primary/5 flex items-start gap-3 rounded-xl border p-3.5 transition-colors",
+                  d.left > 0 ? "cursor-pointer" : "opacity-55",
+                )}
+              >
+                <RadioGroupItem id={`${id}-${i}`} value={String(i)} disabled={d.left <= 0} className="mt-0.5 size-5" />
+                <span className="flex min-w-0 flex-1 flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                  <span>
+                    <span className="block font-medium">{d.date}</span>
+                    <bdi className="text-muted-foreground block text-sm tabular-nums">{d.hours}</bdi>
+                  </span>
+                  <span className={cn("text-sm", d.left > 0 ? "text-muted-foreground" : "text-destructive font-medium")}>
+                    {d.left > 0 ? t("left", { count: d.left }) : t("full")}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </RadioGroup>
+        </fieldset>
+      )}
+    </FormField>
   )
 }
 

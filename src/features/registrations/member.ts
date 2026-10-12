@@ -11,6 +11,7 @@ import { getSetting } from "@/lib/settings"
 import { publicUrls } from "@/lib/storage"
 import { workshopTerms } from "./public"
 import { paymentWayNames, safePaymentUrl } from "./schema"
+import { forDay } from "@/features/workshops/days"
 
 /**
  * The signed-in member's own registrations ("My workshops"). Every read calls
@@ -35,6 +36,7 @@ const columns = {
   videoConsent: registrations.videoConsent,
   termsAcceptedAt: registrations.termsAcceptedAt,
   createdAt: registrations.createdAt,
+  day: registrations.day,
   course: {
     id: courses.id,
     slug: courses.slug,
@@ -68,17 +70,21 @@ async function present(rows: Row[], locale: string) {
     ...r,
     /** The transfer receipt they sent (its CDN address), or null. */
     receiptUrl: url(receiptPath),
-    course: {
-      id: course.id,
-      slug: course.publishedAt ? course.slug : null,
-      status: course.status,
-      title: localized(course.title, locale),
-      venue: localized(course.venue, locale),
-      startsAt: course.startsAt,
-      days: course.days,
-      endsAt: course.endsAt,
-      closedAt: course.closedAt,
-    },
+    // Several days: the workshop as their day (its date and hours, cancelling and refunds counted to it).
+    course: forDay(
+      {
+        id: course.id,
+        slug: course.publishedAt ? course.slug : null,
+        status: course.status,
+        title: localized(course.title, locale),
+        venue: localized(course.venue, locale),
+        startsAt: course.startsAt,
+        days: course.days,
+        endsAt: course.endsAt,
+        closedAt: course.closedAt,
+      },
+      r.day,
+    ),
     /** How to pay: the way they chose when registering (else every way switched on); only shown while not paid yet. */
     ways: chosenWay(paymentWays(payment, safePaymentUrl(course.paymentUrl), locale), r.paymentChoice),
     /** The other ways on, to change to ("Pay another way"); none before a way was chosen. */

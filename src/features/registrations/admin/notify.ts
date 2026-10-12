@@ -11,7 +11,7 @@ import { formatLira } from "@/lib/money"
 import { getSetting } from "@/lib/settings"
 import type { CancelledRegistration, ChangedRefund } from "./payments"
 import type { PaymentMethod } from "./schema"
-import { formatWorkshopDates, workshopHours } from "@/features/workshops/days"
+import { forDay, formatWorkshopDates, workshopHours } from "@/features/workshops/days"
 
 /**
  * Emails to the member after an admin recorded a payment, cancelled a
@@ -32,6 +32,7 @@ async function load(registrationId: string) {
       amount: registrations.amount,
       refundAmount: registrations.refundAmount,
       participantName: registrations.participantName,
+      day: registrations.day,
       member: { name: members.name, email: members.email, locale: members.locale },
       course: { title: courses.title, venue: courses.venue, startsAt: courses.startsAt, endsAt: courses.endsAt, days: courses.days },
     })
@@ -41,7 +42,8 @@ async function load(registrationId: string) {
     .where(eq(registrations.id, registrationId))
     .limit(1)
   if (!row) return null
-  return { ...row, locale: memberLocale(row.member.locale, await getSetting("defaultLocale")) }
+  // Several days: the workshop as their day.
+  return { ...row, course: forDay(row.course, row.day), locale: memberLocale(row.member.locale, await getSetting("defaultLocale")) }
 }
 
 /** "We've received your payment": paid, place confirmed. */

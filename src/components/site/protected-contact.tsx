@@ -4,6 +4,7 @@ import { useMemo, useSyncExternalStore } from "react"
 
 import { reveal } from "@/lib/conceal"
 import { cn } from "@/lib/utils"
+import { whatsappHref } from "./whatsapp"
 
 /**
  * Whether a person is on the page: the first scroll, pointer move, touch, key
@@ -42,7 +43,8 @@ function subscribe(listener: () => void) {
  * reader's user may never scroll. One element throughout, so focus stays on
  * it when the address appears, and the press (or touch) that shows it never
  * also opens the mail app or the dialer. Without JavaScript nothing is shown
- * (the stand-in could not work).
+ * (the stand-in could not work). A phone number opens a WhatsApp chat with
+ * it (`kind: "whatsapp"`, in a new tab) or the dialer (`kind: "phone"`).
  */
 export function ProtectedContact({
   kind,
@@ -52,7 +54,7 @@ export function ProtectedContact({
   className,
   valueClassName,
 }: {
-  kind: "email" | "phone"
+  kind: "email" | "phone" | "whatsapp"
   /** `conceal(address)`. */
   code: string
   label: string
@@ -63,11 +65,19 @@ export function ProtectedContact({
 }) {
   const shown = useSyncExternalStore(subscribe, () => present, () => false)
   const value = useMemo(() => (shown ? reveal(code) : ""), [shown, code])
-  const href = value ? (kind === "email" ? `mailto:${value}` : `tel:${value.replace(/[^\d+]/g, "")}`) : undefined
+  const href = !value
+    ? undefined
+    : kind === "email"
+      ? `mailto:${value}`
+      : kind === "whatsapp"
+        ? whatsappHref(value) || `tel:${value.replace(/[^\d+]/g, "")}`
+        : `tel:${value.replace(/[^\d+]/g, "")}`
+  const external = href?.startsWith("https:")
 
   return (
     <a
       href={href}
+      {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       role={href ? undefined : "button"}
       tabIndex={href ? undefined : 0}
       onClick={(event) => {

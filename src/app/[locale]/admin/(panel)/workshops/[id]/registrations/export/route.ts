@@ -13,6 +13,7 @@ import { routing } from "@/i18n/routing"
 import { audit } from "@/lib/audit"
 import { requireAdminApi } from "@/lib/auth/admin"
 import { zonedParts } from "@/lib/format"
+import { registrationDay, workshopDays } from "@/features/workshops/days"
 
 /**
  * CSV of a workshop's registrations (participant, member's contact, payment,
@@ -27,7 +28,10 @@ export async function GET(request: Request, ctx: RouteContext<"/[locale]/admin/w
 
   const { locale: requested, id } = await ctx.params
   if (!z.uuid().safeParse(id).success) return new Response(null, { status: 404 })
-  const [course] = await db.select({ slug: courses.slug }).from(courses).where(eq(courses.id, id))
+  const [course] = await db
+    .select({ slug: courses.slug, startsAt: courses.startsAt, endsAt: courses.endsAt, days: courses.days })
+    .from(courses)
+    .where(eq(courses.id, id))
   if (!course) return new Response(null, { status: 404 })
   const locale = hasLocale(routing.locales, requested) ? requested : routing.defaultLocale
   const t = await getTranslations({ locale, namespace: "workshops.registrations" })
@@ -36,8 +40,11 @@ export async function GET(request: Request, ctx: RouteContext<"/[locale]/admin/w
   // Istanbul days, in the language's calendar (Persian: "1405/07/16").
   const day = (value: Date | null) => (value ? csvDate(zonedParts(value).date, locale) : "")
   const yesNo = (value: boolean) => (value ? t("csv.yes") : t("csv.no"))
+  // Several days: which day each person comes.
+  const several = workshopDays(course).length > 1
   const columns = [
     "participant",
+    ...(several ? (["day"] as const) : []),
     "member",
     "email",
     "phone",
@@ -55,6 +62,7 @@ export async function GET(request: Request, ctx: RouteContext<"/[locale]/admin/w
     columns.map((c) => t(`csv.${c}`)),
     ...rows.map((r) => [
       r.participantName,
+      ...(several ? [day(registrationDay(course, r.day).startsAt)] : []),
       r.member.name,
       r.member.email,
       r.member.phone ?? "",

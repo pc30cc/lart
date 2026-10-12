@@ -1,5 +1,5 @@
 import "server-only"
-import { and, asc, count, eq, gt, inArray, isNotNull } from "drizzle-orm"
+import { and, asc, count, eq, gt, inArray, isNotNull, sql } from "drizzle-orm"
 import { cache } from "react"
 
 import { db, type Tx } from "@/db"
@@ -12,7 +12,7 @@ import { errorForLog } from "@/lib/errors"
 import { fallbackLanguage, localized, ownText } from "@/lib/format"
 import { getBrand } from "@/lib/settings"
 import { getStorage, type Storage } from "@/lib/storage"
-import { activeStatuses, registrationWindow, safePaymentUrl, seatLimit } from "./schema"
+import { activeStatuses, daySeatsLeft, registrationWindow, safePaymentUrl } from "./schema"
 
 /**
  * The public side of workshops (no sign-in needed): the open workshops list,
@@ -45,18 +45,39 @@ export async function seatsTaken(courseId: string, exec: Exec = db): Promise<num
   return row.n
 }
 
+/** The registrations' day (null, a one-day workshop's, is the first). */
+const dayIndex = sql<number>`coalesce(${registrations.day}, 0)`.mapWith(Number)
+
+/** Places held on each day of a workshop (index = day; one entry for a one-day workshop). */
+export async function seatsTakenByDay(courseId: string, exec: Exec = db): Promise<number[]> {
+  const rows = await exec
+    .select({ day: dayIndex, n: count() })
+    .from(registrations)
+    .where(and(eq(registrations.courseId, courseId), inArray(registrations.status, [...activeStatuses])))
+    .groupBy(dayIndex)
+  return toDays(rows)
+}
+
+const toDays = (rows: { day: number; n: number }[]) => {
+  const out: number[] = []
+  for (const r of rows) out[r.day] = r.n
+  return Array.from(out, (n) => n ?? 0)
+}
+
 /** Places still free (never below zero); `limit` is `seatLimit(course)`. */
 export const seatsLeft = (limit: number, taken: number) => Math.max(0, limit - taken)
 
-/** Places held per workshop, for lists. */
-async function seatsTakenOf(courseIds: string[]): Promise<Map<string, number>> {
+/** Places held per workshop and day, for lists. */
+async function seatsTakenOf(courseIds: string[]): Promise<Map<string, number[]>> {
   if (!courseIds.length) return new Map()
   const rows = await db
-    .select({ courseId: registrations.courseId, n: count() })
+    .select({ courseId: registrations.courseId, day: dayIndex, n: count() })
     .from(registrations)
     .where(and(inArray(registrations.courseId, courseIds), inArray(registrations.status, [...activeStatuses])))
-    .groupBy(registrations.courseId)
-  return new Map(rows.map((r) => [r.courseId, r.n]))
+    .groupBy(registrations.courseId, dayIndex)
+  const byCourse = new Map<string, { day: number; n: number }[]>()
+  for (const r of rows) byCourse.set(r.courseId, [...(byCourse.get(r.courseId) ?? []), r])
+  return new Map([...byCourse].map(([id, list]) => [id, toDays(list)]))
 }
 
 // ─── Files ────────────────────────────────────────────────────────────────────
@@ -121,7 +142,7 @@ export async function listOpenWorkshops(
   const [taken, files] = await Promise.all([seatsTakenOf(rows.map((r) => r.id)), storage()])
 
   return rows.map((r) => {
-    const left = seatsLeft(seatLimit(r), taken.get(r.id) ?? 0)
+    const left = daySeatsLeft(r, taken.get(r.id) ?? []).total
     return {
       id: r.id,
       slug: r.slug,
@@ -210,7 +231,7 @@ export const getPublicWorkshop = cache(async (slug: string, locale: string) => {
   if (!row) return null
 
   const [taken, samples, files] = await Promise.all([
-    seatsTaken(row.id),
+    seatsTakenByDay(row.id),
     db
       .select({ path: media.path, width: media.width, height: media.height })
       .from(media)
@@ -218,7 +239,8 @@ export const getPublicWorkshop = cache(async (slug: string, locale: string) => {
       .orderBy(asc(media.sort), asc(media.createdAt)),
     storage(),
   ])
-  const left = seatsLeft(seatLimit(row), taken)
+  const seats = daySeatsLeft(row, taken)
+  const left = seats.total
   const text = (value: Parameters<typeof localized>[0]) => localized(value, locale)
   const lang = (value: Parameters<typeof localized>[0]) => fallbackLanguage(value, locale)
 
@@ -259,6 +281,8 @@ export const getPublicWorkshop = cache(async (slug: string, locale: string) => {
     maxCapacity: row.maxCapacity,
     price: row.price,
     seatsLeft: left,
+    /** Several days: the places left on each day (index = day), for choosing one. */
+    daySeatsLeft: seats.days,
     termsTemplateId: row.termsTemplateId,
     /** The online payment link, only when it is a safe https link (shown to registered students). */
     paymentUrl: safePaymentUrl(row.paymentUrl) ?? null,

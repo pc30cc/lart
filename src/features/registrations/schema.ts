@@ -8,6 +8,7 @@ import { z } from "zod"
 import { uuid } from "@/components/admin/form/schemas"
 import { normalizePhone, personName } from "@/features/accounts/schema"
 import { locales } from "@/i18n/routing"
+import { type StoredDays, workshopDays } from "@/features/workshops/days"
 import { refundAmount, refundPercent, type RefundPercent } from "./refund-policy"
 
 /** Active registrations (they hold a seat): registered, not paid yet ("pending") and paid ("confirmed"). */
@@ -48,6 +49,8 @@ export const registerSchema = z.object({
   videoConsent: z.boolean(),
   /** How they will pay (a paid workshop with ways to pay); the server checks it is one of the ways on. */
   paymentChoice: z.enum(["cash", "transfer", "online"]).optional(),
+  /** A workshop on several days: the day chosen (its index); the server checks it. */
+  day: z.number().int().min(0).max(13).optional(),
 })
 export type RegisterValues = z.input<typeof registerSchema>
 
@@ -123,6 +126,28 @@ export const formatIban = (iban: string) => iban.replace(/\s+/g, "").replace(/(.
  */
 export function seatLimit(course: { maxCapacity: number; finalParticipants: number | null }): number {
   return course.finalParticipants === null ? course.maxCapacity : Math.min(course.maxCapacity, course.finalParticipants)
+}
+
+/**
+ * Places left on each day and in all. One day: `seatLimit` less those held.
+ * Several days (each a session people choose one of): each day up to its own
+ * maximum (the first day's is the workshop's), and after the go decision no
+ * more than its final number in all days together.
+ */
+export function daySeatsLeft(
+  course: { maxCapacity: number; finalParticipants: number | null; startsAt: Date; endsAt: Date; days?: StoredDays },
+  takenByDay: number[],
+): { days: number[]; total: number } {
+  const days = workshopDays(course)
+  const taken = (i: number) => takenByDay[i] ?? 0
+  const all = takenByDay.reduce((a, b) => a + b, 0)
+  if (days.length === 1) {
+    const left = Math.max(0, seatLimit(course) - all)
+    return { days: [left], total: left }
+  }
+  const cap = course.finalParticipants === null ? Infinity : Math.max(0, course.finalParticipants - all)
+  const left = days.map((d, i) => Math.max(0, (i === 0 ? course.maxCapacity : (d.maxCapacity ?? course.maxCapacity)) - taken(i)))
+  return { days: left.map((n) => Math.min(n, cap)), total: Math.min(left.reduce((a, b) => a + b, 0), cap) }
 }
 
 /**
