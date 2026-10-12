@@ -28,7 +28,9 @@ beforeAll(async () => {
   partner = await makeAdmin("Queries Partner")
   session.admin.id = partner.id
   const world = await makeWorld()
-  courseId = await makeCourse(world, partner.id, { status: "published", fee: { type: "fixed", amount: 9000, advance: 3000 } })
+  // Years ahead: the filter lists the latest 300 workshops with entries, and the test database keeps every run's.
+  const endsAt = new Date(Date.now() + 3650 * 86_400_000)
+  courseId = await makeCourse(world, partner.id, { status: "published", endsAt, fee: { type: "fixed", amount: 9000, advance: 3000 } })
   const common = { occurredOn: day, createdBy: partner.id }
   await db.transaction(async (tx) => {
     ids.contribution = await postContribution(tx, { ...common, description: "seed money", partnerId: partner.id, amount: 50000 })
