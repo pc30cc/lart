@@ -1,6 +1,5 @@
 {
   "title": "Ziyaretler",
-  "description": "Siteyi kaç kişinin ziyaret ettiği, neye baktıkları ve nereden geldikleri. Sayımı site kendisi yapar, çerez kullanmadan.",
   "range": {
     "label": "Dönem",
     "7": "7 gün",
@@ -47,7 +46,6 @@
   },
   "sources": {
     "title": "Ziyaretçiler nereden geliyor",
-    "description": "Onları gönderen site; “Doğrudan”: adres yazıldı, yer imi ya da kaynağı gizleyen bir uygulama.",
     "direct": "Doğrudan"
   },
   "devices": {
@@ -66,6 +64,5 @@
     "title": "Ülkeler",
     "unknown": "Bilinmiyor"
   },
-  "none": "Bu dönemde henüz bir şey yok.",
-  "privacy": "Çerez ve IP adresi tutulmaz: her ziyaretçi her gün değişen anonim bir koddur; aynı kişi günde bir kez sayılır ve günden güne izlenemez. Arama motorları ve diğer botlar sayılmaz. Ziyaretler 13 ay saklanır."
+  "none": "Bu dönemde henüz bir şey yok."
 }

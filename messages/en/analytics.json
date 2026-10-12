@@ -1,6 +1,5 @@
 {
   "title": "Visits",
-  "description": "How many people visit the site, what they look at and where they come from. Counted by the site itself, without cookies.",
   "range": {
     "label": "Period",
     "7": "7 days",
@@ -47,7 +46,6 @@
   },
   "sources": {
     "title": "Where visitors come from",
-    "description": "The site that sent them; “Direct”: typed in, a bookmark or an app that hides it.",
     "direct": "Direct"
   },
   "devices": {
@@ -66,6 +64,5 @@
     "title": "Countries",
     "unknown": "Unknown"
   },
-  "none": "Nothing yet in this period.",
-  "privacy": "No cookies and no IP addresses are kept: a visitor is an anonymous code that changes every day, so the same person counts once a day and can't be followed from day to day. Search engines and other robots are left out. Visits are kept for 13 months."
+  "none": "Nothing yet in this period."
 }

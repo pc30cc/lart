@@ -34,7 +34,6 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/[local
   const header = (
     <PageHeader
       title={t("title")}
-      description={t("description")}
       actions={
         <nav aria-label={t("range.label")} className="bg-muted inline-flex rounded-lg p-1">
           {ranges.map((r) => (
@@ -128,7 +127,7 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/[local
               empty={t("none")}
             />
           </Panel>
-          <Panel id="analytics-sources" title={t("sources.title")} description={t("sources.description")}>
+          <Panel id="analytics-sources" title={t("sources.title")}>
             <RankList
               rows={stats.referrers.map((r) => ({ key: r.host ?? "direct", label: r.host ?? t("sources.direct"), value: r.visitors }))}
               locale={locale}
@@ -171,7 +170,6 @@ export default async function AnalyticsPage({ searchParams }: PageProps<"/[local
             />
           </Panel>
         </div>
-        <p className="text-muted-foreground px-1 text-xs text-pretty">{t("privacy")}</p>
       </div>
     </>
   )
