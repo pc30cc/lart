@@ -44,6 +44,7 @@ const registration: MyRegistration = {
   amount: 150_000,
   paymentMethod: null,
   paymentChoice: null,
+  otherWays: [],
   receiptUrl: null,
   receiptAt: null,
   paidAt: null,

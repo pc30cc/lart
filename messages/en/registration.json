@@ -145,7 +145,8 @@
     "termsChanged": "The terms were just updated. Please reload the page, read them and register again.",
     "alreadyCancelled": "This registration is already cancelled.",
     "cannotCancel": "This registration can’t be cancelled any more.",
-    "startedCancel": "The workshop has already started, so this registration can’t be cancelled any more."
+    "startedCancel": "The workshop has already started, so this registration can’t be cancelled any more.",
+    "cannotChangeWay": "The way to pay this registration can no longer be changed."
   },
   "status": {
     "unpaid": "Not paid yet",
@@ -278,5 +279,12 @@
       "server": "It wasn’t sent. Please try again a little later.",
       "network": "Couldn’t connect. Please check your internet and try again."
     }
+  },
+  "changeWay": {
+    "question": "Prefer to pay another way?",
+    "cash": "I’ll pay in cash at the workshop instead",
+    "transfer": "I’ll pay by bank transfer instead",
+    "online": "I’ll pay online by card instead",
+    "done": "The way to pay was changed."
   }
 }

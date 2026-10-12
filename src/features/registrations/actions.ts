@@ -12,7 +12,8 @@ import { memberAction } from "@/lib/action"
 import { errorForLog } from "@/lib/errors"
 import { sendRegistrationCancelled, sendRegistrationReceived } from "./notify"
 import { cancelMyRegistration, registerForWorkshop } from "./register"
-import { profileSchema, registerSchema, registrationIdSchema } from "./schema"
+import { changePaymentChoice } from "./receipt"
+import { paymentChoiceSchema, profileSchema, registerSchema, registrationIdSchema } from "./schema"
 
 /**
  * The member's registration actions on the site. Every one runs as the
@@ -52,6 +53,17 @@ export const cancelRegistrationAction = memberAction(registrationIdSchema, async
   refresh()
   return { paid, refund, percent }
 })
+
+/** "Pay another way": the member's own registration waiting for payment, to another way that is on. */
+export const changePaymentChoiceAction = memberAction(
+  paymentChoiceSchema,
+  async ({ id, choice }, ctx) => {
+    const result = await changePaymentChoice(ctx.member.id, id, choice)
+    refresh()
+    return result
+  },
+  { notImpersonated: true },
+)
 
 /** "My details": name, phone and the language of the member's emails. */
 export const saveProfileAction = memberAction(profileSchema, async ({ name, phone, locale }, ctx) => {

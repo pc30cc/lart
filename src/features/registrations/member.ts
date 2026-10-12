@@ -10,7 +10,7 @@ import { localized } from "@/lib/format"
 import { getSetting } from "@/lib/settings"
 import { publicUrls } from "@/lib/storage"
 import { workshopTerms } from "./public"
-import { safePaymentUrl } from "./schema"
+import { paymentWayNames, safePaymentUrl } from "./schema"
 
 /**
  * The signed-in member's own registrations ("My workshops"). Every read calls
@@ -79,6 +79,8 @@ async function present(rows: Row[], locale: string) {
     },
     /** How to pay: the way they chose when registering (else every way switched on); only shown while not paid yet. */
     ways: chosenWay(paymentWays(payment, safePaymentUrl(course.paymentUrl), locale), r.paymentChoice),
+    /** The other ways on, to change to ("Pay another way"); none before a way was chosen. */
+    otherWays: r.paymentChoice ? paymentWayNames(payment, course.paymentUrl).filter((w) => w !== r.paymentChoice) : [],
   }))
 }
 

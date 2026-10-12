@@ -1387,6 +1387,9 @@ registration only, never while viewed as; a photo kept as WebP or a PDF as it
 is, in `receipts/`; a new one replaces the old: `receipt_path`, `receipt_at`).
 A super admin still marks it paid (`RecordPaymentDialog`, preselected to their
 choice); the registrations lists show "Will pay: …" and the receipt link.
+The member may change their mind while it is not paid ("Prefer to pay another
+way?" on their registration page: `changePaymentChoiceAction`, only to a way
+that is on).
 
 **The panel's bell** (`NotificationBell` in the header,
 `features/notifications`): an `admin_notifications` row for each new

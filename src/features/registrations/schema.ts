@@ -51,6 +51,9 @@ export const registerSchema = z.object({
 })
 export type RegisterValues = z.input<typeof registerSchema>
 
+/** The member changes how they will pay one of their registrations. */
+export const paymentChoiceSchema = z.object({ id: uuid(), choice: z.enum(["cash", "transfer", "online"]) })
+
 /** One of the member's own registrations (cancel). */
 export const registrationIdSchema = z.object({ id: uuid() })
 

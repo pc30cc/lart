@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button"
 import { CancelRegistration } from "@/features/registrations/components/cancel-registration"
 import { PaymentBadge } from "@/features/registrations/components/payment-badge"
 import { PaymentInstructions } from "@/features/registrations/components/payment-instructions"
+import { ChangePaymentWay } from "@/features/registrations/components/change-payment-way"
 import { ReceiptUpload } from "@/features/registrations/components/receipt-upload"
 import { TermsText } from "@/features/registrations/components/terms-text"
 import { getMyRegistration } from "@/features/registrations/member"
@@ -88,6 +89,8 @@ export default async function MyRegistrationPage({ params, searchParams }: PageP
           <PaymentInstructions ways={r.ways} amount={r.amount} participantName={r.participantName} />
           {/* A bank transfer: they can send the receipt here. */}
           {r.ways.transfer && !impersonating && <ReceiptUpload registrationId={r.id} receiptUrl={r.receiptUrl} receiptAt={r.receiptAt} />}
+          {/* Changed their mind: another way that is on (e.g. cash at the workshop instead of a transfer). */}
+          {!impersonating && <ChangePaymentWay registrationId={r.id} ways={r.otherWays} />}
         </section>
       )}
 

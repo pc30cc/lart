@@ -14,7 +14,7 @@ import { cancelRegistrationAction, registerAction } from "./actions"
 import { sendRegistrationCancelled, sendRegistrationReceived } from "./notify"
 import { getPublicWorkshop, listOpenWorkshops, seatsLeft, seatsTaken, workshopTerms } from "./public"
 import { cancelMyRegistration, registerForWorkshop, type RegisterInput } from "./register"
-import { attachReceipt, canAttachReceipt } from "./receipt"
+import { attachReceipt, canAttachReceipt, changePaymentChoice } from "./receipt"
 import { listAdminNotifications, markNotificationsSeen } from "@/features/notifications/queries"
 import {
   cancelPreview,
@@ -388,9 +388,15 @@ describe("transfer receipts and the panel's bell", () => {
     await markNotificationsSeen(admin.id)
     expect((await listAdminNotifications(admin.id, "en")).unread).toBe(0)
 
+    // Changed their mind: cash at the workshop instead (only to a way that is on, only their own).
+    expect(await changePaymentChoice(member.id, id, "cash")).toEqual({ changed: true })
+    expect(await registrationOf(id)).toMatchObject({ paymentChoice: "cash" })
+    await expect(changePaymentChoice(other.id, id, "transfer")).rejects.toMatchObject({ key: "registration.errors.cannotChangeWay" })
+
     // Paid: no more receipts.
     await db.update(registrations).set({ status: "confirmed", paidAt: new Date(), paymentMethod: "transfer" }).where(eq(registrations.id, id))
     expect(await canAttachReceipt(member.id, id)).toBe(false)
+    await expect(changePaymentChoice(member.id, id, "transfer")).rejects.toMatchObject({ key: "registration.errors.cannotChangeWay" })
   })
 })
 

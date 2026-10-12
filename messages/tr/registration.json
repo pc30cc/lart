@@ -145,7 +145,8 @@
     "termsChanged": "Koşullar az önce güncellendi. Lütfen sayfayı yenileyin, koşulları okuyun ve yeniden kaydolun.",
     "alreadyCancelled": "Bu kayıt zaten iptal edilmiş.",
     "cannotCancel": "Bu kayıt artık iptal edilemiyor.",
-    "startedCancel": "Atölye başladı, bu yüzden bu kayıt artık iptal edilemiyor."
+    "startedCancel": "Atölye başladı, bu yüzden bu kayıt artık iptal edilemiyor.",
+    "cannotChangeWay": "Bu kaydın ödeme yolu artık değiştirilemez."
   },
   "status": {
     "unpaid": "Henüz ödenmedi",
@@ -278,5 +279,12 @@
       "server": "Gönderilemedi. Lütfen biraz sonra tekrar deneyin.",
       "network": "Bağlantı kurulamadı. Lütfen internetinizi kontrol edip tekrar deneyin."
     }
+  },
+  "changeWay": {
+    "question": "Başka bir yolla mı ödemek istersiniz?",
+    "cash": "Bunun yerine atölyede nakit öderim",
+    "transfer": "Bunun yerine havale ile öderim",
+    "online": "Bunun yerine kartla çevrim içi öderim",
+    "done": "Ödeme yolu değiştirildi."
   }
 }

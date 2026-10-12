@@ -2,7 +2,10 @@ import "server-only"
 import { and, eq, isNull } from "drizzle-orm"
 
 import { db } from "@/db"
-import { adminNotifications, registrations } from "@/db/schema"
+import { adminNotifications, courses, registrations } from "@/db/schema"
+import { UserError } from "@/lib/errors"
+import { getSetting } from "@/lib/settings"
+import { paymentWayNames, type PaymentWayName } from "./schema"
 
 /**
  * The bank transfer receipt a member sends for their own registration: only
@@ -45,4 +48,34 @@ export async function canAttachReceipt(memberId: string, registrationId: string)
       ),
     )
   return Boolean(row)
+}
+
+/**
+ * The member changes how they will pay (e.g. from a bank transfer to cash at
+ * the workshop): only their own registration waiting for payment, and only
+ * to one of the ways switched on. A receipt already sent stays with it.
+ */
+export async function changePaymentChoice(memberId: string, registrationId: string, choice: PaymentWayName) {
+  return db.transaction(async (tx) => {
+    const [row] = await tx
+      .select({ paymentChoice: registrations.paymentChoice, paymentUrl: courses.paymentUrl })
+      .from(registrations)
+      .innerJoin(courses, eq(courses.id, registrations.courseId))
+      .where(
+        and(
+          eq(registrations.id, registrationId),
+          eq(registrations.memberId, memberId),
+          eq(registrations.status, "pending"),
+          isNull(registrations.paidAt),
+        ),
+      )
+      .for("update", { of: registrations })
+    if (!row) throw new UserError("registration.errors.cannotChangeWay")
+    if (!paymentWayNames(await getSetting("payment"), row.paymentUrl).includes(choice)) {
+      throw new UserError("registration.errors.cannotChangeWay")
+    }
+    if (row.paymentChoice === choice) return { changed: false }
+    await tx.update(registrations).set({ paymentChoice: choice }).where(eq(registrations.id, registrationId))
+    return { changed: true }
+  })
 }
