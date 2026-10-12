@@ -44,7 +44,7 @@ export function WorkshopCard({
             <PaletteIcon className="text-primary/50 size-12" aria-hidden />
           </div>
         )}
-        <AvailabilityBadge window={w.window} seatsLeft={w.seatsLeft} overlay className="absolute start-3 top-3" />
+        <AvailabilityBadge window={w.window} overlay className="absolute start-3 top-3" />
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-5">

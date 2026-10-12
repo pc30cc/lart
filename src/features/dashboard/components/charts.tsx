@@ -67,7 +67,7 @@ const truncate = (text: string, max: number) => (text.length > max ? `${text.sli
 type TipRow = { label: string; value: string; color?: string }
 
 /** Tooltip card: the value leads, the series name follows, keyed by a short line of its colour. */
-function TipBox({ title, subtitle, rows }: { title: string; subtitle?: string; rows: TipRow[] }) {
+export function TipBox({ title, subtitle, rows }: { title: string; subtitle?: string; rows: TipRow[] }) {
   const { rtl } = useDirection()
   return (
     <div
@@ -95,7 +95,7 @@ function TipBox({ title, subtitle, rows }: { title: string; subtitle?: string; r
  * The values of a chart for screen readers (the chart itself is visual). The
  * sr-only box is a div: a table ignores the 1px width and would widen the page.
  */
-function ChartTable({ caption, head, rows }: { caption: string; head: string[]; rows: string[][] }) {
+export function ChartTable({ caption, head, rows }: { caption: string; head: string[]; rows: string[][] }) {
   return (
     <div className="sr-only">
       <table>
@@ -129,7 +129,7 @@ function ChartTable({ caption, head, rows }: { caption: string; head: string[]; 
   )
 }
 
-function Swatch({ color, shape = "square" }: { color: string; shape?: "square" | "line" | "track" }) {
+export function Swatch({ color, shape = "square" }: { color: string; shape?: "square" | "line" | "track" }) {
   return (
     <span
       aria-hidden

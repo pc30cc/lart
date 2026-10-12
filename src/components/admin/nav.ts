@@ -3,6 +3,7 @@ import {
   ArrowLeftRightIcon,
   BarChart3Icon,
   CalendarRangeIcon,
+  ChartLineIcon,
   FileTextIcon,
   GraduationCapIcon,
   HandCoinsIcon,
@@ -35,7 +36,10 @@ export type NavGroup = { label: string; items: NavItem[] }
 export const adminNav: NavGroup[] = [
   {
     label: "groups.overview",
-    items: [{ href: "/admin", label: "dashboard", icon: LayoutDashboardIcon, exact: true }],
+    items: [
+      { href: "/admin", label: "dashboard", icon: LayoutDashboardIcon, exact: true },
+      { href: "/admin/analytics", label: "analytics", icon: ChartLineIcon },
+    ],
   },
   {
     label: "groups.workshops",

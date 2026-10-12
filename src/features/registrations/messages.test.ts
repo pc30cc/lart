@@ -54,7 +54,6 @@ describe("registration messages", () => {
   it("write numbers with Persian digits in Persian", () => {
     const t = createTranslator({ locale: "fa", messages: { registration: fa } })
     for (const text of [
-      t("registration.seats.left", { count: 3 }),
       t("registration.age.children", { min: 7, max: 12 }),
       t("registration.errors.tooMany", { max: 5 }),
       t("registration.cancel.partial", { percent: 50, refund: "" }),

@@ -25,6 +25,7 @@ Son güncelleme: {updated}
 - Görsel kayıtlar: yalnızca izin verdiyseniz, atölyede çekilen ve sizi tanınır biçimde gösteren fotoğraf ve videolar.
 - Eğitmen bilgileri: eğitmenlerimizin ad soyadı, T.C. kimlik numarası, iletişim bilgileri, sözleşme ve ödeme bilgileri.
 - İşlem güvenliği: oturum bilgileri, IP adresi ve sistem kayıtları.
+- Ziyaret istatistikleri: sitenin hangi sayfalarının görüldüğü, geldiğiniz site, cihaz türü, dil ve ülke; her gün değişen anonim bir kod altında. IP adresiniz bunlarla birlikte saklanmaz ve bunlar size geri götürülemez.
 
 Kart bilgileriniz bize ulaşmaz ve tarafımızca saklanmaz. Çevrim içi ödemeler, lisanslı ödeme kuruluşunun (PayTR Ödeme ve Elektronik Para Kuruluşu A.Ş.) güvenli ödeme sayfasında yapılır.
 
@@ -67,7 +68,7 @@ Kişisel verilerinizi işleme amacının gerektirdiği süre boyunca saklarız. 
 
 ## Çerezler
 
-Sitemiz yalnızca çalışması için zorunlu çerezleri kullanır: giriş yaptığınızda oturumunuzu sürdüren oturum çerezi. Açık veya koyu tema tercihiniz yalnızca tarayıcınızda saklanır. Reklam veya üçüncü taraf takip çerezi kullanmayız.
+Sitemiz yalnızca çalışması için zorunlu çerezleri kullanır: giriş yaptığınızda oturumunuzu sürdüren oturum çerezi. Açık veya koyu tema tercihiniz yalnızca tarayıcınızda saklanır. Reklam veya üçüncü taraf takip çerezi kullanmayız. Sayfalarımızın ziyaretlerini çerez kullanmadan ve IP adresinizi saklamadan kendimiz sayarız (yukarıda Ziyaret istatistikleri); bu istatistikler 13 ay saklanır.
 
 ## Haklarınız
 

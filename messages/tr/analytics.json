@@ -1,0 +1,71 @@
+{
+  "title": "Ziyaretler",
+  "description": "Siteyi kaç kişinin ziyaret ettiği, neye baktıkları ve nereden geldikleri. Sayımı site kendisi yapar, çerez kullanmadan.",
+  "range": {
+    "label": "Dönem",
+    "7": "7 gün",
+    "30": "30 gün",
+    "90": "90 gün",
+    "365": "1 yıl"
+  },
+  "empty": {
+    "title": "Henüz ziyaret sayılmadı",
+    "description": "Sayım sitenin bu sürümüyle başlar; birkaç kişi siteyi ziyaret ettikten sonra tekrar bakın."
+  },
+  "cards": {
+    "visitors": "Ziyaretçi",
+    "views": "Görüntülenen sayfa",
+    "perVisitor": "Ziyaretçi başına sayfa",
+    "live": "Şu an sitede",
+    "vsPrevious": "önceki döneme göre",
+    "noPrevious": "Henüz karşılaştırılacak bir şey yok"
+  },
+  "chart": {
+    "visitors": "Ziyaretçi",
+    "views": "Görüntülenen sayfa",
+    "day": "Gün",
+    "tableCaption": "Günlük ziyaretçi ve görüntülenen sayfa"
+  },
+  "daily": {
+    "title": "Gün gün",
+    "description": "Her gün ziyaretçiler ve gördükleri sayfalar (İstanbul saati)."
+  },
+  "pages": {
+    "title": "En çok görülen sayfalar",
+    "description": "Ziyaretçiye göre; atölye sayfaları adıyla.",
+    "views": "{n} görüntüleme",
+    "names": {
+      "/": "Ana sayfa",
+      "/workshops": "Atölyeler",
+      "/about": "Hakkımızda",
+      "/story": "Hikâyemiz",
+      "/contact": "İletişim",
+      "/privacy": "Gizlilik",
+      "/distance-sales": "Mesafeli satış sözleşmesi",
+      "/cancellation": "İptal ve iade"
+    }
+  },
+  "sources": {
+    "title": "Ziyaretçiler nereden geliyor",
+    "description": "Onları gönderen site; “Doğrudan”: adres yazıldı, yer imi ya da kaynağı gizleyen bir uygulama.",
+    "direct": "Doğrudan"
+  },
+  "devices": {
+    "title": "Cihazlar",
+    "mobile": "Telefon",
+    "tablet": "Tablet",
+    "desktop": "Bilgisayar"
+  },
+  "locales": {
+    "title": "Diller",
+    "fa": "Farsça",
+    "tr": "Türkçe",
+    "en": "İngilizce"
+  },
+  "countries": {
+    "title": "Ülkeler",
+    "unknown": "Bilinmiyor"
+  },
+  "none": "Bu dönemde henüz bir şey yok.",
+  "privacy": "Çerez ve IP adresi tutulmaz: her ziyaretçi her gün değişen anonim bir koddur; aynı kişi günde bir kez sayılır ve günden güne izlenemez. Arama motorları ve diğer botlar sayılmaz. Ziyaretler 13 ay saklanır."
+}

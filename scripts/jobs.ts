@@ -17,6 +17,8 @@
  *   Istanbul time) and the report of a Solar Hijri month that is over, when
  *   Settings → Backup has a password and automatic backups on
  *   (src/features/backup/backup.ts; the running site does the same by itself).
+ * - page_views: delete the visit statistics older than 13 months
+ *   (src/features/analytics/record.ts).
  */
 import "dotenv/config"
 
@@ -33,6 +35,7 @@ async function main() {
   const { notifyDueDecisions } = await import("../src/features/workshops/decisions")
   const { sendDayBeforeReminders } = await import("../src/features/registrations/admin/reminders")
   const { runScheduledBackups } = await import("../src/features/backup/backup")
+  const { pruneViews } = await import("../src/features/analytics/record")
   const { db } = await import("../src/db")
   const { errorForLog } = await import("../src/lib/errors")
   let failed = false
@@ -62,6 +65,10 @@ async function main() {
     await job("backup", async () => {
       const r = await runScheduledBackups()
       return { done: r.made, due: r.due, what: "backup(s) made" }
+    })
+    await job("page_views", async () => {
+      const gone = await pruneViews()
+      return { done: gone, due: gone, what: "old view(s) deleted" }
     })
   } finally {
     await db.$client.end()

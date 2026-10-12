@@ -4,8 +4,8 @@ import { getTranslations } from "next-intl/server"
 
 import { db } from "@/db"
 import { courses, instructors } from "@/db/schema"
-import { seatLimit } from "@/features/registrations/schema"
-import { seatsLeft, seatsTaken } from "@/features/registrations/public"
+import { daySeatsLeft } from "@/features/registrations/schema"
+import { seatsTakenByDay } from "@/features/registrations/public"
 import { absoluteLocaleUrl } from "@/i18n/links"
 import { decrypt } from "@/lib/crypto"
 import { UserError } from "@/lib/errors"
@@ -68,10 +68,10 @@ export async function workshopPost(courseId: string, locale: "fa" | "tr" | "en")
     getTranslations({ locale, namespace: "telegram" }),
     getBrand(locale),
     publicUrls(),
-    seatsTaken(c.id),
+    seatsTakenByDay(c.id),
   ])
   const title = localized(c.title, locale)
-  const left = seatsLeft(seatLimit(c), taken)
+  const left = daySeatsLeft(c, taken).total
   const lines = [
     `✨ <b>${escape(title)}</b> ✨`,
     "",
@@ -82,7 +82,8 @@ export async function workshopPost(courseId: string, locale: "fa" | "tr" | "en")
     `📍  ${escape(localized(c.venue, locale))}`,
     `🎨  ${escape(t("instructor", { name: localized(row.instructor.displayName, locale) }))}`,
     `💳  ${escape(c.price > 0 ? t("price", { price: formatLira(c.price, locale) }) : t("free"))}`,
-    `👥  ${escape(left > 0 ? t("seats", { count: left }) : t("full"))}`,
+    // Only "Full": the channel never says how many places are left.
+    ...(left > 0 ? [] : [`👥  ${escape(t("full"))}`]),
     "",
     `🌿 <i>${escape(t("signoff", { brand }))}</i>`,
   ]

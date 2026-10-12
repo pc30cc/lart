@@ -46,7 +46,6 @@ export function WorkshopCard({ workshop: w, priority, headingAs: Heading = "h2" 
         </div>
         <AvailabilityBadge
           window={w.window}
-          seatsLeft={w.seatsLeft}
           overlay
           className="absolute start-3 top-3 h-6 px-2.5 text-[11px] sm:start-4 sm:top-4 sm:h-7 sm:px-3 sm:text-xs"
         />

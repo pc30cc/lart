@@ -547,6 +547,30 @@ export const settings = pgTable("settings", {
   updatedAt: updatedAt(),
 })
 
+/**
+ * The site's own visit statistics (features/analytics): one row per page
+ * seen on the public site, without cookies and without the IP address.
+ * `visitor` is a hash of the address, the browser and the day with a secret
+ * key: the same person counts once a day, and cannot be followed from one
+ * day to the next nor traced back. Kept 13 months (the jobs prune it).
+ */
+export const pageViews = pgTable("page_views", {
+  id: id(),
+  at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  /** The page without its language ("/workshops/candl"). */
+  path: text("path").notNull(),
+  locale: text("locale").notNull(),
+  visitor: text("visitor").notNull(),
+  /** The site the visitor came from (its host), null when typed in or from this site. */
+  referrer: text("referrer"),
+  device: text("device").notNull(),
+  /** Two letters, from Cloudflare; null when unknown. */
+  country: text("country"),
+}, (t) => [
+  index("page_views_at_idx").on(t.at),
+  check("page_views_device", sql`${t.device} in ('mobile', 'tablet', 'desktop')`),
+])
+
 /** Who did what in the super-admin panel. Append-only. */
 export const auditLog = pgTable("audit_log", {
   id: id(),

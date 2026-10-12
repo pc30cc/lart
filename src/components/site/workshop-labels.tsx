@@ -22,23 +22,23 @@ export function Price({ value, className }: { value: number; className?: string 
 }
 
 /**
- * Seats and registration state as a small pill: "3 places left" (warm when
- * few are left), "Full", "Registration closed", ... `overlay` sits on a photo.
+ * The registration state as a small pill: "Registration open", "Full",
+ * "Registration closed", ... Visitors never see how many places there are
+ * or are left, only that it is full. `overlay` sits on a photo.
  */
 export function AvailabilityBadge({
   window,
-  seatsLeft,
   overlay = false,
   className,
 }: {
   window: RegistrationWindow
-  seatsLeft: number
+  /** Not shown (only "Full" when none are left); kept for the callers. */
+  seatsLeft?: number
   overlay?: boolean
   className?: string
 }) {
   const t = useTranslations("registration")
   const open = window === "open"
-  const few = open && seatsLeft <= 3
   return (
     <span
       className={cn(
@@ -46,19 +46,17 @@ export function AvailabilityBadge({
         overlay
           ? cn(
               "shadow-xs backdrop-blur-sm",
-              open && !few && "bg-background/90 text-foreground",
-              few && "bg-warning text-white dark:text-black",
+              open && "bg-background/90 text-foreground",
               !open && "bg-foreground/80 text-background",
             )
           : cn(
-              open && !few && "bg-success/10 text-success",
-              few && "bg-warning/12 text-warning",
+              open && "bg-success/10 text-success",
               !open && "bg-muted text-muted-foreground",
             ),
         className,
       )}
     >
-      {open ? t("seats.left", { count: seatsLeft }) : t(`window.${window}`)}
+      {t(`window.${window}`)}
     </span>
   )
 }

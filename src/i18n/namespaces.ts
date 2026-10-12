@@ -28,4 +28,5 @@ export const namespaces = [
   "about",
   "legal",
   "telegram",
+  "analytics",
 ] as const

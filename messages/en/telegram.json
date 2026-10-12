@@ -3,7 +3,6 @@
   "instructor": "Instructor: {name}",
   "price": "Price: {price}",
   "free": "Free",
-  "seats": "{count, plural, one {# place left} other {# places left}}",
   "full": "Fully booked",
   "signoff": "See you at {brand}",
   "register": "✨ Register for the workshop"

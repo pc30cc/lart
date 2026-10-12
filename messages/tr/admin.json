@@ -24,7 +24,8 @@
     "settings": "Ayarlar",
     "audit": "İşlem geçmişi",
     "students": "Öğrenciler",
-    "receipts": "Kayıtlı fişler"
+    "receipts": "Kayıtlı fişler",
+    "analytics": "Ziyaretler"
   },
   "shell": {
     "toggleSidebar": "Menüyü göster veya gizle",

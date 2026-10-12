@@ -24,7 +24,8 @@
     "settings": "Settings",
     "audit": "Activity log",
     "students": "Students",
-    "receipts": "Receipts"
+    "receipts": "Receipts",
+    "analytics": "Visits"
   },
   "shell": {
     "toggleSidebar": "Show or hide the menu",

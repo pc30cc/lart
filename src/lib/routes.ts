@@ -61,6 +61,7 @@ const table: [path: string, area: Area, access: Access, kind?: RouteKind][] = [
   ["/admin/reset", "admin", "open"],
   ["/admin/invite", "admin", "open"],
   ["/admin", "admin", "private"],
+  ["/admin/analytics", "admin", "private"],
   ["/admin/audit", "admin", "private"],
   ["/admin/categories", "admin", "private"],
   ["/admin/categories/new", "admin", "private"],
@@ -118,6 +119,8 @@ export const UNLOCALIZED_HANDLERS: readonly string[] = [
   "/api/admin/money/export/[report]",
   "/api/admin/uploads",
   "/api/instructor/uploads",
+  // The site's visit statistics (a page's beacon).
+  "/api/view",
   "/media/[...path]",
   // The site's share picture (Open Graph): its dot keeps the proxy away.
   "/og.png",

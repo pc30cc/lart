@@ -257,10 +257,9 @@ async function Facts({ workshop: w, locale }: { workshop: PublicWorkshop; locale
                 {workshopSchedule(w, locale, "full").map((d, i) => (
                   <li key={d.date}>
                     {d.date} · <bdi className="tabular-nums">{d.hours}</bdi>
-                    {w.window === "open" && (
-                      <span className="text-muted-foreground block text-xs font-normal">
-                        {(w.daySeatsLeft[i] ?? 0) > 0 ? t("dayLeft", { count: w.daySeatsLeft[i] }) : t("dayFull")}
-                      </span>
+                    {/* Only "Full": visitors never see how many places are left. */}
+                    {w.window === "open" && (w.daySeatsLeft[i] ?? 0) <= 0 && (
+                      <span className="text-destructive block text-xs font-medium">{t("dayFull")}</span>
                     )}
                   </li>
                 ))}
@@ -291,7 +290,7 @@ async function Facts({ workshop: w, locale }: { workshop: PublicWorkshop; locale
         </span>
         <span>
           <span className="sr-only">{t("seats")}: </span>
-          <AvailabilityBadge window={w.window} seatsLeft={w.seatsLeft} />
+          <AvailabilityBadge window={w.window} />
         </span>
       </div>
       {w.window === "open" && (

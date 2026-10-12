@@ -25,6 +25,7 @@ We, {seller}, process your personal data in line with Turkey's Personal Data Pro
 - Images: only if you consented, photos and videos taken at the workshop in which you can be identified.
 - Instructor details: our instructors' names, Turkish ID numbers, contact, contract and payment details.
 - Security: session details, IP addresses and system logs.
+- Visit statistics: which pages of the website are seen, the site you came from, the kind of device, the language and the country, under an anonymous code that changes every day. Your IP address is not stored with them and they cannot be traced back to you.
 
 Your card details never reach us and we do not store them. Online payments are made on the secure payment page of a licensed payment institution (PayTR Ödeme ve Elektronik Para Kuruluşu A.Ş.).
 
@@ -67,7 +68,7 @@ We keep personal data for as long as its purpose requires. Accounting and tax re
 
 ## Cookies
 
-Our website uses only the cookies it needs to work: a session cookie that keeps you signed in. Your light or dark theme choice is stored only in your own browser. We use no advertising or third-party tracking cookies.
+Our website uses only the cookies it needs to work: a session cookie that keeps you signed in. Your light or dark theme choice is stored only in your own browser. We use no advertising or third-party tracking cookies. We count visits to our pages ourselves, without cookies and without storing your IP address (see Visit statistics above); these statistics are kept for 13 months.
 
 ## Your rights
 

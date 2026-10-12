@@ -15,14 +15,14 @@
     "perPerson": "per person"
   },
   "seats": {
-    "full": "Full",
-    "left": "{count, plural, one {# place left} other {# places left}}"
+    "full": "Full"
   },
   "age": {
     "adults": "For adults",
     "children": "For children aged {min, number}–{max, number}"
   },
   "window": {
+    "open": "Registration open",
     "full": "Full",
     "closed": "Registration closed",
     "started": "Already started",
@@ -43,7 +43,6 @@
       "seats": "Places",
       "deadline": "Registration closes",
       "days": "Days (choose one when registering)",
-      "dayLeft": "{count, plural, one {# place left} other {# places left}}",
       "dayFull": "Full"
     },
     "register": "Register",
@@ -138,7 +137,6 @@
     },
     "day": {
       "choose": "Which day will you come?",
-      "left": "{count, plural, one {# place left} other {# places left}}",
       "full": "Full"
     }
   },

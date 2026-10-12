@@ -15,14 +15,14 @@
     "perPerson": "kişi başı"
   },
   "seats": {
-    "full": "Dolu",
-    "left": "{count, plural, one {# yer kaldı} other {# yer kaldı}}"
+    "full": "Dolu"
   },
   "age": {
     "adults": "Yetişkinler için",
     "children": "{min, number}–{max, number} yaş arası çocuklar için"
   },
   "window": {
+    "open": "Kayıtlar açık",
     "full": "Dolu",
     "closed": "Kayıtlar kapandı",
     "started": "Başladı",
@@ -43,7 +43,6 @@
       "seats": "Yerler",
       "deadline": "Son kayıt",
       "days": "Günler (kayıtta birini seçin)",
-      "dayLeft": "{count} yer kaldı",
       "dayFull": "Dolu"
     },
     "register": "Kaydol",
@@ -138,7 +137,6 @@
     },
     "day": {
       "choose": "Hangi gün geleceksiniz?",
-      "left": "{count} yer kaldı",
       "full": "Dolu"
     }
   },

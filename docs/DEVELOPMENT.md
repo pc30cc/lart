@@ -284,6 +284,7 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 | `/admin/reset` | admin | open | |
 | `/admin/invite` | admin | open | |
 | `/admin` | admin | private | |
+| `/admin/analytics` | admin | private | |
 | `/admin/audit` | admin | private | |
 | `/admin/categories` | admin | private | |
 | `/admin/categories/new` | admin | private | |
@@ -333,8 +334,8 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 Never localized (`UNLOCALIZED_HANDLERS`): `/api/account/receipts`, `/api/admin/backups/[id]`,
 `/api/admin/exports/[kind]`, `/api/admin/media/watermark-preview`,
 `/api/admin/money/export/[report]`, `/api/admin/uploads`,
-`/api/instructor/uploads`, `/media/[...path]`, `/og.png` (the site's share
-picture), and the metadata routes `/sitemap.xml` and `/robots.txt`.
+`/api/instructor/uploads`, `/api/view` (the visit statistics' beacon),
+`/media/[...path]`, `/og.png` (the site's share picture), and the metadata routes `/sitemap.xml` and `/robots.txt`.
 
 ### Redirects
 
@@ -1404,7 +1405,7 @@ workshop goes public for the first time (the instructor signs,
 `contracts/sign.ts`) the bell gets a "workshop" notification; on the
 workshop's page the "Telegram channel" card shows the post as it will look
 (cover, caption with title, intro, date, time, place, instructor, price,
-places left; a "Register" button to its page) and a super admin sends it
+"Full" when it is; a "Register" button to its page) and a super admin sends it
 (`postWorkshopToTelegramAction`, audited `workshop.telegram`;
 `courses.telegram_posted_at` / `telegram_message_id`). Without a cover it is a
 text post. "Send a test message" checks the bot and channel.
@@ -1421,8 +1422,8 @@ places are the workshop's own (`min_capacity`, `max_capacity`).
 `registrations.day` is the day chosen (its index; null for a one-day
 workshop, read as the first). Places are counted per day (`daySeatsLeft`:
 each day up to its maximum, and after the go decision no more than the
-final number in all); the register form shows the days as cards with their
-places left (a full one can't be chosen) and the server checks the day
+final number in all); the register form shows the days as cards ("Full" on a
+full one, which can't be chosen) and the server checks the day
 again under the workshop's lock. Everything about one registration follows
 its day (`forDay`, `registrationDay`): My workshops, its page and emails,
 cancelling and the refund band, the day-before reminder (per day), the
@@ -1430,9 +1431,33 @@ admin's lists, cancel dialog and CSV (a "Day" column). The admin's
 registrations tab counts each day. A day with people registered on it can't
 be removed or get fewer places than them. Pages, emails and the Telegram
 post list every day (`formatWorkshopDates`, `workshopHours`); the public
-page lists each day with its hours and places left; the contract has one
+page lists each day with its hours ("Full" on a full one); the contract has one
 line per day (date, hours, participants). Changing the days is a contract
 change like changing the date, and clears the reminders already sent.
+
+**Places are never shown to visitors**: the site, its workshop cards, the
+register form and the Telegram post never say how many places a workshop
+has or has left; the pill says "Registration open", and only "Full" when
+none are left (`AvailabilityBadge`). The panel still shows every count.
+
+**Visit statistics** (`features/analytics`, Admin → Visits, `/admin/analytics`):
+the site counts its own visits, without cookies and without a third party.
+Every page of the public site sends a beacon (`ViewBeacon` in the site
+layout, not while a super admin views as a member) to `POST /api/view`
+(same origin, rate-limited, always 204), and `recordView` stores one
+`page_views` row: the page without its language, the language, the host of
+the site the person came from (first page only; Google, Instagram and
+Facebook under one name), phone / tablet / computer, the Cloudflare country,
+and `visitor`, an HMAC of the IP address, the browser and the Istanbul day
+with a key derived from ENCRYPTION_KEY. The IP address itself is never
+stored, a person counts once a day and can't be followed across days.
+Robots and link previews, the account / instructor / admin pages and
+malformed reports are left out. The page shows 7 / 30 / 90 / 365 days:
+visitors, pages seen (with the change from the period before), a day-by-day
+chart, the most seen pages (a workshop's by its title), sources, devices,
+languages, countries and who is on the site now (30 minutes). The jobs
+delete views older than 13 months (`pruneViews`). The privacy policy says
+so (Visit statistics, Cookies).
 
 **WhatsApp** (`components/site/whatsapp`): the footer's phone number opens
 a WhatsApp chat (wa.me, in a new tab; a Turkish 05xx number is read as

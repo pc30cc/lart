@@ -200,7 +200,7 @@ function TermsDialog({
   )
 }
 
-/** A workshop on several days: which day, as big cards to tap (a full day can't be chosen). */
+/** A workshop on several days: which day, as big cards to tap (a full day says so and can't be chosen). */
 function DayChoiceField({ days }: { days: { date: string; hours: string; left: number }[] }) {
   const t = useTranslations("registration.register.day")
   return (
@@ -232,9 +232,8 @@ function DayChoiceField({ days }: { days: { date: string; hours: string; left: n
                     <span className="block font-medium">{d.date}</span>
                     <bdi className="text-muted-foreground block text-sm tabular-nums">{d.hours}</bdi>
                   </span>
-                  <span className={cn("text-sm", d.left > 0 ? "text-muted-foreground" : "text-destructive font-medium")}>
-                    {d.left > 0 ? t("left", { count: d.left }) : t("full")}
-                  </span>
+                  {/* Only "Full": how many places are left is not shown. */}
+                  {d.left <= 0 && <span className="text-destructive text-sm font-medium">{t("full")}</span>}
                 </span>
               </label>
             ))}
