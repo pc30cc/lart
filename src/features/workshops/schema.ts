@@ -3,7 +3,9 @@ import { z } from "zod"
 import { isoDateTime, kurus, localizedText, slug, uuid } from "@/components/admin/form/schemas"
 import type { LocalizedText } from "@/db/schema"
 import { safePaymentUrl } from "@/features/registrations/schema"
+import { zonedParts } from "@/lib/format"
 import { isSafePath } from "@/lib/storage/shared"
+import { buildDays } from "./days"
 
 /**
  * Workshop fields, shared by the form (client) and the actions (server).
@@ -61,6 +63,8 @@ const fields = z.object({
   instructorId: z.uuid({ error: "workshops.validation.chooseInstructor" }),
   startsAt: isoDateTime(),
   endsAt: isoDateTime(),
+  /** A workshop on several days: the other days ("YYYY-MM-DD"), each at the first day's hours. */
+  extraDates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { error: "common.validation.required" })).max(13),
   registrationDeadline: isoDateTime(),
   decisionAt: isoDateTime(),
   /** Like the title, in three languages; Turkish is required (the other languages fall back to it). */
@@ -101,6 +105,11 @@ export function maxAdvance(v: Pick<Fields, "feeType" | "feeAmount" | "maxCapacit
 function crossCheck(v: Fields, ctx: z.RefinementCtx) {
   const issue = (path: keyof Fields, message: string) => ctx.addIssue({ code: "custom", path: [path], message })
   if (v.endsAt <= v.startsAt) issue("endsAt", "common.validation.endAfterStart")
+  // The other days come after the first, each once (same hours, so a day must not be the first one again).
+  const first = zonedParts(v.startsAt).date
+  if (v.extraDates.some((d) => d <= first) || new Set(v.extraDates).size !== v.extraDates.length) {
+    issue("extraDates", "workshops.validation.daysAfterFirst")
+  }
   if (v.maxCapacity < v.minCapacity) issue("maxCapacity", "workshops.validation.maxBelowMin")
   if (v.registrationDeadline > v.startsAt) issue("registrationDeadline", "workshops.validation.deadlineBeforeStart")
   if (v.decisionAt > v.startsAt) issue("decisionAt", "workshops.validation.decisionBeforeStart")
@@ -172,13 +181,15 @@ export function translationsChanged(before: LocalizedText | null | undefined, af
 export function changedContractFields(
   diff: Record<string, { from: unknown; to: unknown }>,
 ): (typeof contractCourseFields)[number][] {
-  return contractCourseFields.filter(
+  const fields = contractCourseFields.filter(
     (k) =>
       k in diff &&
       (k !== "title" && k !== "venue"
         ? true
         : translationsChanged(diff[k].from as LocalizedText | null, diff[k].to as LocalizedText | null)),
   )
+  // The days of a workshop on several days are in the contract too (its date): counted as its end.
+  return "days" in diff && !fields.includes("endsAt") ? [...fields, "endsAt"] : fields
 }
 
 /** Course columns from validated form input (contract fee fields stay on the contract). */
@@ -190,7 +201,8 @@ export function courseValues(v: WorkshopInput) {
     categoryId: v.categoryId,
     instructorId: v.instructorId,
     startsAt: v.startsAt,
-    endsAt: v.endsAt,
+    // Several days: the last one's end, and every day kept.
+    ...buildDays(v.startsAt, v.endsAt, v.extraDates),
     registrationDeadline: v.registrationDeadline,
     decisionAt: v.decisionAt,
     venue: v.venue,

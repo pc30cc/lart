@@ -45,6 +45,7 @@ const workshopCard = {
   title: courses.title,
   venue: courses.venue,
   startsAt: courses.startsAt,
+  days: courses.days,
   endsAt: courses.endsAt,
   status: courses.status,
   cancelledAt: courses.cancelledAt,
@@ -65,6 +66,7 @@ export async function listContractsToSign() {
       sentAt: contracts.sentAt,
       title: courses.title,
       startsAt: courses.startsAt,
+      days: courses.days,
       endsAt: courses.endsAt,
     })
     .from(contracts)
@@ -91,6 +93,7 @@ export async function listMyContracts() {
       signedAt: contracts.signedAt,
       title: courses.title,
       startsAt: courses.startsAt,
+      days: courses.days,
       courseStatus: courses.status,
     })
     .from(contracts)
@@ -130,6 +133,7 @@ export async function getMyContract(id: string, locale: Locale) {
       courseId: courses.id,
       title: courses.title,
       startsAt: courses.startsAt,
+      days: courses.days,
       endsAt: courses.endsAt,
       courseStatus: courses.status,
       cancelledAt: courses.cancelledAt,
@@ -175,6 +179,7 @@ export async function getMyContract(id: string, locale: Locale) {
       id: row.courseId,
       title: row.title,
       startsAt: row.startsAt,
+      days: row.days,
       endsAt: row.endsAt,
       status: row.courseStatus,
       cancelledAt: row.cancelledAt,
@@ -273,6 +278,7 @@ export async function getMyEarnings() {
       id: courses.id,
       title: courses.title,
       startsAt: courses.startsAt,
+      days: courses.days,
       endsAt: courses.endsAt,
       status: courses.status,
       cancelledAt: courses.cancelledAt,
@@ -309,6 +315,7 @@ export async function getMyEarnings() {
         id: r.id,
         title: r.title,
         startsAt: r.startsAt,
+        days: r.days,
         endsAt: r.endsAt,
         status: r.status,
         cancelledAt: r.cancelledAt,

@@ -61,6 +61,7 @@ const card = (n: number, categorySlug: string): WorkshopCard => {
     instructorName: "Zeynep",
     coverUrl: null,
     startsAt,
+    days: null,
     endsAt: new Date(startsAt.getTime() + 7_200_000),
     registrationDeadline: startsAt,
     price: 150_000,

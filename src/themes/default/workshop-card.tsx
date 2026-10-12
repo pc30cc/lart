@@ -4,7 +4,8 @@ import { useLocale, useTranslations } from "next-intl"
 import { AgeLabel, AvailabilityBadge, Price } from "@/components/site/workshop-labels"
 import type { WorkshopCard as Card } from "@/features/registrations/public"
 import { Link } from "@/i18n/navigation"
-import { formatDate, formatTimeRange } from "@/lib/format"
+import { formatTimeRange } from "@/lib/format"
+import { formatWorkshopDates } from "@/features/workshops/days"
 
 /**
  * One workshop in a list: cover, title, when and where, who it's for, price
@@ -53,7 +54,7 @@ export function WorkshopCard({
           {w.instructorName && <p className="text-muted-foreground text-sm">{t("list.with", { name: w.instructorName })}</p>}
         </div>
         <ul className="text-muted-foreground space-y-1.5 text-sm">
-          <Line icon={CalendarDaysIcon}>{formatDate(w.startsAt, locale, "full")}</Line>
+          <Line icon={CalendarDaysIcon}>{formatWorkshopDates(w, locale, "full")}</Line>
           <Line icon={ClockIcon}>
             <bdi>{formatTimeRange(w.startsAt, w.endsAt, locale)}</bdi>
           </Line>

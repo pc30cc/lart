@@ -7,8 +7,9 @@ import { admins, contracts, courses, instructors } from "@/db/schema"
 import { localeHref } from "@/i18n/links"
 import { locales } from "@/i18n/routing"
 import { sendEmail } from "@/lib/email"
-import { formatDate, formatTimeRange, localized } from "@/lib/format"
+import { formatTimeRange, localized } from "@/lib/format"
 import { getSetting } from "@/lib/settings"
+import { formatWorkshopDates } from "@/features/workshops/days"
 
 /**
  * Contract emails. The instructor's go out in the instructor's own language
@@ -33,6 +34,7 @@ export async function sendContractReady(contractId: string): Promise<boolean> {
       locale: instructors.locale,
       title: courses.title,
       startsAt: courses.startsAt,
+      days: courses.days,
       endsAt: courses.endsAt,
     })
     .from(contracts)
@@ -50,7 +52,7 @@ export async function sendContractReady(contractId: string): Promise<boolean> {
       instructorName: localized(row.displayName, locale) || row.officialName,
       workshopTitle: localized(row.title, locale),
       // Persian uses its own comma.
-      workshopDate: `${formatDate(row.startsAt, locale, "full")}${locale === "fa" ? "،" : ","} ${formatTimeRange(row.startsAt, row.endsAt, locale)}`,
+      workshopDate: `${formatWorkshopDates(row, locale, "full")}${locale === "fa" ? "،" : ","} ${formatTimeRange(row.startsAt, row.endsAt, locale)}`,
       signUrl: await signPath(locale, contractId),
     },
   })

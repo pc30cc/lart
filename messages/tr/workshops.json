@@ -202,7 +202,12 @@
     "hasAdvance": "Ön ödeme",
     "hasAdvanceHint": "Ücretin bir kısmı atölyeden önce ödenir ve hesap kapatılırken düşülür.",
     "advanceAmount": "Ön ödeme tutarı",
-    "advanceMax": "En fazla {amount}."
+    "advanceMax": "En fazla {amount}.",
+    "extraDates": "Diğer günler (birkaç günlük atölye)",
+    "extraDatesHint": "Atölye birden fazla gün sürüyorsa sonraki günleri ekleyin. Her gün ilk günün saatlerinde yapılır; ücret ve kontenjan tüm günler için aynıdır.",
+    "dayNumber": "{n, number}. gün",
+    "addDay": "Gün ekle",
+    "removeDay": "Bu günü kaldır"
   },
   "validation": {
     "chooseCategory": "Lütfen bir kategori seçin.",
@@ -213,7 +218,8 @@
     "ageRange": "Üst yaş, alt yaştan küçük olamaz.",
     "advanceRequired": "Lütfen ön ödeme tutarını girin ya da ön ödemeyi kapatın.",
     "advanceTooBig": "Ön ödeme toplam ücreti geçemez (katılımcı başına ücrette: tutar × en fazla katılımcı).",
-    "startInFuture": "Lütfen ileri bir tarih ve saat seçin."
+    "startInFuture": "Lütfen ileri bir tarih ve saat seçin.",
+    "daysAfterFirst": "Diğer günler ilk günden sonra olmalı ve her biri bir kez yer almalı."
   },
   "toast": {
     "created": "Atölye oluşturuldu. Sözleşme e-postayla gönderildi: {name}",

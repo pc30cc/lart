@@ -1409,6 +1409,15 @@ places left; a "Register" button to its page) and a super admin sends it
 `courses.telegram_posted_at` / `telegram_message_id`). Without a cover it is a
 text post. "Send a test message" checks the bot and channel.
 
+**Workshops on several days** (`features/workshops/days`): the form's
+"Other days" adds dates, each held at the first day's hours, with one price
+and one set of places for all of them. Stored in `courses.days` (every day's
+start and end; null for one day) with `starts_at` the first day's start and
+`ends_at` the last day's end, so "started" and "ended" (registration window,
+closing, past lists) need nothing else. Pages, emails, the contract's {date}
+and the Telegram post list every day (`formatWorkshopDates`); changing the
+days is a contract change like changing the date.
+
 **QR code** (the workshop page's "QR code for posters" card): the public
 workshop page's address in the main language, as PNG (1200 px) and SVG
 (`qrcode`, made on the server).

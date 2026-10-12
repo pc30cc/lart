@@ -1,6 +1,6 @@
 "use client"
 
-import { BabyIcon, FileSignatureIcon, Link2Icon, LockIcon, TriangleAlertIcon, UsersRoundIcon } from "lucide-react"
+import { BabyIcon, CalendarPlusIcon, FileSignatureIcon, Link2Icon, LockIcon, TriangleAlertIcon, UsersRoundIcon, XIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useFormContext, useWatch, type DefaultValues } from "react-hook-form"
@@ -42,7 +42,7 @@ import {
   type WorkshopFormValues,
 } from "@/features/workshops/schema"
 import { Link, useRouter } from "@/i18n/navigation"
-import { formatNumber, localized, slugify } from "@/lib/format"
+import { formatDate, formatNumber, localized, slugify } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { cn } from "@/lib/utils"
 
@@ -70,6 +70,7 @@ export function emptyWorkshopValues(): DefaultValues<Values> {
     instructorId: "",
     startsAt: "",
     endsAt: "",
+    extraDates: [],
     registrationDeadline: "",
     decisionAt: "",
     venue: text(),
@@ -109,7 +110,9 @@ const trimmed = (t: Record<string, string | undefined> | undefined) =>
 
 /** The part of the form that appears in the contract, except the translated texts (see `reissues`). */
 function contractPart(v: Partial<Values>) {
-  const course = Object.fromEntries(contractCourseFields.flatMap((k) => (k === "title" || k === "venue" ? [] : [[k, v[k]]])))
+  const course: Record<string, unknown> = Object.fromEntries(contractCourseFields.flatMap((k) => (k === "title" || k === "venue" ? [] : [[k, v[k]]])))
+  // The other days are in the contract's date too.
+  course.extraDates = [...(v.extraDates ?? [])].sort().join(",")
   return stable({ ...course, feeType: v.feeType, feeAmount: v.feeAmount, advance: v.hasAdvance ? v.advanceAmount : 0 })
 }
 
@@ -246,6 +249,7 @@ export function WorkshopForm({
           endName="endsAt"
           required
         />
+        <ExtraDatesField />
         <DateTimeFields
           label={t("fields.registrationDeadline")}
           description={t("fields.registrationDeadlineHint")}
@@ -776,5 +780,57 @@ function ContractFields() {
         </FormField>
       )}
     </>
+  )
+}
+
+/**
+ * A workshop on several days: the other days' dates, each held at the first
+ * day's hours ("Add a day" adds the day after the last one).
+ */
+function ExtraDatesField() {
+  const t = useTranslations("workshops")
+  const locale = useLocale()
+  const { getValues } = useFormContext<Values>()
+  return (
+    <FormField<Values> name="extraDates" label={<ContractLabel>{t("fields.extraDates")}</ContractLabel>} description={t("fields.extraDatesHint")}>
+      {({ value, onChange, id }) => {
+        const dates = (value as string[] | undefined) ?? []
+        const next = () => {
+          const last = dates[dates.length - 1] ?? (getValues("startsAt") as string | undefined)?.slice(0, 10)
+          const d = last ? new Date(`${last.slice(0, 10)}T12:00:00Z`) : new Date()
+          d.setUTCDate(d.getUTCDate() + 1)
+          return d.toISOString().slice(0, 10)
+        }
+        return (
+          <div id={id} className="space-y-2">
+            {dates.map((date, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="text-muted-foreground w-14 shrink-0 text-sm">{t("fields.dayNumber", { n: i + 2 })}</span>
+                <Input
+                  type="date"
+                  dir="ltr"
+                  value={date}
+                  onChange={(e) => onChange(dates.map((d, j) => (j === i ? e.target.value : d)))}
+                  className="max-w-48"
+                  aria-label={t("fields.dayNumber", { n: i + 2 })}
+                />
+                {/^\d{4}-\d{2}-\d{2}$/.test(date) && (
+                  <span className="text-muted-foreground text-sm">{formatDate(`${date}T12:00:00Z`, locale, "full")}</span>
+                )}
+                <Button type="button" variant="ghost" size="icon-sm" aria-label={t("fields.removeDay")} onClick={() => onChange(dates.filter((_, j) => j !== i))}>
+                  <XIcon />
+                </Button>
+              </div>
+            ))}
+            {dates.length < 13 && (
+              <Button type="button" variant="outline" size="sm" onClick={() => onChange([...dates, next()])}>
+                <CalendarPlusIcon />
+                {t("fields.addDay")}
+              </Button>
+            )}
+          </div>
+        )
+      }}
+    </FormField>
   )
 }

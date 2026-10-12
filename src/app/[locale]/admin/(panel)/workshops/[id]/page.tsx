@@ -32,6 +32,7 @@ import { CancelWorkshopButton, ConfirmWorkshopButton, RaiseFinalButton, ResendCo
 import { WorkshopHeader } from "../_components/workshop-header"
 import { QrCard, TelegramCard } from "../_components/share-cards"
 import { FillMeter } from "../_components/workshop-status"
+import { formatWorkshopDates } from "@/features/workshops/days"
 
 async function load(id: string) {
   if (!z.uuid().safeParse(id).success) notFound()
@@ -75,7 +76,7 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/admi
           <Card title={t("overview.details")}>
             <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
               <Fact label={t("overview.when")}>
-                {formatDate(w.startsAt, locale, "full")}
+                {formatWorkshopDates(w, locale, "full")}
                 <Sub>
                   <bdi className="tabular-nums">{formatTimeRange(w.startsAt, w.endsAt, locale)}</bdi>
                 </Sub>

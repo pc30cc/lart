@@ -155,6 +155,13 @@
       "when": 1791819920444,
       "tag": "0021_telegram",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1791824482299,
+      "tag": "0022_workshop_days",
+      "breakpoints": true
     }
   ]
 }

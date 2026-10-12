@@ -77,6 +77,8 @@ export type PastWorkshop = {
   slug: string
   title: string
   startsAt: Date
+  /** A workshop on several days: every day (`features/workshops/days`); null for one day. */
+  days?: { startsAt: string; endsAt: string }[] | null
   coverUrl: string | null
   photos: { url: string; width: number | null; height: number | null }[]
 }

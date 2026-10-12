@@ -11,13 +11,14 @@ import { getMyContract } from "@/features/instructor-panel/queries"
 import { panelStatus } from "@/features/instructor-panel/schema"
 import { Link } from "@/i18n/navigation"
 import { getInstructor } from "@/lib/auth/instructor"
-import { formatDate, formatDateTime, formatNumber, formatTimeRange, localized } from "@/lib/format"
+import { formatDateTime, formatNumber, formatTimeRange, localized } from "@/lib/format"
 import { getBrand } from "@/lib/settings"
 import { cn } from "@/lib/utils"
 // The same calm, printable document the admins see.
 import { BackLink, contractTone, WorkshopStatus } from "../../_components/parts"
 import { PrintButton } from "../../_components/print-button"
 import { SignForm } from "../../_components/sign-form"
+import { formatWorkshopDates } from "@/features/workshops/days"
 
 /** Print only the contract: A4, no panel around it. */
 const printCss = `@media print {
@@ -94,7 +95,7 @@ export default async function MyContractPage({ params, searchParams }: PageProps
         <p className="text-muted-foreground">
           {tList("version", { version: formatNumber(contract.version, locale) })}
           <span aria-hidden> · </span>
-          {formatDate(course.startsAt, locale, "full")}
+          {formatWorkshopDates(course, locale, "full")}
           <span aria-hidden> · </span>
           <bdi>{formatTimeRange(course.startsAt, course.endsAt, locale)}</bdi>
         </p>

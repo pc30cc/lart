@@ -6,11 +6,12 @@ import { admins, courses, members, registrations } from "@/db/schema"
 import { localeHref } from "@/i18n/links"
 import { locales, type AppLocale } from "@/i18n/routing"
 import { sendEmail } from "@/lib/email"
-import { formatDate, formatTimeRange, localized } from "@/lib/format"
+import { formatTimeRange, localized } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { getSetting } from "@/lib/settings"
 import type { CancelledRegistration, ChangedRefund } from "./payments"
 import type { PaymentMethod } from "./schema"
+import { formatWorkshopDates } from "@/features/workshops/days"
 
 /**
  * Emails to the member after an admin recorded a payment, cancelled a
@@ -32,7 +33,7 @@ async function load(registrationId: string) {
       refundAmount: registrations.refundAmount,
       participantName: registrations.participantName,
       member: { name: members.name, email: members.email, locale: members.locale },
-      course: { title: courses.title, venue: courses.venue, startsAt: courses.startsAt, endsAt: courses.endsAt },
+      course: { title: courses.title, venue: courses.venue, startsAt: courses.startsAt, endsAt: courses.endsAt, days: courses.days },
     })
     .from(registrations)
     .innerJoin(members, eq(members.id, registrations.memberId))
@@ -58,7 +59,7 @@ export async function sendPaymentReceived(registrationId: string, method: Paymen
       workshopTitle: localized(course.title, locale),
       amount: formatLira(row.amount, locale),
       method,
-      date: formatDate(course.startsAt, locale, "full"),
+      date: formatWorkshopDates(course, locale, "full"),
       time: formatTimeRange(course.startsAt, course.endsAt, locale),
       venue: localized(course.venue, locale),
       accountUrl: await localeHref(locale, `/account/registrations/${registrationId}`),

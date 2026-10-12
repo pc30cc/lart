@@ -61,6 +61,7 @@ const workshop: WorkshopCard = {
   instructorName: "Zeynep",
   coverUrl: null,
   startsAt,
+  days: null,
   endsAt: new Date(startsAt.getTime() + 2 * 3_600_000),
   registrationDeadline: startsAt,
   price: 150_000,

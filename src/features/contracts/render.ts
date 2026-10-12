@@ -5,13 +5,14 @@ import { createTranslator } from "next-intl"
 import { db, type Db, type Tx } from "@/db"
 import { contracts, courses, instructors, templates, type Locale, type LocalizedText } from "@/db/schema"
 import { decrypt } from "@/lib/crypto"
-import { formatDate, formatDateTime, formatNumber, formatTime, formatWeekday, localized } from "@/lib/format"
+import { formatDateTime, formatNumber, formatTime, formatWeekday, localized } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { getBrand } from "@/lib/settings"
 import en from "../../../messages/en/contracts.json"
 import fa from "../../../messages/fa/contracts.json"
 import tr from "../../../messages/tr/contracts.json"
 import { fillPlaceholders, type ContractPlaceholder } from "./text"
+import { formatWorkshopDates } from "@/features/workshops/days"
 
 /** Everything a contract text is made from. */
 export type ContractData = {
@@ -46,6 +47,7 @@ export async function loadContractData(contractId: string, tx: Tx | Db = db): Pr
       idNumberEnc: instructors.idNumberEnc,
       title: courses.title,
       startsAt: courses.startsAt,
+      days: courses.days,
       endsAt: courses.endsAt,
       venue: courses.venue,
       minCapacity: courses.minCapacity,
@@ -85,7 +87,7 @@ export function contractValues(data: ContractData, locale: Locale, brand: string
     instructor_name: data.instructor.officialName,
     instructor_id_number: data.instructor.idNumber,
     workshop_title: localized(course.title, locale),
-    date: formatDate(course.startsAt, locale, "long"),
+    date: formatWorkshopDates(course, locale, "long"),
     weekday: formatWeekday(course.startsAt, locale),
     start_time: formatTime(course.startsAt, locale),
     end_time: formatTime(course.endsAt, locale),

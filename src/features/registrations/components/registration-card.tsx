@@ -4,12 +4,13 @@ import { useLocale, useTranslations } from "next-intl"
 import { Money } from "@/components/admin/money"
 import { Button } from "@/components/ui/button"
 import { Link } from "@/i18n/navigation"
-import { formatDate, formatTimeRange } from "@/lib/format"
+import { formatTimeRange } from "@/lib/format"
 import type { MyRegistration } from "../member"
 import { cancelPreview, canCancel, paymentState } from "../schema"
 import { CancelRegistration } from "./cancel-registration"
 import { HowToPay } from "./how-to-pay"
 import { PaymentBadge } from "./payment-badge"
+import { formatWorkshopDates } from "@/features/workshops/days"
 
 /**
  * One of the member's registrations in My workshops: the workshop, who
@@ -50,7 +51,7 @@ export function RegistrationCard({ registration: r, now }: { registration: MyReg
 
       <dl className="grid gap-x-6 gap-y-2 text-[0.95rem] sm:grid-cols-2">
         <Fact icon={CalendarDaysIcon} label={t("item.date")}>
-          {formatDate(r.course.startsAt, locale, "full")}
+          {formatWorkshopDates(r.course, locale, "full")}
         </Fact>
         <Fact icon={ClockIcon} label={t("item.time")}>
           <bdi>{formatTimeRange(r.course.startsAt, r.course.endsAt, locale)}</bdi>

@@ -19,9 +19,10 @@ import { Button } from "@/components/ui/button"
 import { getMyWorkshop } from "@/features/instructor-panel/queries"
 import { panelStatus } from "@/features/instructor-panel/schema"
 import { Link } from "@/i18n/navigation"
-import { formatDate, formatDateTime, formatNumber, formatTimeRange, localized } from "@/lib/format"
+import { formatDateTime, formatNumber, formatTimeRange, localized } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { BackLink, card, Section, WorkshopStatus } from "../../_components/parts"
+import { formatWorkshopDates } from "@/features/workshops/days"
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("instructorPanel.workshop")
@@ -57,7 +58,7 @@ export default async function MyWorkshopPage({ params }: PageProps<"/[locale]/in
 
         <dl className={cn(card, "grid gap-x-6 gap-y-5 p-5 sm:grid-cols-2 sm:p-6")}>
           <Fact icon={CalendarDaysIcon} label={t("date")}>
-            {formatDate(workshop.startsAt, locale, "full")}
+            {formatWorkshopDates(workshop, locale, "full")}
           </Fact>
           <Fact icon={ClockIcon} label={t("time")}>
             <bdi>{formatTimeRange(workshop.startsAt, workshop.endsAt, locale)}</bdi>

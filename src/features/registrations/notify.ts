@@ -6,11 +6,12 @@ import { admins, courses, members, registrations } from "@/db/schema"
 import { chosenWay, paymentWays } from "@/emails/payment"
 import { localeHref } from "@/i18n/links"
 import { sendEmail } from "@/lib/email"
-import { formatDate, formatTimeRange, localized } from "@/lib/format"
+import { formatTimeRange, localized } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { getSetting } from "@/lib/settings"
 import type { Cancelled } from "./register"
 import { safePaymentUrl } from "./schema"
+import { formatWorkshopDates } from "@/features/workshops/days"
 
 /**
  * The emails of registering and cancelling, sent after the commit (never
@@ -33,6 +34,7 @@ async function loadRegistration(id: string) {
         title: courses.title,
         venue: courses.venue,
         startsAt: courses.startsAt,
+        days: courses.days,
         endsAt: courses.endsAt,
         paymentUrl: courses.paymentUrl,
       },
@@ -57,7 +59,7 @@ export async function sendRegistrationReceived(registrationId: string): Promise<
   const details = {
     name: member.name,
     workshopTitle: localized(course.title, locale),
-    date: formatDate(course.startsAt, locale, "full"),
+    date: formatWorkshopDates(course, locale, "full"),
     time: formatTimeRange(course.startsAt, course.endsAt, locale),
     venue: localized(course.venue, locale),
     amount: formatLira(row.amount, locale),

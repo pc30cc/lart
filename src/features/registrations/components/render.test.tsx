@@ -55,7 +55,7 @@ const registration: MyRegistration = {
   videoConsent: false,
   termsAcceptedAt: new Date(),
   createdAt: new Date(),
-  course: { id: "c", slug: "mum", status: "published", title: "Mum Yapımı", venue: "Moda", startsAt, endsAt, closedAt: null },
+  course: { id: "c", slug: "mum", status: "published", title: "Mum Yapımı", venue: "Moda", startsAt, days: null, endsAt, closedAt: null },
   ways,
 }
 const terms = { text: "Terms\n\n- one\n- two\n\nEnd", sha256: "a".repeat(64) }
@@ -114,6 +114,7 @@ describe.each(["fa", "en", "tr"])("renders in %s", (locale) => {
               instructorName: "Zeynep",
               coverUrl: null,
               startsAt,
+              days: null,
               endsAt,
               registrationDeadline: startsAt,
               price: 150_000,

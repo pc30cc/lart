@@ -260,6 +260,12 @@ export const courses = pgTable("courses", {
   closedTotals: jsonb("closed_totals").$type<ClosedTotals>(),
   /** First signature; kept when a later contract version sends it back to awaiting_signature. */
   publishedAt: timestamp("published_at", { withTimezone: true }),
+  /**
+   * A workshop on several days: every day's start and end (ISO), the first
+   * being `starts_at`, the last ending at `ends_at` (each day at the same
+   * hours). Null for a one-day workshop.
+   */
+  days: jsonb("days").$type<{ startsAt: string; endsAt: string }[]>(),
   /** When a super admin last sent it to the Telegram channel (Settings → Telegram), and that post's message id. */
   telegramPostedAt: timestamp("telegram_posted_at", { withTimezone: true }),
   telegramMessageId: integer("telegram_message_id"),

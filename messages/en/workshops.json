@@ -202,7 +202,12 @@
     "hasAdvance": "Advance payment",
     "hasAdvanceHint": "Part of the fee paid before the workshop, deducted at settlement.",
     "advanceAmount": "Advance amount",
-    "advanceMax": "At most {amount}."
+    "advanceMax": "At most {amount}.",
+    "extraDates": "Other days (a workshop on several days)",
+    "extraDatesHint": "If the workshop runs on more than one day, add the following days. Each day is held at the first day's hours; the price and places are for all the days together.",
+    "dayNumber": "Day {n, number}",
+    "addDay": "Add a day",
+    "removeDay": "Remove this day"
   },
   "validation": {
     "chooseCategory": "Please choose a category.",
@@ -213,7 +218,8 @@
     "ageRange": "The upper age can’t be less than the lower age.",
     "advanceRequired": "Please enter the advance amount, or turn off the advance payment.",
     "advanceTooBig": "The advance can’t be more than the total fee (for a per-participant fee: the amount times the maximum participants).",
-    "startInFuture": "Please choose a date and time in the future."
+    "startInFuture": "Please choose a date and time in the future.",
+    "daysAfterFirst": "The other days must come after the first one, each only once."
   },
   "toast": {
     "created": "Workshop created. The contract is on its way to {name}.",

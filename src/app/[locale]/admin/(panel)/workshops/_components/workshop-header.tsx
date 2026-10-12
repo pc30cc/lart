@@ -5,10 +5,11 @@ import { PageHeader } from "@/components/admin/page-header"
 import type { Workshop } from "@/features/workshops/queries"
 import { displayStatus } from "@/features/workshops/schema"
 import { Link } from "@/i18n/navigation"
-import { formatDate, formatNumber, formatTimeRange, localized } from "@/lib/format"
+import { formatNumber, formatTimeRange, localized } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { WorkshopStatusBadge } from "./workshop-status"
 import { WorkshopTabsNav } from "./workshop-tabs-nav"
+import { formatWorkshopDates } from "@/features/workshops/days"
 
 export type WorkshopTab = "overview" | "contract" | "registrations" | "gallery" | "finances"
 
@@ -50,7 +51,7 @@ export async function WorkshopHeader({
             <WorkshopStatusBadge status={displayStatus(workshop)} />
             <span className="inline-flex items-center gap-1.5">
               <CalendarDaysIcon className="size-4 opacity-70" />
-              {formatDate(workshop.startsAt, locale, "full")}
+              {formatWorkshopDates(workshop, locale, "full")}
               <span className="opacity-60">·</span>
               <bdi className="tabular-nums">{formatTimeRange(workshop.startsAt, workshop.endsAt, locale)}</bdi>
             </span>

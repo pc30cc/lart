@@ -21,12 +21,13 @@ import { getPublicWorkshop, myActiveRegistrations, type PublicWorkshop } from "@
 import { Link } from "@/i18n/navigation"
 import { isRtl } from "@/i18n/locales"
 import { absoluteLocaleUrl, localeHref } from "@/i18n/links"
-import { formatDate, formatDateTime, formatTimeRange } from "@/lib/format"
+import { formatDateTime, formatTimeRange } from "@/lib/format"
 import { absoluteUrl, alternates, jsonLdText, openGraphOf } from "@/lib/seo"
 import { getBrand } from "@/lib/settings"
 import { cn } from "@/lib/utils"
 import { AgeLabel, AvailabilityBadge, Price } from "@/components/site/workshop-labels"
 import { pageLocale } from "@/i18n/page-locale"
+import { formatWorkshopDates } from "@/features/workshops/days"
 
 /** Search engines get a summary of at most this many characters. */
 const DESCRIPTION_MAX = 160
@@ -44,7 +45,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/workshop
   // Only the intro written in this language: another language's text would describe the page in the wrong one.
   const description = clip(
     w.ownIntro.replace(/\s+/g, " ") ||
-      t("metaDescription", { title: w.title, date: formatDate(w.startsAt, locale, "long"), venue: w.venue, brand }),
+      t("metaDescription", { title: w.title, date: formatWorkshopDates(w, locale, "long"), venue: w.venue, brand }),
     DESCRIPTION_MAX,
   )
   const links = await alternates(`/workshops/${w.slug}`, locale)
@@ -241,7 +242,7 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/work
 async function Facts({ workshop: w, locale }: { workshop: PublicWorkshop; locale: string }) {
   const t = await getTranslations("registration.workshop.facts")
   const rows: { icon: LucideIcon; label: string; value: React.ReactNode }[] = [
-    { icon: CalendarDaysIcon, label: t("date"), value: formatDate(w.startsAt, locale, "full") },
+    { icon: CalendarDaysIcon, label: t("date"), value: formatWorkshopDates(w, locale, "full") },
     { icon: ClockIcon, label: t("time"), value: <bdi>{formatTimeRange(w.startsAt, w.endsAt, locale)}</bdi> },
     { icon: MapPinIcon, label: t("venue"), value: <span {...langProps(w.textLang.venue)}>{w.venue}</span> },
     { icon: UsersRoundIcon, label: t("age"), value: <AgeLabel ageMin={w.ageMin} ageMax={w.ageMax} /> },

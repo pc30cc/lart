@@ -25,6 +25,7 @@ import { formatDate, formatTimeRange, isolate } from "@/lib/format"
 import { getBrand, getSetting } from "@/lib/settings"
 import { Price } from "@/components/site/workshop-labels"
 import { pageLocale } from "@/i18n/page-locale"
+import { formatWorkshopDates } from "@/features/workshops/days"
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/workshops/[slug]/register">): Promise<Metadata> {
   const { locale: raw, slug } = await params
@@ -165,7 +166,7 @@ async function RegisterView({ params }: PageProps<"/[locale]/workshops/[slug]/re
       <div className="bg-card ring-foreground/8 mb-8 space-y-2 rounded-2xl p-4 text-[0.95rem] shadow-xs ring-1 sm:p-5">
         <p className="flex items-start gap-2.5">
           <CalendarDaysIcon className="text-primary mt-0.5 size-4.5 shrink-0" aria-hidden />
-          {formatDate(w.startsAt, locale, "full")}
+          {formatWorkshopDates(w, locale, "full")}
         </p>
         <p className="flex items-start gap-2.5">
           <ClockIcon className="text-primary mt-0.5 size-4.5 shrink-0" aria-hidden />
