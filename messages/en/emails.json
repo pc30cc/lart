@@ -50,6 +50,14 @@
     "cta": "Confirm my email",
     "note": "If you didn’t create an account, you can simply ignore this email."
   },
+  "member_welcome": {
+    "subject": "Welcome to {brand}!",
+    "preview": "Your account is ready; have a look at the workshops.",
+    "heading": "Welcome to {brand}!",
+    "intro": "We're so glad you joined us. Your account is ready, and you can sign up for workshops right away.",
+    "cta": "See the workshops",
+    "note": "If you didn't create this account, please let us know."
+  },
   "instructor_invite": {
     "subject": "Welcome to {brand}: you’re now one of our instructors",
     "preview": "Choose a password to open your instructor panel.",

@@ -37,7 +37,7 @@ export const registerAction = memberAction(
     after(() => sendRegistrationReceived(id).catch(logFailure("registration email")))
     redirect(await localeHref(input.locale, `/account/registrations/${id}?welcome=1`))
   },
-  { verified: true, notImpersonated: true },
+  { notImpersonated: true },
 )
 
 /** Cancel one of the member's own registrations; the refund (if any) follows the terms. */

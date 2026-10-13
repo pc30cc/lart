@@ -620,14 +620,13 @@ describe("actions", () => {
     expect(vi.mocked(sendEmail)).toHaveBeenCalledWith(expect.objectContaining({ template: "registration_received", to: member.email }))
   })
 
-  it("register: a member whose email is not confirmed is asked to confirm it first", async () => {
+  it("register: a member whose email was never confirmed can register too (no confirmation needed)", async () => {
     const course = await newCourse()
     const member = await newMember({ emailVerifiedAt: null })
     await signIn(member.id)
 
-    const result = await registerAction(await input(course.id))
-    expect(result).toMatchObject({ ok: false, error: expect.stringMatching(/confirm your email/i) })
-    expect(await seatsTaken(course.id)).toBe(0)
+    await expect(registerAction(await input(course.id))).rejects.toMatchObject({ digest: expect.stringContaining("/account/registrations/") })
+    expect(await seatsTaken(course.id)).toBe(1)
   })
 
   it("register: the terms box must be ticked", async () => {

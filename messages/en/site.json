@@ -31,7 +31,8 @@
   "notices": {
     "checkEmail": "Welcome! We’ve sent you an email. Please open it to confirm your address.",
     "signedOut": "You’re logged out. See you soon!",
-    "passwordSaved": "Your new password is saved, and you’re logged in."
+    "passwordSaved": "Your new password is saved, and you’re logged in.",
+    "welcome": "Welcome! You're signed in and can sign up for workshops right away."
   },
   "error": {
     "workshops": "See all workshops"

@@ -31,7 +31,8 @@
   "notices": {
     "checkEmail": "Hoş geldiniz! Size bir e-posta gönderdik. Adresinizi doğrulamak için lütfen açın.",
     "signedOut": "Çıkış yaptınız. Görüşmek üzere!",
-    "passwordSaved": "Yeni şifreniz kaydedildi ve giriş yaptınız."
+    "passwordSaved": "Yeni şifreniz kaydedildi ve giriş yaptınız.",
+    "welcome": "Hoş geldiniz! Giriş yaptınız; atölyelere hemen kayıt olabilirsiniz."
   },
   "error": {
     "workshops": "Tüm atölyeleri görün"

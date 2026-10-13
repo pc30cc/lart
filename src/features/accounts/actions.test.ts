@@ -128,18 +128,19 @@ const signup = (values: Partial<Parameters<typeof memberSignupAction>[0] & objec
   memberSignupAction({ name: "Ayşe", email: address("signup"), password: PASSWORD, phone: "", ...values })
 
 describe("memberSignupAction", () => {
-  it("creates the account, signs in, emails the verify link and goes back to the site", async () => {
+  it("creates the account already confirmed, signs in, sends a welcome and goes back to the site", async () => {
     const email = address("new")
     await expect(signup({ email, phone: "0532 123 45 67", next: "/en/workshops/candles" })).rejects.toMatchObject(
-      redirectTo("/en/workshops/candles?notice=checkEmail"),
+      redirectTo("/en/workshops/candles?notice=welcome"),
     )
     const [row] = await db.select().from(members).where(eq(members.email, email))
-    expect(row).toMatchObject({ name: "Ayşe", phone: "05321234567", locale: "en", emailVerifiedAt: null })
+    expect(row).toMatchObject({ name: "Ayşe", phone: "05321234567", locale: "en" })
+    expect(row.emailVerifiedAt).toBeInstanceOf(Date)
     expect(memberCookie()).toBeTruthy()
     const sent = await emails()
     expect(sent).toHaveLength(1)
-    expect(sent[0]).toMatchObject({ to: email, template: "welcome_verify" })
-    expect(sent[0].props.verifyUrl).toMatch(/^\/en\/account\/verify\?token=/)
+    expect(sent[0]).toMatchObject({ to: email, template: "member_welcome" })
+    expect(sent[0].props.workshopsUrl).toMatch(/\/workshops$/)
   })
 
   it("answers an existing email the same way, without signing in, and tells the owner", async () => {
@@ -156,9 +157,10 @@ describe("memberSignupAction", () => {
   })
 
   it("never goes on to another site or a panel", async () => {
-    await expect(signup({ next: "https://evil.example/en" })).rejects.toMatchObject(redirectTo("/en/workshops?notice=checkEmail"))
+    await expect(signup({ next: "https://evil.example/en" })).rejects.toMatchObject(redirectTo("/en/workshops?notice=welcome"))
     request.cookies.clear()
-    await expect(signup({ next: "/en/admin" })).rejects.toMatchObject(redirectTo("/en/workshops?notice=checkEmail"))
+    await expect(signup({ next: "/en/admin" })).rejects.toMatchObject(redirectTo("/en/workshops?notice=welcome"))
+    await emails() // the welcome emails go out after the response: let them finish here
   })
 
   it("asks for a long enough password and a real phone number, in friendly words", async () => {
@@ -218,7 +220,7 @@ describe("memberLoginAction", () => {
       await expect(memberLoginAction({ email: m.email, password: PASSWORD, next }), next).rejects.toMatchObject(redirectTo(to))
     }
     request.cookies.clear()
-    await expect(signup({ next: "/tr/workshops" })).rejects.toMatchObject(redirectTo("/workshops?notice=checkEmail"))
+    await expect(signup({ next: "/tr/workshops" })).rejects.toMatchObject(redirectTo("/workshops?notice=welcome"))
   })
 
   it("gives one message for an unknown email, a wrong password and a locked account", async () => {

@@ -142,6 +142,8 @@ export async function signUpMember(input: SignUpInput): Promise<string | null> {
       name: input.name,
       phone: input.phone || null,
       locale: input.locale,
+      // No confirmation link for members: the account is ready at once.
+      emailVerifiedAt: new Date(),
     })
     .onConflictDoNothing({ target: members.email })
     .returning({ id: members.id })
@@ -246,6 +248,19 @@ export async function setInstructorLocale(instructorId: string, locale: string) 
  * Email a new verify link (24 hours; earlier ones stop working) in the
  * person's language. "verified" when there is nothing to verify.
  */
+/** The welcome email of a new member (signed in at once, nothing to confirm). */
+export async function sendMemberWelcome(id: string): Promise<boolean> {
+  const person = await findPerson("member", { id })
+  if (!person) return false
+  const sent = await sendEmail({
+    to: person.email,
+    template: "member_welcome",
+    locale: person.locale,
+    props: { name: person.name, workshopsUrl: await localeHref(person.locale, "/workshops") },
+  })
+  return sent.ok
+}
+
 export async function sendVerifyLink(kind: AccountKind, id: string): Promise<"sent" | "verified" | "failed"> {
   const person = await findPerson(kind, { id })
   if (!person) return "failed"

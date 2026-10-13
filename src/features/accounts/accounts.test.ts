@@ -76,7 +76,9 @@ describe("signUpMember", () => {
     const id = await signUpMember({ name: "Ayşe", email: `  ${address.toUpperCase()} `, password: PASSWORD, phone: "", locale: "en" })
     expect(id).toBeTruthy()
     const row = await member(id!)
-    expect(row).toMatchObject({ email: address, name: "Ayşe", phone: null, locale: "en", emailVerifiedAt: null })
+    expect(row).toMatchObject({ email: address, name: "Ayşe", phone: null, locale: "en" })
+    // Nothing to confirm: a member can register for a workshop at once.
+    expect(row.emailVerifiedAt).toBeInstanceOf(Date)
     expect(row.passwordHash).not.toContain(PASSWORD)
     expect(await verifyPassword(row.passwordHash, PASSWORD)).toBe(true)
   })

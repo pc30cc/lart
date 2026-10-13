@@ -193,6 +193,12 @@ export const emailTemplates = {
     greet: "name",
     cta: "verifyUrl",
   }),
+  /** A new member: welcome, signed in already; the button opens the workshops. */
+  member_welcome: define({
+    schema: z.object({ name: text(), workshopsUrl: siteUrl }),
+    greet: "name",
+    cta: "workshopsUrl",
+  }),
   instructor_invite: define({
     schema: z.object({ name: text(), acceptUrl: siteUrl }),
     greet: "name",

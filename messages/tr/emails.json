@@ -50,6 +50,14 @@
     "cta": "E-postamı doğrula",
     "note": "Bu hesabı siz oluşturmadıysanız bu e-postayı görmezden gelebilirsiniz."
   },
+  "member_welcome": {
+    "subject": "{brand}'e hoş geldiniz!",
+    "preview": "Hesabınız hazır; atölyelere hemen göz atın.",
+    "heading": "{brand}'e hoş geldiniz!",
+    "intro": "Aramıza katıldığınız için çok mutluyuz. Hesabınız hazır, atölyelere hemen kayıt olabilirsiniz.",
+    "cta": "Atölyeleri gör",
+    "note": "Bu hesabı siz oluşturmadıysanız lütfen bize haber verin."
+  },
   "instructor_invite": {
     "subject": "{brand} ailesine hoş geldiniz: artık eğitmenlerimizdensiniz",
     "preview": "Eğitmen panelinizi açmak için bir şifre belirleyin.",

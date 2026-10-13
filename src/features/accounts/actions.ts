@@ -23,6 +23,7 @@ import {
   resetPassword,
   sendMemberExists,
   sendResetLink,
+  sendMemberWelcome,
   sendVerifyLink,
   setInstructorLocale,
   setMemberLocale,
@@ -80,11 +81,12 @@ export const memberSignupAction = publicAction(
     const id = await signUpMember({ ...input, locale })
     if (id) {
       await startSession("member", id)
-      after(() => sendVerifyLink("member", id).catch(logFailure("welcome email")))
+      after(() => sendMemberWelcome(id).catch(logFailure("welcome email")))
     } else if (existsEmailLimiter.consume(input.email).ok) {
       after(() => sendMemberExists(input.email, locale).catch(logFailure("member exists email")))
     }
-    redirect(withNotice(safeNext(next, "member", await workshopsPath(locale), await mainLocale()), "checkEmail"))
+    // A new member is signed in at once; someone who already had an account is told by email.
+    redirect(withNotice(safeNext(next, "member", await workshopsPath(locale), await mainLocale()), id ? "welcome" : "checkEmail"))
   },
   perNetwork(10, 60),
 )

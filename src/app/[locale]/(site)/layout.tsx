@@ -3,7 +3,6 @@ import { Suspense } from "react"
 
 import { ImpersonationBar } from "@/components/impersonation-bar"
 import { NoticeToast } from "@/components/site/notice-toast"
-import { VerifyBanner } from "@/components/site/verify-banner"
 import { ViewBeacon } from "@/features/analytics/components/view-beacon"
 import { getSiteFrame } from "@/features/site/frame"
 import { getMember } from "@/lib/auth/member"
@@ -61,7 +60,7 @@ export default async function SiteLayout({ children, params }: LayoutProps<"/[lo
             />
           ) : null
         }
-        banner={session && !session.member.emailVerified ? <VerifyBanner email={session.member.email} /> : null}
+        banner={null}
         nav={frame.nav}
         footer={frame.footer}
       >

@@ -3,7 +3,7 @@
  * layout shows them as a toast (messages: site.notices.<notice>) and removes
  * the parameter. Only these values are ever shown.
  */
-export const siteNotices = ["checkEmail", "signedOut", "passwordSaved"] as const
+export const siteNotices = ["checkEmail", "signedOut", "passwordSaved", "welcome"] as const
 export type SiteNotice = (typeof siteNotices)[number]
 
 export const isSiteNotice = (value: unknown): value is SiteNotice =>

@@ -7,6 +7,7 @@
 /** Every transactional email, in the order the templates page lists them. */
 export const emailTemplateNames = [
   "welcome_verify",
+  "member_welcome",
   "instructor_invite",
   "instructor_signup",
   "instructor_approved",
