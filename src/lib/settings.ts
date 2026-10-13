@@ -69,6 +69,12 @@ export const settingSchemas = {
    * panels keep every language. Read through `getSiteLocales()` (src/i18n/main-locale).
    */
   siteLocales: z.array(locale).min(1),
+  /**
+   * Show visitors how many people registered for a workshop and how many
+   * places are left (Settings → General). Off: only "Registration open" or
+   * "Full". The panel always shows every count.
+   */
+  showSeats: z.boolean(),
   seo: z.object({ title: localized, description: localized }),
   /** Active public-site theme: an id of src/themes/ids.ts (an unknown one shows the default theme). */
   theme: z.string().regex(/^[a-z0-9-]+$/),
@@ -279,6 +285,7 @@ export const settingDefaults: { [K in SettingKey]: SettingValue<K> } = {
   brand: { fa: "لارت", tr: "Lart", en: "Lart" },
   defaultLocale: FALLBACK_LOCALE,
   siteLocales: ["fa", "tr", "en"],
+  showSeats: true,
   seo: { title: {}, description: {} },
   theme: "default",
   logo: null,

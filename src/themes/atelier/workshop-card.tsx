@@ -1,4 +1,4 @@
-import { useLocale } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 
 import { AvailabilityBadge, Price } from "@/components/site/workshop-labels"
 import { Link } from "@/i18n/navigation"
@@ -16,6 +16,7 @@ import { formatWorkshopDates, workshopHours } from "@/features/workshops/days"
  */
 export function WorkshopCard({ workshop: w, priority, headingAs: Heading = "h2" }: WorkshopCardProps) {
   const locale = useLocale()
+  const t = useTranslations("registration.seats")
   const fallback = atelierPhotos.card
 
   return (
@@ -46,6 +47,7 @@ export function WorkshopCard({ workshop: w, priority, headingAs: Heading = "h2" 
         </div>
         <AvailabilityBadge
           window={w.window}
+          seatsLeft={w.seats?.left}
           overlay
           className="absolute start-3 top-3 h-6 px-2.5 text-[11px] sm:start-4 sm:top-4 sm:h-7 sm:px-3 sm:text-xs"
         />
@@ -60,6 +62,10 @@ export function WorkshopCard({ workshop: w, priority, headingAs: Heading = "h2" 
           <bdi className="whitespace-nowrap">{workshopHours(w, locale)}</bdi>
         </p>
         <Price value={w.price} className="text-primary text-[15px] sm:text-base" />
+        {/* How many registered, when Settings → General shows it. */}
+        {w.seats && w.window === "open" && w.seats.taken > 0 && (
+          <p className="text-muted-foreground text-xs tabular-nums">{t("registered", { count: w.seats.taken })}</p>
+        )}
       </div>
     </Link>
   )

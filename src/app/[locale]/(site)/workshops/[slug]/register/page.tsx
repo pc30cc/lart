@@ -191,7 +191,13 @@ async function RegisterView({ params }: PageProps<"/[locale]/workshops/[slug]/re
         ways={paymentWayNames(payment, w.paymentUrl)}
         days={
           w.daySeatsLeft.length > 1
-            ? workshopSchedule(w, locale, "full").map((d, i) => ({ date: d.date, hours: d.hours, left: w.daySeatsLeft[i] ?? 0 }))
+            ? workshopSchedule(w, locale, "full").map((d, i) => {
+                const left = w.daySeatsLeft[i] ?? 0
+                // The numbers only when visitors may see them; else just whether a place is left.
+                return w.seats
+                  ? { date: d.date, hours: d.hours, left, taken: w.seats.days[i]?.taken ?? 0 }
+                  : { date: d.date, hours: d.hours, left: Math.min(left, 1) }
+              })
             : undefined
         }
       />

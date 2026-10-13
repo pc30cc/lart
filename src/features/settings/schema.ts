@@ -17,6 +17,8 @@ export const generalSettingsSchema = z
     defaultLocale: z.enum(siteLocales),
     /** The languages the public site is shown in; the main language is always one of them. */
     siteLocales: z.array(z.enum(siteLocales)),
+    /** Show visitors the registrations and places left of each workshop. */
+    showSeats: z.boolean(),
     seo: z.object({
       title: localizedText({ max: 120 }),
       description: localizedText({ max: 300 }),

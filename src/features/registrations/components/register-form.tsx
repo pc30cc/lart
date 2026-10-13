@@ -14,6 +14,7 @@ import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTr
 import { Link } from "@/i18n/navigation"
 import type { AppLocale } from "@/i18n/routing"
 import { formatLira } from "@/lib/money"
+import { SeatsLine } from "@/components/site/workshop-labels"
 import { cn } from "@/lib/utils"
 import { registerAction } from "../actions"
 import { registerSchema, type PaymentWayName, type RegisterValues } from "../schema"
@@ -49,8 +50,11 @@ export function RegisterForm({
   /** In kuruş; 0 for a free workshop. */
   price: number
   ways: PaymentWayName[]
-  /** A workshop on several days: each day (written out) and its places left, to choose one. */
-  days?: { date: string; hours: string; left: number }[]
+  /**
+   * A workshop on several days: each day (written out) and its places left, to
+   * choose one; `taken` (registered) only when visitors may see the numbers.
+   */
+  days?: Day[]
 }) {
   const t = useTranslations("registration.register")
   const tp = useTranslations("registration.price")
@@ -201,7 +205,9 @@ function TermsDialog({
 }
 
 /** A workshop on several days: which day, as big cards to tap (a full day says so and can't be chosen). */
-function DayChoiceField({ days }: { days: { date: string; hours: string; left: number }[] }) {
+type Day = { date: string; hours: string; left: number; taken?: number }
+
+function DayChoiceField({ days }: { days: Day[] }) {
   const t = useTranslations("registration.register.day")
   return (
     <FormField<RegisterValues> name="day">
@@ -232,8 +238,12 @@ function DayChoiceField({ days }: { days: { date: string; hours: string; left: n
                     <span className="block font-medium">{d.date}</span>
                     <bdi className="text-muted-foreground block text-sm tabular-nums">{d.hours}</bdi>
                   </span>
-                  {/* Only "Full": how many places are left is not shown. */}
-                  {d.left <= 0 && <span className="text-destructive text-sm font-medium">{t("full")}</span>}
+                  {/* Registered and left when Settings → General shows them, else only "Full". */}
+                  {d.taken !== undefined ? (
+                    <SeatsLine taken={d.taken} left={d.left} className="text-muted-foreground text-sm" />
+                  ) : (
+                    d.left <= 0 && <span className="text-destructive text-sm font-medium">{t("full")}</span>
+                  )}
                 </span>
               </label>
             ))}

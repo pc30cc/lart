@@ -64,11 +64,12 @@ export async function workshopPost(courseId: string, locale: "fa" | "tr" | "en")
     .where(eq(courses.id, courseId))
   if (!row) return null
   const c = row.course
-  const [t, brand, url, taken] = await Promise.all([
+  const [t, brand, url, taken, showSeats] = await Promise.all([
     getTranslations({ locale, namespace: "telegram" }),
     getBrand(locale),
     publicUrls(),
     seatsTakenByDay(c.id),
+    getSetting("showSeats"),
   ])
   const title = localized(c.title, locale)
   const left = daySeatsLeft(c, taken).total
@@ -82,8 +83,8 @@ export async function workshopPost(courseId: string, locale: "fa" | "tr" | "en")
     `📍  ${escape(localized(c.venue, locale))}`,
     `🎨  ${escape(t("instructor", { name: localized(row.instructor.displayName, locale) }))}`,
     `💳  ${escape(c.price > 0 ? t("price", { price: formatLira(c.price, locale) }) : t("free"))}`,
-    // Only "Full": the channel never says how many places are left.
-    ...(left > 0 ? [] : [`👥  ${escape(t("full"))}`]),
+    // The places left when Settings → General shows them to visitors, else only "Full".
+    ...(left <= 0 ? [`👥  ${escape(t("full"))}`] : showSeats ? [`👥  ${escape(t("seats", { count: left }))}`] : []),
     "",
     `🌿 <i>${escape(t("signoff", { brand }))}</i>`,
   ]

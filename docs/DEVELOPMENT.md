@@ -1442,10 +1442,15 @@ page lists each day with its hours ("Full" on a full one); the contract has one
 line per day (date, hours, participants). Changing the days is a contract
 change like changing the date, and clears the reminders already sent.
 
-**Places are never shown to visitors**: the site, its workshop cards, the
-register form and the Telegram post never say how many places a workshop
-has or has left; the pill says "Registration open", and only "Full" when
-none are left (`AvailabilityBadge`). The panel still shows every count.
+**Places shown to visitors or not** (Settings → General → "Show
+registrations and places left", setting `showSeats`, on by default): when
+on, the workshop cards' pill says "3 places left" (`AvailabilityBadge`) and
+the card how many registered, the workshop page "5 registered · 3 places
+left" (each day's on a workshop of several days, `SeatsLine`), the register
+form's day cards the same, and the Telegram post the places left. When off,
+none of the numbers leave the server (`seats` is null in
+`listOpenWorkshops` / `getPublicWorkshop`): the pill says "Registration
+open", and only "Full" when none are left. The panel always shows every count.
 
 **Members need no email confirmation**: signing up makes the account
 confirmed, signs the member in (notice "welcome") and sends `member_welcome`.

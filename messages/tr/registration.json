@@ -15,7 +15,9 @@
     "perPerson": "kişi başı"
   },
   "seats": {
-    "full": "Dolu"
+    "full": "Dolu",
+    "left": "{count, plural, one {# yer kaldı} other {# yer kaldı}}",
+    "registered": "{count, plural, one {# kişi kayıt oldu} other {# kişi kayıt oldu}}"
   },
   "age": {
     "adults": "Yetişkinler için",

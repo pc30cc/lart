@@ -47,7 +47,7 @@ const session = vi.hoisted(() => ({
 }))
 vi.mock("@/lib/auth/admin", () => ({ requireAdmin: async () => session, getAdmin: async () => session }))
 
-const KEYS = ["brand", "defaultLocale", "siteLocales", "seo", "cdn", "watermark", "email"] as const
+const KEYS = ["brand", "defaultLocale", "siteLocales", "showSeats", "seo", "cdn", "watermark", "email"] as const
 const run = randomUUID().slice(0, 8)
 let startedAt: Date
 
@@ -241,6 +241,7 @@ describe("general settings", () => {
     brand: { fa: "لارت", tr: `Lart ${run}`, en: `Lart ${run}` },
     defaultLocale: "fa" as const,
     siteLocales: ["fa", "tr", "en"] as ("fa" | "tr" | "en")[],
+    showSeats: true,
     seo: { title: { tr: "Atölyeler", en: "", fa: "" }, description: { fa: "", tr: "", en: "" } },
   }
 
@@ -254,11 +255,19 @@ describe("general settings", () => {
       brand: input.brand,
       defaultLocale: "fa",
       siteLocales: ["fa", "tr", "en"],
+      showSeats: true,
       seo: { title: { tr: "Atölyeler" }, description: {} },
     })
 
     expect(await saveGeneralSettings(input)).toEqual({ ok: true, data: { changed: [] } })
     expect(await auditsOf("brand")).toHaveLength(1)
+  })
+
+  it("hides and shows the places left on the site", async () => {
+    expect(await saveGeneralSettings({ ...input, showSeats: false })).toEqual({ ok: true, data: { changed: ["showSeats"] } })
+    expect(await stored("showSeats")).toBe(false)
+    expect((await getGeneralSettings()).showSeats).toBe(false)
+    expect(await saveGeneralSettings(input)).toEqual({ ok: true, data: { changed: ["showSeats"] } })
   })
 
   it("switches the addresses' main language at once in the process that saved it", async () => {

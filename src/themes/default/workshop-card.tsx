@@ -1,4 +1,4 @@
-import { CalendarDaysIcon, ClockIcon, MapPinIcon, PaletteIcon, UsersRoundIcon, type LucideIcon } from "lucide-react"
+import { CalendarDaysIcon, ClockIcon, MapPinIcon, PaletteIcon, TicketIcon, UsersRoundIcon, type LucideIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 
 import { AgeLabel, AvailabilityBadge, Price } from "@/components/site/workshop-labels"
@@ -44,7 +44,7 @@ export function WorkshopCard({
             <PaletteIcon className="text-primary/50 size-12" aria-hidden />
           </div>
         )}
-        <AvailabilityBadge window={w.window} overlay className="absolute start-3 top-3" />
+        <AvailabilityBadge window={w.window} seatsLeft={w.seats?.left} overlay className="absolute start-3 top-3" />
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-5">
@@ -62,6 +62,10 @@ export function WorkshopCard({
           <Line icon={UsersRoundIcon}>
             <AgeLabel ageMin={w.ageMin} ageMax={w.ageMax} />
           </Line>
+          {/* How many registered, when Settings → General shows it. */}
+          {w.seats && w.window === "open" && w.seats.taken > 0 && (
+            <Line icon={TicketIcon}>{t("seats.registered", { count: w.seats.taken })}</Line>
+          )}
         </ul>
         <div className="mt-auto flex items-baseline justify-between gap-3 border-t pt-3">
           <Price value={w.price} className="text-lg" />

@@ -1,4 +1,4 @@
-import { NextIntlClientProvider } from "next-intl"
+import { createTranslator, NextIntlClientProvider } from "next-intl"
 import { renderToString } from "react-dom/server"
 import { describe, expect, it, vi } from "vitest"
 
@@ -121,6 +121,7 @@ describe.each(["fa", "en", "tr"])("renders in %s", (locale) => {
               price: 150_000,
               maxCapacity: 10,
               seatsLeft: 2,
+              seats: null,
               ageMin: 7,
               ageMax: 12,
               window: "open",
@@ -140,6 +141,37 @@ describe.each(["fa", "en", "tr"])("renders in %s", (locale) => {
       expect(html).toContain("ورکشاپ")
       expect(html).toContain("۱٬۵۰۰")
     }
+  })
+
+  it("a workshop card shows the places left and how many registered only when given", async () => {
+    const card = {
+      id: "x",
+      slug: "mum",
+      title: "Mum",
+      venue: "Moda",
+      category: "Mum",
+      categorySlug: "mum",
+      instructorName: "Zeynep",
+      coverUrl: null,
+      startsAt,
+      days: null,
+      endsAt,
+      registrationDeadline: startsAt,
+      price: 150_000,
+      maxCapacity: 10,
+      seatsLeft: 2,
+      ageMin: null,
+      ageMax: null,
+      window: "open" as const,
+    }
+    const seats = (await load(locale)).registration.seats as Record<string, string>
+    const createdT = createTranslator({ locale, messages: { seats } })
+    const shown = await render(<WorkshopCard workshop={{ ...card, seats: { taken: 5, left: 2 } }} />)
+    expect(shown).toContain(createdT("seats.left", { count: 2 }))
+    expect(shown).toContain(createdT("seats.registered", { count: 5 }))
+    const hidden = await render(<WorkshopCard workshop={{ ...card, seats: null }} />)
+    expect(hidden).not.toContain(createdT("seats.left", { count: 2 }))
+    expect(hidden).not.toContain(createdT("seats.registered", { count: 5 }))
   })
 
   it("a free workshop's registration says Free, never a zero price", async () => {

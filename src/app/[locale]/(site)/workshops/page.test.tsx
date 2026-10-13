@@ -67,6 +67,7 @@ const card = (n: number, categorySlug: string): WorkshopCard => {
     price: 150_000,
     maxCapacity: 10,
     seatsLeft: 4,
+    seats: null,
     ageMin: null,
     ageMax: null,
     window: "open",

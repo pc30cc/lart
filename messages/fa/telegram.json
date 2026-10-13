@@ -3,6 +3,7 @@
   "instructor": "مدرس: {name}",
   "price": "هزینه: {price}",
   "free": "رایگان",
+  "seats": "{count, plural, one {# جای خالی} other {# جای خالی}}",
   "full": "ظرفیت تکمیل است",
   "signoff": "منتظر دیدنتان در {brand} هستیم",
   "register": "✨ ثبت‌نام در ورکشاپ"

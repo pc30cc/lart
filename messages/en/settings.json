@@ -37,7 +37,11 @@
     "seoPageDescriptionHint": "One or two sentences, around 150–160 characters. With the Classic template it is also the sentence under the brand on the home page.",
     "errors": {
       "mainOff": "The main language must stay on."
-    }
+    },
+    "workshopsTitle": "Workshops on the site",
+    "workshopsDescription": "What visitors see on the workshop cards and pages.",
+    "showSeats": "Show registrations and places left",
+    "showSeatsHint": "On: “5 registered · 3 places left” (each day on its own for a workshop on several days). Off: only “Registration open” or “Full”."
   },
   "email": {
     "providerTitle": "How emails are sent",

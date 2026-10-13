@@ -27,7 +27,7 @@ const settingAudit = (key: SettingKey, data: Record<string, unknown>) =>
 export const saveGeneralSettings = adminAction(generalSettingsSchema, async (input, ctx) => {
   // In the usual order, so a reordered choice is no change.
   input = { ...input, siteLocales: siteLocaleOrder.filter((l) => input.siteLocales.includes(l)) }
-  const keys = ["brand", "defaultLocale", "siteLocales", "seo"] as const
+  const keys = ["brand", "defaultLocale", "siteLocales", "showSeats", "seo"] as const
   const before = await Promise.all(keys.map((key) => getSetting(key)))
   const changed = keys.filter((key, i) => Object.keys(changes({ value: before[i] }, { value: input[key] })).length > 0)
   if (changed.length === 0) return { changed }

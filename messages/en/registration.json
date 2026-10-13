@@ -15,7 +15,9 @@
     "perPerson": "per person"
   },
   "seats": {
-    "full": "Full"
+    "full": "Full",
+    "left": "{count, plural, one {# place left} other {# places left}}",
+    "registered": "{count, plural, one {# registered} other {# registered}}"
   },
   "age": {
     "adults": "For adults",

@@ -25,7 +25,7 @@ import { formatDateTime } from "@/lib/format"
 import { absoluteUrl, alternates, jsonLdText, openGraphOf } from "@/lib/seo"
 import { getBrand } from "@/lib/settings"
 import { cn } from "@/lib/utils"
-import { AgeLabel, AvailabilityBadge, Price } from "@/components/site/workshop-labels"
+import { AgeLabel, AvailabilityBadge, Price, SeatsLine } from "@/components/site/workshop-labels"
 import { pageLocale } from "@/i18n/page-locale"
 import { formatWorkshopDates, workshopHours, workshopSchedule } from "@/features/workshops/days"
 
@@ -260,9 +260,12 @@ async function Facts({ workshop: w, locale }: { workshop: PublicWorkshop; locale
                 {workshopSchedule(w, locale, "full").map((d, i) => (
                   <li key={d.date}>
                     {d.date} · <bdi className="tabular-nums">{d.hours}</bdi>
-                    {/* Only "Full": visitors never see how many places are left. */}
-                    {w.window === "open" && (w.daySeatsLeft[i] ?? 0) <= 0 && (
-                      <span className="text-destructive block text-xs font-medium">{t("dayFull")}</span>
+                    {/* Registered and left on that day (Settings → General), else only "Full". */}
+                    {w.window === "open" && w.seats?.days[i] ? (
+                      <SeatsLine taken={w.seats.days[i].taken} left={w.seats.days[i].left} className="text-muted-foreground block text-xs" />
+                    ) : (
+                      w.window === "open" &&
+                      (w.daySeatsLeft[i] ?? 0) <= 0 && <span className="text-destructive block text-xs font-medium">{t("dayFull")}</span>
                     )}
                   </li>
                 ))}
@@ -272,6 +275,10 @@ async function Facts({ workshop: w, locale }: { workshop: PublicWorkshop; locale
         ]),
     { icon: MapPinIcon, label: t("venue"), value: <span {...langProps(w.textLang.venue)}>{w.venue}</span> },
     { icon: UsersRoundIcon, label: t("age"), value: <AgeLabel ageMin={w.ageMin} ageMax={w.ageMax} /> },
+    // One day: how many registered and how many places are left (Settings → General).
+    ...(w.seats && w.window === "open" && w.daySeatsLeft.length <= 1
+      ? [{ icon: TicketIcon, label: t("seats"), value: <SeatsLine taken={w.seats.taken} left={w.seats.left} /> }]
+      : []),
   ]
   return (
     <div className="bg-card ring-foreground/8 rounded-2xl p-5 shadow-sm ring-1">
@@ -293,7 +300,7 @@ async function Facts({ workshop: w, locale }: { workshop: PublicWorkshop; locale
         </span>
         <span>
           <span className="sr-only">{t("seats")}: </span>
-          <AvailabilityBadge window={w.window} />
+          <AvailabilityBadge window={w.window} seatsLeft={w.seats?.left} />
         </span>
       </div>
       {w.window === "open" && (

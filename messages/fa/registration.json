@@ -15,7 +15,9 @@
     "perPerson": "برای هر نفر"
   },
   "seats": {
-    "full": "تکمیل"
+    "full": "تکمیل",
+    "left": "{count, plural, one {# جا مانده} other {# جا مانده}}",
+    "registered": "{count, plural, one {# نفر ثبت‌نام کرده} other {# نفر ثبت‌نام کرده‌اند}}"
   },
   "age": {
     "adults": "ویژهٔ بزرگسالان",

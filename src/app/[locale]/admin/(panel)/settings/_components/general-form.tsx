@@ -15,6 +15,7 @@ type Saved = {
   brand: LocalizedText
   defaultLocale: (typeof siteLocales)[number]
   siteLocales: (typeof siteLocales)[number][]
+  showSeats: boolean
   seo: { title: LocalizedText; description: LocalizedText }
 }
 
@@ -33,6 +34,7 @@ export function GeneralSettingsForm({ saved }: { saved: Saved }) {
       brand: full(saved.brand),
       defaultLocale: saved.defaultLocale,
       siteLocales: saved.siteLocales,
+      showSeats: saved.showSeats,
       seo: { title: full(saved.seo.title), description: full(saved.seo.description) },
     },
     successMessage: ts("toast.saved"),
@@ -82,6 +84,27 @@ export function GeneralSettingsForm({ saved }: { saved: Saved }) {
               </div>
             )
           }}
+        </FormField>
+      </FormSection>
+
+      <FormSection title={t("workshopsTitle")} description={t("workshopsDescription")}>
+        <FormField<GeneralSettingsValues> name="showSeats">
+          {(field) => (
+            <label htmlFor={field.id} className="flex items-start justify-between gap-4 rounded-xl border p-3.5">
+              <span className="space-y-0.5">
+                <span className="block text-sm font-medium">{t("showSeats")}</span>
+                <span className="text-muted-foreground block text-sm text-pretty">{t("showSeatsHint")}</span>
+              </span>
+              <Switch
+                id={field.id}
+                checked={Boolean(field.value)}
+                onCheckedChange={(checked) => {
+                  field.onChange(checked)
+                  field.onBlur()
+                }}
+              />
+            </label>
+          )}
         </FormField>
       </FormSection>
 

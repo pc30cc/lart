@@ -22,23 +22,27 @@ export function Price({ value, className }: { value: number; className?: string 
 }
 
 /**
- * The registration state as a small pill: "Registration open", "Full",
- * "Registration closed", ... Visitors never see how many places there are
- * or are left, only that it is full. `overlay` sits on a photo.
+ * The registration state as a small pill: "3 places left" (warm when few are
+ * left) or "Registration open", "Full", "Registration closed", ... The number
+ * is shown only when given (`seatsLeft`: Settings → General lets visitors
+ * see it or not). `overlay` sits on a photo.
  */
 export function AvailabilityBadge({
   window,
+  seatsLeft,
   overlay = false,
   className,
 }: {
   window: RegistrationWindow
-  /** Not shown (only "Full" when none are left); kept for the callers. */
-  seatsLeft?: number
+  /** Places left, when visitors may see them; null/undefined: "Registration open". */
+  seatsLeft?: number | null
   overlay?: boolean
   className?: string
 }) {
   const t = useTranslations("registration")
   const open = window === "open"
+  const shown = open && typeof seatsLeft === "number"
+  const few = shown && seatsLeft <= 3
   return (
     <span
       className={cn(
@@ -46,17 +50,33 @@ export function AvailabilityBadge({
         overlay
           ? cn(
               "shadow-xs backdrop-blur-sm",
-              open && "bg-background/90 text-foreground",
+              open && !few && "bg-background/90 text-foreground",
+              few && "bg-warning text-white dark:text-black",
               !open && "bg-foreground/80 text-background",
             )
           : cn(
-              open && "bg-success/10 text-success",
+              open && !few && "bg-success/10 text-success",
+              few && "bg-warning/12 text-warning",
               !open && "bg-muted text-muted-foreground",
             ),
         className,
       )}
     >
-      {t(`window.${window}`)}
+      {shown ? t("seats.left", { count: seatsLeft }) : t(`window.${window}`)}
+    </span>
+  )
+}
+
+/** "5 registered · 3 places left" (or "Full"), for visitors when Settings → General shows it. */
+export function SeatsLine({ taken, left, className }: { taken: number; left: number; className?: string }) {
+  const t = useTranslations("registration.seats")
+  return (
+    <span className={cn("tabular-nums", className)}>
+      {t("registered", { count: taken })}
+      <span aria-hidden> · </span>
+      <span className={cn(left <= 0 ? "text-destructive" : left <= 3 ? "text-warning" : undefined)}>
+        {left > 0 ? t("left", { count: left }) : t("full")}
+      </span>
     </span>
   )
 }

@@ -37,7 +37,11 @@
     "seoPageDescriptionHint": "Bir iki cümle, 150–160 karakter civarı. Klasik temada ana sayfada markanın altında görünen cümle de budur.",
     "errors": {
       "mainOff": "Ana dil açık kalmalı."
-    }
+    },
+    "workshopsTitle": "Sitede atölyeler",
+    "workshopsDescription": "Ziyaretçilerin atölye kartlarında ve sayfalarında gördükleri.",
+    "showSeats": "Kayıt sayısını ve kalan yerleri göster",
+    "showSeatsHint": "Açık: “5 kişi kayıtlı · 3 yer kaldı” (birkaç günlük atölyede her gün ayrı). Kapalı: yalnızca “Kayıtlar açık” ya da “Dolu”."
   },
   "email": {
     "providerTitle": "E-postalar nasıl gönderilsin",

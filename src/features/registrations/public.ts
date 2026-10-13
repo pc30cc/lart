@@ -10,7 +10,7 @@ import { getMember } from "@/lib/auth/member"
 import { sha256 } from "@/lib/crypto"
 import { errorForLog } from "@/lib/errors"
 import { fallbackLanguage, localized, ownText } from "@/lib/format"
-import { getBrand } from "@/lib/settings"
+import { getBrand, getSetting } from "@/lib/settings"
 import { getStorage, type Storage } from "@/lib/storage"
 import { activeStatuses, daySeatsLeft, registrationWindow, safePaymentUrl } from "./schema"
 
@@ -80,6 +80,14 @@ async function seatsTakenOf(courseIds: string[]): Promise<Map<string, number[]>>
   return new Map([...byCourse].map(([id, list]) => [id, toDays(list)]))
 }
 
+/**
+ * What visitors may see of the places: how many registered and how many are
+ * left, or null when Settings → General hides it (then only "Full").
+ */
+export type ShownSeats = { taken: number; left: number } | null
+
+const sum = (ns: number[]) => ns.reduce((a, b) => a + b, 0)
+
 // ─── Files ────────────────────────────────────────────────────────────────────
 
 /** Storage for showing files, or null when the CDN settings are broken (pages still render). */
@@ -139,10 +147,12 @@ export async function listOpenWorkshops(
     .where(and(openWorkshopsWhere(now), category === undefined ? undefined : eq(categories.slug, category)))
     .orderBy(asc(courses.startsAt), asc(courses.id))
     .limit(limit)
-  const [taken, files] = await Promise.all([seatsTakenOf(rows.map((r) => r.id)), storage()])
+  const [taken, files, showSeats] = await Promise.all([seatsTakenOf(rows.map((r) => r.id)), storage(), getSetting("showSeats")])
 
   return rows.map((r) => {
-    const left = daySeatsLeft(r, taken.get(r.id) ?? []).total
+    const held = taken.get(r.id) ?? []
+    const left = daySeatsLeft(r, held).total
+    const seats: ShownSeats = showSeats ? { taken: sum(held), left } : null
     return {
       id: r.id,
       slug: r.slug,
@@ -160,6 +170,7 @@ export async function listOpenWorkshops(
       price: r.price,
       maxCapacity: r.maxCapacity,
       seatsLeft: left,
+      seats,
       ageMin: r.ageMin,
       ageMax: r.ageMax,
       window: registrationWindow({ ...r, seatsLeft: left }, now),
@@ -230,7 +241,7 @@ export const getPublicWorkshop = cache(async (slug: string, locale: string) => {
     .limit(1)
   if (!row) return null
 
-  const [taken, samples, files] = await Promise.all([
+  const [taken, samples, files, showSeats] = await Promise.all([
     seatsTakenByDay(row.id),
     db
       .select({ path: media.path, width: media.width, height: media.height })
@@ -238,6 +249,7 @@ export const getPublicWorkshop = cache(async (slug: string, locale: string) => {
       .where(and(eq(media.courseId, row.id), eq(media.kind, "sample")))
       .orderBy(asc(media.sort), asc(media.createdAt)),
     storage(),
+    getSetting("showSeats"),
   ])
   const seats = daySeatsLeft(row, taken)
   const left = seats.total
@@ -283,6 +295,14 @@ export const getPublicWorkshop = cache(async (slug: string, locale: string) => {
     seatsLeft: left,
     /** Several days: the places left on each day (index = day), for choosing one. */
     daySeatsLeft: seats.days,
+    /** Registered and left, in all and on each day; null when hidden from visitors. */
+    seats: showSeats
+      ? {
+          taken: sum(taken),
+          left,
+          days: seats.days.map((n, i) => ({ taken: taken[i] ?? 0, left: n })),
+        }
+      : null,
     termsTemplateId: row.termsTemplateId,
     /** The online payment link, only when it is a safe https link (shown to registered students). */
     paymentUrl: safePaymentUrl(row.paymentUrl) ?? null,
