@@ -14,6 +14,7 @@ import { cancelRegistrationAction, registerAction } from "./actions"
 import { sendRegistrationCancelled, sendRegistrationReceived } from "./notify"
 import { getPublicWorkshop, listOpenWorkshops, seatsLeft, seatsTaken, workshopTerms } from "./public"
 import { cancelMyRegistration, registerForWorkshop, type RegisterInput } from "./register"
+import { registerByAdmin } from "./admin/register"
 import { attachReceipt, canAttachReceipt, changePaymentChoice } from "./receipt"
 import { listAdminNotifications, markNotificationsSeen } from "@/features/notifications/queries"
 import {
@@ -413,6 +414,37 @@ describe("workshops on several days", () => {
     const member = await newMember()
     const { id } = await registerForWorkshop(member.id, await input(course.id, { day: 1 }))
     expect(await registrationOf(id)).toMatchObject({ day: null })
+  })
+})
+
+describe("registerByAdmin", () => {
+  const base = { participantName: "Mona", paid: false } as const
+
+  it("registers a member as not paid yet, or paid with the payment recorded", async () => {
+    const course = await newCourse()
+    const [a, b] = [await newMember(), await newMember()]
+    const unpaid = await db.transaction((tx) => registerByAdmin(tx, { ...base, memberId: a.id, courseId: course.id }, admin.id))
+    expect(unpaid).toMatchObject({ paid: false })
+    expect(await registrationOf(unpaid.id)).toMatchObject({ status: "pending", amount: 150_000, day: null })
+
+    const paid = await db.transaction((tx) =>
+      registerByAdmin(tx, { ...base, memberId: b.id, courseId: course.id, paid: true, method: "cash" }, admin.id),
+    )
+    expect(paid).toMatchObject({ paid: true })
+    expect(await registrationOf(paid.id)).toMatchObject({ status: "confirmed", paymentMethod: "cash" })
+  })
+
+  it("takes people after the deadline, but never on a full day or the same participant twice", async () => {
+    const course = await newCourse({ maxCapacity: 1, registrationDeadline: new Date(Date.now() - DAY) })
+    const [a, b] = [await newMember(), await newMember()]
+    await db.transaction((tx) => registerByAdmin(tx, { ...base, memberId: a.id, courseId: course.id }, admin.id))
+    await rejectsWith(db.transaction((tx) => registerByAdmin(tx, { ...base, memberId: a.id, courseId: course.id }, admin.id)), "registration.errors.full")
+    const bigger = await newCourse()
+    await db.transaction((tx) => registerByAdmin(tx, { ...base, memberId: b.id, courseId: bigger.id }, admin.id))
+    await rejectsWith(
+      db.transaction((tx) => registerByAdmin(tx, { ...base, memberId: b.id, courseId: bigger.id }, admin.id)),
+      "registration.errors.duplicate",
+    )
   })
 })
 

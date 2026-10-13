@@ -331,7 +331,8 @@
         "cancel": "Registration cancelled",
         "refund": "Refund marked as paid back",
         "refundChange": "Refund changed",
-        "export": "Registrations exported"
+        "export": "Registrations exported",
+        "added": "Registration added by an admin"
       },
       "setting": {
         "update": "Settings changed",

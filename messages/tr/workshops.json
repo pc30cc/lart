@@ -553,7 +553,44 @@
       "empty": "Bir atölyeye kaydolanlar burada görünür."
     },
     "dayCount": "{taken} / {max}",
-    "byDay": "Günlere göre"
+    "byDay": "Günlere göre",
+    "add": {
+      "trigger": "Kayıt ekle",
+      "title": "Kayıt ekle",
+      "description": "Bir katılımcıyı atölyeye kendiniz kaydedin. Sitede kayıt olduğunda giden e-postanın aynısı ona gider.",
+      "member": "Katılımcının hesabı",
+      "searchPlaceholder": "Ad, e-posta veya telefonla ara",
+      "searching": "Aranıyor…",
+      "noMembers": "Kimse bulunamadı. Önce Katılımcılar'dan ekleyin.",
+      "change": "Değiştir",
+      "workshop": "Atölye",
+      "chooseWorkshop": "Bir atölye seçin",
+      "day": "Hangi gün",
+      "when": "Tarih ve saat",
+      "begun": "Başladı",
+      "left": "{count} yer kaldı",
+      "full": "Dolu",
+      "participant": "Katılımcının adı",
+      "participantHint": "Atölyeye katılan kişi (ör. çocuğu).",
+      "payment": "Ödeme",
+      "paymentState": {
+        "unpaid": "Henüz ödenmedi",
+        "paid": "Ödendi"
+      },
+      "price": "Ücret: {price}",
+      "method": "Ödeme şekli",
+      "chooseMethod": "Seçin",
+      "methods": {
+        "cash": "Nakit",
+        "transfer": "Banka havalesi",
+        "online": "Online"
+      },
+      "paidOn": "Ödeme tarihi",
+      "cancel": "Vazgeç",
+      "submit": "Kaydet",
+      "done": "Kayıt yapıldı, katılımcıya e-posta gönderildi.",
+      "noWorkshops": "Şu anda kayıt alan bir atölye yok."
+    }
   },
   "gallery": {
     "metaTitle": "Galeri · {title}",

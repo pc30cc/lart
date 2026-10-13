@@ -10,6 +10,8 @@ import { EmptyState } from "@/components/admin/empty-state"
 import { Money } from "@/components/admin/money"
 import { Button } from "@/components/ui/button"
 import { RegistrationActions } from "@/features/registrations/admin/components/dialogs"
+import { AddRegistrationDialog } from "@/features/registrations/admin/components/add-registration-dialog"
+import { registrableWorkshops } from "@/features/registrations/admin/register"
 import { PaymentCell, refundOwed } from "@/features/registrations/admin/components/payment-cell"
 import { listWorkshopRegistrations, registrationSummary, type AdminRegistrationRow } from "@/features/registrations/admin/queries"
 import { paymentMethods, registrationTable, registrationViews, type PaymentMethod } from "@/features/registrations/admin/schema"
@@ -63,6 +65,8 @@ export default async function WorkshopRegistrationsPage({
   ])
   if (!workshop) notFound()
   const exportHref = await localeHref(locale, `/admin/workshops/${workshop.id}/registrations/export`)
+  // "Add registration" offers this workshop (when it still takes people) first.
+  const addable = await registrableWorkshops(locale)
 
   const n = (v: number) => formatNumber(v, locale)
   // A cancelled workshop's registrations are all cancelled; closed books can't change.
@@ -219,14 +223,17 @@ export default async function WorkshopRegistrationsPage({
         workshop={workshop}
         active="registrations"
         actions={
-          summary.active + summary.cancelled > 0 ? (
-            <Button asChild variant="outline" size="lg" className="px-4">
-              <a href={exportHref} download>
-                <DownloadIcon />
-                {t("export")}
-              </a>
-            </Button>
-          ) : undefined
+          <>
+            {!locked && <AddRegistrationDialog workshops={addable} courseId={workshop.id} />}
+            {summary.active + summary.cancelled > 0 && (
+              <Button asChild variant="outline" size="lg" className="px-4">
+                <a href={exportHref} download>
+                  <DownloadIcon />
+                  {t("export")}
+                </a>
+              </Button>
+            )}
+          </>
         }
       />
       {summary.active + summary.cancelled === 0 ? (

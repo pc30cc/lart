@@ -11,7 +11,9 @@ import { errorForLog } from "@/lib/errors"
 import { getSetting, setSetting } from "@/lib/settings"
 import { sendPaymentReceived, sendRefundChanged, sendRefundSent, sendRegistrationCancelled } from "./notify"
 import { cancelRegistration, momentOf, recordPayment, recordRefund, setRefund } from "./payments"
-import { cancelRegistrationSchema, markRefundedSchema, recordPaymentSchema, setRefundSchema } from "./schema"
+import { sendRegistrationReceived } from "../notify"
+import { registerByAdmin, searchMembers } from "./register"
+import { addRegistrationSchema, cancelRegistrationSchema, markRefundedSchema, memberSearchSchema, recordPaymentSchema, setRefundSchema } from "./schema"
 
 /**
  * The super admin's registration actions: record a payment, cancel a
@@ -47,6 +49,35 @@ export const recordPaymentAction = adminAction(recordPaymentSchema, async ({ id,
   revalidate()
   return { id, method }
 })
+
+/**
+ * "Add registration": a member registered by a super admin for a workshop
+ * (and day), not paid yet or paid. The member is emailed like after their own
+ * registration ("your place is reserved", or "we received your payment").
+ */
+export const addRegistrationAction = adminAction(addRegistrationSchema, async (input, ctx) => {
+  const added = await db.transaction(async (tx) => {
+    const added = await registerByAdmin(tx, input, ctx.admin.id)
+    await ctx.audit(
+      {
+        action: "registration.added",
+        entity: "registration",
+        entityId: added.id,
+        data: { courseId: added.courseId, memberId: input.memberId, day: input.day ?? null, paid: added.paid, method: added.paid ? input.method : null },
+      },
+      tx,
+    )
+    return added
+  })
+  after(() =>
+    (added.paid && input.method ? sendPaymentReceived(added.id, input.method) : sendRegistrationReceived(added.id)).catch(logFailure("registration email")),
+  )
+  revalidate()
+  return { id: added.id, courseId: added.courseId }
+})
+
+/** The member search of "Add registration" (name, email or phone). */
+export const searchMembersAction = adminAction(memberSearchSchema, async ({ q }) => searchMembers(q))
 
 /** Cancel a registration; a paid one is owed its refund (under the terms, or in full). */
 export const cancelRegistrationAction = adminAction(cancelRegistrationSchema, async ({ id, refund }, ctx) => {

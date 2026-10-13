@@ -553,7 +553,44 @@
       "empty": "People who register for a workshop appear here."
     },
     "dayCount": "{taken} of {max}",
-    "byDay": "By day"
+    "byDay": "By day",
+    "add": {
+      "trigger": "Add registration",
+      "title": "Add a registration",
+      "description": "Register a participant for a workshop yourself. They get the same email as when they register on the site.",
+      "member": "Participant's account",
+      "searchPlaceholder": "Search by name, email or phone",
+      "searching": "Searching…",
+      "noMembers": "No one found. Add them first in Participants.",
+      "change": "Change",
+      "workshop": "Workshop",
+      "chooseWorkshop": "Choose a workshop",
+      "day": "Which day",
+      "when": "Date and time",
+      "begun": "Begun",
+      "left": "{count, plural, one {# place left} other {# places left}}",
+      "full": "Full",
+      "participant": "Participant's name",
+      "participantHint": "The person who attends (e.g. their child).",
+      "payment": "Payment",
+      "paymentState": {
+        "unpaid": "Not paid yet",
+        "paid": "Paid"
+      },
+      "price": "Price: {price}",
+      "method": "Paid by",
+      "chooseMethod": "Choose",
+      "methods": {
+        "cash": "Cash",
+        "transfer": "Bank transfer",
+        "online": "Online"
+      },
+      "paidOn": "Paid on",
+      "cancel": "Cancel",
+      "submit": "Register",
+      "done": "Registered. We emailed the participant.",
+      "noWorkshops": "No workshop takes registrations right now."
+    }
   },
   "gallery": {
     "metaTitle": "Gallery · {title}",

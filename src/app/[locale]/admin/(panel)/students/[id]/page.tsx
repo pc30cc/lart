@@ -8,6 +8,8 @@ import { z } from "zod"
 import { AccountAccess } from "@/components/admin/account-access"
 import { Detail, Panel } from "@/components/admin/detail-panel"
 import { PageHeader } from "@/components/admin/page-header"
+import { AddRegistrationDialog } from "@/features/registrations/admin/components/add-registration-dialog"
+import { registrableWorkshops } from "@/features/registrations/admin/register"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PaymentCell } from "@/features/registrations/admin/components/payment-cell"
 import { getStudent, getStudentRegistrations } from "@/features/students/queries"
@@ -46,6 +48,12 @@ export default async function StudentPage({ params }: PageProps<"/[locale]/admin
         title={student.name}
         description={student.email}
         back={{ href: "/admin/students", label: t("backToList") }}
+        actions={
+          <AddRegistrationDialog
+            workshops={await registrableWorkshops(locale)}
+            member={{ id: student.id, name: student.name, email: student.email, phone: student.phone }}
+          />
+        }
       />
 
       <div className="space-y-6">

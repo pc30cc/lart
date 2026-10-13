@@ -28,6 +28,7 @@ const values = {
   name: "Ayşe",
   participant: "Deniz",
   n: "2",
+  price: "₺450",
   taken: "3",
   amount: "₺1.500",
   paid: "₺1.500",

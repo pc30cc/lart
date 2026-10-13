@@ -149,7 +149,10 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/work
             {mine.length > 0 ? (
               <Registered workshop={w} registrations={mine} />
             ) : w.window === "open" ? (
-              <Register slug={w.slug} />
+              // Phones and narrow windows: the bar fixed at the bottom is the one button (PhoneRegisterBar).
+              <div className="hidden lg:block">
+                <Register slug={w.slug} />
+              </div>
             ) : (
               <ClosedState workshop={w} locale={locale} />
             )}
@@ -320,7 +323,8 @@ async function Register({ slug }: { slug: string }) {
 
 /**
  * Phones: the price and "Register" kept at the bottom of the screen while the
- * page is read (the aside's button is below the cover and the facts there).
+ * page is read; below the large layout it is the page's only "Register" (the
+ * aside's button shows on wide screens only).
  * Sticky at the end of the article, so it never covers the footer.
  */
 async function PhoneRegisterBar({ workshop: w }: { workshop: PublicWorkshop }) {

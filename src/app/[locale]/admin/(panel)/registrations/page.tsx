@@ -7,6 +7,8 @@ import { parseTableParams } from "@/components/admin/data-table/params"
 import { EmptyState } from "@/components/admin/empty-state"
 import { Money } from "@/components/admin/money"
 import { PageHeader } from "@/components/admin/page-header"
+import { AddRegistrationDialog } from "@/features/registrations/admin/components/add-registration-dialog"
+import { registrableWorkshops } from "@/features/registrations/admin/register"
 import { RegistrationActions } from "@/features/registrations/admin/components/dialogs"
 import { PaymentCell, refundOwed } from "@/features/registrations/admin/components/payment-cell"
 import { countRegistrationViews, listRegistrations, type AllRegistrationRow } from "@/features/registrations/admin/queries"
@@ -171,7 +173,7 @@ export default async function RegistrationsPage({ searchParams }: PageProps<"/[l
 
   return (
     <>
-      <PageHeader title={t("all.title")} description={t("all.description")} />
+      <PageHeader title={t("all.title")} description={t("all.description")} actions={<AddRegistrationDialog workshops={await registrableWorkshops(locale)} />} />
       {counts.all === 0 ? (
         <EmptyState icon={TicketIcon} title={t("empty.title")} description={t("all.empty")} />
       ) : (

@@ -29,6 +29,27 @@ export const recordPaymentSchema = z.object({
 })
 export type RecordPaymentValues = z.input<typeof recordPaymentSchema>
 
+/**
+ * "Add registration": a super admin registers a member (searched by name,
+ * email or phone) for a workshop and, on several days, one of its days, as
+ * not paid yet or already paid (how, and when).
+ */
+export const addRegistrationSchema = z
+  .object({
+    memberId: uuid(),
+    courseId: uuid(),
+    day: z.number().int().min(0).max(13).optional(),
+    participantName: z.string().trim().min(2).max(80),
+    paid: z.boolean(),
+    method: z.enum(paymentMethods).optional(),
+    paidOn: entryDate().optional(),
+  })
+  .refine((v) => !v.paid || v.method, { path: ["method"], error: "workshops.registrations.errors.chooseMethod" })
+export type AddRegistrationValues = z.input<typeof addRegistrationSchema>
+
+/** The member search of "Add registration". */
+export const memberSearchSchema = z.object({ q: z.string().trim().max(100) })
+
 /** "Cancel registration": refund under the terms (100 / 50 / 0 % by the time left) or in full. Unpaid: nothing to refund. */
 export const cancelRegistrationSchema = z.object({
   id: uuid(),
