@@ -21,6 +21,7 @@ import {
   postWithdrawal,
   registrationMoney,
   reverseTransaction,
+  startEdit,
   walletBalance,
   type Posting,
 } from "./ledger"
@@ -408,3 +409,36 @@ describe("reverseTransaction", () => {
     )
   })
 })
+
+describe("editing an entry (startEdit)", () => {
+  it("reverses the original on its own date, so the corrected entry takes its place", async () => {
+    const courseId = await makeCourse(world, alice.id, { status: "published" })
+    const original = await inTx((tx) => postExpense(tx, { ...common(), courseId, amount: 5000, source: "wallet" }))
+    const edited = await inTx(async (tx) => {
+      const info = await startEdit(tx, original, bob.id)
+      expect(info).toMatchObject({ kind: "expense", courseId, occurredOn: day, furnishing: false })
+      return postExpense(tx, { ...common(), occurredOn: "2026-09-16", courseId, amount: 4200, source: "wallet", editOf: original })
+    })
+    const [reversal] = await db.select().from(ledgerTransactions).where(eq(ledgerTransactions.reversalOf, original))
+    expect(reversal).toMatchObject({ kind: "reversal", occurredOn: day })
+    expect(await db.select({ editOf: ledgerTransactions.editOf }).from(ledgerTransactions).where(eq(ledgerTransactions.id, edited))).toEqual([
+      { editOf: original },
+    ])
+    expect(await walletChange([original, reversal.id, edited])).toBe(-4200)
+    expect(await courseBalances(db, courseId)).toMatchObject({ courseExpenses: 4200 })
+    // Once only, and never a kind that can't be edited.
+    expect(await userError(inTx((tx) => startEdit(tx, original, bob.id)))).toBe("money.errors.alreadyReversed")
+    expect(await userError(inTx((tx) => startEdit(tx, reversal.id, bob.id)))).toBe("money.errors.notEditable")
+  })
+
+  it("keeps a contribution's partners and undoes everything when the corrected entry fails", async () => {
+    const id = await inTx((tx) => postContribution(tx, { ...common(), partnerId: alice.id, amount: 1000 }))
+    const info = await inTx((tx) => startEdit(tx, id, bob.id).then(async (r) => {
+      throw Object.assign(new Error("stop"), { r })
+    })).catch((e: { r: Awaited<ReturnType<typeof startEdit>> }) => e.r)
+    expect(info.partnerIds).toEqual([alice.id])
+    // The failed edit left nothing behind: the original is still not reversed.
+    expect(await db.select().from(ledgerTransactions).where(eq(ledgerTransactions.reversalOf, id))).toEqual([])
+  })
+})
+

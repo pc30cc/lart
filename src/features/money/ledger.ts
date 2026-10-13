@@ -160,7 +160,7 @@ export const booksClosed = (course: { status: string; closedAt: Date | null }) =
  * Post one balanced transaction. Must run inside `db.transaction`: the
  * database checks the balance at commit. Returns the transaction id.
  */
-export async function postTransaction(tx: Tx, p: Posting & { reversalOf?: string; furnishing?: boolean }): Promise<string> {
+export async function postTransaction(tx: Tx, p: Posting & { reversalOf?: string; editOf?: string; furnishing?: boolean }): Promise<string> {
   checkPosting(p)
 
   const partnerIds = [...new Set(p.lines.flatMap((l) => (l.partnerId ? [l.partnerId] : [])))]
@@ -190,6 +190,7 @@ export async function postTransaction(tx: Tx, p: Posting & { reversalOf?: string
       courseId: p.courseId ?? null,
       registrationId: p.registrationId ?? null,
       reversalOf: p.reversalOf ?? null,
+      editOf: p.editOf ?? null,
       furnishing: p.furnishing ?? false,
       createdBy: p.createdBy,
     })
@@ -200,7 +201,7 @@ export async function postTransaction(tx: Tx, p: Posting & { reversalOf?: string
   return row.id
 }
 
-type Common = { occurredOn: string; description: string; createdBy: string }
+type Common = { occurredOn: string; description: string; createdBy: string; /** An edit: the entry this one replaces (`editTransaction`). */ editOf?: string }
 
 const positive = (amount: number) => {
   if (!Number.isSafeInteger(amount) || amount <= 0) throw new LedgerError("amount must be a positive whole number of kuruş")
@@ -457,6 +458,40 @@ export async function reverseTransaction(
     if (pgError(err)?.code === PG.uniqueViolation) throw new UserError("money.errors.alreadyReversed")
     throw err
   }
+}
+
+/** The kinds an admin can edit (an expense, furnishing included, a contribution, an advance, an instructor's payment). */
+export const editableKinds: readonly TransactionKind[] = ["expense", "capital_contribution", "instructor_advance", "instructor_payment"]
+
+/**
+ * The first half of editing an entry: check it can be edited and reverse it,
+ * dated as the original, so its period nets to nothing and the corrected
+ * entry (posted next by the caller, with `editOf` = this id, in the same
+ * database transaction) takes its place. Only `editableKinds`, not reversed
+ * or edited already, and nothing that touches a closed workshop's figures
+ * (the rules of `reverseTransaction`). Returns the original's kind,
+ * workshop, partners (a contribution's) and furnishing flag.
+ */
+export async function startEdit(tx: Tx, id: string, adminId: string) {
+  const [original] = await tx
+    .select({
+      kind: ledgerTransactions.kind,
+      occurredOn: ledgerTransactions.occurredOn,
+      courseId: ledgerTransactions.courseId,
+      furnishing: ledgerTransactions.furnishing,
+    })
+    .from(ledgerTransactions)
+    .where(eq(ledgerTransactions.id, id))
+  if (!original) throw new UserError("money.errors.entryGone")
+  if (!editableKinds.includes(original.kind)) throw new UserError("money.errors.notEditable")
+  const [edited] = await tx.select({ id: ledgerTransactions.id }).from(ledgerTransactions).where(eq(ledgerTransactions.editOf, id))
+  if (edited) throw new UserError("money.errors.alreadyReversed")
+  await reverseTransaction(id, adminId, { tx, occurredOn: original.occurredOn })
+  const partners = await tx
+    .select({ partnerId: ledgerLines.partnerId })
+    .from(ledgerLines)
+    .where(and(eq(ledgerLines.transactionId, id), eq(ledgerLines.account, "partner_capital")))
+  return { ...original, partnerIds: partners.flatMap((p) => (p.partnerId ? [p.partnerId] : [])) }
 }
 
 // ─── Balances ─────────────────────────────────────────────────────────────────

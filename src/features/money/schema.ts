@@ -179,3 +179,12 @@ export function parseReportParams(searchParams: Record<string, unknown>, now: Da
   }
 }
 export type ReportParams = ReturnType<typeof parseReportParams>
+
+// ─── Editing an entry ─────────────────────────────────────────────────────────
+
+/** Editing an entry: its id and the same fields as recording it (`startEdit` in the ledger). */
+const editOf = z.object({ id: uuid() })
+export const editExpenseSchema = expenseSchema.and(editOf)
+export const editContributionSchema = contributionSchema.and(editOf)
+export const editAdvanceSchema = advanceSchema.and(editOf)
+export const editInstructorPaymentSchema = instructorPaymentSchema.and(editOf)

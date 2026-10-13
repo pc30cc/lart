@@ -2,13 +2,14 @@ import { useLocale, useTranslations } from "next-intl"
 
 import { Money } from "@/components/admin/money"
 import { StatusBadge } from "@/components/admin/status-badge"
-import { isReversible, type WorkshopEntry } from "@/features/money/queries"
+import { editTarget, isReversible, type WorkshopEntry } from "@/features/money/queries"
 import { formatDate } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { kindIcons } from "../../../../money/_components/parts"
+import { EditEntry } from "../../../../money/_components/edit-entry"
 import { ReverseEntry } from "../../../../money/_components/reverse-entry"
 
-/** A workshop's expenses, advance movements or instructor payments; mistakes are reversed, never edited. */
+/** A workshop's expenses, advance movements or instructor payments; mistakes are edited (the original reversed, the corrected entry recorded) or reversed. */
 export function EntryList({ entries, empty }: { entries: WorkshopEntry[]; empty: string }) {
   const t = useTranslations("money")
   const locale = useLocale()
@@ -35,6 +36,7 @@ export function EntryList({ entries, empty }: { entries: WorkshopEntry[]; empty:
               <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
                 <span className={cn("truncate", e.reversedBy && "line-through decoration-1")}>{title}</span>
                 {e.reversedBy && <StatusBadge className="h-5">{t("ledger.reversed")}</StatusBadge>}
+                {e.editOf && <StatusBadge tone="info" className="h-5">{t("ledger.edited")}</StatusBadge>}
               </p>
               <p className="text-muted-foreground truncate text-xs">
                 {formatDate(`${e.occurredOn}T09:00:00Z`, locale, "medium")} · {source}
@@ -43,6 +45,7 @@ export function EntryList({ entries, empty }: { entries: WorkshopEntry[]; empty:
             </div>
             <div className="flex shrink-0 items-center gap-1">
               <Money value={e.amount} className="text-sm font-semibold" />
+              {editTarget(e) && <EditEntry target={editTarget(e)!} size="xs" />}
               {isReversible(e) && <ReverseEntry id={e.id} what={title} size="xs" />}
             </div>
           </li>

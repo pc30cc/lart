@@ -107,7 +107,7 @@ function FormDialog({
 }
 
 /** The form inside a dialog: fields, then Cancel / Save. */
-function DialogForm<T extends FieldValues, C, O>({
+export function DialogForm<T extends FieldValues, C, O>({
   form,
   submit,
   pending,
@@ -137,7 +137,7 @@ function DialogForm<T extends FieldValues, C, O>({
 }
 
 /** Where the money comes from or goes: always the shared wallet (no partner pays personally). */
-function FromWallet({ text }: { text: string }) {
+export function FromWallet({ text }: { text: string }) {
   return (
     <p className="text-muted-foreground flex items-center gap-2 text-sm">
       <WalletIcon className="size-4 shrink-0" aria-hidden />
@@ -147,7 +147,7 @@ function FromWallet({ text }: { text: string }) {
 }
 
 /** The "amount" field of a money form (kuruş, typed as lira). */
-function AmountField<T extends FieldValues>({ label, description }: { label: string; description?: string }) {
+export function AmountField<T extends FieldValues>({ label, description }: { label: string; description?: string }) {
   return (
     <FormField<T> name={"amount" as Path<T>} label={label} description={description} required>
       {(field) => <MoneyInput {...field} ref={field.ref} className="h-10 text-base" />}
@@ -235,7 +235,7 @@ function WithdrawalForm({ partners, onDone }: { partners: PartnerOption[]; onDon
 
 // ─── Expense ──────────────────────────────────────────────────────────────────
 
-const categoryKeys = ["venue", "materials", "catering", "advertising", "transport", "printing"] as const
+export const categoryKeys = ["venue", "materials", "catering", "advertising", "transport", "printing"] as const
 
 /**
  * Add an expense of a workshop (`courseId`) or, without it, a general expense
@@ -278,7 +278,7 @@ export function ExpenseDialog({
   )
 }
 
-const furnishingKeys = ["furniture", "tools", "kitchen", "lighting", "decor", "electronics"] as const
+export const furnishingKeys = ["furniture", "tools", "kitchen", "lighting", "decor", "electronics"] as const
 
 function ExpenseForm({
   courseId,

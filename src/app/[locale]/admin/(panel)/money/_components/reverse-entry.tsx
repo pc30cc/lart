@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button"
 import { reverseEntry } from "@/features/money/actions"
 
 /**
- * Correct a mistake: entries are never edited or deleted, a reversal posts
- * their mirror image (with an "are you sure" first).
+ * Cancel an entry: entries are never deleted, a reversal posts their mirror
+ * image (with an "are you sure" first). To correct one, "Edit" (edit-entry).
  */
 export function ReverseEntry({ id, what, size = "sm" }: { id: string; what: string; size?: "sm" | "xs" }) {
   const t = useTranslations("money.reverse")

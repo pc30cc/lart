@@ -320,7 +320,8 @@
         "advance_returned": "Ön ödeme iade edildi",
         "instructor_payment": "Eğitmene ödeme yapıldı",
         "reverse": "İşlem ters kayıtla iptal edildi",
-        "export": "Rapor dışa aktarıldı"
+        "export": "Rapor dışa aktarıldı",
+        "edit": "İşlem düzenlendi"
       },
       "partner": {
         "shares": "Ortaklık payları değiştirildi"

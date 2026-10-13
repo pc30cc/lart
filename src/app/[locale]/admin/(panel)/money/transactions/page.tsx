@@ -12,7 +12,7 @@ import { parseTableParams } from "@/components/admin/data-table/params"
 import { EmptyState } from "@/components/admin/empty-state"
 import { PageHeader } from "@/components/admin/page-header"
 import { Button } from "@/components/ui/button"
-import { getLedgerFilterOptions, isReversible, listTransactions } from "@/features/money/queries"
+import { editTarget, getLedgerFilterOptions, isReversible, listTransactions } from "@/features/money/queries"
 import { accounts, isIsoDate, transactionKinds, transactionTable } from "@/features/money/schema"
 import { requireAdmin } from "@/lib/auth/admin"
 import { formatDate, formatNumber, localized, zonedParts } from "@/lib/format"
@@ -63,6 +63,8 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/[lo
     amount: r.amount,
     walletChange: r.walletChange,
     reversible: isReversible(r),
+    edit: editTarget(r),
+    edited: r.editOf !== null,
     lines: r.lines.map((l) => ({ account: l.account, partnerName: l.partnerName, amount: l.amount })),
   }))
 

@@ -320,7 +320,8 @@
         "advance_returned": "Advance returned",
         "instructor_payment": "Instructor paid",
         "reverse": "Transaction reversed",
-        "export": "Report exported"
+        "export": "Report exported",
+        "edit": "Transaction edited"
       },
       "partner": {
         "shares": "Partner shares changed"

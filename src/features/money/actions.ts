@@ -16,11 +16,16 @@ import {
   postJointContribution,
   postWithdrawal,
   reverseTransaction,
+  startEdit,
 } from "./ledger"
 import {
   advanceSchema,
   closeSchema,
   contributionSchema,
+  editAdvanceSchema,
+  editContributionSchema,
+  editExpenseSchema,
+  editInstructorPaymentSchema,
   expenseSchema,
   instructorPaymentSchema,
   reverseSchema,
@@ -224,3 +229,107 @@ export const reverseEntry = adminAction(reverseSchema, async ({ id }, ctx) => {
   revalidate()
   return { id: reversal.id }
 })
+
+// ─── Editing an entry ─────────────────────────────────────────────────────────
+//
+// Entries are never changed in place: an edit reverses the original (dated as
+// it was, so its period nets to nothing) and records the corrected entry with
+// `edit_of`, in one database transaction (`startEdit`). The same rules as
+// recording it apply (who may pay from the wallet, the advance held, ...).
+
+/** Edit an expense (furnishing too): subject, amount, date, paid from, and its files. The workshop stays. */
+export const editExpense = adminAction(editExpenseSchema, async ({ id, category, amount, occurredOn, source, files }, ctx) => {
+  await assertSpender(ctx.admin.id)
+  const stored = await Promise.all(files.map((f) => exists(f.path)))
+  if (stored.includes(false)) throw new UserError("money.errors.fileGone", { field: "files" })
+  const newId = await db.transaction(async (tx) => {
+    const original = await startEdit(tx, id, ctx.admin.id)
+    if (original.kind !== "expense") throw new UserError("money.errors.notEditable")
+    const newId = await postExpense(tx, {
+      courseId: original.courseId,
+      amount,
+      occurredOn,
+      description: category,
+      source: original.courseId ? source : "wallet",
+      furnishing: original.furnishing,
+      createdBy: ctx.admin.id,
+      editOf: id,
+    })
+    if (files.length) {
+      await tx.insert(expenseFiles).values(
+        files.map((f) => ({
+          transactionId: newId,
+          role: f.role,
+          path: f.path,
+          contentType: mediaContentType(f.path) ?? "application/octet-stream",
+          createdBy: ctx.admin.id,
+        })),
+      )
+    }
+    await ctx.audit(
+      { action: "money.edit", entity: "ledger_transaction", entityId: id, data: { newId, kind: "expense", category, amount, occurredOn, paidFrom: source, files: files.map((f) => f.path) } },
+      tx,
+    )
+    return newId
+  })
+  revalidate()
+  return { id: newId }
+})
+
+/** Edit a contribution: the amount each partner put in, the date and the note (the same partners). */
+export const editContribution = adminAction(editContributionSchema, async ({ id, amount, occurredOn, note }, ctx) => {
+  const newId = await db.transaction(async (tx) => {
+    const original = await startEdit(tx, id, ctx.admin.id)
+    if (original.kind !== "capital_contribution" || original.partnerIds.length === 0) throw new UserError("money.errors.notEditable")
+    const newId = await postJointContribution(tx, {
+      partnerIds: original.partnerIds,
+      amountEach: amount,
+      occurredOn,
+      description: note,
+      createdBy: ctx.admin.id,
+      editOf: id,
+    })
+    await ctx.audit(
+      { action: "money.edit", entity: "ledger_transaction", entityId: id, data: { newId, kind: "capital_contribution", amountEach: amount, occurredOn, note } },
+      tx,
+    )
+    return newId
+  })
+  revalidate()
+  return { id: newId }
+})
+
+/** Edit an advance paid to (or returned by) the instructor: amount, date, note. */
+export const editAdvance = adminAction(editAdvanceSchema, async ({ id, direction, amount, occurredOn, note }, ctx) => {
+  await assertSpender(ctx.admin.id)
+  const newId = await db.transaction(async (tx) => {
+    const original = await startEdit(tx, id, ctx.admin.id)
+    if (original.kind !== "instructor_advance" || !original.courseId) throw new UserError("money.errors.notEditable")
+    const newId = await postAdvance(tx, { courseId: original.courseId, direction, amount, occurredOn, description: note, createdBy: ctx.admin.id, editOf: id })
+    await ctx.audit(
+      { action: "money.edit", entity: "ledger_transaction", entityId: id, data: { newId, kind: "instructor_advance", direction, amount, occurredOn, note } },
+      tx,
+    )
+    return newId
+  })
+  revalidate()
+  return { id: newId }
+})
+
+/** Edit a payment to the instructor: amount, date, note. */
+export const editInstructorPayment = adminAction(editInstructorPaymentSchema, async ({ id, amount, occurredOn, note }, ctx) => {
+  await assertSpender(ctx.admin.id)
+  const newId = await db.transaction(async (tx) => {
+    const original = await startEdit(tx, id, ctx.admin.id)
+    if (original.kind !== "instructor_payment" || !original.courseId) throw new UserError("money.errors.notEditable")
+    const newId = await postInstructorPayment(tx, { courseId: original.courseId, amount, occurredOn, description: note, createdBy: ctx.admin.id, editOf: id })
+    await ctx.audit(
+      { action: "money.edit", entity: "ledger_transaction", entityId: id, data: { newId, kind: "instructor_payment", amount, occurredOn, note } },
+      tx,
+    )
+    return newId
+  })
+  revalidate()
+  return { id: newId }
+})
+

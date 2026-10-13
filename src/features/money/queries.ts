@@ -10,7 +10,7 @@ import { splitByShares } from "@/lib/money"
 import { getSetting } from "@/lib/settings"
 import { publicUrls } from "@/lib/storage"
 import { activePartners, prepareClosing, projectedFees, totalOf, workshopsToClose } from "./closing"
-import { accountBalances, booksClosed, openResult, partnerCapitals, registrationKinds, type Account, type TransactionKind } from "./ledger"
+import { accountBalances, booksClosed, editableKinds, openResult, partnerCapitals, registrationKinds, type Account, type TransactionKind } from "./ledger"
 import type { transactionTable } from "./schema"
 
 const t = ledgerTransactions
@@ -26,6 +26,13 @@ const size = sql<number>`(select coalesce(sum(l.amount), 0) from ${ledgerLines} 
 const walletChange = sql<number>`(select coalesce(sum(l.amount), 0) from ${ledgerLines} l where l.transaction_id = ${q(t, t.id)} and l.account = 'wallet')`.mapWith(Number)
 const reversedBy = sql<string | null>`(select r.id from ${ledgerTransactions} r where r.reversal_of = ${q(t, t.id)})`
 
+/**
+ * Leave out the earlier versions of edited entries: an entry replaced by an
+ * edit (`edit_of`) and the reversal that cancelled it. They net to nothing;
+ * the ledger keeps them and the activity log tells the story.
+ */
+const current = sql`not exists (select 1 from ${ledgerTransactions} e where e.edit_of = ${q(t, t.id)} or (${q(t, t.reversalOf)} is not null and e.edit_of = ${q(t, t.reversalOf)}))`
+
 export type EntryLine = { account: Account; partnerId: string | null; partnerName: string | null; amount: number }
 
 export type Entry = {
@@ -35,6 +42,9 @@ export type Entry = {
   originalKind: TransactionKind | null
   reversalOf: string | null
   reversedBy: string | null
+  /** An edited entry: the one it replaced. */
+  editOf: string | null
+  furnishing: boolean
   occurredOn: string
   description: string
   courseId: string | null
@@ -47,6 +57,8 @@ export type Entry = {
   amount: number
   walletChange: number
   lines: EntryLine[]
+  /** An expense's receipts and photos (for editing it). */
+  files: { path: string; role: "receipt" | "photo" }[]
 }
 
 /** Transactions with their lines, newest first unless `orderBy` says otherwise. */
@@ -58,6 +70,8 @@ async function loadEntries(options: { where?: SQL; orderBy?: SQL[]; limit?: numb
       originalKind: original.kind,
       reversalOf: t.reversalOf,
       reversedBy,
+      editOf: t.editOf,
+      furnishing: t.furnishing,
       occurredOn: t.occurredOn,
       description: t.description,
       courseId: t.courseId,
@@ -73,7 +87,7 @@ async function loadEntries(options: { where?: SQL; orderBy?: SQL[]; limit?: numb
     .leftJoin(original, eq(original.id, t.reversalOf))
     .leftJoin(courses, eq(courses.id, t.courseId))
     .leftJoin(creator, eq(creator.id, t.createdBy))
-    .where(options.where)
+    .where(and(current, options.where))
     .orderBy(...(options.orderBy ?? [desc(t.occurredOn), desc(t.createdAt)]), desc(t.id))
     .$dynamic()
   if (options.limit) query.limit(options.limit)
@@ -94,9 +108,19 @@ async function loadEntries(options: { where?: SQL; orderBy?: SQL[]; limit?: numb
     .where(inArray(ledgerLines.transactionId, rows.map((r) => r.id)))
     .orderBy(desc(ledgerLines.amount))
   const byTx = Map.groupBy(lines, (l) => l.transactionId)
+  const expenseIds = rows.filter((r) => r.kind === "expense").map((r) => r.id)
+  const files = expenseIds.length
+    ? await db
+        .select({ transactionId: expenseFiles.transactionId, path: expenseFiles.path, role: expenseFiles.role })
+        .from(expenseFiles)
+        .where(inArray(expenseFiles.transactionId, expenseIds))
+        .orderBy(asc(expenseFiles.createdAt))
+    : []
+  const filesByTx = Map.groupBy(files, (f) => f.transactionId)
   return rows.map((r) => ({
     ...r,
     lines: (byTx.get(r.id) ?? []).map((l) => ({ account: l.account, partnerId: l.partnerId, partnerName: l.partnerName, amount: l.amount })),
+    files: (filesByTx.get(r.id) ?? []).map((f) => ({ path: f.path, role: f.role })),
   }))
 }
 
@@ -110,6 +134,48 @@ export function isReversible(entry: Pick<Entry, "kind" | "reversedBy" | "courseS
   if (entry.reversedBy || ["reversal", "course_settlement", "course_close", ...registrationKinds].includes(entry.kind)) return false
   const closed = entry.courseStatus !== null && booksClosed({ status: entry.courseStatus, closedAt: entry.courseClosedAt })
   return !closed || entry.kind === "instructor_payment"
+}
+
+/** What the edit form of an entry starts with, or null when it can't be edited (`editableKinds`, and `isReversible`). */
+export type EditTarget =
+  | { kind: "expense"; id: string; values: { courseId: string | null; category: string; amount: number; occurredOn: string; source: "wallet" | "advance"; furnishing: boolean; files: Entry["files"] } }
+  | { kind: "capital_contribution"; id: string; values: { amount: number; occurredOn: string; note: string } }
+  | { kind: "instructor_advance"; id: string; values: { courseId: string; direction: "paid" | "returned"; amount: number; occurredOn: string; note: string } }
+  | { kind: "instructor_payment"; id: string; values: { courseId: string; amount: number; occurredOn: string; note: string } }
+
+export function editTarget(e: Entry): EditTarget | null {
+  if (!isReversible(e) || !editableKinds.includes(e.kind)) return null
+  const line = (account: Account) => e.lines.find((l) => l.account === account)?.amount ?? 0
+  const base = { amount: e.amount, occurredOn: e.occurredOn, note: e.description }
+  switch (e.kind) {
+    case "expense":
+      return {
+        kind: "expense",
+        id: e.id,
+        values: {
+          courseId: e.courseId,
+          category: e.description,
+          amount: e.amount,
+          occurredOn: e.occurredOn,
+          source: line("instructor_advance") < 0 ? "advance" : "wallet",
+          furnishing: e.furnishing,
+          files: e.files,
+        },
+      }
+    case "capital_contribution": {
+      // Each partner's part (the form records an amount per partner).
+      const partners = e.lines.filter((l) => l.account === "partner_capital").length || 1
+      return { kind: "capital_contribution", id: e.id, values: { ...base, amount: Math.round(line("wallet") / partners) } }
+    }
+    case "instructor_advance":
+      return e.courseId
+        ? { kind: "instructor_advance", id: e.id, values: { ...base, courseId: e.courseId, direction: line("instructor_advance") > 0 ? "paid" : "returned" } }
+        : null
+    case "instructor_payment":
+      return e.courseId ? { kind: "instructor_payment", id: e.id, values: { ...base, courseId: e.courseId } } : null
+    default:
+      return null
+  }
 }
 
 /**
@@ -335,7 +401,7 @@ export async function listTransactions(params: TableParams<Sort, Filter>, range:
 
   const [rows, [{ total }]] = await Promise.all([
     loadEntries({ where, orderBy, limit: params.pageSize, offset: params.offset }),
-    db.select({ total: count() }).from(t).leftJoin(courses, eq(courses.id, t.courseId)).where(where),
+    db.select({ total: count() }).from(t).leftJoin(courses, eq(courses.id, t.courseId)).where(and(current, where)),
   ])
   return { rows, total }
 }
@@ -430,10 +496,10 @@ export const RECEIPTS_PER_PAGE = 48
 export async function listReceipts(group: ReceiptGroup, page: number, workshopId?: string) {
   await requireAdmin()
   const kind = sql<ReceiptGroup>`case when ${t.furnishing} then 'furnishing' when ${t.courseId} is not null then 'workshops' else 'general' end`
-  const where =
-    group === "all"
-      ? undefined
-      : and(sql`${kind} = ${group}`, group === "workshops" && workshopId ? eq(t.courseId, workshopId) : undefined)
+  const where = and(
+    current,
+    group === "all" ? undefined : and(sql`${kind} = ${group}`, group === "workshops" && workshopId ? eq(t.courseId, workshopId) : undefined),
+  )
   const reversal = alias(ledgerTransactions, "reversal")
   const [rows, [{ total }], counts, workshops, url] = await Promise.all([
     db
@@ -467,13 +533,14 @@ export async function listReceipts(group: ReceiptGroup, page: number, workshopId
       .select({ kind, n: count() })
       .from(expenseFiles)
       .innerJoin(t, eq(t.id, expenseFiles.transactionId))
+      .where(current)
       .groupBy(kind),
     db
       .select({ id: courses.id, title: courses.title, startsAt: courses.startsAt, n: count() })
       .from(expenseFiles)
       .innerJoin(t, eq(t.id, expenseFiles.transactionId))
       .innerJoin(courses, eq(courses.id, t.courseId))
-      .where(eq(t.furnishing, false))
+      .where(and(current, eq(t.furnishing, false)))
       .groupBy(courses.id)
       .orderBy(desc(courses.startsAt)),
     publicUrls(),

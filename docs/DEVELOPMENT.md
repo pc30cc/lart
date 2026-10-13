@@ -108,7 +108,14 @@ drizzle/                        SQL migrations (generated + custom guards)
   `parseLira`, display with `formatLira`. Never floats.
 - Every movement of money is a balanced ledger transaction (double entry).
   The database rejects unbalanced transactions and any UPDATE/DELETE of
-  ledger rows; a correction is a reversal transaction.
+  ledger rows; a correction is a reversal transaction. "Edit" on an
+  expense (furnishing too), a contribution, an advance or an instructor's
+  payment (`editExpense`, … in money/actions, `startEdit` in the ledger)
+  reverses the original dated as it was and records the corrected entry
+  with `edit_of` in the same database transaction (its files copied, the
+  same rules as recording it; audited `money.edit`). The lists and the
+  receipts show only the latest version (`current` in money/queries); the
+  ledger keeps every version.
 - Every cost is paid from the shared wallet: a partner never pays one
   personally (the ledger refuses a `partner_capital` line on an expense,
   advance or instructor payment). Settings → Money (`money` setting) names

@@ -471,6 +471,12 @@ export const ledgerTransactions = pgTable("ledger_transactions", {
   registrationId: uuid("registration_id").references(() => registrations.id),
   /** Set on a reversal: the transaction it cancels. */
   reversalOf: uuid("reversal_of").unique(),
+  /**
+   * Set on an edited entry: the transaction it replaces (reversed in the same
+   * database transaction, dated as the original). Lists show only the latest
+   * version; the history stays in the ledger and the activity log.
+   */
+  editOf: uuid("edit_of").unique(),
   /** A general expense spent on the studio's furniture and equipment ("Furnishing" in Money). */
   furnishing: boolean("furnishing").notNull().default(false),
   createdBy: uuid("created_by").references(() => admins.id),

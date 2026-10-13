@@ -248,7 +248,7 @@
   },
   "ledger": {
     "title": "Transactions",
-    "description": "Every movement of money, in double entry. Nothing is ever edited or deleted: mistakes are reversed.",
+    "description": "Every movement of money, in double entry. Entries can be edited but never deleted: every earlier version stays in the books.",
     "search": "Search descriptions and workshops…",
     "details": "Show the debit and credit lines",
     "wallet": "wallet",
@@ -265,7 +265,8 @@
     "empty": {
       "title": "No transactions yet",
       "description": "Contributions, expenses and workshop payments will appear here as you record them."
-    }
+    },
+    "edited": "Edited"
   },
   "reports": {
     "title": "Reports",
@@ -377,7 +378,8 @@
     "withdrawalsClosed": "Taking money out of the shared wallet is closed for now (Settings → Money).",
     "noSpender": "No partner has been chosen yet to pay costs from the shared wallet. Choose one in Settings → Money.",
     "notSpender": "Only {name} can pay and record costs from the shared wallet.",
-    "fileGone": "One of the files could not be found. Please upload it again."
+    "fileGone": "One of the files could not be found. Please upload it again.",
+    "notEditable": "This entry can't be edited."
   },
   "validation": {
     "amountPositive": "Please enter an amount above zero.",
@@ -519,5 +521,11 @@
       "tooMany": "At most {max} files per expense."
     },
     "allWorkshops": "All workshops"
+  },
+  "edit": {
+    "action": "Edit",
+    "title": "Edit entry",
+    "description": "Change what was recorded. The original stays in the books, reversed, and the corrected entry takes its place.",
+    "done": "Entry updated."
   }
 }

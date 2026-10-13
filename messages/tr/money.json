@@ -248,7 +248,7 @@
   },
   "ledger": {
     "title": "İşlemler",
-    "description": "Paranın tüm hareketleri, çift taraflı kayıtla. Hiçbir kayıt düzenlenmez veya silinmez; hatalar geri alınır.",
+    "description": "Paranın tüm hareketleri, çift taraflı kayıtla. Kayıtlar düzenlenebilir ama asla silinmez: her önceki sürüm defterde kalır.",
     "search": "Açıklama ve atölyelerde arayın…",
     "details": "Borç ve alacak satırlarını göster",
     "wallet": "kasa",
@@ -265,7 +265,8 @@
     "empty": {
       "title": "Henüz işlem yok",
       "description": "Sermaye girişleri, giderler ve atölye ödemeleri kaydettikçe burada görünür."
-    }
+    },
+    "edited": "Düzenlendi"
   },
   "reports": {
     "title": "Raporlar",
@@ -377,7 +378,8 @@
     "withdrawalsClosed": "Ortak kasadan para çekme şimdilik kapalı (Ayarlar → Para).",
     "noSpender": "Masrafları ortak kasadan ödeyecek ortak henüz seçilmedi. Ayarlar → Para bölümünden seçin.",
     "notSpender": "Masrafları ortak kasadan yalnızca {name} ödeyip kaydedebilir.",
-    "fileGone": "Dosyalardan biri bulunamadı. Lütfen yeniden yükleyin."
+    "fileGone": "Dosyalardan biri bulunamadı. Lütfen yeniden yükleyin.",
+    "notEditable": "Bu kayıt düzenlenemez."
   },
   "validation": {
     "amountPositive": "Lütfen sıfırdan büyük bir tutar girin.",
@@ -519,5 +521,11 @@
       "tooMany": "Bir gider için en fazla {max} dosya."
     },
     "allWorkshops": "Tüm atölyeler"
+  },
+  "edit": {
+    "action": "Düzenle",
+    "title": "Kaydı düzenle",
+    "description": "Kaydedileni değiştirin. Asıl kayıt ters kayıtla defterde kalır, düzeltilmiş kayıt onun yerini alır.",
+    "done": "Kayıt güncellendi."
   }
 }

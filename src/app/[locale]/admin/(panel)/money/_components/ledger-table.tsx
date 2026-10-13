@@ -12,6 +12,8 @@ import type { Account, TransactionKind } from "@/features/money/ledger"
 import { Link } from "@/i18n/navigation"
 import { formatDate, formatDateTime } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import type { EditTarget } from "@/features/money/queries"
+import { EditEntry } from "./edit-entry"
 import { ReverseEntry } from "./reverse-entry"
 
 export type LedgerRow = {
@@ -28,6 +30,10 @@ export type LedgerRow = {
   amount: number
   walletChange: number
   reversible: boolean
+  /** "Edit": the form's starting values, or null when it can't be edited. */
+  edit: EditTarget | null
+  /** An edited entry (it replaced an earlier version). */
+  edited: boolean
   lines: { account: Account; partnerName: string | null; amount: number }[]
 }
 
@@ -92,6 +98,7 @@ export function LedgerTable({ rows, sort, dir }: { rows: LedgerRow[]; sort: "occ
                     <span className={cn("font-medium", row.reversedBy && "line-through decoration-1")}>{label}</span>
                     {row.reversedBy && <StatusBadge>{t("ledger.reversed")}</StatusBadge>}
                     {row.reversalOf && <StatusBadge tone="warning">{t("ledger.correction")}</StatusBadge>}
+                    {row.edited && <StatusBadge tone="info">{t("ledger.edited")}</StatusBadge>}
                   </div>
                   {row.description && (
                     // dir="auto": a Latin description in Persian (or the other way round) is cut at its own end.
@@ -198,7 +205,10 @@ function EntryLines({ row }: { row: LedgerRow }) {
             </>
           )}
         </p>
-        {row.reversible && <ReverseEntry id={row.id} what={row.description || t(`kinds.${row.kind}`)} />}
+        <span className="flex items-center gap-1">
+          {row.edit && <EditEntry target={row.edit} />}
+          {row.reversible && <ReverseEntry id={row.id} what={row.description || t(`kinds.${row.kind}`)} />}
+        </span>
       </div>
       {(row.kind === "registration_payment" || row.kind === "registration_refund") && (
         <p className="text-muted-foreground text-xs text-pretty">
