@@ -248,9 +248,9 @@ describe("acceptPartnerInviteAction", () => {
 
   it("asks for a password as long as the admins' own", async () => {
     const { token } = await invited()
-    expect(await acceptPartnerInviteAction({ token, password: "eleven char" })).toMatchObject({
+    expect(await acceptPartnerInviteAction({ token, password: "abc" })).toMatchObject({
       ok: false,
-      fieldErrors: { password: "Please use at least 12 characters." },
+      fieldErrors: { password: "Please use at least 4 characters." },
     })
   })
 

@@ -162,11 +162,11 @@ describe("memberSignupAction", () => {
   })
 
   it("asks for a long enough password and a real phone number, in friendly words", async () => {
-    expect(await signup({ password: "short", phone: "call me" })).toEqual({
+    expect(await signup({ password: "abc", phone: "call me" })).toEqual({
       ok: false,
       error: "Please check the highlighted fields.",
       fieldErrors: {
-        password: "Please use at least 10 characters.",
+        password: "Please use at least 4 characters.",
         phone: "Please enter a phone number, like +90 532 123 45 67.",
       },
     })
@@ -186,7 +186,7 @@ describe("memberSignupAction", () => {
   })
 
   it("is rate limited per network", async () => {
-    for (let i = 0; i < 10; i++) await signup({ password: "short" })
+    for (let i = 0; i < 10; i++) await signup({ password: "abc" })
     expect(await signup()).toEqual({
       ok: false,
       error: "Too many tries from this device. Please wait a few minutes, then try again.",
@@ -482,7 +482,7 @@ describe("instructorSignupAction", () => {
   })
 
   it("is rate limited per network", async () => {
-    for (let i = 0; i < 5; i++) await instructorSignup({ password: "short" })
+    for (let i = 0; i < 5; i++) await instructorSignup({ password: "abc" })
     expect(await instructorSignup()).toEqual({
       ok: false,
       error: "Too many tries from this device. Please wait a few minutes, then try again.",

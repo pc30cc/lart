@@ -79,9 +79,9 @@ describe("changeAdminPasswordAction", () => {
       ok: false,
       fieldErrors: { confirm: "The two new passwords don’t match." },
     })
-    expect(await changeAdminPasswordAction({ current: OLD, next: "short", confirm: "short" })).toMatchObject({
+    expect(await changeAdminPasswordAction({ current: OLD, next: "abc", confirm: "abc" })).toMatchObject({
       ok: false,
-      fieldErrors: { next: "Please use at least 12 characters." },
+      fieldErrors: { next: "Please use at least 4 characters." },
     })
     expect(await changeAdminPasswordAction({ current: "wrong guess", next: NEW, confirm: NEW })).toEqual({
       ok: false,

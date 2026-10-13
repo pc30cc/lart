@@ -182,7 +182,7 @@ describe.each(["member", "instructor"] as const)("setting a %s's password", (kin
 
   it("checks the person's own password rules and an unknown id", async () => {
     const id = await person(kind)
-    expect(await setPassword[kind]({ id, mode: "type", password: "short" })).toMatchObject({
+    expect(await setPassword[kind]({ id, mode: "type", password: "abc" })).toMatchObject({
       ok: false,
       fieldErrors: { password: expect.any(String) },
     })
