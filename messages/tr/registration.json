@@ -17,7 +17,7 @@
   "seats": {
     "full": "Dolu",
     "left": "{count, plural, one {# yer kaldı} other {# yer kaldı}}",
-    "registered": "{count, plural, one {# kişi kayıt oldu} other {# kişi kayıt oldu}}"
+    "registered": "{count, plural, =0 {henüz kayıt yok} one {# kişi kayıt oldu} other {# kişi kayıt oldu}}"
   },
   "age": {
     "adults": "Yetişkinler için",

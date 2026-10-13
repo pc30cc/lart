@@ -17,7 +17,7 @@
   "seats": {
     "full": "Full",
     "left": "{count, plural, one {# place left} other {# places left}}",
-    "registered": "{count, plural, one {# registered} other {# registered}}"
+    "registered": "{count, plural, =0 {no one registered yet} one {# registered} other {# registered}}"
   },
   "age": {
     "adults": "For adults",

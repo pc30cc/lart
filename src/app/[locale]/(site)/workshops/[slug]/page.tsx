@@ -25,7 +25,7 @@ import { formatDateTime } from "@/lib/format"
 import { absoluteUrl, alternates, jsonLdText, openGraphOf } from "@/lib/seo"
 import { getBrand } from "@/lib/settings"
 import { cn } from "@/lib/utils"
-import { AgeLabel, AvailabilityBadge, Price, SeatsLine } from "@/components/site/workshop-labels"
+import { AgeLabel, AvailabilityBadge, Price, SeatsMeter } from "@/components/site/workshop-labels"
 import { pageLocale } from "@/i18n/page-locale"
 import { formatWorkshopDates, workshopHours, workshopSchedule } from "@/features/workshops/days"
 
@@ -256,19 +256,27 @@ async function Facts({ workshop: w, locale }: { workshop: PublicWorkshop; locale
             icon: CalendarDaysIcon,
             label: t("days"),
             value: (
-              <ul className="space-y-1">
-                {workshopSchedule(w, locale, "full").map((d, i) => (
-                  <li key={d.date}>
-                    {d.date} · <bdi className="tabular-nums">{d.hours}</bdi>
-                    {/* Registered and left on that day (Settings → General), else only "Full". */}
-                    {w.window === "open" && w.seats?.days[i] ? (
-                      <SeatsLine taken={w.seats.days[i].taken} left={w.seats.days[i].left} className="text-muted-foreground block text-xs" />
-                    ) : (
-                      w.window === "open" &&
-                      (w.daySeatsLeft[i] ?? 0) <= 0 && <span className="text-destructive block text-xs font-medium">{t("dayFull")}</span>
-                    )}
-                  </li>
-                ))}
+              <ul className={cn(w.seats && w.window === "open" ? "mt-1.5 space-y-2" : "space-y-1")}>
+                {workshopSchedule(w, locale, "full").map((d, i) => {
+                  const seats = w.window === "open" ? w.seats?.days[i] : undefined
+                  // Registered and left on that day with a bar (Settings → General), else only "Full".
+                  return seats ? (
+                    <li key={d.date} className="bg-muted/40 ring-foreground/6 rounded-xl p-3 ring-1">
+                      <span className="block">{d.date}</span>
+                      <span className="text-muted-foreground block text-sm font-normal">
+                        <bdi className="tabular-nums">{d.hours}</bdi>
+                      </span>
+                      <SeatsMeter taken={seats.taken} left={seats.left} label={d.date} className="mt-2.5" />
+                    </li>
+                  ) : (
+                    <li key={d.date}>
+                      {d.date} · <bdi className="tabular-nums">{d.hours}</bdi>
+                      {w.window === "open" && (w.daySeatsLeft[i] ?? 0) <= 0 && (
+                        <span className="text-destructive block text-xs font-medium">{t("dayFull")}</span>
+                      )}
+                    </li>
+                  )
+                })}
               </ul>
             ),
           },
@@ -277,7 +285,7 @@ async function Facts({ workshop: w, locale }: { workshop: PublicWorkshop; locale
     { icon: UsersRoundIcon, label: t("age"), value: <AgeLabel ageMin={w.ageMin} ageMax={w.ageMax} /> },
     // One day: how many registered and how many places are left (Settings → General).
     ...(w.seats && w.window === "open" && w.daySeatsLeft.length <= 1
-      ? [{ icon: TicketIcon, label: t("seats"), value: <SeatsLine taken={w.seats.taken} left={w.seats.left} /> }]
+      ? [{ icon: TicketIcon, label: t("seats"), value: <SeatsMeter taken={w.seats.taken} left={w.seats.left} label={t("seats")} className="mt-1" /> }]
       : []),
   ]
   return (

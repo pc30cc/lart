@@ -188,6 +188,14 @@
         "title": "Hoş geldiniz + e-posta doğrulama",
         "to": "Katılımcılar ve eğitmenler"
       },
+      "member_welcome": {
+        "title": "Katılımcıya hoş geldiniz",
+        "to": "Katılımcılar"
+      },
+      "member_added": {
+        "title": "Ekibin açtığı hesap (şifreyle)",
+        "to": "Katılımcılar"
+      },
       "instructor_invite": {
         "title": "Eğitmen daveti",
         "to": "Eğitmenler"

@@ -67,6 +67,32 @@ export function AvailabilityBadge({
   )
 }
 
+/**
+ * "5 registered · 3 places left" (or "Full") over a bar of how full it is, for
+ * visitors when Settings → General shows it. `label` names the bar (the day).
+ */
+export function SeatsMeter({ taken, left, label, className }: { taken: number; left: number; label: string; className?: string }) {
+  const t = useTranslations("registration.seats")
+  const max = taken + left
+  const pct = max > 0 ? Math.min(100, Math.round((taken / max) * 100)) : 100
+  const tone = left <= 0 ? "bg-destructive/70" : left <= 3 ? "bg-warning" : "bg-primary"
+  return (
+    <span className={cn("block", className)}>
+      <SeatsLine taken={taken} left={left} className="text-muted-foreground block text-xs font-normal" />
+      <span
+        className="bg-foreground/8 relative mt-1.5 block h-1.5 w-full overflow-hidden rounded-full"
+        role="meter"
+        aria-valuemin={0}
+        aria-valuemax={max}
+        aria-valuenow={taken}
+        aria-label={`${label}: ${t("registered", { count: taken })}`}
+      >
+        <span className={cn(tone, "absolute inset-y-0 start-0 rounded-full transition-all")} style={{ width: `${pct}%` }} />
+      </span>
+    </span>
+  )
+}
+
 /** "5 registered · 3 places left" (or "Full"), for visitors when Settings → General shows it. */
 export function SeatsLine({ taken, left, className }: { taken: number; left: number; className?: string }) {
   const t = useTranslations("registration.seats")

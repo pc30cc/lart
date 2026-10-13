@@ -14,7 +14,7 @@ import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTr
 import { Link } from "@/i18n/navigation"
 import type { AppLocale } from "@/i18n/routing"
 import { formatLira } from "@/lib/money"
-import { SeatsLine } from "@/components/site/workshop-labels"
+import { SeatsMeter } from "@/components/site/workshop-labels"
 import { cn } from "@/lib/utils"
 import { registerAction } from "../actions"
 import { registerSchema, type PaymentWayName, type RegisterValues } from "../schema"
@@ -236,11 +236,13 @@ function DayChoiceField({ days }: { days: Day[] }) {
                 <span className="flex min-w-0 flex-1 flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
                   <span>
                     <span className="block font-medium">{d.date}</span>
-                    <bdi className="text-muted-foreground block text-sm tabular-nums">{d.hours}</bdi>
+                    <span className="text-muted-foreground block text-sm">
+                      <bdi className="tabular-nums">{d.hours}</bdi>
+                    </span>
                   </span>
                   {/* Registered and left when Settings → General shows them, else only "Full". */}
                   {d.taken !== undefined ? (
-                    <SeatsLine taken={d.taken} left={d.left} className="text-muted-foreground text-sm" />
+                    <SeatsMeter taken={d.taken} left={d.left} label={d.date} className="mt-1.5 basis-full" />
                   ) : (
                     d.left <= 0 && <span className="text-destructive text-sm font-medium">{t("full")}</span>
                   )}

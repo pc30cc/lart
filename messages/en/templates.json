@@ -188,6 +188,14 @@
         "title": "Welcome + verify your email",
         "to": "Participants and instructors"
       },
+      "member_welcome": {
+        "title": "Welcome to a participant",
+        "to": "Participants"
+      },
+      "member_added": {
+        "title": "Account created by the team (with password)",
+        "to": "Participants"
+      },
       "instructor_invite": {
         "title": "Instructor invitation",
         "to": "Instructors"

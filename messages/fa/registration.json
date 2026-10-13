@@ -17,7 +17,7 @@
   "seats": {
     "full": "تکمیل",
     "left": "{count, plural, one {# جا مانده} other {# جا مانده}}",
-    "registered": "{count, plural, one {# نفر ثبت‌نام کرده} other {# نفر ثبت‌نام کرده‌اند}}"
+    "registered": "{count, plural, =0 {هنوز کسی ثبت‌نام نکرده} one {# نفر ثبت‌نام کرده} other {# نفر ثبت‌نام کرده‌اند}}"
   },
   "age": {
     "adults": "ویژهٔ بزرگسالان",
