@@ -51,12 +51,12 @@ export function AvailabilityBadge({
           ? cn(
               "shadow-xs backdrop-blur-sm",
               open && !few && "bg-background/90 text-foreground",
-              few && "bg-warning text-white dark:text-black",
+              few && "bg-primary text-primary-foreground",
               !open && "bg-foreground/80 text-background",
             )
           : cn(
               open && !few && "bg-success/10 text-success",
-              few && "bg-warning/12 text-warning",
+              few && "bg-primary/10 text-primary",
               !open && "bg-muted text-muted-foreground",
             ),
         className,
@@ -68,40 +68,47 @@ export function AvailabilityBadge({
 }
 
 /**
- * "5 registered · 3 places left" (or "Full") over a bar of how full it is, for
- * visitors when Settings → General shows it. `label` names the bar (the day).
+ * How full a workshop (or one of its days) is, for visitors when Settings →
+ * General shows it: one small bar per place, the taken ones filled in the
+ * theme's main colour (a plain bar above 24 places), and under it "5
+ * registered" and "3 places left" (or "Full"). Only the theme's own colours,
+ * so it sits well in every theme. `label` names it for screen readers.
  */
 export function SeatsMeter({ taken, left, label, className }: { taken: number; left: number; label: string; className?: string }) {
   const t = useTranslations("registration.seats")
   const max = taken + left
-  const pct = max > 0 ? Math.min(100, Math.round((taken / max) * 100)) : 100
-  const tone = left <= 0 ? "bg-destructive/70" : left <= 3 ? "bg-warning" : "bg-primary"
+  const full = left <= 0
   return (
     <span className={cn("block", className)}>
-      <SeatsLine taken={taken} left={left} className="text-muted-foreground block text-xs font-normal" />
       <span
-        className="bg-foreground/8 relative mt-1.5 block h-1.5 w-full overflow-hidden rounded-full"
+        className="flex h-2 w-full gap-[3px]"
         role="meter"
         aria-valuemin={0}
         aria-valuemax={max}
         aria-valuenow={taken}
-        aria-label={`${label}: ${t("registered", { count: taken })}`}
+        aria-label={`${label}: ${t("registered", { count: taken })}, ${full ? t("full") : t("left", { count: left })}`}
       >
-        <span className={cn(tone, "absolute inset-y-0 start-0 rounded-full transition-all")} style={{ width: `${pct}%` }} />
+        {max > 0 && max <= 24 ? (
+          Array.from({ length: max }, (_, i) => (
+            <span
+              key={i}
+              className={cn("h-full min-w-0 flex-1 rounded-full", i < taken ? (full ? "bg-primary/55" : "bg-primary") : "bg-primary/12")}
+            />
+          ))
+        ) : (
+          <span className="bg-primary/12 relative h-full w-full overflow-hidden rounded-full">
+            <span
+              className={cn("absolute inset-y-0 start-0 rounded-full", full ? "bg-primary/55" : "bg-primary")}
+              style={{ width: `${max > 0 ? Math.min(100, (taken / max) * 100) : 100}%` }}
+            />
+          </span>
+        )}
       </span>
-    </span>
-  )
-}
-
-/** "5 registered · 3 places left" (or "Full"), for visitors when Settings → General shows it. */
-export function SeatsLine({ taken, left, className }: { taken: number; left: number; className?: string }) {
-  const t = useTranslations("registration.seats")
-  return (
-    <span className={cn("tabular-nums", className)}>
-      {t("registered", { count: taken })}
-      <span aria-hidden> · </span>
-      <span className={cn(left <= 0 ? "text-destructive" : left <= 3 ? "text-warning" : undefined)}>
-        {left > 0 ? t("left", { count: left }) : t("full")}
+      <span className="mt-2 flex items-baseline justify-between gap-3 text-xs tabular-nums">
+        <span className="text-muted-foreground font-normal">{t("registered", { count: taken })}</span>
+        <span className={cn("font-medium", full ? "text-muted-foreground" : "text-primary")}>
+          {full ? t("full") : t("left", { count: left })}
+        </span>
       </span>
     </span>
   )

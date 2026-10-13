@@ -256,17 +256,17 @@ async function Facts({ workshop: w, locale }: { workshop: PublicWorkshop; locale
             icon: CalendarDaysIcon,
             label: t("days"),
             value: (
-              <ul className={cn(w.seats && w.window === "open" ? "mt-1.5 space-y-2" : "space-y-1")}>
+              <ul className={cn(w.seats && w.window === "open" ? "mt-2 space-y-2.5" : "space-y-1")}>
                 {workshopSchedule(w, locale, "full").map((d, i) => {
                   const seats = w.window === "open" ? w.seats?.days[i] : undefined
                   // Registered and left on that day with a bar (Settings → General), else only "Full".
                   return seats ? (
-                    <li key={d.date} className="bg-muted/40 ring-foreground/6 rounded-xl p-3 ring-1">
-                      <span className="block">{d.date}</span>
-                      <span className="text-muted-foreground block text-sm font-normal">
-                        <bdi className="tabular-nums">{d.hours}</bdi>
+                    <li key={d.date} className="border-border/80 bg-background/45 rounded-xl border px-3.5 py-3">
+                      <span className="flex flex-wrap items-baseline justify-between gap-x-3">
+                        <span>{d.date}</span>
+                        <bdi className="text-muted-foreground text-sm font-normal tabular-nums">{d.hours}</bdi>
                       </span>
-                      <SeatsMeter taken={seats.taken} left={seats.left} label={d.date} className="mt-2.5" />
+                      <SeatsMeter taken={seats.taken} left={seats.left} label={d.date} className="mt-3" />
                     </li>
                   ) : (
                     <li key={d.date}>
@@ -285,7 +285,7 @@ async function Facts({ workshop: w, locale }: { workshop: PublicWorkshop; locale
     { icon: UsersRoundIcon, label: t("age"), value: <AgeLabel ageMin={w.ageMin} ageMax={w.ageMax} /> },
     // One day: how many registered and how many places are left (Settings → General).
     ...(w.seats && w.window === "open" && w.daySeatsLeft.length <= 1
-      ? [{ icon: TicketIcon, label: t("seats"), value: <SeatsMeter taken={w.seats.taken} left={w.seats.left} label={t("seats")} className="mt-1" /> }]
+      ? [{ icon: TicketIcon, label: t("seats"), value: <SeatsMeter taken={w.seats.taken} left={w.seats.left} label={t("seats")} className="mt-2" /> }]
       : []),
   ]
   return (

@@ -1446,7 +1446,8 @@ change like changing the date, and clears the reminders already sent.
 registrations and places left", setting `showSeats`, on by default): when
 on, the workshop cards' pill says "3 places left" (`AvailabilityBadge`) and
 the card how many registered, the workshop page "5 registered · 3 places
-left" (each day's on a workshop of several days, `SeatsLine`), the register
+left" over one small bar per place in the theme's main colour (each day's on
+a workshop of several days, `SeatsMeter`), the register
 form's day cards the same, and the Telegram post the places left. When off,
 none of the numbers leave the server (`seats` is null in
 `listOpenWorkshops` / `getPublicWorkshop`): the pill says "Registration
