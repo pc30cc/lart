@@ -36,6 +36,30 @@
     }
   },
   "errors": {
-    "notFound": "This student no longer exists."
+    "notFound": "This student no longer exists.",
+    "emailTaken": "This email already has an account. Look for it in the list."
+  },
+  "add": {
+    "trigger": "Add participant",
+    "title": "Add a participant",
+    "description": "Their account is ready at once: a 4-character password is made for them and emailed with the way in. They can always choose “Forgot your password?”.",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone (optional)",
+    "locale": "Language of their emails",
+    "localeHint": "The welcome email and later ones are in this language.",
+    "languages": {
+      "fa": "Persian",
+      "tr": "Turkish",
+      "en": "English"
+    },
+    "submit": "Add",
+    "result": {
+      "title": "{name} was added",
+      "emailed": "We emailed {name} their password and how to sign in.",
+      "notEmailed": "The account is ready, but the email to {name} did not go out. Give them the password below.",
+      "once": "This password is shown only now. They can change it after signing in, or choose “Forgot your password?”.",
+      "open": "Open their page"
+    }
   }
 }

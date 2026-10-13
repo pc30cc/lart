@@ -91,6 +91,7 @@ export async function sampleEmailProps<T extends EmailTemplate>(template: T, loc
   const samples: { [K in EmailTemplate]: EmailProps<K> } = {
     welcome_verify: { name: person, verifyUrl: href("/") },
     member_welcome: { name: person, workshopsUrl: href("/workshops") },
+    member_added: { name: person, email: "ayse@example.com", password: "k7Mp", loginUrl: href("/account/login"), resetUrl: href("/account/forgot") },
     instructor_invite: { name: instructorName, acceptUrl: href("/") },
     instructor_signup: {
       adminName,

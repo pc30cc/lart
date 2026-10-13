@@ -1447,6 +1447,14 @@ register form and the Telegram post never say how many places a workshop
 has or has left; the pill says "Registration open", and only "Full" when
 none are left (`AvailabilityBadge`). The panel still shows every count.
 
+**Members need no email confirmation**: signing up makes the account
+confirmed, signs the member in (notice "welcome") and sends `member_welcome`.
+A super admin can also add one (Students → "Add participant",
+`createMemberAsAdmin`): a ready account with a 4-character generated password
+(`generateShortPassword`), emailed in `member_added` with the way in and
+"forgot your password?", shown once to the admin, never stored or logged
+(audited `member.created`).
+
 **Visit statistics** (`features/analytics`, Admin → Visits, `/admin/analytics`):
 the site counts its own visits, without cookies and without a third party.
 Every page of the public site sends a beacon (`ViewBeacon` in the site

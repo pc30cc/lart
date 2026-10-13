@@ -219,7 +219,7 @@ function GeneratedPassword({ name, result }: { name: string; result: Generated }
 }
 
 /** The password in a read-only box (left-to-right in every language) with a Copy button. */
-function PasswordToCopy({ password }: { password: string }) {
+export function PasswordToCopy({ password }: { password: string }) {
   const t = useTranslations("admin.access.password.result")
   const id = useId()
   const [copied, setCopied] = useState(false)

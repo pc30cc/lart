@@ -37,6 +37,7 @@ const locales: EmailLocale[] = ["fa", "tr", "en"]
 const samples: { [T in EmailTemplate]: EmailProps<T> } = {
   welcome_verify: { name: "Ayşe", verifyUrl: `${site}/account/verify?token=abc&next=1` },
   member_welcome: { name: "Ayşe", workshopsUrl: `${site}/workshops` },
+  member_added: { name: "Ayşe", email: "ayse@example.com", password: "k7Mp", loginUrl: `${site}/account/login`, resetUrl: `${site}/account/forgot` },
   instructor_invite: { name: "Zeynep", acceptUrl: "/instructor/invite?token=inv123" },
   instructor_signup: {
     adminName: "Mina",

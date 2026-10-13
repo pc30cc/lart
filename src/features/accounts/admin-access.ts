@@ -17,7 +17,7 @@ import { deleteSessionsOf, startImpersonation, type ImpersonableKind } from "@/l
 import { unusedTokensOf } from "@/lib/auth/tokens"
 import { sendEmail } from "@/lib/email"
 import type { AccountKind } from "./accounts"
-import type { adminPasswordSchema } from "./schema"
+import type { addMemberSchema, adminPasswordSchema } from "./schema"
 
 /**
  * What a super admin can do for a member's or instructor's account: set a new
@@ -40,6 +40,58 @@ const ALPHABET = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 export function generatePassword(): string {
   const chars = Array.from({ length: 16 }, () => ALPHABET[randomInt(ALPHABET.length)])
   return [0, 4, 8, 12].map((i) => chars.slice(i, i + 4).join("")).join("-")
+}
+
+/** The short password of an account made by an admin: 4 characters, easy to read out (no 0/O, 1/l/I). */
+export function generateShortPassword(): string {
+  return Array.from({ length: 4 }, () => ALPHABET[randomInt(ALPHABET.length)]).join("")
+}
+
+export type AddedMember = { id: string; password: string; emailed: boolean }
+
+/**
+ * A super admin adds a member (Students → "Add participant"). The account is
+ * ready at once (email confirmed) with a short generated password, which the
+ * welcome email (`member_added`) gives them, with the way in and "forgot
+ * your password?"; it is also returned once to show the admin, never stored
+ * or logged. An email that already has an account is refused (the
+ * existing member's id comes with the error). Audited `member.created`.
+ */
+export async function createMemberAsAdmin(input: z.output<typeof addMemberSchema>, ctx: AdminActionContext): Promise<AddedMember> {
+  if (!passwordLimiter.consume(ctx.admin.id).ok) throw new UserError("admin.access.password.errors.rateLimited")
+  const password = generateShortPassword()
+  const passwordHash = await hashPassword(password)
+  const id = await db.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(members)
+      .values({
+        email: input.email,
+        name: input.name,
+        phone: input.phone || null,
+        locale: input.locale,
+        passwordHash,
+        emailVerifiedAt: new Date(),
+      })
+      .onConflictDoNothing({ target: members.email })
+      .returning({ id: members.id })
+    if (!row) throw new UserError("students.errors.emailTaken", { field: "email" })
+    await ctx.audit({ action: "member.created", entity: "member", entityId: row.id, data: { email: input.email, locale: input.locale } }, tx)
+    return row.id
+  })
+  const locale = asLocale(input.locale)
+  const sent = await sendEmail({
+    to: input.email,
+    template: "member_added",
+    locale,
+    props: {
+      name: input.name,
+      email: input.email,
+      password,
+      loginUrl: await absoluteLocaleUrl(locale, "/account/login"),
+      resetUrl: await absoluteLocaleUrl(locale, "/account/forgot"),
+    },
+  })
+  return { id, password, emailed: sent.ok }
 }
 
 const notFound = (kind: AccountKind) =>

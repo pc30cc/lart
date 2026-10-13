@@ -36,6 +36,30 @@
     }
   },
   "errors": {
-    "notFound": "Bu öğrenci artık yok."
+    "notFound": "Bu öğrenci artık yok.",
+    "emailTaken": "Bu e-postanın zaten bir hesabı var; listede bulabilirsiniz."
+  },
+  "add": {
+    "trigger": "Katılımcı ekle",
+    "title": "Katılımcı ekle",
+    "description": "Hesap hemen hazır olur: 4 karakterlik bir şifre oluşturulur ve giriş bilgisiyle e-postayla gönderilir. İstediği zaman “Şifremi unuttum”u seçebilir.",
+    "name": "Ad",
+    "email": "E-posta",
+    "phone": "Telefon (isteğe bağlı)",
+    "locale": "E-postaların dili",
+    "localeHint": "Hoş geldin e-postası ve sonrakiler bu dilde gider.",
+    "languages": {
+      "fa": "Farsça",
+      "tr": "Türkçe",
+      "en": "İngilizce"
+    },
+    "submit": "Ekle",
+    "result": {
+      "title": "{name} eklendi",
+      "emailed": "{name} adlı kişiye şifresi ve giriş bilgisi e-postayla gönderildi.",
+      "notEmailed": "Hesap hazır, ancak {name} adlı kişiye e-posta gitmedi. Aşağıdaki şifreyi ona iletin.",
+      "once": "Bu şifre yalnızca şimdi gösterilir. Giriş yaptıktan sonra değiştirebilir ya da “Şifremi unuttum”u seçebilir.",
+      "open": "Sayfasını aç"
+    }
   }
 }

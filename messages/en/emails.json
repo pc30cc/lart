@@ -21,7 +21,8 @@
     "price": "To pay",
     "participant": "Participant",
     "teachingField": "Teaches",
-    "email": "Email"
+    "email": "Email",
+    "password": "Password"
   },
   "payment": {
     "cash": {
@@ -57,6 +58,14 @@
     "intro": "We're so glad you joined us. Your account is ready, and you can sign up for workshops right away.",
     "cta": "See the workshops",
     "note": "If you didn't create this account, please let us know."
+  },
+  "member_added": {
+    "subject": "Your {brand} account is ready",
+    "preview": "Your password is in this email.",
+    "heading": "Welcome to {brand}!",
+    "intro": "Your account on the {brand} website has been created. Sign in with the email and password below and sign up for workshops.",
+    "cta": "Sign in",
+    "note": "If you forget your password, choose \"Forgot your password?\"."
   },
   "instructor_invite": {
     "subject": "Welcome to {brand}: you’re now one of our instructors",

@@ -6,6 +6,7 @@ import { DataTable, type Column } from "@/components/admin/data-table/data-table
 import { parseTableParams } from "@/components/admin/data-table/params"
 import { EmptyState } from "@/components/admin/empty-state"
 import { PageHeader } from "@/components/admin/page-header"
+import { AddStudentDialog } from "./_components/add-student-dialog"
 import { StatusBadge } from "@/components/admin/status-badge"
 import { listStudents, type StudentRow } from "@/features/students/queries"
 import { studentTable } from "@/features/students/schema"
@@ -85,7 +86,7 @@ export default async function StudentsPage({ searchParams }: PageProps<"/[locale
 
   return (
     <>
-      <PageHeader title={t("title")} description={t("description")} />
+      <PageHeader title={t("title")} description={t("description")} actions={<AddStudentDialog />} />
       <DataTable
         columns={columns}
         rows={rows}

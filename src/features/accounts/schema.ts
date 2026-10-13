@@ -51,6 +51,28 @@ export const personName = () =>
     .max(80)
     .refine((v) => !looksLikeContact(v), { error: "account.signup.errors.name" })
 
+/** An optional phone number as typed: normalized, empty or 7–15 digits. */
+export const optionalPhone = () =>
+  z
+    .string()
+    .max(40)
+    .optional()
+    .transform((v) => normalizePhone(v ?? ""))
+    .refine((v) => v === "" || /^\+?\d{7,15}$/.test(v), { error: "account.signup.errors.phone" })
+
+/**
+ * A super admin adds a member (Students → "Add participant"): name, email,
+ * optional phone and the language of their emails. The password is made by
+ * the server (`createMemberAsAdmin`).
+ */
+export const addMemberSchema = z.object({
+  name: personName(),
+  email: email(),
+  phone: optionalPhone(),
+  locale: z.enum(locales),
+})
+export type AddMemberValues = z.input<typeof addMemberSchema>
+
 /** Sign up: name, email, password and an optional phone. The language is the page's. */
 export const signupSchema = z.object({
   name: personName(),

@@ -357,7 +357,8 @@
         "password_set": "Password set by an admin",
         "impersonate": "Admin entered the account",
         "impersonate_end": "Admin left the account",
-        "profile_update": "Details edited"
+        "profile_update": "Details edited",
+        "created": "Account added by an admin"
       }
     },
     "viewingAs": "while viewing as them"

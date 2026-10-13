@@ -21,7 +21,8 @@
     "price": "Ödenecek tutar",
     "participant": "Katılımcı",
     "teachingField": "Alanı",
-    "email": "E-posta"
+    "email": "E-posta",
+    "password": "Şifre"
   },
   "payment": {
     "cash": {
@@ -57,6 +58,14 @@
     "intro": "Aramıza katıldığınız için çok mutluyuz. Hesabınız hazır, atölyelere hemen kayıt olabilirsiniz.",
     "cta": "Atölyeleri gör",
     "note": "Bu hesabı siz oluşturmadıysanız lütfen bize haber verin."
+  },
+  "member_added": {
+    "subject": "{brand} hesabınız oluşturuldu",
+    "preview": "Giriş şifreniz bu e-postada.",
+    "heading": "{brand}'e hoş geldiniz!",
+    "intro": "{brand} sitesinde hesabınız oluşturuldu. Aşağıdaki e-posta ve şifre ile giriş yapıp atölyelere kayıt olabilirsiniz.",
+    "cta": "Giriş yap",
+    "note": "Şifrenizi unutursanız \"Şifremi unuttum\"a tıklayın."
   },
   "instructor_invite": {
     "subject": "{brand} ailesine hoş geldiniz: artık eğitmenlerimizdensiniz",

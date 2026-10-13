@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache"
 
-import { impersonate, setPasswordAsAdmin } from "@/features/accounts/admin-access"
-import { adminPasswordSchema } from "@/features/accounts/schema"
+import { createMemberAsAdmin, impersonate, setPasswordAsAdmin } from "@/features/accounts/admin-access"
+import { addMemberSchema, adminPasswordSchema } from "@/features/accounts/schema"
 import { localeRedirect } from "@/i18n/redirect"
 import { adminAction } from "@/lib/action"
 import { studentIdSchema } from "./schema"
@@ -29,3 +29,11 @@ export const impersonateMember = adminAction(studentIdSchema, async ({ id }, ctx
   await impersonate("member", id, ctx)
   await localeRedirect("/account")
 })
+
+/** "Add participant": a ready account with a short password, emailed to them and shown once here. */
+export const addStudent = adminAction(addMemberSchema, async (input, ctx) => {
+  const result = await createMemberAsAdmin(input, ctx)
+  revalidate()
+  return result
+})
+

@@ -8,6 +8,7 @@
 export const emailTemplateNames = [
   "welcome_verify",
   "member_welcome",
+  "member_added",
   "instructor_invite",
   "instructor_signup",
   "instructor_approved",

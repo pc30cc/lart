@@ -85,6 +85,7 @@ export type DetailLabel =
   | "participant"
   | "teachingField"
   | "email"
+  | "password"
 
 /**
  * A small titled block under the details (e.g. one way to pay): a title, a
@@ -316,6 +317,14 @@ export const emailTemplates = {
     schema: z.object({ name: text(), loginUrl: siteUrl }),
     greet: "name",
     cta: "loginUrl",
+  }),
+  /** A super admin made the member's account: the email and the short password to sign in with, and "forgot your password?". */
+  member_added: define({
+    schema: z.object({ name: text(), email: text(254), password: text(40), loginUrl: siteUrl, resetUrl: siteUrl }),
+    greet: "name",
+    cta: "loginUrl",
+    details: { email: "email", password: "password" },
+    noteLink: "resetUrl",
   }),
   /** Someone signed up with the email of an existing member: log in, or choose a new password (the note links to "forgot"). */
   member_exists: define({

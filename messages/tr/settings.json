@@ -357,7 +357,8 @@
         "password_set": "Şifre bir yönetici tarafından belirlendi",
         "impersonate": "Yönetici hesaba girdi",
         "impersonate_end": "Yönetici hesaptan çıktı",
-        "profile_update": "Bilgiler düzenlendi"
+        "profile_update": "Bilgiler düzenlendi",
+        "created": "Hesap yönetici tarafından eklendi"
       }
     },
     "viewingAs": "onun hesabını görüntülerken"

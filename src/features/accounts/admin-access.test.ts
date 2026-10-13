@@ -9,7 +9,7 @@ import { auditLog, emailTokens, instructors, members, sessions } from "@/db/sche
 import { impersonateInstructor, setInstructorPassword } from "@/features/instructors/actions"
 import { listInstructors } from "@/features/instructors/queries"
 import { instructorTable } from "@/features/instructors/schema"
-import { impersonateMember, setStudentPassword } from "@/features/students/actions"
+import { addStudent, impersonateMember, setStudentPassword } from "@/features/students/actions"
 import { createAdmin, createInstructor, createMember, runId } from "@/features/workshops/test-fixtures"
 import { audit } from "@/lib/audit"
 import { requireAdmin } from "@/lib/auth/admin"
@@ -18,7 +18,7 @@ import { hashPassword, verifyPassword } from "@/lib/auth/password"
 import { createSession, IMPERSONATION_MS } from "@/lib/auth/session"
 import { issueEmailToken } from "@/lib/auth/tokens"
 import { sendEmail } from "@/lib/email"
-import { generatePassword } from "./admin-access"
+import { generatePassword, generateShortPassword } from "./admin-access"
 
 vi.mock("next-intl/server", async () => {
   const { createTranslator } = await import("next-intl")
@@ -331,3 +331,39 @@ describe("entering a deactivated instructor's panel", () => {
     ).toEqual([])
   })
 })
+
+describe("adding a participant (addStudent)", () => {
+  it("makes a ready account with a 4-character password, emails it and shows it once", async () => {
+    const email = `added-${randomUUID().slice(0, 8)}@test.local`
+    const result = await addStudent({ name: "Mona Akay", email: email.toUpperCase(), phone: "0532 123 45 67", locale: "tr" })
+    expect(result).toMatchObject({ ok: true, data: { emailed: true } })
+    if (!result?.ok) throw new Error("not added")
+    const { id, password } = result.data
+    expect(password).toMatch(/^[A-Za-z2-9]{4}$/)
+
+    const [row] = await db.select().from(members).where(eq(members.id, id))
+    expect(row).toMatchObject({ email, name: "Mona Akay", phone: "05321234567", locale: "tr" })
+    expect(row.emailVerifiedAt).toBeInstanceOf(Date)
+    expect(await verifyPassword(row.passwordHash, password)).toBe(true)
+
+    const sent = vi.mocked(sendEmail).mock.calls.at(-1)?.[0] as unknown as { to: string; template: string; locale: string; props: Record<string, string> }
+    expect(sent).toMatchObject({ to: email, template: "member_added", locale: "tr", props: { email, password } })
+    expect(sent.props.resetUrl).toMatch(/\/account\/forgot$/)
+    // Audited without the password.
+    const [entry] = await auditOf("member.created", id)
+    expect(JSON.stringify(entry.data)).not.toContain(password)
+  })
+
+  it("refuses an email that already has an account", async () => {
+    const existing = await createMember(runId())
+    expect(await addStudent({ name: "Someone", email: existing.email, phone: "", locale: "fa" })).toMatchObject({
+      ok: false,
+      fieldErrors: { email: "This email already has an account. Look for it in the list." },
+    })
+  })
+
+  it("makes short passwords from easy-to-read characters", () => {
+    for (let i = 0; i < 50; i++) expect(generateShortPassword()).toMatch(/^[a-km-zA-HJ-NP-Z2-9]{4}$/)
+  })
+})
+
