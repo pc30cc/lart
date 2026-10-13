@@ -324,6 +324,7 @@
         "advance_returned": "Ön ödeme iade edildi",
         "instructor_payment": "Eğitmene ödeme yapıldı",
         "reverse": "İşlem ters kayıtla iptal edildi",
+        "discrepancy": "Uyuşmazlık kaydedildi",
         "export": "Rapor dışa aktarıldı",
         "edit": "İşlem düzenlendi"
       },

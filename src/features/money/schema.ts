@@ -139,6 +139,10 @@ export const closeSchema = z.object({
 
 export const reverseSchema = z.object({ id: uuid() })
 
+/** A discrepancy: the entry, and why it is wrong (shown under it and kept with it). */
+export const discrepancySchema = z.object({ id: uuid(), reason: z.string().trim().min(3).max(500) })
+export type DiscrepancyValues = z.input<typeof discrepancySchema>
+
 // ─── Lists and reports (URL params) ───────────────────────────────────────────
 
 export const transactionTable = {

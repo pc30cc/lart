@@ -15,6 +15,7 @@ import {
   postInstructorPayment,
   postJointContribution,
   postWithdrawal,
+  recordDiscrepancy,
   reverseTransaction,
   startEdit,
 } from "./ledger"
@@ -22,6 +23,7 @@ import {
   advanceSchema,
   closeSchema,
   contributionSchema,
+  discrepancySchema,
   editAdvanceSchema,
   editContributionSchema,
   editExpenseSchema,
@@ -228,6 +230,35 @@ export const reverseEntry = adminAction(reverseSchema, async ({ id }, ctx) => {
   })
   revalidate()
   return { id: reversal.id }
+})
+
+/**
+ * Record a discrepancy on an entry that concerns neither a participant nor an
+ * instructor (an expense, a contribution, a withdrawal): it is brought to zero
+ * by a reversal dated as it was, with the reason (`recordDiscrepancy`), and
+ * stays in the list with the reason and who recorded it. Taking money out of
+ * the wallet (a contribution's) is a payment: only the spender may.
+ */
+export const markDiscrepancy = adminAction(discrepancySchema, async ({ id, reason }, ctx) => {
+  const [wallet] = await db
+    .select({ total: sum(ledgerLines.amount).mapWith(Number) })
+    .from(ledgerLines)
+    .where(and(eq(ledgerLines.transactionId, id), eq(ledgerLines.account, "wallet")))
+  if ((wallet?.total ?? 0) > 0) await assertSpender(ctx.admin.id)
+  await db.transaction(async (tx) => {
+    const entry = await recordDiscrepancy(tx, id, ctx.admin.id, reason)
+    await ctx.audit(
+      {
+        action: "money.discrepancy",
+        entity: "ledger_transaction",
+        entityId: id,
+        data: { reversalId: entry.reversalId, kind: entry.kind, courseId: entry.courseId, description: entry.description, occurredOn: entry.occurredOn, reason },
+      },
+      tx,
+    )
+  })
+  revalidate()
+  return { id }
 })
 
 // ─── Editing an entry ─────────────────────────────────────────────────────────

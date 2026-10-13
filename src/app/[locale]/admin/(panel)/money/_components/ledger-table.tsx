@@ -11,8 +11,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import type { Account, TransactionKind } from "@/features/money/ledger"
 import { Link } from "@/i18n/navigation"
 import { formatDate, formatDateTime } from "@/lib/format"
+import { formatLira } from "@/lib/money"
 import { cn } from "@/lib/utils"
 import type { EditTarget } from "@/features/money/queries"
+import { DiscrepancyEntry } from "./discrepancy-entry"
+import { DocumentViewer, type LedgerDocument } from "./document-viewer"
 import { EditEntry } from "./edit-entry"
 import { ReverseEntry } from "./reverse-entry"
 
@@ -30,6 +33,14 @@ export type LedgerRow = {
   amount: number
   walletChange: number
   reversible: boolean
+  /** "Discrepancy" offered: an entry that concerns neither a participant nor an instructor. */
+  discrepancyAllowed: boolean
+  /** Marked as a discrepancy: at zero, why, by whom and when. */
+  discrepancy: { reason: string; by: string | null; at: Date } | null
+  /** Its receipts and photos, or the transfer receipt the participant sent. */
+  documents: LedgerDocument[]
+  /** A registration's payment or refund: who it was for and who paid. */
+  registration: { participantName: string; memberId: string; memberName: string } | null
   /** "Edit": the form's starting values, or null when it can't be edited. */
   edit: EditTarget | null
   /** An edited entry (it replaced an earlier version). */
@@ -87,7 +98,7 @@ export function LedgerTable({ rows, sort, dir }: { rows: LedgerRow[]; sort: "occ
           return (
             <Fragment key={row.id}>
               <TableRow
-                className={cn("group/row cursor-pointer", expanded && "bg-muted/30 hover:bg-muted/30", row.reversedBy && "opacity-60")}
+                className={cn("group/row cursor-pointer", expanded && "bg-muted/30 hover:bg-muted/30", row.reversedBy && !row.discrepancy && "opacity-60")}
                 onClick={() => toggle(row.id)}
               >
                 <TableCell className="px-4 py-3 align-top whitespace-nowrap tabular-nums">
@@ -95,8 +106,12 @@ export function LedgerTable({ rows, sort, dir }: { rows: LedgerRow[]; sort: "occ
                 </TableCell>
                 <TableCell className="w-full max-w-0 px-4 py-3 align-top">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span className={cn("font-medium", row.reversedBy && "line-through decoration-1")}>{label}</span>
-                    {row.reversedBy && <StatusBadge>{t("ledger.reversed")}</StatusBadge>}
+                    <span className={cn("font-medium", row.reversedBy && !row.discrepancy && "line-through decoration-1")}>{label}</span>
+                    {row.discrepancy ? (
+                      <StatusBadge tone="warning">{t("discrepancy.badge")}</StatusBadge>
+                    ) : (
+                      row.reversedBy && <StatusBadge>{t("ledger.reversed")}</StatusBadge>
+                    )}
                     {row.reversalOf && <StatusBadge tone="warning">{t("ledger.correction")}</StatusBadge>}
                     {row.edited && <StatusBadge tone="info">{t("ledger.edited")}</StatusBadge>}
                   </div>
@@ -105,6 +120,39 @@ export function LedgerTable({ rows, sort, dir }: { rows: LedgerRow[]; sort: "occ
                     <p dir="auto" title={row.description} className="text-muted-foreground truncate text-sm rtl:text-right">
                       {row.description}
                     </p>
+                  )}
+                  {row.registration && <Payer registration={row.registration} />}
+                  {row.discrepancy && (
+                    <p dir="auto" className="text-warning mt-0.5 text-sm text-pretty rtl:text-right">
+                      {t("discrepancy.line", { reason: row.discrepancy.reason })}
+                    </p>
+                  )}
+                  {row.documents.length > 0 && (
+                    <div className="mt-1.5">
+                      <DocumentViewer
+                        documents={row.documents}
+                        title={row.description ? `${label} · ${row.description}` : label}
+                        details={
+                          <>
+                            <Money value={row.walletChange || row.amount} className="text-foreground font-medium" />
+                            <span aria-hidden>·</span>
+                            <span>{formatDate(`${row.occurredOn}T09:00:00Z`, locale, "long")}</span>
+                            {row.registration && (
+                              <>
+                                <span aria-hidden>·</span>
+                                <span>{t("ledger.participant", { name: row.registration.participantName })}</span>
+                              </>
+                            )}
+                            {row.workshop && (
+                              <>
+                                <span aria-hidden>·</span>
+                                <span dir="auto">{row.workshop.title}</span>
+                              </>
+                            )}
+                          </>
+                        }
+                      />
+                    </div>
                   )}
                   {row.workshop && (
                     <p dir="auto" className="text-muted-foreground truncate text-xs md:hidden rtl:text-right">
@@ -120,18 +168,26 @@ export function LedgerTable({ rows, sort, dir }: { rows: LedgerRow[]; sort: "occ
                   {row.workshop?.title ?? "—"}
                 </TableCell>
                 <TableCell className="px-4 py-3 text-end align-top">
-                  {row.walletChange !== 0 ? (
+                  {row.discrepancy ? (
+                    <>
+                      <Money value={0} className="font-medium" />
+                      <span className="text-muted-foreground block text-xs line-through">
+                        <Money value={row.walletChange || row.amount} />
+                      </span>
+                    </>
+                  ) : row.walletChange !== 0 ? (
                     <Money value={row.walletChange} tone="signed" className="font-medium" />
                   ) : (
                     <Money value={row.amount} className="font-medium" />
                   )}
-                  {row.walletChange !== 0 && (
+                  {row.walletChange !== 0 && !row.discrepancy && (
                     <span className="text-muted-foreground block text-xs">{t("ledger.wallet")}</span>
                   )}
                 </TableCell>
                 <TableCell className="px-2 py-3 align-top">
                   <span className="flex items-center gap-0.5">
                     {row.edit && <EditEntry target={row.edit} iconOnly />}
+                    {row.discrepancyAllowed && <DiscrepancyEntry id={row.id} what={row.description || label} iconOnly />}
                     <button
                     type="button"
                     aria-expanded={expanded}
@@ -168,6 +224,18 @@ function EntryLines({ row }: { row: LedgerRow }) {
   const locale = useLocale()
   return (
     <div className="animate-in fade-in-0 slide-in-from-top-1 space-y-3 duration-200">
+      {row.discrepancy && (
+        <div className="border-warning/30 bg-warning/8 rounded-lg border px-3 py-2.5 text-sm">
+          <p dir="auto" className="font-medium text-pretty">
+            {t("discrepancy.line", { reason: row.discrepancy.reason })}
+          </p>
+          <p className="text-muted-foreground mt-0.5 text-xs">
+            {t("discrepancy.recorded", { name: row.discrepancy.by ?? "—", date: formatDateTime(row.discrepancy.at, locale, "medium") })}
+            {" · "}
+            {t("discrepancy.was", { amount: formatLira(Math.abs(row.walletChange || row.amount), locale) })}
+          </p>
+        </div>
+      )}
       <div className="bg-card ring-foreground/8 overflow-x-auto rounded-lg ring-1">
         <table className="w-full text-sm">
           <thead>
@@ -211,6 +279,7 @@ function EntryLines({ row }: { row: LedgerRow }) {
         <span className="flex items-center gap-1">
           {row.edit && <EditEntry target={row.edit} />}
           {row.reversible && <ReverseEntry id={row.id} what={row.description || t(`kinds.${row.kind}`)} />}
+          {row.discrepancyAllowed && <DiscrepancyEntry id={row.id} what={row.description || t(`kinds.${row.kind}`)} />}
         </span>
       </div>
       {(row.kind === "registration_payment" || row.kind === "registration_refund") && (
@@ -230,5 +299,32 @@ function EntryLines({ row }: { row: LedgerRow }) {
         </p>
       )}
     </div>
+  )
+}
+
+/** "Participant: Ali · Paid by Mona" (the member's page), or just the participant when they paid themselves. */
+function Payer({ registration: r }: { registration: NonNullable<LedgerRow["registration"]> }) {
+  const t = useTranslations("money.ledger")
+  return (
+    <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm">
+      <Link
+        href={`/admin/students/${r.memberId}`}
+        onClick={(e) => e.stopPropagation()}
+        className="text-foreground hover:text-primary font-medium underline-offset-3 hover:underline"
+        dir="auto"
+      >
+        {t("participant", { name: r.participantName })}
+      </Link>
+      {r.memberName.trim() !== r.participantName.trim() && (
+        <Link
+          href={`/admin/students/${r.memberId}`}
+          onClick={(e) => e.stopPropagation()}
+          className="text-muted-foreground hover:text-primary text-xs underline-offset-3 hover:underline"
+          dir="auto"
+        >
+          {t("paidBy", { name: r.memberName })}
+        </Link>
+      )}
+    </p>
   )
 }

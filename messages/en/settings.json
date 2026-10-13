@@ -324,6 +324,7 @@
         "advance_returned": "Advance returned",
         "instructor_payment": "Instructor paid",
         "reverse": "Transaction reversed",
+        "discrepancy": "Discrepancy recorded",
         "export": "Report exported",
         "edit": "Transaction edited"
       },

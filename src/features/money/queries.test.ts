@@ -3,17 +3,21 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { parseTableParams } from "@/components/admin/data-table/params"
 import { db } from "@/db"
-import { postAdvance, postContribution, postExpense, reverseTransaction } from "./ledger"
+import { eq } from "drizzle-orm"
+
+import { registrations } from "@/db/schema"
+import { postAdvance, postContribution, postExpense, postRegistrationPayment, recordDiscrepancy, reverseTransaction } from "./ledger"
 import {
   getLedgerFilterOptions,
   getWalletOverview,
   getWorkshopFinances,
+  canMarkDiscrepancy,
   isReversible,
   listPartnerAccounts,
   listTransactions,
 } from "./queries"
 import { transactionTable } from "./schema"
-import { makeAdmin, makeCourse, makeWorld, retireAdmins } from "./testing"
+import { addRegistration, makeAdmin, makeCourse, makeWorld, retireAdmins } from "./testing"
 
 const session = vi.hoisted(() => ({ sessionId: "test", admin: { id: "", email: "", name: "Queries", shareBp: 0 } }))
 vi.mock("@/lib/auth/admin", () => ({ requireAdmin: async () => session, getAdmin: async () => session }))
@@ -111,5 +115,39 @@ describe("money queries", () => {
     const options = await getLedgerFilterOptions()
     expect(options.partners.some((p) => p.id === partner.id)).toBe(true)
     expect(options.workshops.some((w) => w.id === courseId)).toBe(true)
+  })
+})
+
+describe("discrepancies and payments in the ledger", () => {
+  it("keeps a discrepancy in the list at its place, with the reason, and never lists its reversal", async () => {
+    const world = await makeWorld()
+    const other = await makeCourse(world, partner.id, { status: "published", endsAt: new Date(Date.now() + 3650 * 86_400_000) })
+    const common = { occurredOn: day, createdBy: partner.id }
+    const wrong = await db.transaction((tx) => postExpense(tx, { ...common, description: `Wrong ${tag}`, courseId: other, amount: 700, source: "wallet" }))
+    const kept = await db.transaction((tx) => postExpense(tx, { ...common, description: `Kept ${tag}`, courseId: other, amount: 900, source: "wallet" }))
+    await db.transaction((tx) => recordDiscrepancy(tx, wrong, partner.id, `Twice ${tag}`))
+    const { rows, total } = await listTransactions(params({ q: `${tag}` }), {})
+    expect(rows.map((r) => r.id)).toEqual(expect.arrayContaining([wrong, kept]))
+    expect(total).toBe(rows.length)
+    const row = rows.find((r) => r.id === wrong)!
+    expect(row.discrepancy).toMatchObject({ reason: `Twice ${tag}`, by: "Queries Partner" })
+    expect(row.reversedBy).toEqual(expect.any(String))
+    expect(rows.filter((r) => r.reversalOf === wrong)).toEqual([])
+    expect(canMarkDiscrepancy(row)).toBe(false)
+    expect(canMarkDiscrepancy(rows.find((r) => r.id === kept)!)).toBe(true)
+  })
+
+  it("says who a payment was for and who paid, with the receipt they sent, and finds it by their name", async () => {
+    const world = await makeWorld()
+    const course = await makeCourse(world, partner.id, { status: "published", endsAt: new Date(Date.now() + 3650 * 86_400_000) })
+    const registrationId = await addRegistration(world, course, { amount: 3300 })
+    const name = `Deniz ${tag}`
+    await db.update(registrations).set({ participantName: name, receiptPath: `receipts/${tag}.webp` }).where(eq(registrations.id, registrationId))
+    const payment = await db.transaction((tx) => postRegistrationPayment(tx, { registrationId, occurredOn: day }))
+    const { rows } = await listTransactions(params({ q: name }), {})
+    const row = rows.find((r) => r.id === payment)!
+    expect(row.registration).toMatchObject({ id: registrationId, participantName: name, receiptPath: `receipts/${tag}.webp` })
+    expect(row.registration?.memberName).toEqual(expect.any(String))
+    expect(canMarkDiscrepancy(row)).toBe(false)
   })
 })

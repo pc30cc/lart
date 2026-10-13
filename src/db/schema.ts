@@ -488,6 +488,20 @@ export const ledgerTransactions = pgTable("ledger_transactions", {
   uniqueIndex("ledger_tx_one_payment").on(t.registrationId).where(sql`${t.kind} = 'registration_payment'`),
 ])
 
+/**
+ * Discrepancies (Money → Transactions → "Discrepancy"): an entry found to be
+ * wrong is brought to zero by a reversal dated as it was, and kept here with
+ * the reason and who recorded it. The entry stays in the list (amount zero,
+ * the reason under it); its reversal is not listed on its own. Only entries
+ * that concern neither a participant nor an instructor.
+ */
+export const ledgerDiscrepancies = pgTable("ledger_discrepancies", {
+  transactionId: uuid("transaction_id").primaryKey().references(() => ledgerTransactions.id, { onDelete: "cascade" }),
+  reason: text("reason").notNull(),
+  recordedBy: uuid("recorded_by").references(() => admins.id),
+  createdAt: createdAt(),
+})
+
 export const expenseFileRole = pgEnum("expense_file_role", ["receipt", "photo"])
 
 /**

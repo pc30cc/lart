@@ -248,8 +248,8 @@
   },
   "ledger": {
     "title": "İşlemler",
-    "description": "Paranın tüm hareketleri, çift taraflı kayıtla. Kayıtlar düzenlenebilir ama asla silinmez: her önceki sürüm defterde kalır.",
-    "search": "Açıklama ve atölyelerde arayın…",
+    "description": "Paranın tüm hareketleri, çift taraflı kayıtla. Kayıtlar düzenlenebilir ama asla silinmez; hatalı bir işlem “Uyuşmazlık” ile sıfırlanır ve nedeni yanında kalır.",
+    "search": "Açıklamalarda, atölyelerde ve katılımcı adlarında ara…",
     "details": "Borç ve alacak satırlarını göster",
     "wallet": "kasa",
     "reversed": "Geri alındı",
@@ -266,7 +266,11 @@
       "title": "Henüz işlem yok",
       "description": "Sermaye girişleri, giderler ve atölye ödemeleri kaydettikçe burada görünür."
     },
-    "edited": "Düzenlendi"
+    "edited": "Düzenlendi",
+    "participant": "Katılımcı: {name}",
+    "paidBy": "Ödeyen: {name}",
+    "document": "Belge",
+    "showDocument": "Belgeyi göster"
   },
   "reports": {
     "title": "Raporlar",
@@ -379,7 +383,8 @@
     "noSpender": "Masrafları ortak kasadan ödeyecek ortak henüz seçilmedi. Ayarlar → Para bölümünden seçin.",
     "notSpender": "Masrafları ortak kasadan yalnızca {name} ödeyip kaydedebilir.",
     "fileGone": "Dosyalardan biri bulunamadı. Lütfen yeniden yükleyin.",
-    "notEditable": "Bu kayıt düzenlenemez."
+    "notEditable": "Bu kayıt düzenlenemez.",
+    "noDiscrepancy": "Bu işlem için uyuşmazlık kaydedilemez: katılımcı ve eğitmen ödemeleri ile atölye kapanış kayıtları yalnızca kendi yollarıyla düzeltilir."
   },
   "validation": {
     "amountPositive": "Lütfen sıfırdan büyük bir tutar girin.",
@@ -527,5 +532,29 @@
     "title": "Kaydı düzenle",
     "description": "Kaydedileni değiştirin. Asıl kayıt ters kayıtla defterde kalır, düzeltilmiş kayıt onun yerini alır.",
     "done": "Kayıt güncellendi."
+  },
+  "discrepancy": {
+    "action": "Uyuşmazlık",
+    "title": "Bu işlem için uyuşmazlık kaydet",
+    "description": "“{what}” sıfırlanır ve yazdığınız nedenle listede kalır. Hesaplar ve denetim doğru kalsın diye aynı tarihli bir düzeltme kaydı girilir; uyuşmazlığı kimin kaydettiği ayrıntılarda ve etkinlik kaydında kalır.",
+    "reason": "Uyuşmazlığın nedeni",
+    "reasonHint": "Örneğin: iki kez girilmişti ya da bu alım yapılmadı.",
+    "confirm": "Uyuşmazlığı kaydet",
+    "done": "Uyuşmazlık kaydedildi.",
+    "badge": "Uyuşmazlık",
+    "line": "Uyuşmazlık nedeni: {reason}",
+    "recorded": "Uyuşmazlığı {name} kaydetti, {date}",
+    "was": "Uyuşmazlıktan önceki tutar: {amount}"
+  },
+  "document": {
+    "title": "İşlem belgesi",
+    "receipt": "Fiş veya fatura",
+    "photo": "Alınanın fotoğrafı",
+    "transfer": "Katılımcının dekontu",
+    "pdf": "PDF dosyası",
+    "openNew": "Yeni sekmede aç",
+    "previous": "Önceki belge",
+    "next": "Sonraki belge",
+    "of": "{n} / {total}"
   }
 }

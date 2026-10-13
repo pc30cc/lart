@@ -7,6 +7,7 @@ import {
   account,
   admins,
   courses,
+  ledgerDiscrepancies,
   ledgerLines,
   ledgerTransactions,
   registrations,
@@ -401,7 +402,7 @@ async function lockRegistration(tx: Tx, id: string) {
 export async function reverseTransaction(
   id: string,
   adminId: string,
-  options: { tx?: Tx; occurredOn?: string } = {},
+  options: { tx?: Tx; occurredOn?: string; description?: string } = {},
 ): Promise<{ id: string; original: { kind: TransactionKind; courseId: string | null; description: string } }> {
   const run = async (tx: Tx) => {
     const [original] = await tx
@@ -442,7 +443,7 @@ export async function reverseTransaction(
     const reversalId = await postTransaction(tx, {
       kind: "reversal",
       occurredOn: options.occurredOn ?? today(),
-      description: original.description,
+      description: options.description ?? original.description,
       courseId: original.courseId,
       registrationId: original.registrationId,
       createdBy: adminId,
@@ -458,6 +459,41 @@ export async function reverseTransaction(
     if (pgError(err)?.code === PG.uniqueViolation) throw new UserError("money.errors.alreadyReversed")
     throw err
   }
+}
+
+/**
+ * The kinds an admin can mark as a discrepancy: those that concern neither a
+ * participant (registration payments and refunds) nor an instructor
+ * (advances, payments, and expenses paid out of an advance); never a closing
+ * entry or a reversal.
+ */
+export const discrepancyKinds: readonly TransactionKind[] = ["expense", "capital_contribution", "capital_withdrawal"]
+
+/** Whether an entry with these lines may be marked as a discrepancy (also `isReversible`): its kind, no instructor's account. */
+export const discrepancyAllowed = (kind: TransactionKind, lines: { account: Account }[]) =>
+  discrepancyKinds.includes(kind) && !lines.some((l) => l.account === "instructor_advance" || l.account === "instructor_payable")
+
+/**
+ * Record a discrepancy: the entry is brought to zero by a reversal dated as
+ * it was (so no period keeps its amounts), whose description is the reason,
+ * and kept in `ledger_discrepancies` with the reason and who recorded it. The
+ * entry stays in the lists, at zero. In the caller's transaction. Only
+ * `discrepancyAllowed` entries, not reversed or edited already, and nothing
+ * that touches a closed workshop's figures (the rules of `reverseTransaction`).
+ */
+export async function recordDiscrepancy(tx: Tx, id: string, adminId: string, reason: string) {
+  const [original] = await tx
+    .select({ kind: ledgerTransactions.kind, occurredOn: ledgerTransactions.occurredOn, courseId: ledgerTransactions.courseId, description: ledgerTransactions.description })
+    .from(ledgerTransactions)
+    .where(eq(ledgerTransactions.id, id))
+  if (!original) throw new UserError("money.errors.entryGone")
+  const lines = await tx.select({ account: ledgerLines.account }).from(ledgerLines).where(eq(ledgerLines.transactionId, id))
+  if (!discrepancyAllowed(original.kind, lines)) throw new UserError("money.errors.noDiscrepancy")
+  const [edited] = await tx.select({ id: ledgerTransactions.id }).from(ledgerTransactions).where(eq(ledgerTransactions.editOf, id))
+  if (edited) throw new UserError("money.errors.alreadyReversed")
+  const reversal = await reverseTransaction(id, adminId, { tx, occurredOn: original.occurredOn, description: reason })
+  await tx.insert(ledgerDiscrepancies).values({ transactionId: id, reason, recordedBy: adminId })
+  return { reversalId: reversal.id, ...original }
 }
 
 /** The kinds an admin can edit (an expense, furnishing included, a contribution, an advance, an instructor's payment). */

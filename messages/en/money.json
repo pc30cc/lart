@@ -248,8 +248,8 @@
   },
   "ledger": {
     "title": "Transactions",
-    "description": "Every movement of money, in double entry. Entries can be edited but never deleted: every earlier version stays in the books.",
-    "search": "Search descriptions and workshops…",
+    "description": "Every movement of money, in double entry. Entries can be edited but never deleted; a wrong one is brought to zero with “Discrepancy”, its reason kept beside it.",
+    "search": "Search descriptions, workshops and participants…",
     "details": "Show the debit and credit lines",
     "wallet": "wallet",
     "reversed": "Reversed",
@@ -266,7 +266,11 @@
       "title": "No transactions yet",
       "description": "Contributions, expenses and workshop payments will appear here as you record them."
     },
-    "edited": "Edited"
+    "edited": "Edited",
+    "participant": "Participant: {name}",
+    "paidBy": "Paid by {name}",
+    "document": "Document",
+    "showDocument": "Show the document"
   },
   "reports": {
     "title": "Reports",
@@ -379,7 +383,8 @@
     "noSpender": "No partner has been chosen yet to pay costs from the shared wallet. Choose one in Settings → Money.",
     "notSpender": "Only {name} can pay and record costs from the shared wallet.",
     "fileGone": "One of the files could not be found. Please upload it again.",
-    "notEditable": "This entry can't be edited."
+    "notEditable": "This entry can't be edited.",
+    "noDiscrepancy": "No discrepancy can be recorded for this transaction: participants’ and instructors’ payments and workshop closings are corrected only their own way."
   },
   "validation": {
     "amountPositive": "Please enter an amount above zero.",
@@ -527,5 +532,29 @@
     "title": "Edit entry",
     "description": "Change what was recorded. The original stays in the books, reversed, and the corrected entry takes its place.",
     "done": "Entry updated."
+  },
+  "discrepancy": {
+    "action": "Discrepancy",
+    "title": "Record a discrepancy for this transaction",
+    "description": "“{what}” is brought to zero and stays in the list with the reason you write. A correction dated as the entry keeps the balances and the audit trail right, and who recorded the discrepancy stays in its details and the activity log.",
+    "reason": "Reason for the discrepancy",
+    "reasonHint": "For example: it was recorded twice, or this purchase didn’t happen.",
+    "confirm": "Record discrepancy",
+    "done": "Discrepancy recorded.",
+    "badge": "Discrepancy",
+    "line": "Discrepancy: {reason}",
+    "recorded": "Discrepancy recorded by {name} on {date}",
+    "was": "Amount before the discrepancy: {amount}"
+  },
+  "document": {
+    "title": "Transaction document",
+    "receipt": "Receipt or invoice",
+    "photo": "Photo of the purchase",
+    "transfer": "Participant’s transfer receipt",
+    "pdf": "PDF file",
+    "openNew": "Open in a new tab",
+    "previous": "Previous document",
+    "next": "Next document",
+    "of": "{n} of {total}"
   }
 }

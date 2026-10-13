@@ -3,7 +3,7 @@ import { and, eq, inArray, sql } from "drizzle-orm"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 import { db, type Tx } from "@/db"
-import { account, courses, ledgerLines, ledgerTransactions, transactionKind } from "@/db/schema"
+import { account, courses, ledgerDiscrepancies, ledgerLines, ledgerTransactions, transactionKind } from "@/db/schema"
 import { UserError } from "@/lib/errors"
 import {
   checkPosting,
@@ -19,6 +19,7 @@ import {
   postRegistrationRefund,
   postTransaction,
   postWithdrawal,
+  recordDiscrepancy,
   registrationMoney,
   reverseTransaction,
   startEdit,
@@ -442,3 +443,43 @@ describe("editing an entry (startEdit)", () => {
   })
 })
 
+describe("a discrepancy (recordDiscrepancy)", () => {
+  it("brings an expense to zero on its own date and keeps the reason and who recorded it", async () => {
+    const courseId = await makeCourse(world, alice.id, { status: "published" })
+    const id = await inTx((tx) => postExpense(tx, { ...common(), courseId, amount: 3000, source: "wallet" }))
+    const entry = await inTx((tx) => recordDiscrepancy(tx, id, bob.id, "Recorded twice"))
+    expect(entry).toMatchObject({ kind: "expense", courseId, occurredOn: day })
+    const [reversal] = await db.select().from(ledgerTransactions).where(eq(ledgerTransactions.reversalOf, id))
+    expect(reversal).toMatchObject({ kind: "reversal", occurredOn: day, id: entry.reversalId, description: "Recorded twice" })
+    expect(await db.select().from(ledgerDiscrepancies).where(eq(ledgerDiscrepancies.transactionId, id))).toEqual([
+      expect.objectContaining({ transactionId: id, reason: "Recorded twice", recordedBy: bob.id }),
+    ])
+    expect(await walletChange([id, reversal.id])).toBe(0)
+    expect(await courseBalances(db, courseId)).toMatchObject({ courseExpenses: 0 })
+    expect(await userError(inTx((tx) => recordDiscrepancy(tx, id, bob.id, "Again")))).toBe("money.errors.alreadyReversed")
+  })
+
+  it("is for a contribution too, never a participant's or an instructor's entry", async () => {
+    const contribution = await inTx((tx) => postContribution(tx, { ...common(), partnerId: alice.id, amount: 800 }))
+    await inTx((tx) => recordDiscrepancy(tx, contribution, bob.id, "Never arrived"))
+    expect(await walletChange([contribution])).toBe(800)
+
+    const courseId = await makeCourse(world, alice.id, { status: "published" })
+    const registrationId = await addRegistration(world, courseId, { amount: 2500 })
+    const payment = await inTx((tx) => postRegistrationPayment(tx, { registrationId, occurredOn: day }))
+    const advance = await inTx((tx) => postAdvance(tx, { ...common(), courseId, amount: 1000, direction: "paid" }))
+    const fromAdvance = await inTx((tx) => postExpense(tx, { ...common(), courseId, amount: 200, source: "advance" }))
+    for (const id of [payment, advance, fromAdvance]) {
+      expect(await userError(inTx((tx) => recordDiscrepancy(tx, id, bob.id, "No")))).toBe("money.errors.noDiscrepancy")
+    }
+    expect(await db.select().from(ledgerTransactions).where(inArray(ledgerTransactions.reversalOf, [payment, advance, fromAdvance]))).toEqual([])
+  })
+
+  it("leaves a closed workshop's figures alone", async () => {
+    const courseId = await makeCourse(world, alice.id)
+    const expense = await inTx((tx) => postExpense(tx, { ...common(), courseId, amount: 500, source: "wallet" }))
+    await db.update(courses).set({ status: "closed" }).where(eq(courses.id, courseId))
+    expect(await userError(inTx((tx) => recordDiscrepancy(tx, expense, bob.id, "Late")))).toBe("money.errors.workshopClosed")
+    expect(await db.select().from(ledgerDiscrepancies).where(eq(ledgerDiscrepancies.transactionId, expense))).toEqual([])
+  })
+})

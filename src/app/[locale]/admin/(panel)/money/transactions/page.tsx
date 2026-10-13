@@ -12,10 +12,11 @@ import { parseTableParams } from "@/components/admin/data-table/params"
 import { EmptyState } from "@/components/admin/empty-state"
 import { PageHeader } from "@/components/admin/page-header"
 import { Button } from "@/components/ui/button"
-import { editTarget, getLedgerFilterOptions, isReversible, listTransactions } from "@/features/money/queries"
+import { editTarget, getLedgerFilterOptions, canMarkDiscrepancy, isReversible, listTransactions } from "@/features/money/queries"
 import { accounts, isIsoDate, transactionKinds, transactionTable } from "@/features/money/schema"
 import { requireAdmin } from "@/lib/auth/admin"
 import { formatDate, formatNumber, localized, zonedParts } from "@/lib/format"
+import { publicUrls } from "@/lib/storage"
 import { LedgerTable, type LedgerRow } from "../_components/ledger-table"
 import { RangeFilter } from "../_components/range-filter"
 
@@ -47,7 +48,7 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/[lo
   })
   const [from, to] = [first(sp.from), first(sp.to)]
   const range = isIsoDate(from) && isIsoDate(to) ? (from <= to ? { from, to } : { from: to, to: from }) : {}
-  const { rows, total } = await listTransactions(params, range)
+  const [{ rows, total }, url] = await Promise.all([listTransactions(params, range), publicUrls()])
 
   const tableRows: LedgerRow[] = rows.map((r) => ({
     id: r.id,
@@ -63,6 +64,21 @@ export default async function TransactionsPage({ searchParams }: PageProps<"/[lo
     amount: r.amount,
     walletChange: r.walletChange,
     reversible: isReversible(r),
+    discrepancyAllowed: canMarkDiscrepancy(r),
+    discrepancy: r.discrepancy,
+    // An expense's receipts first, then its photos; a payment's transfer receipt (not for a refund: that is the participant's to us).
+    documents: [
+      ...[...r.files].sort((a, b) => (a.role === b.role ? 0 : a.role === "receipt" ? -1 : 1)),
+      ...(r.kind === "registration_payment" && r.registration?.receiptPath
+        ? [{ path: r.registration.receiptPath, role: "transfer" as const, contentType: r.registration.receiptPath.endsWith(".pdf") ? "application/pdf" : "image" }]
+        : []),
+    ].flatMap((f) => {
+      const href = url(f.path)
+      return href ? [{ url: href, pdf: f.contentType === "application/pdf", kind: f.role }] : []
+    }),
+    registration: r.registration
+      ? { participantName: r.registration.participantName, memberId: r.registration.memberId, memberName: r.registration.memberName }
+      : null,
     edit: editTarget(r),
     edited: r.editOf !== null,
     lines: r.lines.map((l) => ({ account: l.account, partnerName: l.partnerName, amount: l.amount })),

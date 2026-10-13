@@ -4,18 +4,31 @@ import { alias } from "drizzle-orm/pg-core"
 
 import { likePattern, type TableParams } from "@/components/admin/data-table/params"
 import { db } from "@/db"
-import { admins, contracts, courses, expenseFiles, instructors, ledgerLines, ledgerTransactions, type LocalizedText } from "@/db/schema"
+import {
+  admins,
+  contracts,
+  courses,
+  expenseFiles,
+  instructors,
+  ledgerDiscrepancies,
+  ledgerLines,
+  ledgerTransactions,
+  members,
+  registrations,
+  type LocalizedText,
+} from "@/db/schema"
 import { requireAdmin } from "@/lib/auth/admin"
 import { splitByShares } from "@/lib/money"
 import { getSetting } from "@/lib/settings"
 import { publicUrls } from "@/lib/storage"
 import { activePartners, prepareClosing, projectedFees, totalOf, workshopsToClose } from "./closing"
-import { accountBalances, booksClosed, editableKinds, openResult, partnerCapitals, registrationKinds, type Account, type TransactionKind } from "./ledger"
+import { accountBalances, booksClosed, discrepancyAllowed, editableKinds, openResult, partnerCapitals, registrationKinds, type Account, type TransactionKind } from "./ledger"
 import type { transactionTable } from "./schema"
 
 const t = ledgerTransactions
 const original = alias(ledgerTransactions, "original")
 const creator = alias(admins, "creator")
+const recorder = alias(admins, "recorder")
 
 /** A column qualified by hand, for use inside raw subqueries (see categories/queries.ts). */
 const q = (table: typeof ledgerTransactions | typeof courses | typeof admins, column: { name: string }) =>
@@ -27,11 +40,13 @@ const walletChange = sql<number>`(select coalesce(sum(l.amount), 0) from ${ledge
 const reversedBy = sql<string | null>`(select r.id from ${ledgerTransactions} r where r.reversal_of = ${q(t, t.id)})`
 
 /**
- * Leave out the earlier versions of edited entries: an entry replaced by an
- * edit (`edit_of`) and the reversal that cancelled it. They net to nothing;
- * the ledger keeps them and the activity log tells the story.
+ * Leave out the earlier versions of edited entries (an entry replaced by an
+ * edit, `edit_of`, and the reversal that cancelled it) and the reversal of a
+ * discrepancy (the entry itself stays, at zero, with the reason). They net to
+ * nothing; the ledger keeps them and the activity log tells the story.
  */
-const current = sql`not exists (select 1 from ${ledgerTransactions} e where e.edit_of = ${q(t, t.id)} or (${q(t, t.reversalOf)} is not null and e.edit_of = ${q(t, t.reversalOf)}))`
+const current = sql`not exists (select 1 from ${ledgerTransactions} e where e.edit_of = ${q(t, t.id)} or (${q(t, t.reversalOf)} is not null and e.edit_of = ${q(t, t.reversalOf)}))
+  and not exists (select 1 from ${ledgerDiscrepancies} d where d.transaction_id = ${q(t, t.reversalOf)})`
 
 export type EntryLine = { account: Account; partnerId: string | null; partnerName: string | null; amount: number }
 
@@ -57,8 +72,12 @@ export type Entry = {
   amount: number
   walletChange: number
   lines: EntryLine[]
-  /** An expense's receipts and photos (for editing it). */
-  files: { path: string; role: "receipt" | "photo" }[]
+  /** An expense's receipts and photos (for editing it and showing them). */
+  files: { path: string; role: "receipt" | "photo"; contentType: string }[]
+  /** A registration's payment or refund: who registered, who paid, and the transfer receipt they sent. */
+  registration: { id: string; participantName: string; memberId: string; memberName: string; receiptPath: string | null } | null
+  /** Marked as a discrepancy: brought to zero, why, by whom and when. */
+  discrepancy: { reason: string; by: string | null; at: Date } | null
 }
 
 /** Transactions with their lines, newest first unless `orderBy` says otherwise. */
@@ -82,11 +101,23 @@ async function loadEntries(options: { where?: SQL; orderBy?: SQL[]; limit?: numb
       createdAt: t.createdAt,
       amount: size,
       walletChange,
+      registrationId: registrations.id,
+      participantName: registrations.participantName,
+      memberId: members.id,
+      memberName: members.name,
+      receiptPath: registrations.receiptPath,
+      discrepancyReason: ledgerDiscrepancies.reason,
+      discrepancyAt: ledgerDiscrepancies.createdAt,
+      discrepancyBy: recorder.name,
     })
     .from(t)
     .leftJoin(original, eq(original.id, t.reversalOf))
     .leftJoin(courses, eq(courses.id, t.courseId))
     .leftJoin(creator, eq(creator.id, t.createdBy))
+    .leftJoin(registrations, eq(registrations.id, t.registrationId))
+    .leftJoin(members, eq(members.id, registrations.memberId))
+    .leftJoin(ledgerDiscrepancies, eq(ledgerDiscrepancies.transactionId, t.id))
+    .leftJoin(recorder, eq(recorder.id, ledgerDiscrepancies.recordedBy))
     .where(and(current, options.where))
     .orderBy(...(options.orderBy ?? [desc(t.occurredOn), desc(t.createdAt)]), desc(t.id))
     .$dynamic()
@@ -111,16 +142,21 @@ async function loadEntries(options: { where?: SQL; orderBy?: SQL[]; limit?: numb
   const expenseIds = rows.filter((r) => r.kind === "expense").map((r) => r.id)
   const files = expenseIds.length
     ? await db
-        .select({ transactionId: expenseFiles.transactionId, path: expenseFiles.path, role: expenseFiles.role })
+        .select({ transactionId: expenseFiles.transactionId, path: expenseFiles.path, role: expenseFiles.role, contentType: expenseFiles.contentType })
         .from(expenseFiles)
         .where(inArray(expenseFiles.transactionId, expenseIds))
         .orderBy(asc(expenseFiles.createdAt))
     : []
   const filesByTx = Map.groupBy(files, (f) => f.transactionId)
-  return rows.map((r) => ({
+  return rows.map(({ registrationId, participantName, memberId, memberName, receiptPath, discrepancyReason, discrepancyAt, discrepancyBy, ...r }) => ({
     ...r,
     lines: (byTx.get(r.id) ?? []).map((l) => ({ account: l.account, partnerId: l.partnerId, partnerName: l.partnerName, amount: l.amount })),
-    files: (filesByTx.get(r.id) ?? []).map((f) => ({ path: f.path, role: f.role })),
+    files: (filesByTx.get(r.id) ?? []).map((f) => ({ path: f.path, role: f.role, contentType: f.contentType })),
+    registration:
+      registrationId && participantName !== null && memberId && memberName !== null
+        ? { id: registrationId, participantName, memberId, memberName, receiptPath }
+        : null,
+    discrepancy: discrepancyReason !== null && discrepancyAt ? { reason: discrepancyReason, by: discrepancyBy, at: discrepancyAt } : null,
   }))
 }
 
@@ -136,9 +172,14 @@ export function isReversible(entry: Pick<Entry, "kind" | "reversedBy" | "courseS
   return !closed || entry.kind === "instructor_payment"
 }
 
+/** Can the panel offer "Discrepancy" for this entry? Neither a participant's nor an instructor's (`discrepancyAllowed`), and `isReversible`. */
+export function canMarkDiscrepancy(entry: Pick<Entry, "kind" | "reversedBy" | "courseStatus" | "courseClosedAt" | "lines">): boolean {
+  return isReversible(entry) && discrepancyAllowed(entry.kind, entry.lines)
+}
+
 /** What the edit form of an entry starts with, or null when it can't be edited (`editableKinds`, and `isReversible`). */
 export type EditTarget =
-  | { kind: "expense"; id: string; values: { courseId: string | null; category: string; amount: number; occurredOn: string; source: "wallet" | "advance"; furnishing: boolean; files: Entry["files"] } }
+  | { kind: "expense"; id: string; values: { courseId: string | null; category: string; amount: number; occurredOn: string; source: "wallet" | "advance"; furnishing: boolean; files: { path: string; role: "receipt" | "photo" }[] } }
   | { kind: "capital_contribution"; id: string; values: { amount: number; occurredOn: string; note: string } }
   | { kind: "instructor_advance"; id: string; values: { courseId: string; direction: "paid" | "returned"; amount: number; occurredOn: string; note: string } }
   | { kind: "instructor_payment"; id: string; values: { courseId: string; amount: number; occurredOn: string; note: string } }
@@ -159,7 +200,7 @@ export function editTarget(e: Entry): EditTarget | null {
           occurredOn: e.occurredOn,
           source: line("instructor_advance") < 0 ? "advance" : "wallet",
           furnishing: e.furnishing,
-          files: e.files,
+          files: e.files.map((f) => ({ path: f.path, role: f.role })),
         },
       }
     case "capital_contribution": {
@@ -391,6 +432,9 @@ export async function listTransactions(params: TableParams<Sort, Filter>, range:
     conditions.push(
       or(
         ilike(t.description, pattern),
+        // A payment by who it was for or who paid it.
+        ilike(registrations.participantName, pattern),
+        ilike(members.name, pattern),
         ...(["fa", "tr", "en"] as const).map((l) => ilike(sql`${courses.title}->>${l}`, pattern)),
       ),
     )
@@ -401,7 +445,13 @@ export async function listTransactions(params: TableParams<Sort, Filter>, range:
 
   const [rows, [{ total }]] = await Promise.all([
     loadEntries({ where, orderBy, limit: params.pageSize, offset: params.offset }),
-    db.select({ total: count() }).from(t).leftJoin(courses, eq(courses.id, t.courseId)).where(and(current, where)),
+    db
+      .select({ total: count() })
+      .from(t)
+      .leftJoin(courses, eq(courses.id, t.courseId))
+      .leftJoin(registrations, eq(registrations.id, t.registrationId))
+      .leftJoin(members, eq(members.id, registrations.memberId))
+      .where(and(current, where)),
   ])
   return { rows, total }
 }

@@ -183,6 +183,13 @@
       "when": 1791872938474,
       "tag": "0025_ledger_edit_of",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791928189503,
+      "tag": "0026_ledger_discrepancies",
+      "breakpoints": true
     }
   ]
 }

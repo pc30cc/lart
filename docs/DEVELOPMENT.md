@@ -116,6 +116,18 @@ drizzle/                        SQL migrations (generated + custom guards)
   same rules as recording it; audited `money.edit`). The lists and the
   receipts show only the latest version (`current` in money/queries); the
   ledger keeps every version.
+- Nothing is ever deleted. A wrong entry that concerns neither a
+  participant nor an instructor (an expense, a contribution, a withdrawal:
+  `discrepancyAllowed`) gets "Discrepancy" in Money → Transactions
+  (`markDiscrepancy`, `recordDiscrepancy`): a reason is required, a reversal
+  dated as the entry (its description the reason) brings it to zero, and
+  `ledger_discrepancies` keeps the reason, who recorded it and when (audited
+  `money.discrepancy`). The entry stays in the list at zero with a
+  "Discrepancy" mark and its reason; its reversal is not listed on its own.
+- The transactions list shows, for a registration's payment or refund, the
+  participant and who paid (the member, linked) and finds them by name;
+  "Show the document" opens, on the same page, an expense's receipts and
+  photos or the transfer receipt the participant sent (`DocumentViewer`).
 - Every cost is paid from the shared wallet: a partner never pays one
   personally (the ledger refuses a `partner_capital` line on an expense,
   advance or instructor payment). Settings → Money (`money` setting) names
