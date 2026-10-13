@@ -32,19 +32,32 @@ import { ReceiptFiles } from "./receipt-files"
  * reverses the original and records the corrected entry in its place
  * (`startEdit`); the lists then show only the corrected one.
  */
-export function EditEntry({ target, size = "sm" }: { target: EditTarget; size?: "sm" | "xs" }) {
+export function EditEntry({ target, size = "sm", iconOnly = false }: { target: EditTarget; size?: "sm" | "xs"; iconOnly?: boolean }) {
   const t = useTranslations("money.edit")
   const [open, setOpen] = useState(false)
   const close = () => setOpen(false)
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size={size} className="text-muted-foreground hover:text-foreground print:hidden">
-          <PencilIcon />
-          {t("action")}
-        </Button>
+        {iconOnly ? (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={t("action")}
+            title={t("action")}
+            onClick={(e) => e.stopPropagation()}
+            className="text-muted-foreground hover:text-foreground print:hidden"
+          >
+            <PencilIcon />
+          </Button>
+        ) : (
+          <Button variant="ghost" size={size} className="text-muted-foreground hover:text-foreground print:hidden">
+            <PencilIcon />
+            {t("action")}
+          </Button>
+        )}
       </DialogTrigger>
-      <DialogContent showCloseButton={false} className="gap-5 p-5 sm:max-w-md">
+      <DialogContent showCloseButton={false} className="gap-5 p-5 sm:max-w-md" onClick={(e) => e.stopPropagation()}>
         <DialogHeader className="text-start">
           <DialogTitle className="text-lg">{t("title")}</DialogTitle>
           <DialogDescription className="text-pretty">{t("description")}</DialogDescription>

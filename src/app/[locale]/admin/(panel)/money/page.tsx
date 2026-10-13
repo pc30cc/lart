@@ -15,13 +15,14 @@ import { Money } from "@/components/admin/money"
 import { PageHeader } from "@/components/admin/page-header"
 import { Button } from "@/components/ui/button"
 import type { Entry } from "@/features/money/queries"
-import { getMoneyRules, getWalletOverview, spendBlockText } from "@/features/money/queries"
+import { editTarget, getMoneyRules, getWalletOverview, spendBlockText } from "@/features/money/queries"
 import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
 import { formatDate, localized } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { WorkshopStatusBadge } from "../workshops/_components/workshop-status"
 import { ContributionDialog, ExpenseDialog, WithdrawalDialog } from "./_components/dialogs"
+import { EditEntry } from "./_components/edit-entry"
 import { kindIcons, Panel, Stat } from "./_components/parts"
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -220,6 +221,7 @@ function RecentEntry({
     : t(`kinds.${entry.kind}`)
   const detail = [entry.description, entry.courseTitle && localized(entry.courseTitle, locale)].filter(Boolean).join(" · ")
   const partner = entry.lines.find((l) => l.partnerName)?.partnerName
+  const edit = editTarget(entry)
   return (
     <li className={cn("flex items-center gap-3 py-3", entry.reversedBy && "opacity-60")}>
       <span
@@ -246,6 +248,7 @@ function RecentEntry({
         tone={entry.walletChange !== 0 ? "signed" : "plain"}
         className="shrink-0 text-sm font-semibold"
       />
+      {edit && <EditEntry target={edit} iconOnly />}
     </li>
   )
 }
