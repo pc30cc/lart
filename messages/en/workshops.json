@@ -281,7 +281,12 @@
     "privateHint": "Private details, only for admins.",
     "photos": "Photos",
     "noCover": "No cover photo yet",
-    "dayParticipants": "participants {range}"
+    "dayParticipants": "participants {range}",
+    "daysTogether": "{count, plural, other {All # days together}}",
+    "dayLabel": "Day {n}",
+    "dayFull": "Full",
+    "dayFree": "{count, plural, one {# place free} other {# places free}}",
+    "dayMinimum": "{count, plural, other {At least # needed}}"
   },
   "next": {
     "viewContract": "View contract",

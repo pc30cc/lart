@@ -1,128 +1,68 @@
-import "server-only";
-import {
-  and,
-  asc,
-  count,
-  desc,
-  eq,
-  exists,
-  ilike,
-  inArray,
-  min,
-  or,
-  sql,
-  type SQL,
-} from "drizzle-orm";
-import { alias } from "drizzle-orm/pg-core";
+import "server-only"
+import { and, asc, count, desc, eq, exists, ilike, inArray, min, or, sql, type SQL } from "drizzle-orm"
+import { alias } from "drizzle-orm/pg-core"
 
-import {
-  likePattern,
-  type TableParams,
-} from "@/components/admin/data-table/params";
-import { db } from "@/db";
-import {
-  admins,
-  contracts,
-  courses,
-  expenseFiles,
-  instructors,
-  ledgerLines,
-  ledgerTransactions,
-  type LocalizedText,
-} from "@/db/schema";
-import { requireAdmin } from "@/lib/auth/admin";
-import { splitByShares } from "@/lib/money";
-import { getSetting } from "@/lib/settings";
-import { publicUrls } from "@/lib/storage";
-import {
-  activePartners,
-  prepareClosing,
-  projectedFees,
-  totalOf,
-  workshopsToClose,
-} from "./closing";
-import {
-  accountBalances,
-  booksClosed,
-  editableKinds,
-  openResult,
-  partnerCapitals,
-  registrationKinds,
-  type Account,
-  type TransactionKind,
-} from "./ledger";
-import type { transactionTable } from "./schema";
+import { likePattern, type TableParams } from "@/components/admin/data-table/params"
+import { db } from "@/db"
+import { admins, contracts, courses, expenseFiles, instructors, ledgerLines, ledgerTransactions, type LocalizedText } from "@/db/schema"
+import { requireAdmin } from "@/lib/auth/admin"
+import { splitByShares } from "@/lib/money"
+import { getSetting } from "@/lib/settings"
+import { publicUrls } from "@/lib/storage"
+import { activePartners, prepareClosing, projectedFees, totalOf, workshopsToClose } from "./closing"
+import { accountBalances, booksClosed, editableKinds, openResult, partnerCapitals, registrationKinds, type Account, type TransactionKind } from "./ledger"
+import type { transactionTable } from "./schema"
 
-const t = ledgerTransactions;
-const original = alias(ledgerTransactions, "original");
-const creator = alias(admins, "creator");
+const t = ledgerTransactions
+const original = alias(ledgerTransactions, "original")
+const creator = alias(admins, "creator")
 
 /** A column qualified by hand, for use inside raw subqueries (see categories/queries.ts). */
-const q = (
-  table: typeof ledgerTransactions | typeof courses | typeof admins,
-  column: { name: string },
-) => sql`${table}.${sql.identifier(column.name)}`;
+const q = (table: typeof ledgerTransactions | typeof courses | typeof admins, column: { name: string }) =>
+  sql`${table}.${sql.identifier(column.name)}`
 
 /** Total debits of a transaction (its size), and what it did to the wallet. */
-const size =
-  sql<number>`(select coalesce(sum(l.amount), 0) from ${ledgerLines} l where l.transaction_id = ${q(t, t.id)} and l.amount > 0)`.mapWith(
-    Number,
-  );
-const walletChange =
-  sql<number>`(select coalesce(sum(l.amount), 0) from ${ledgerLines} l where l.transaction_id = ${q(t, t.id)} and l.account = 'wallet')`.mapWith(
-    Number,
-  );
-const reversedBy = sql<
-  string | null
->`(select r.id from ${ledgerTransactions} r where r.reversal_of = ${q(t, t.id)})`;
+const size = sql<number>`(select coalesce(sum(l.amount), 0) from ${ledgerLines} l where l.transaction_id = ${q(t, t.id)} and l.amount > 0)`.mapWith(Number)
+const walletChange = sql<number>`(select coalesce(sum(l.amount), 0) from ${ledgerLines} l where l.transaction_id = ${q(t, t.id)} and l.account = 'wallet')`.mapWith(Number)
+const reversedBy = sql<string | null>`(select r.id from ${ledgerTransactions} r where r.reversal_of = ${q(t, t.id)})`
 
 /**
  * Leave out the earlier versions of edited entries: an entry replaced by an
  * edit (`edit_of`) and the reversal that cancelled it. They net to nothing;
  * the ledger keeps them and the activity log tells the story.
  */
-const current = sql`not exists (select 1 from ${ledgerTransactions} e where e.edit_of = ${q(t, t.id)} or (${q(t, t.reversalOf)} is not null and e.edit_of = ${q(t, t.reversalOf)}))`;
+const current = sql`not exists (select 1 from ${ledgerTransactions} e where e.edit_of = ${q(t, t.id)} or (${q(t, t.reversalOf)} is not null and e.edit_of = ${q(t, t.reversalOf)}))`
 
-export type EntryLine = {
-  account: Account;
-  partnerId: string | null;
-  partnerName: string | null;
-  amount: number;
-};
+export type EntryLine = { account: Account; partnerId: string | null; partnerName: string | null; amount: number }
 
 export type Entry = {
-  id: string;
-  kind: TransactionKind;
+  id: string
+  kind: TransactionKind
   /** For a reversal: the kind of the entry it cancels. */
-  originalKind: TransactionKind | null;
-  reversalOf: string | null;
-  reversedBy: string | null;
+  originalKind: TransactionKind | null
+  reversalOf: string | null
+  reversedBy: string | null
   /** An edited entry: the one it replaced. */
-  editOf: string | null;
-  furnishing: boolean;
-  occurredOn: string;
-  description: string;
-  courseId: string | null;
-  courseTitle: LocalizedText | null;
-  courseStatus: (typeof courses.status.enumValues)[number] | null;
+  editOf: string | null
+  furnishing: boolean
+  occurredOn: string
+  description: string
+  courseId: string | null
+  courseTitle: LocalizedText | null
+  courseStatus: (typeof courses.status.enumValues)[number] | null
   /** When the workshop's books were closed (also set for a cancelled workshop that was closed). */
-  courseClosedAt: Date | null;
-  createdBy: string | null;
-  createdAt: Date;
-  amount: number;
-  walletChange: number;
-  lines: EntryLine[];
+  courseClosedAt: Date | null
+  createdBy: string | null
+  createdAt: Date
+  amount: number
+  walletChange: number
+  lines: EntryLine[]
   /** An expense's receipts and photos (for editing it). */
-  files: { path: string; role: "receipt" | "photo" }[];
-};
+  files: { path: string; role: "receipt" | "photo" }[]
+}
 
 /** Transactions with their lines, newest first unless `orderBy` says otherwise. */
-async function loadEntries(options: {
-  where?: SQL;
-  orderBy?: SQL[];
-  limit?: number;
-  offset?: number;
-}): Promise<Entry[]> {
+async function loadEntries(options: { where?: SQL; orderBy?: SQL[]; limit?: number; offset?: number }): Promise<Entry[]> {
   const query = db
     .select({
       id: t.id,
@@ -148,15 +88,12 @@ async function loadEntries(options: {
     .leftJoin(courses, eq(courses.id, t.courseId))
     .leftJoin(creator, eq(creator.id, t.createdBy))
     .where(and(current, options.where))
-    .orderBy(
-      ...(options.orderBy ?? [desc(t.occurredOn), desc(t.createdAt)]),
-      desc(t.id),
-    )
-    .$dynamic();
-  if (options.limit) query.limit(options.limit);
-  if (options.offset) query.offset(options.offset);
-  const rows = await query;
-  if (!rows.length) return [];
+    .orderBy(...(options.orderBy ?? [desc(t.occurredOn), desc(t.createdAt)]), desc(t.id))
+    .$dynamic()
+  if (options.limit) query.limit(options.limit)
+  if (options.offset) query.offset(options.offset)
+  const rows = await query
+  if (!rows.length) return []
 
   const lines = await db
     .select({
@@ -168,40 +105,23 @@ async function loadEntries(options: {
     })
     .from(ledgerLines)
     .leftJoin(admins, eq(admins.id, ledgerLines.partnerId))
-    .where(
-      inArray(
-        ledgerLines.transactionId,
-        rows.map((r) => r.id),
-      ),
-    )
-    .orderBy(desc(ledgerLines.amount));
-  const byTx = Map.groupBy(lines, (l) => l.transactionId);
-  const expenseIds = rows.filter((r) => r.kind === "expense").map((r) => r.id);
+    .where(inArray(ledgerLines.transactionId, rows.map((r) => r.id)))
+    .orderBy(desc(ledgerLines.amount))
+  const byTx = Map.groupBy(lines, (l) => l.transactionId)
+  const expenseIds = rows.filter((r) => r.kind === "expense").map((r) => r.id)
   const files = expenseIds.length
     ? await db
-        .select({
-          transactionId: expenseFiles.transactionId,
-          path: expenseFiles.path,
-          role: expenseFiles.role,
-        })
+        .select({ transactionId: expenseFiles.transactionId, path: expenseFiles.path, role: expenseFiles.role })
         .from(expenseFiles)
         .where(inArray(expenseFiles.transactionId, expenseIds))
         .orderBy(asc(expenseFiles.createdAt))
-    : [];
-  const filesByTx = Map.groupBy(files, (f) => f.transactionId);
+    : []
+  const filesByTx = Map.groupBy(files, (f) => f.transactionId)
   return rows.map((r) => ({
     ...r,
-    lines: (byTx.get(r.id) ?? []).map((l) => ({
-      account: l.account,
-      partnerId: l.partnerId,
-      partnerName: l.partnerName,
-      amount: l.amount,
-    })),
-    files: (filesByTx.get(r.id) ?? []).map((f) => ({
-      path: f.path,
-      role: f.role,
-    })),
-  }));
+    lines: (byTx.get(r.id) ?? []).map((l) => ({ account: l.account, partnerId: l.partnerId, partnerName: l.partnerName, amount: l.amount })),
+    files: (filesByTx.get(r.id) ?? []).map((f) => ({ path: f.path, role: f.role })),
+  }))
 }
 
 /**
@@ -210,76 +130,23 @@ async function loadEntries(options: {
  * (undone by cancelling the registration), not reversed yet, and nothing that
  * would change a closed workshop's figures (paying its instructor can still be corrected).
  */
-export function isReversible(
-  entry: Pick<Entry, "kind" | "reversedBy" | "courseStatus" | "courseClosedAt">,
-): boolean {
-  if (
-    entry.reversedBy ||
-    [
-      "reversal",
-      "course_settlement",
-      "course_close",
-      ...registrationKinds,
-    ].includes(entry.kind)
-  )
-    return false;
-  const closed =
-    entry.courseStatus !== null &&
-    booksClosed({ status: entry.courseStatus, closedAt: entry.courseClosedAt });
-  return !closed || entry.kind === "instructor_payment";
+export function isReversible(entry: Pick<Entry, "kind" | "reversedBy" | "courseStatus" | "courseClosedAt">): boolean {
+  if (entry.reversedBy || ["reversal", "course_settlement", "course_close", ...registrationKinds].includes(entry.kind)) return false
+  const closed = entry.courseStatus !== null && booksClosed({ status: entry.courseStatus, closedAt: entry.courseClosedAt })
+  return !closed || entry.kind === "instructor_payment"
 }
 
 /** What the edit form of an entry starts with, or null when it can't be edited (`editableKinds`, and `isReversible`). */
 export type EditTarget =
-  | {
-      kind: "expense";
-      id: string;
-      values: {
-        courseId: string | null;
-        category: string;
-        amount: number;
-        occurredOn: string;
-        source: "wallet" | "advance";
-        furnishing: boolean;
-        files: Entry["files"];
-      };
-    }
-  | {
-      kind: "capital_contribution";
-      id: string;
-      values: { amount: number; occurredOn: string; note: string };
-    }
-  | {
-      kind: "instructor_advance";
-      id: string;
-      values: {
-        courseId: string;
-        direction: "paid" | "returned";
-        amount: number;
-        occurredOn: string;
-        note: string;
-      };
-    }
-  | {
-      kind: "instructor_payment";
-      id: string;
-      values: {
-        courseId: string;
-        amount: number;
-        occurredOn: string;
-        note: string;
-      };
-    };
+  | { kind: "expense"; id: string; values: { courseId: string | null; category: string; amount: number; occurredOn: string; source: "wallet" | "advance"; furnishing: boolean; files: Entry["files"] } }
+  | { kind: "capital_contribution"; id: string; values: { amount: number; occurredOn: string; note: string } }
+  | { kind: "instructor_advance"; id: string; values: { courseId: string; direction: "paid" | "returned"; amount: number; occurredOn: string; note: string } }
+  | { kind: "instructor_payment"; id: string; values: { courseId: string; amount: number; occurredOn: string; note: string } }
 
 export function editTarget(e: Entry): EditTarget | null {
-  if (!isReversible(e) || !editableKinds.includes(e.kind)) return null;
-  const line = (account: Account) =>
-    e.lines.find((l) => l.account === account)?.amount ?? 0;
-  const base = {
-    amount: e.amount,
-    occurredOn: e.occurredOn,
-    note: e.description,
-  };
+  if (!isReversible(e) || !editableKinds.includes(e.kind)) return null
+  const line = (account: Account) => e.lines.find((l) => l.account === account)?.amount ?? 0
+  const base = { amount: e.amount, occurredOn: e.occurredOn, note: e.description }
   switch (e.kind) {
     case "expense":
       return {
@@ -294,39 +161,20 @@ export function editTarget(e: Entry): EditTarget | null {
           furnishing: e.furnishing,
           files: e.files,
         },
-      };
+      }
     case "capital_contribution": {
       // Each partner's part (the form records an amount per partner).
-      const partners =
-        e.lines.filter((l) => l.account === "partner_capital").length || 1;
-      return {
-        kind: "capital_contribution",
-        id: e.id,
-        values: { ...base, amount: Math.round(line("wallet") / partners) },
-      };
+      const partners = e.lines.filter((l) => l.account === "partner_capital").length || 1
+      return { kind: "capital_contribution", id: e.id, values: { ...base, amount: Math.round(line("wallet") / partners) } }
     }
     case "instructor_advance":
       return e.courseId
-        ? {
-            kind: "instructor_advance",
-            id: e.id,
-            values: {
-              ...base,
-              courseId: e.courseId,
-              direction: line("instructor_advance") > 0 ? "paid" : "returned",
-            },
-          }
-        : null;
+        ? { kind: "instructor_advance", id: e.id, values: { ...base, courseId: e.courseId, direction: line("instructor_advance") > 0 ? "paid" : "returned" } }
+        : null
     case "instructor_payment":
-      return e.courseId
-        ? {
-            kind: "instructor_payment",
-            id: e.id,
-            values: { ...base, courseId: e.courseId },
-          }
-        : null;
+      return e.courseId ? { kind: "instructor_payment", id: e.id, values: { ...base, courseId: e.courseId } } : null
     default:
-      return null;
+      return null
   }
 }
 
@@ -335,109 +183,65 @@ export function editTarget(e: Entry): EditTarget | null {
  * the fees confirmed workshops will owe their instructors (booked at closing).
  */
 async function notSharedOut() {
-  const [ledger, fees] = await Promise.all([openResult(db), projectedFees(db)]);
-  return ledger - totalOf(fees);
+  const [ledger, fees] = await Promise.all([openResult(db), projectedFees(db)])
+  return ledger - totalOf(fees)
 }
 
 // ─── Wallet overview ──────────────────────────────────────────────────────────
 
 /** Money held by or owed to instructors, per workshop (advances out, fees not yet paid). */
 async function withInstructors() {
-  const advance =
-    sql<number>`coalesce(sum(${ledgerLines.amount}) filter (where ${ledgerLines.account} = 'instructor_advance'), 0)`.mapWith(
-      Number,
-    );
-  const owed =
-    sql<number>`coalesce(-sum(${ledgerLines.amount}) filter (where ${ledgerLines.account} = 'instructor_payable'), 0)`.mapWith(
-      Number,
-    );
+  const advance = sql<number>`coalesce(sum(${ledgerLines.amount}) filter (where ${ledgerLines.account} = 'instructor_advance'), 0)`.mapWith(Number)
+  const owed = sql<number>`coalesce(-sum(${ledgerLines.amount}) filter (where ${ledgerLines.account} = 'instructor_payable'), 0)`.mapWith(Number)
   return db
-    .select({
-      courseId: courses.id,
-      title: courses.title,
-      status: courses.status,
-      instructor: instructors.displayName,
-      advance,
-      owed,
-    })
+    .select({ courseId: courses.id, title: courses.title, status: courses.status, instructor: instructors.displayName, advance, owed })
     .from(ledgerLines)
     .innerJoin(t, eq(t.id, ledgerLines.transactionId))
     .innerJoin(courses, eq(courses.id, t.courseId))
     .innerJoin(instructors, eq(instructors.id, courses.instructorId))
-    .where(
-      inArray(ledgerLines.account, [
-        "instructor_advance",
-        "instructor_payable",
-      ]),
-    )
+    .where(inArray(ledgerLines.account, ["instructor_advance", "instructor_payable"]))
     .groupBy(courses.id, instructors.id)
     .having(sql`${advance} <> 0 or ${owed} <> 0`)
-    .orderBy(asc(courses.startsAt));
+    .orderBy(asc(courses.startsAt))
 }
 
 export async function getWalletOverview() {
-  await requireAdmin();
-  const [balances, open, recent, toClose, instructorsOpen, partners, capitals] =
-    await Promise.all([
-      accountBalances(db),
-      notSharedOut(),
-      loadEntries({ limit: 8 }),
-      workshopsToClose(db),
-      withInstructors(),
-      activePartners(db),
-      partnerCapitals(db),
-    ]);
+  await requireAdmin()
+  const [balances, open, recent, toClose, instructorsOpen, partners, capitals] = await Promise.all([
+    accountBalances(db),
+    notSharedOut(),
+    loadEntries({ limit: 8 }),
+    workshopsToClose(db),
+    withInstructors(),
+    activePartners(db),
+    partnerCapitals(db),
+  ])
   // The wallet in two parts. Capital: what the partners put in (less what they took
   // out), less the business's own costs (general and furnishing). Workshops: their
   // profit or loss, closed ones (shared out) and the rest so far (their projected
   // instructor fee counted). What is left over is held by instructors or owed.
-  const all = [...capitals.values()];
-  const putIn = all.reduce((s, c) => s + c.contributions - c.withdrawals, 0);
-  const overhead = balances.general_expenses;
-  const workshops =
-    all.reduce((s, c) => s + c.profitShares, 0) + open + overhead;
-  const remaining = putIn - overhead;
-  const capital = {
-    putIn,
-    overhead,
-    remaining,
-    workshops,
-    other: balances.wallet - remaining - workshops,
-  };
+  const all = [...capitals.values()]
+  const putIn = all.reduce((s, c) => s + c.contributions - c.withdrawals, 0)
+  const overhead = balances.general_expenses
+  const workshops = all.reduce((s, c) => s + c.profitShares, 0) + open + overhead
+  const remaining = putIn - overhead
+  const capital = { putIn, overhead, remaining, workshops, other: balances.wallet - remaining - workshops }
   // The workshops an expense can still be recorded for (books not closed), latest first.
-  const heldBy = new Map(instructorsOpen.map((r) => [r.courseId, r.advance]));
+  const heldBy = new Map(instructorsOpen.map((r) => [r.courseId, r.advance]))
   const openWorkshops = (
     await db
-      .select({
-        id: courses.id,
-        title: courses.title,
-        startsAt: courses.startsAt,
-      })
+      .select({ id: courses.id, title: courses.title, startsAt: courses.startsAt })
       .from(courses)
-      .where(
-        and(
-          sql`${courses.closedAt} is null`,
-          sql`${courses.status} <> 'closed'`,
-        ),
-      )
+      .where(and(sql`${courses.closedAt} is null`, sql`${courses.status} <> 'closed'`))
       .orderBy(desc(courses.startsAt))
-  ).map((w) => ({ ...w, advance: Math.max(0, heldBy.get(w.id) ?? 0) }));
-  return {
-    balances,
-    openResult: open,
-    recent,
-    toClose,
-    withInstructors: instructorsOpen,
-    partners,
-    capital,
-    openWorkshops,
-  };
+  ).map((w) => ({ ...w, advance: Math.max(0, heldBy.get(w.id) ?? 0) }))
+  return { balances, openResult: open, recent, toClose, withInstructors: instructorsOpen, partners, capital, openWorkshops }
 }
 
 /** Active partners for the forms (who puts money in). */
 export async function listActivePartners() {
-  await requireAdmin();
-  return activePartners(db);
+  await requireAdmin()
+  return activePartners(db)
 }
 
 /**
@@ -446,35 +250,22 @@ export async function listActivePartners() {
  * partner who pays the costs).
  */
 export async function getMoneyRules() {
-  const { admin } = await requireAdmin();
-  const { withdrawals, spenderId } = await getSetting("money");
-  const [spender] = spenderId
-    ? await db
-        .select({ name: admins.name })
-        .from(admins)
-        .where(eq(admins.id, spenderId))
-    : [];
+  const { admin } = await requireAdmin()
+  const { withdrawals, spenderId } = await getSetting("money")
+  const [spender] = spenderId ? await db.select({ name: admins.name }).from(admins).where(eq(admins.id, spenderId)) : []
   return {
     withdrawals,
     spenderName: spender?.name ?? null,
     /** "none": nobody is chosen yet; "other": someone else pays the costs; null: this admin does. */
-    spendBlock: !spenderId
-      ? ("none" as const)
-      : spenderId === admin.id
-        ? null
-        : ("other" as const),
-  };
+    spendBlock: !spenderId ? ("none" as const) : spenderId === admin.id ? null : ("other" as const),
+  }
 }
 
 /** The text a cost dialog shows instead of its form, or null when this admin can record costs. */
-export function spendBlockText(
-  rules: Awaited<ReturnType<typeof getMoneyRules>>,
-  t: (key: string, values?: Record<string, string>) => string,
-) {
-  if (rules.spendBlock === "none") return t("rules.noSpender");
-  if (rules.spendBlock === "other")
-    return t("rules.onlySpender", { name: rules.spenderName ?? "" });
-  return null;
+export function spendBlockText(rules: Awaited<ReturnType<typeof getMoneyRules>>, t: (key: string, values?: Record<string, string>) => string) {
+  if (rules.spendBlock === "none") return t("rules.noSpender")
+  if (rules.spendBlock === "other") return t("rules.onlySpender", { name: rules.spenderName ?? "" })
+  return null
 }
 
 // ─── Partners ─────────────────────────────────────────────────────────────────
@@ -486,7 +277,7 @@ export function spendBlockText(
  * that part = what they would get if the business settled today.
  */
 export async function listPartnerAccounts() {
-  await requireAdmin();
+  await requireAdmin()
   const [people, capitals, open, url, lastMoves, shares] = await Promise.all([
     db
       .select({
@@ -498,45 +289,30 @@ export async function listPartnerAccounts() {
         photoPath: admins.photoPath,
       })
       .from(admins)
-      .orderBy(
-        desc(admins.active),
-        desc(admins.shareBp),
-        asc(admins.createdAt),
-      ),
+      .orderBy(desc(admins.active), desc(admins.shareBp), asc(admins.createdAt)),
     partnerCapitals(db),
     notSharedOut(),
     publicUrls(),
     // Each partner's last movement of capital (contribution, withdrawal, profit share).
     db
-      .select({
-        partnerId: ledgerLines.partnerId,
-        last: sql<string>`max(${ledgerTransactions.occurredOn})`,
-      })
+      .select({ partnerId: ledgerLines.partnerId, last: sql<string>`max(${ledgerTransactions.occurredOn})` })
       .from(ledgerLines)
-      .innerJoin(
-        ledgerTransactions,
-        eq(ledgerTransactions.id, ledgerLines.transactionId),
-      )
+      .innerJoin(ledgerTransactions, eq(ledgerTransactions.id, ledgerLines.transactionId))
       .where(eq(ledgerLines.account, "partner_capital"))
       .groupBy(ledgerLines.partnerId),
     workshopShares(),
-  ]);
-  const lastOf = new Map(lastMoves.map((r) => [r.partnerId, r.last]));
-  const partners = people.filter((p) => p.active || capitals.has(p.id));
-  const sharing = partners.filter((p) => p.active && p.shareBp > 0);
-  const sharesOk = sharing.reduce((s, p) => s + p.shareBp, 0) === 10000;
-  const openParts = sharesOk
-    ? splitByShares(
-        open,
-        sharing.map((p) => p.shareBp),
-      )
-    : [];
-  const openOf = new Map(sharing.map((p, i) => [p.id, openParts[i] ?? 0]));
+  ])
+  const lastOf = new Map(lastMoves.map((r) => [r.partnerId, r.last]))
+  const partners = people.filter((p) => p.active || capitals.has(p.id))
+  const sharing = partners.filter((p) => p.active && p.shareBp > 0)
+  const sharesOk = sharing.reduce((s, p) => s + p.shareBp, 0) === 10000
+  const openParts = sharesOk ? splitByShares(open, sharing.map((p) => p.shareBp)) : []
+  const openOf = new Map(sharing.map((p, i) => [p.id, openParts[i] ?? 0]))
 
   const rows = partners.map(({ photoPath, ...p }) => {
-    const c = capitals.get(p.id);
-    const capital = c?.capital ?? 0;
-    const openShare = sharesOk ? (openOf.get(p.id) ?? 0) : 0;
+    const c = capitals.get(p.id)
+    const capital = c?.capital ?? 0
+    const openShare = sharesOk ? (openOf.get(p.id) ?? 0) : 0
     return {
       ...p,
       photoUrl: url(photoPath),
@@ -552,14 +328,9 @@ export async function listPartnerAccounts() {
       owed: Math.max(0, (c?.profitShares ?? 0) - (c?.withdrawals ?? 0)),
       openShare,
       equity: capital + openShare,
-    };
-  });
-  return {
-    rows,
-    openResult: open,
-    sharesOk,
-    activeCount: people.filter((p) => p.active).length,
-  };
+    }
+  })
+  return { rows, openResult: open, sharesOk, activeCount: people.filter((p) => p.active).length }
 }
 
 /**
@@ -567,126 +338,77 @@ export async function listPartnerAccounts() {
  * a reversed closing netting out), latest first: what the workshop earned them.
  */
 async function workshopShares() {
-  const original = alias(ledgerTransactions, "original");
-  const kind = sql`coalesce(${original.kind}, ${ledgerTransactions.kind})`;
+  const original = alias(ledgerTransactions, "original")
+  const kind = sql`coalesce(${original.kind}, ${ledgerTransactions.kind})`
   const rows = await db
     .select({
       partnerId: ledgerLines.partnerId,
       courseId: courses.id,
       title: courses.title,
       closedOn: sql<string>`max(${ledgerTransactions.occurredOn})`,
-      total: sql<number>`coalesce(sum(${ledgerLines.amount}), 0)`.mapWith(
-        Number,
-      ),
+      total: sql<number>`coalesce(sum(${ledgerLines.amount}), 0)`.mapWith(Number),
     })
     .from(ledgerLines)
-    .innerJoin(
-      ledgerTransactions,
-      eq(ledgerTransactions.id, ledgerLines.transactionId),
-    )
+    .innerJoin(ledgerTransactions, eq(ledgerTransactions.id, ledgerLines.transactionId))
     .leftJoin(original, eq(original.id, ledgerTransactions.reversalOf))
     .innerJoin(courses, eq(courses.id, ledgerTransactions.courseId))
-    .where(
-      and(
-        eq(ledgerLines.account, "partner_capital"),
-        sql`${kind} = 'course_close'`,
-      ),
-    )
+    .where(and(eq(ledgerLines.account, "partner_capital"), sql`${kind} = 'course_close'`))
     .groupBy(ledgerLines.partnerId, courses.id, courses.title)
-    .orderBy(desc(sql`max(${ledgerTransactions.occurredOn})`), asc(courses.id));
-  const out = new Map<
-    string,
-    {
-      courseId: string;
-      title: LocalizedText;
-      closedOn: string;
-      amount: number;
-    }[]
-  >();
+    .orderBy(desc(sql`max(${ledgerTransactions.occurredOn})`), asc(courses.id))
+  const out = new Map<string, { courseId: string; title: LocalizedText; closedOn: string; amount: number }[]>()
   for (const r of rows) {
-    if (!r.partnerId || r.total === 0) continue;
-    const list = out.get(r.partnerId) ?? [];
-    list.push({
-      courseId: r.courseId,
-      title: r.title,
-      closedOn: r.closedOn,
-      amount: -r.total,
-    });
-    out.set(r.partnerId, list);
+    if (!r.partnerId || r.total === 0) continue
+    const list = out.get(r.partnerId) ?? []
+    list.push({ courseId: r.courseId, title: r.title, closedOn: r.closedOn, amount: -r.total })
+    out.set(r.partnerId, list)
   }
-  return out;
+  return out
 }
 
-export type PartnerAccount = Awaited<
-  ReturnType<typeof listPartnerAccounts>
->["rows"][number];
+export type PartnerAccount =Awaited<ReturnType<typeof listPartnerAccounts>>["rows"][number]
 
 // ─── Ledger ───────────────────────────────────────────────────────────────────
 
-type Sort = (typeof transactionTable.sort)[number];
-type Filter = keyof typeof transactionTable.filters | "partner" | "workshop";
+type Sort = (typeof transactionTable.sort)[number]
+type Filter = keyof typeof transactionTable.filters | "partner" | "workshop"
 
 /** The ledger: search, filters (kind, account, partner, workshop, date range), sort, one page. */
-export async function listTransactions(
-  params: TableParams<Sort, Filter>,
-  range: { from?: string; to?: string },
-) {
-  await requireAdmin();
-  const f = params.filters;
+export async function listTransactions(params: TableParams<Sort, Filter>, range: { from?: string; to?: string }) {
+  await requireAdmin()
+  const f = params.filters
   const lineWhere = (cond: SQL) =>
-    exists(
-      db
-        .select({ one: sql`1` })
-        .from(ledgerLines)
-        .where(and(sql`${ledgerLines.transactionId} = ${q(t, t.id)}`, cond)),
-    );
+    exists(db.select({ one: sql`1` }).from(ledgerLines).where(and(sql`${ledgerLines.transactionId} = ${q(t, t.id)}`, cond)))
   const conditions: (SQL | undefined)[] = [
     f.kind ? eq(t.kind, f.kind as TransactionKind) : undefined,
-    f.account
-      ? lineWhere(eq(ledgerLines.account, f.account as Account))
-      : undefined,
+    f.account ? lineWhere(eq(ledgerLines.account, f.account as Account)) : undefined,
     f.partner ? lineWhere(eq(ledgerLines.partnerId, f.partner)) : undefined,
     f.workshop ? eq(t.courseId, f.workshop) : undefined,
     range.from ? sql`${t.occurredOn} >= ${range.from}` : undefined,
     range.to ? sql`${t.occurredOn} <= ${range.to}` : undefined,
-  ];
+  ]
   if (params.q) {
-    const pattern = likePattern(params.q);
+    const pattern = likePattern(params.q)
     conditions.push(
       or(
         ilike(t.description, pattern),
-        ...(["fa", "tr", "en"] as const).map((l) =>
-          ilike(sql`${courses.title}->>${l}`, pattern),
-        ),
+        ...(["fa", "tr", "en"] as const).map((l) => ilike(sql`${courses.title}->>${l}`, pattern)),
       ),
-    );
+    )
   }
-  const where = and(...conditions);
-  const direction = params.dir === "asc" ? asc : desc;
-  const orderBy =
-    params.sort === "amount"
-      ? [direction(size)]
-      : [direction(t.occurredOn), direction(t.createdAt)];
+  const where = and(...conditions)
+  const direction = params.dir === "asc" ? asc : desc
+  const orderBy = params.sort === "amount" ? [direction(size)] : [direction(t.occurredOn), direction(t.createdAt)]
 
   const [rows, [{ total }]] = await Promise.all([
-    loadEntries({
-      where,
-      orderBy,
-      limit: params.pageSize,
-      offset: params.offset,
-    }),
-    db
-      .select({ total: count() })
-      .from(t)
-      .leftJoin(courses, eq(courses.id, t.courseId))
-      .where(and(current, where)),
-  ]);
-  return { rows, total };
+    loadEntries({ where, orderBy, limit: params.pageSize, offset: params.offset }),
+    db.select({ total: count() }).from(t).leftJoin(courses, eq(courses.id, t.courseId)).where(and(current, where)),
+  ])
+  return { rows, total }
 }
 
 /** Choices for the ledger filters: people with capital entries or active, workshops with entries. */
 export async function getLedgerFilterOptions() {
-  await requireAdmin();
+  await requireAdmin()
   const [people, workshops] = await Promise.all([
     db
       .select({ id: admins.id, name: admins.name })
@@ -694,34 +416,18 @@ export async function getLedgerFilterOptions() {
       .where(
         or(
           eq(admins.active, true),
-          exists(
-            db
-              .select({ one: sql`1` })
-              .from(ledgerLines)
-              .where(sql`${ledgerLines.partnerId} = ${q(admins, admins.id)}`),
-          ),
+          exists(db.select({ one: sql`1` }).from(ledgerLines).where(sql`${ledgerLines.partnerId} = ${q(admins, admins.id)}`)),
         ),
       )
       .orderBy(asc(admins.name)),
     db
-      .select({
-        id: courses.id,
-        title: courses.title,
-        startsAt: courses.startsAt,
-      })
+      .select({ id: courses.id, title: courses.title, startsAt: courses.startsAt })
       .from(courses)
-      .where(
-        exists(
-          db
-            .select({ one: sql`1` })
-            .from(t)
-            .where(sql`${t.courseId} = ${q(courses, courses.id)}`),
-        ),
-      )
+      .where(exists(db.select({ one: sql`1` }).from(t).where(sql`${t.courseId} = ${q(courses, courses.id)}`)))
       .orderBy(desc(courses.startsAt))
       .limit(300),
-  ]);
-  return { partners: people, workshops };
+  ])
+  return { partners: people, workshops }
 }
 
 // ─── One workshop ─────────────────────────────────────────────────────────────
@@ -734,42 +440,24 @@ export async function getLedgerFilterOptions() {
  * earlier instructor), null without one. Null when the workshop does not exist.
  */
 export async function getWorkshopFinances(courseId: string) {
-  await requireAdmin();
-  const preview = await prepareClosing(db, courseId);
-  if (!preview) return null;
+  await requireAdmin()
+  const preview = await prepareClosing(db, courseId)
+  if (!preview) return null
   const [entries, [first]] = await Promise.all([
     loadEntries({
-      where: and(
-        eq(t.courseId, courseId),
-        inArray(t.kind, [
-          "expense",
-          "instructor_advance",
-          "instructor_payment",
-        ]),
-      ),
+      where: and(eq(t.courseId, courseId), inArray(t.kind, ["expense", "instructor_advance", "instructor_payment"])),
       orderBy: [desc(t.occurredOn), desc(t.createdAt)],
     }),
     db
       .select({ since: min(contracts.sentAt) })
       .from(contracts)
       .innerJoin(courses, eq(courses.id, contracts.courseId))
-      .where(
-        and(
-          eq(contracts.courseId, courseId),
-          eq(contracts.instructorId, courses.instructorId),
-        ),
-      ),
-  ]);
-  return {
-    ...preview,
-    entries: entries.map(describeEntry),
-    contractSince: first?.since ?? null,
-  };
+      .where(and(eq(contracts.courseId, courseId), eq(contracts.instructorId, courses.instructorId))),
+  ])
+  return { ...preview, entries: entries.map(describeEntry), contractSince: first?.since ?? null }
 }
 
-export type WorkshopFinances = NonNullable<
-  Awaited<ReturnType<typeof getWorkshopFinances>>
->;
+export type WorkshopFinances = NonNullable<Awaited<ReturnType<typeof getWorkshopFinances>>>
 
 /**
  * What a workshop entry means, from its lines: the amount, and where the money
@@ -777,40 +465,27 @@ export type WorkshopFinances = NonNullable<
  */
 export function describeEntry(entry: Entry) {
   const main: Account =
-    entry.kind === "expense"
-      ? "course_expenses"
-      : entry.kind === "instructor_payment"
-        ? "instructor_payable"
-        : "instructor_advance";
-  const mainLine = entry.lines.find((l) => l.account === main);
-  const other = entry.lines.find((l) => l.account !== main);
-  const amount = Math.abs(mainLine?.amount ?? entry.amount);
+    entry.kind === "expense" ? "course_expenses" : entry.kind === "instructor_payment" ? "instructor_payable" : "instructor_advance"
+  const mainLine = entry.lines.find((l) => l.account === main)
+  const other = entry.lines.find((l) => l.account !== main)
+  const amount = Math.abs(mainLine?.amount ?? entry.amount)
   return {
     ...entry,
     amount,
     /** For advance movements: paid to the instructor, or returned by them. */
-    direction:
-      (mainLine?.amount ?? 0) >= 0 ? ("paid" as const) : ("returned" as const),
-    source:
-      other?.account === "instructor_advance"
-        ? ("advance" as const)
-        : ("wallet" as const),
-  };
+    direction: (mainLine?.amount ?? 0) >= 0 ? ("paid" as const) : ("returned" as const),
+    source: other?.account === "instructor_advance" ? ("advance" as const) : ("wallet" as const),
+  }
 }
 
-export type WorkshopEntry = ReturnType<typeof describeEntry>;
+export type WorkshopEntry = ReturnType<typeof describeEntry>
 
 // ─── Receipts ─────────────────────────────────────────────────────────────────
 
 /** The receipts page's tabs: everything, workshops' expenses, general expenses, or furnishing. */
-export const receiptGroups = [
-  "all",
-  "workshops",
-  "general",
-  "furnishing",
-] as const;
-export type ReceiptGroup = (typeof receiptGroups)[number];
-export const RECEIPTS_PER_PAGE = 48;
+export const receiptGroups = ["all", "workshops", "general", "furnishing"] as const
+export type ReceiptGroup = (typeof receiptGroups)[number]
+export const RECEIPTS_PER_PAGE = 48
 
 /**
  * The files kept with expenses (Money → Receipts), newest expense first, with
@@ -818,25 +493,14 @@ export const RECEIPTS_PER_PAGE = 48;
  * and whether it was reversed since. `workshopId` narrows "workshops" to one;
  * `workshops` lists those with receipts, for that choice.
  */
-export async function listReceipts(
-  group: ReceiptGroup,
-  page: number,
-  workshopId?: string,
-) {
-  await requireAdmin();
-  const kind = sql<ReceiptGroup>`case when ${t.furnishing} then 'furnishing' when ${t.courseId} is not null then 'workshops' else 'general' end`;
+export async function listReceipts(group: ReceiptGroup, page: number, workshopId?: string) {
+  await requireAdmin()
+  const kind = sql<ReceiptGroup>`case when ${t.furnishing} then 'furnishing' when ${t.courseId} is not null then 'workshops' else 'general' end`
   const where = and(
     current,
-    group === "all"
-      ? undefined
-      : and(
-          sql`${kind} = ${group}`,
-          group === "workshops" && workshopId
-            ? eq(t.courseId, workshopId)
-            : undefined,
-        ),
-  );
-  const reversal = alias(ledgerTransactions, "reversal");
+    group === "all" ? undefined : and(sql`${kind} = ${group}`, group === "workshops" && workshopId ? eq(t.courseId, workshopId) : undefined),
+  )
+  const reversal = alias(ledgerTransactions, "reversal")
   const [rows, [{ total }], counts, workshops, url] = await Promise.all([
     db
       .select({
@@ -853,10 +517,7 @@ export async function listReceipts(
         recordedBy: creator.name,
         reversed: sql<boolean>`${reversal.id} is not null`,
         // The expense's amount: its debit to the workshop's or the general expenses.
-        amount:
-          sql<number>`(select coalesce(sum(l.amount), 0) from ${ledgerLines} l where l.transaction_id = ${t.id} and l.account in ('course_expenses', 'general_expenses'))`.mapWith(
-            Number,
-          ),
+        amount: sql<number>`(select coalesce(sum(l.amount), 0) from ${ledgerLines} l where l.transaction_id = ${t.id} and l.account in ('course_expenses', 'general_expenses'))`.mapWith(Number),
       })
       .from(expenseFiles)
       .innerJoin(t, eq(t.id, expenseFiles.transactionId))
@@ -864,19 +525,10 @@ export async function listReceipts(
       .leftJoin(creator, eq(creator.id, t.createdBy))
       .leftJoin(reversal, eq(reversal.reversalOf, t.id))
       .where(where)
-      .orderBy(
-        desc(t.occurredOn),
-        desc(t.createdAt),
-        asc(expenseFiles.role),
-        asc(expenseFiles.createdAt),
-      )
+      .orderBy(desc(t.occurredOn), desc(t.createdAt), asc(expenseFiles.role), asc(expenseFiles.createdAt))
       .limit(RECEIPTS_PER_PAGE)
       .offset((Math.max(1, page) - 1) * RECEIPTS_PER_PAGE),
-    db
-      .select({ total: count() })
-      .from(expenseFiles)
-      .innerJoin(t, eq(t.id, expenseFiles.transactionId))
-      .where(where),
+    db.select({ total: count() }).from(expenseFiles).innerJoin(t, eq(t.id, expenseFiles.transactionId)).where(where),
     db
       .select({ kind, n: count() })
       .from(expenseFiles)
@@ -884,12 +536,7 @@ export async function listReceipts(
       .where(current)
       .groupBy(kind),
     db
-      .select({
-        id: courses.id,
-        title: courses.title,
-        startsAt: courses.startsAt,
-        n: count(),
-      })
+      .select({ id: courses.id, title: courses.title, startsAt: courses.startsAt, n: count() })
       .from(expenseFiles)
       .innerJoin(t, eq(t.id, expenseFiles.transactionId))
       .innerJoin(courses, eq(courses.id, t.courseId))
@@ -897,14 +544,10 @@ export async function listReceipts(
       .groupBy(courses.id)
       .orderBy(desc(courses.startsAt)),
     publicUrls(),
-  ]);
-  const n = (g: ReceiptGroup) => counts.find((c) => c.kind === g)?.n ?? 0;
+  ])
+  const n = (g: ReceiptGroup) => counts.find((c) => c.kind === g)?.n ?? 0
   return {
-    rows: rows.map(({ path, ...r }) => ({
-      ...r,
-      url: url(path),
-      pdf: r.contentType === "application/pdf",
-    })),
+    rows: rows.map(({ path, ...r }) => ({ ...r, url: url(path), pdf: r.contentType === "application/pdf" })),
     total,
     counts: {
       all: n("workshops") + n("general") + n("furnishing"),
@@ -913,26 +556,21 @@ export async function listReceipts(
       furnishing: n("furnishing"),
     } satisfies Record<ReceiptGroup, number>,
     workshops,
-  };
+  }
 }
 
-export type ReceiptRow = Awaited<
-  ReturnType<typeof listReceipts>
->["rows"][number];
+export type ReceiptRow = Awaited<ReturnType<typeof listReceipts>>["rows"][number]
 
 /** The edit forms' starting values of some entries (the receipts page), by id; absent when one can't be edited. */
-export async function editTargetsOf(
-  ids: string[],
-): Promise<Map<string, EditTarget>> {
-  await requireAdmin();
-  if (!ids.length) return new Map();
-  const entries = await loadEntries({
-    where: inArray(t.id, [...new Set(ids)]),
-  });
+export async function editTargetsOf(ids: string[]): Promise<Map<string, EditTarget>> {
+  await requireAdmin()
+  if (!ids.length) return new Map()
+  const entries = await loadEntries({ where: inArray(t.id, [...new Set(ids)]) })
   return new Map(
     entries.flatMap((e) => {
-      const target = editTarget(e);
-      return target ? [[e.id, target] as const] : [];
+      const target = editTarget(e)
+      return target ? [[e.id, target] as const] : []
     }),
-  );
+  )
 }
+

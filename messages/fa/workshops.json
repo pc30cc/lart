@@ -281,7 +281,12 @@
     "privateHint": "اطلاعات خصوصی، فقط برای مدیران.",
     "photos": "عکس‌ها",
     "noCover": "هنوز عکس کاور ندارد",
-    "dayParticipants": "{range} نفر"
+    "dayParticipants": "{range} نفر",
+    "daysTogether": "{count, plural, other {جمع هر # روز}}",
+    "dayLabel": "روز {n}",
+    "dayFull": "تکمیل",
+    "dayFree": "{count, plural, other {# جای خالی}}",
+    "dayMinimum": "{count, plural, other {دست‌کم # نفر لازم است}}"
   },
   "next": {
     "viewContract": "دیدن قرارداد",

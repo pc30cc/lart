@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils"
 import { CancelWorkshopButton, ConfirmWorkshopButton, RaiseFinalButton, ResendContractButton } from "../_components/lifecycle-actions"
 import { WorkshopHeader } from "../_components/workshop-header"
 import { QrCard, TelegramCard } from "../_components/share-cards"
+import { seatsTakenByDay } from "@/features/registrations/public"
 import { FillMeter } from "../_components/workshop-status"
 import { formatWorkshopDates, workshopHours, formatDayCapacity, workshopDays, workshopSchedule } from "@/features/workshops/days"
 
@@ -51,8 +52,10 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/admin/wo
 export default async function WorkshopPage({ params }: PageProps<"/[locale]/admin/workshops/[id]">) {
   await requireAdmin()
   const { id } = await params
-  const [w, t, locale] = await Promise.all([load(id), getTranslations("workshops"), getLocale()])
+  const [w, t, locale, takenByDay] = await Promise.all([load(id), getTranslations("workshops"), getLocale(), seatsTakenByDay(id)])
   const n = (v: number) => formatNumber(v, locale)
+  // Several days: each one's places and how full it is (people choose one day).
+  const schedule = workshopDays(w).length > 1 ? workshopSchedule(w, locale, "full") : null
 
   return (
     <>
@@ -166,15 +169,30 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/admi
 
         <aside className="min-w-0 space-y-6">
           <Card title={t("overview.participants")}>
-            <FillMeter
-              size="lg"
-              registered={w.registered.pending + w.registered.confirmed}
-              min={w.minCapacity}
-              max={w.maxCapacity}
-              label={t("table.fillValue", { confirmed: n(w.registered.pending + w.registered.confirmed), max: n(w.maxCapacity) })}
-            />
+            {schedule ? (
+              <DayCapacities
+                days={schedule.map((d, i) => ({
+                  date: d.date,
+                  hours: d.hours,
+                  taken: takenByDay[i] ?? 0,
+                  min: d.minCapacity ?? w.minCapacity,
+                  max: d.maxCapacity ?? w.maxCapacity,
+                }))}
+                locale={locale}
+                t={t}
+              />
+            ) : (
+              <FillMeter
+                size="lg"
+                registered={w.registered.pending + w.registered.confirmed}
+                min={w.minCapacity}
+                max={w.maxCapacity}
+                label={t("table.fillValue", { confirmed: n(w.registered.pending + w.registered.confirmed), max: n(w.maxCapacity) })}
+              />
+            )}
             <ul className="text-muted-foreground mt-4 space-y-1.5 text-sm">
-              <li>{t("overview.minimum", { count: w.minCapacity })}</li>
+              {/* Several days: each day's card says its own minimum. */}
+              {!schedule && <li>{t("overview.minimum", { count: w.minCapacity })}</li>}
               {/* Paid: confirmed with an amount above 0 (a free workshop's registrations are never "paid"). */}
               {w.registered.pending + w.registered.confirmed > 0 && (w.price > 0 || w.paid > 0) && (
                 <li>{t("overview.paid", { count: w.paid })}</li>
@@ -470,6 +488,75 @@ async function Timeline({ workshop: w }: { workshop: Workshop }) {
 }
 
 // ─── Small pieces ─────────────────────────────────────────────────────────────
+
+/**
+ * A workshop on several days: all places together, then each day as a small
+ * card (date, hours, how many of its places are taken, a bar with the day's
+ * minimum as a tick, and "Full" or the places still free).
+ */
+function DayCapacities({
+  days,
+  locale,
+  t,
+}: {
+  days: { date: string; hours: string; taken: number; min: number; max: number }[]
+  locale: string
+  t: Awaited<ReturnType<typeof getTranslations<"workshops">>>
+}) {
+  const n = (v: number) => formatNumber(v, locale)
+  const taken = days.reduce((s, d) => s + d.taken, 0)
+  const max = days.reduce((s, d) => s + d.max, 0)
+  const min = days.reduce((s, d) => s + d.min, 0)
+  return (
+    <div className="space-y-4">
+      <FillMeter size="lg" registered={taken} min={min} max={max} label={t("table.fillValue", { confirmed: n(taken), max: n(max) })} />
+      <p className="text-muted-foreground -mt-2 text-xs">{t("overview.daysTogether", { count: days.length })}</p>
+      <ol className="space-y-2.5">
+        {days.map((d, i) => {
+          const full = d.taken >= d.max
+          const pct = Math.min(100, Math.round((d.taken / Math.max(d.max, 1)) * 100))
+          const tone = full ? "bg-primary" : d.taken >= d.min ? "bg-success" : "bg-warning"
+          return (
+            <li key={i} className="bg-muted/40 ring-foreground/6 rounded-xl p-3 ring-1">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-muted-foreground text-[0.7rem] font-medium">{t("overview.dayLabel", { n: n(i + 1) })}</p>
+                  <p className="truncate text-sm font-medium">{d.date}</p>
+                  <bdi className="text-muted-foreground text-xs tabular-nums">{d.hours}</bdi>
+                </div>
+                <div className="shrink-0 text-end">
+                  <p className="text-lg leading-tight font-semibold tabular-nums">
+                    {n(d.taken)}
+                    <span className="text-muted-foreground text-sm font-normal"> / {n(d.max)}</span>
+                  </p>
+                  <p className={cn("text-xs font-medium", full ? "text-primary" : "text-muted-foreground")}>
+                    {full ? t("overview.dayFull") : t("overview.dayFree", { count: d.max - d.taken })}
+                  </p>
+                </div>
+              </div>
+              <div
+                className="bg-background relative mt-2.5 h-1.5 w-full overflow-hidden rounded-full"
+                role="meter"
+                aria-valuemin={0}
+                aria-valuemax={d.max}
+                aria-valuenow={d.taken}
+                aria-label={`${d.date}: ${t("table.fillValue", { confirmed: n(d.taken), max: n(d.max) })}`}
+              >
+                <div className={cn(tone, "absolute inset-y-0 start-0 rounded-full transition-all")} style={{ width: `${pct}%` }} />
+                <div
+                  aria-hidden
+                  className="bg-foreground/35 absolute inset-y-0 w-px"
+                  style={{ insetInlineStart: `${Math.min(100, (d.min / Math.max(d.max, 1)) * 100)}%` }}
+                />
+              </div>
+              <p className="text-muted-foreground mt-1.5 text-[0.7rem]">{t("overview.dayMinimum", { count: d.min })}</p>
+            </li>
+          )
+        })}
+      </ol>
+    </div>
+  )
+}
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (

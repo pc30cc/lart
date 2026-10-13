@@ -281,7 +281,12 @@
     "privateHint": "Gizli bilgiler; yalnızca yöneticiler görür.",
     "photos": "Fotoğraflar",
     "noCover": "Henüz kapak fotoğrafı yok",
-    "dayParticipants": "{range} katılımcı"
+    "dayParticipants": "{range} katılımcı",
+    "daysTogether": "{count, plural, other {# günün toplamı}}",
+    "dayLabel": "{n}. gün",
+    "dayFull": "Dolu",
+    "dayFree": "{count, plural, other {# boş yer}}",
+    "dayMinimum": "{count, plural, other {En az # kişi gerekli}}"
   },
   "next": {
     "viewContract": "Sözleşmeyi gör",
