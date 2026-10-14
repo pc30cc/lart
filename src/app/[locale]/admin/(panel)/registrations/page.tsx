@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/admin/empty-state"
 import { Money } from "@/components/admin/money"
 import { PageHeader } from "@/components/admin/page-header"
 import { AddRegistrationDialog } from "@/features/registrations/admin/components/add-registration-dialog"
+import { HoldSeatsDialog } from "@/features/registrations/admin/components/hold-seats"
 import { registrableWorkshops } from "@/features/registrations/admin/register"
 import { RegistrationActions } from "@/features/registrations/admin/components/dialogs"
 import { PaymentCell, refundOwed } from "@/features/registrations/admin/components/payment-cell"
@@ -58,6 +59,8 @@ export default async function RegistrationsPage({ searchParams }: PageProps<"/[l
   ])
 
   const url = await publicUrls()
+  // The workshops still taking people, for "Hold places" and "Add registration".
+  const addable = await registrableWorkshops(locale)
   const defaultMethod: PaymentMethod =
     paymentMethods.find((m) => (m === "cash" ? payment.cash : payment[m].enabled)) ?? "cash"
   // As on the workshop's tab: a cancelled workshop's registrations are all cancelled; closed books can't change.
@@ -173,7 +176,16 @@ export default async function RegistrationsPage({ searchParams }: PageProps<"/[l
 
   return (
     <>
-      <PageHeader title={t("all.title")} description={t("all.description")} actions={<AddRegistrationDialog workshops={await registrableWorkshops(locale)} />} />
+      <PageHeader
+        title={t("all.title")}
+        description={t("all.description")}
+        actions={
+          <>
+            <HoldSeatsDialog workshops={addable} />
+            <AddRegistrationDialog workshops={addable} />
+          </>
+        }
+      />
       {counts.all === 0 ? (
         <EmptyState icon={TicketIcon} title={t("empty.title")} description={t("all.empty")} />
       ) : (

@@ -229,7 +229,7 @@ export default async function WorkshopRegistrationsPage({
         active="registrations"
         actions={
           <>
-            {!locked && holdable && <HoldSeatsDialog workshop={holdable} />}
+            {!locked && holdable && <HoldSeatsDialog workshops={addable} courseId={holdable.id} />}
             {!locked && <AddRegistrationDialog workshops={addable} courseId={workshop.id} />}
             {summary.active + summary.cancelled > 0 && (
               <Button asChild variant="outline" size="lg" className="px-4">
