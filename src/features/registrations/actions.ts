@@ -8,6 +8,7 @@ import { after } from "next/server"
 import { db } from "@/db"
 import { members } from "@/db/schema"
 import { localeHref } from "@/i18n/links"
+import { notifyAdmins } from "@/features/telegram/admin-notices"
 import { memberAction } from "@/lib/action"
 import { errorForLog } from "@/lib/errors"
 import { sendRegistrationCancelled, sendRegistrationReceived } from "./notify"
@@ -35,6 +36,8 @@ export const registerAction = memberAction(
   async (input, ctx) => {
     const { id } = await registerForWorkshop(ctx.member.id, input)
     after(() => sendRegistrationReceived(id).catch(logFailure("registration email")))
+    // The admins' Telegram: the new registration, with "Confirm payment".
+    after(() => notifyAdmins(id, "registration"))
     redirect(await localeHref(input.locale, `/account/registrations/${id}?welcome=1`))
   },
   { notImpersonated: true },

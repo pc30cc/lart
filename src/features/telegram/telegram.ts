@@ -20,7 +20,7 @@ const CAPTION_MAX = 1024
 const TIMEOUT_MS = 15_000
 
 /** Text for Telegram's HTML: only &, < and > are special. */
-const escape = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+export const escape = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
 
 type Config = { token: string; chatId: string; locale: "fa" | "tr" | "en" }
 
@@ -31,8 +31,14 @@ export async function telegramConfig(): Promise<Config | null> {
   return { token: decrypt(setting.botTokenEnc), chatId: setting.chatId, locale: setting.locale }
 }
 
+/** The saved bot's token alone (the admins' messages need no channel), or null. */
+export async function telegramToken(): Promise<string | null> {
+  const setting = await getSetting("telegram")
+  return setting.botTokenEnc ? decrypt(setting.botTokenEnc) : null
+}
+
 /** One Bot API call; a refusal becomes a UserError with Telegram's own reason (never the token). */
-async function call<T>(token: string, method: string, body: Record<string, unknown>): Promise<T> {
+export async function call<T>(token: string, method: string, body: Record<string, unknown>): Promise<T> {
   let answer: Response
   try {
     answer = await fetch(`https://api.telegram.org/bot${token}/${method}`, {

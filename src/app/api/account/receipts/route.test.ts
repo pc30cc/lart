@@ -23,6 +23,10 @@ import { env } from "@/lib/env"
 
 /** One request's cookies (the real member session is looked up in the database). */
 const state = vi.hoisted(() => ({ cookies: new Map<string, string>(), root: "" }))
+// The admins' Telegram runs after the response: here it is only checked that it is asked for.
+const telegram = vi.hoisted(() => ({ notifyAdmins: vi.fn(async () => {}) }))
+vi.mock("@/features/telegram/admin-notices", () => telegram)
+vi.mock("next/server", () => ({ after: (fn: () => unknown) => void fn() }))
 vi.mock("next/headers", () => ({
   headers: async () => new Headers({ "x-real-ip": "198.51.100.5" }),
   cookies: async () => ({
@@ -104,6 +108,7 @@ describe("POST /api/account/receipts", () => {
     const [row] = await db.select().from(registrations).where(eq(registrations.id, registrationId))
     expect(row.receiptPath).toMatch(/^receipts\/[\w-]{22}\.webp$/)
     expect(row.receiptAt).toBeInstanceOf(Date)
+    expect(telegram.notifyAdmins).toHaveBeenCalledWith(registrationId, "receipt")
   })
 
   it("refuses a paid registration, someone else's, and without a session", async () => {

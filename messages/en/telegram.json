@@ -6,5 +6,35 @@
   "seats": "{count, plural, one {# place left} other {# places left}}",
   "full": "Fully booked",
   "signoff": "See you at {brand}",
-  "register": "✨ Register for the workshop"
+  "register": "✨ Register for the workshop",
+  "admin": {
+    "title": {
+      "registration": "New registration",
+      "receipt": "Transfer receipt received"
+    },
+    "participant": "Participant",
+    "registeredBy": "Registered by",
+    "free": "Free",
+    "ways": {
+      "cash": "Cash, on the day",
+      "transfer": "Bank transfer",
+      "online": "Online payment"
+    },
+    "status": {
+      "pending": "Waiting for payment",
+      "check": "Check the receipt and confirm the payment",
+      "paid": "Payment confirmed",
+      "cancelled": "Registration cancelled",
+      "free": "Free; place reserved"
+    },
+    "confirm": "Confirm payment",
+    "open": "Open in the panel",
+    "confirmed": "Payment recorded; the participant got the confirmation email.",
+    "notAllowed": "This button works only for the admins connected in Settings → Telegram.",
+    "start": {
+      "connected": "Hello {name} 👋\nFrom now on I’ll send every new registration and every transfer receipt here; confirm a payment with “✅ Confirm payment”.",
+      "unknown": "This bot is only for the site’s admins. If you are one, enter your Telegram username in Settings → Telegram and press Start again."
+    },
+    "test": "✅ All set: registrations and receipts will arrive here from now on."
+  }
 }

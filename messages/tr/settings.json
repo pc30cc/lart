@@ -599,7 +599,30 @@
       "chat": "Kanal adını @ ile yazın (ör. ‎@limer_atolye) ya da sayısal kimliğini girin.",
       "notSet": "Önce Ayarlar → Telegram'da botu ve kanalı girin.",
       "unreachable": "Telegram'a bağlanılamadı. Biraz sonra tekrar deneyin.",
-      "refused": "Telegram kabul etmedi: {reason}. Botun kanal yöneticisi olduğundan emin olun."
+      "refused": "Telegram kabul etmedi: {reason}. Botun kanal yöneticisi olduğundan emin olun.",
+      "username": "Telegram kullanıcı adı 5–32 harf, rakam veya _ olur; örn. limer_mina."
+    },
+    "admins": {
+      "title": "Telegram'daki yöneticiler",
+      "description": "Bot her yeni kaydı ve her dekontu (dekontun fotoğrafı ve kaydı yapanın bilgileriyle) bu yöneticilere gönderir; orada “Ödemeyi onayla” ile ödeme kaydedilir ve katılımcıya onay e-postası gider.",
+      "step1": "Her yöneticinin Telegram kullanıcı adını adının yanına yazıp kaydedin.",
+      "step2": "Her yönetici botu Telegram'da bir kez açıp Start'a bassın (bot bunu yapmayan kimseye mesaj gönderemez).",
+      "step3": "Bot:",
+      "step3Later": "Kaydettikten sonra botun bağlantısı burada görünür; yöneticiler onu açar.",
+      "notify": "Kayıtları ve dekontları Telegram'a gönder",
+      "notifyHint": "Kapalıyken bot yöneticilere bir şey göndermez.",
+      "connected": "Bağlı",
+      "waiting": "Botta Start bekleniyor",
+      "none": "Telegram girilmedi",
+      "usernameOf": "{name} için Telegram kullanıcı adı",
+      "locale": "Yönetici mesajlarının dili",
+      "localeHint": "Kayıt ve dekont kartları bu dilde gönderilir.",
+      "noneConnected": "Henüz hiçbir yönetici botta Start'a basmadı.",
+      "test": {
+        "action": "Yöneticilere deneme mesajı",
+        "running": "Gönderiliyor…",
+        "sent": "Deneme mesajı {count, plural, one {# yöneticiye} other {# yöneticiye}} gönderildi."
+      }
     }
   }
 }

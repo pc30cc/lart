@@ -353,7 +353,7 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 Never localized (`UNLOCALIZED_HANDLERS`): `/api/account/receipts`, `/api/admin/backups/[id]`,
 `/api/admin/exports/[kind]`, `/api/admin/media/watermark-preview`,
 `/api/admin/money/export/[report]`, `/api/admin/uploads`,
-`/api/instructor/uploads`, `/api/view` (the visit statistics' beacon),
+`/api/instructor/uploads`, `/api/telegram/webhook` (the admins' bot), `/api/view` (the visit statistics' beacon),
 `/media/[...path]`, `/og.png` (the site's share picture), and the metadata routes `/sitemap.xml` and `/robots.txt`.
 
 ### Redirects
@@ -659,6 +659,19 @@ await sendEmail({ to, template: "contract_ready", props: { … }, locale }) // n
   returns `{ ok: true, skipped: true }`. The `requiredEmails` (an account's
   way in, a new password, an invitation, a contract to sign) can't be
   turned off and show a lock.
+- **The admins' Telegram** (Settings → Telegram → "Admins on Telegram",
+  setting `telegramAdmins`, `features/telegram/admin-notices.ts`): each
+  admin's Telegram username; saving points the bot at
+  `/api/telegram/webhook` (with a secret Telegram sends back, checked there)
+  and each admin presses Start in the bot once (their chat is then known).
+  A new registration (`registerAction`) and a transfer receipt
+  (`/api/account/receipts`, the receipt itself as a photo or PDF) send them a
+  card: workshop, day and hours, participant, who registered with email and
+  phone, amount and way to pay, status, "✅ Confirm payment" and "Open in the
+  panel". Confirming records the payment like the panel (`confirmPayment`,
+  the way they chose, audited as that admin's, `via: "telegram"`), emails
+  the participant and updates every copy (`telegram_notices`,
+  `refreshAdminNotices`, also after a payment recorded in the panel).
 - **How they are sent** is the `email` setting (Settings → Email,
   `features/settings/email.ts`): **Resend** (API key) or **SMTP** (our own
   mail server, a mail container on the server's network, or a service such

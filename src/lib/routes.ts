@@ -119,6 +119,8 @@ export const UNLOCALIZED_HANDLERS: readonly string[] = [
   "/api/admin/money/export/[report]",
   "/api/admin/uploads",
   "/api/instructor/uploads",
+  // The admins' Telegram bot (updates from Telegram, checked by their secret).
+  "/api/telegram/webhook",
   // The site's visit statistics (a page's beacon).
   "/api/view",
   "/media/[...path]",

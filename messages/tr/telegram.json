@@ -6,5 +6,35 @@
   "seats": "{count, plural, one {# boş yer} other {# boş yer}}",
   "full": "Kontenjan doldu",
   "signoff": "{brand}'da görüşmek üzere",
-  "register": "✨ Atölyeye kaydol"
+  "register": "✨ Atölyeye kaydol",
+  "admin": {
+    "title": {
+      "registration": "Yeni kayıt",
+      "receipt": "Dekont geldi"
+    },
+    "participant": "Katılımcı",
+    "registeredBy": "Kaydı yapan",
+    "free": "Ücretsiz",
+    "ways": {
+      "cash": "Nakit, atölye günü",
+      "transfer": "Havale / EFT",
+      "online": "Online ödeme"
+    },
+    "status": {
+      "pending": "Ödeme bekleniyor",
+      "check": "Dekontu kontrol edip ödemeyi onaylayın",
+      "paid": "Ödeme onaylandı",
+      "cancelled": "Kayıt iptal edildi",
+      "free": "Ücretsiz; yer ayrıldı"
+    },
+    "confirm": "Ödemeyi onayla",
+    "open": "Panelde aç",
+    "confirmed": "Ödeme kaydedildi, katılımcıya onay e-postası gitti.",
+    "notAllowed": "Bu düğme yalnızca “Ayarlar → Telegram”da bağlı yöneticiler için çalışır.",
+    "start": {
+      "connected": "Merhaba {name} 👋\nBundan sonra her yeni kaydı ve her dekontu buraya göndereceğim; “✅ Ödemeyi onayla” ile ödemeyi onaylayabilirsiniz.",
+      "unknown": "Bu bot yalnızca sitenin yöneticileri içindir. Yöneticiyseniz Telegram kullanıcı adınızı “Ayarlar → Telegram”a girip Start'a yeniden basın."
+    },
+    "test": "✅ Her şey hazır: kayıtlar ve dekontlar bundan sonra buraya gelecek."
+  }
 }

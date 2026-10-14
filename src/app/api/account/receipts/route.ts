@@ -1,9 +1,11 @@
+import { after } from "next/server"
 import { z } from "zod"
 
 import { requireMemberApi } from "@/lib/auth/member"
 import { createRateLimiter } from "@/lib/auth/rate-limit"
 import { errorForLog } from "@/lib/errors"
 import { attachReceipt, canAttachReceipt } from "@/features/registrations/receipt"
+import { notifyAdmins } from "@/features/telegram/admin-notices"
 import { getSetting } from "@/lib/settings"
 import { getStorage, StorageError } from "@/lib/storage"
 import { MultipartReader, multipartBoundary } from "@/lib/storage/multipart"
@@ -63,6 +65,8 @@ export async function POST(request: Request) {
       return notFound()
     }
     if (attached.previous) await storage.remove(attached.previous).catch(() => {})
+    // The admins' Telegram: the receipt itself, with the registration and "Confirm payment".
+    after(() => notifyAdmins(id.data, "receipt"))
     return Response.json({ ok: true }, { status: 201 })
   } catch (error) {
     if (error instanceof UploadError) return fail(error.code)

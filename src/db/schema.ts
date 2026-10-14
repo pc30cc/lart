@@ -502,6 +502,23 @@ export const ledgerDiscrepancies = pgTable("ledger_discrepancies", {
   createdAt: createdAt(),
 })
 
+/**
+ * The Telegram messages sent to the admins about a registration (a new one,
+ * a receipt sent), so that "Confirm payment" (there or in the panel) can
+ * update every copy: its chat, the message and how it was sent.
+ */
+export const telegramNotices = pgTable("telegram_notices", {
+  id: id(),
+  registrationId: uuid("registration_id").notNull().references(() => registrations.id, { onDelete: "cascade" }),
+  /** "registration": someone registered; "receipt": they sent a transfer receipt. */
+  kind: text("kind").notNull(),
+  chatId: text("chat_id").notNull(),
+  messageId: integer("message_id").notNull(),
+  /** "text", or "photo" / "document" (the receipt, with a caption). */
+  format: text("format").notNull(),
+  createdAt: createdAt(),
+}, (t) => [index("telegram_notices_registration_idx").on(t.registrationId)])
+
 export const expenseFileRole = pgEnum("expense_file_role", ["receipt", "photo"])
 
 /**

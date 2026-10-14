@@ -250,6 +250,19 @@ export const settingSchemas = {
    * token (encrypted; the bot is an admin of the channel), the channel
    * ("@name" or its numeric id) and the language of the posts.
    */
+  /**
+   * The admins' own Telegram (Settings → Telegram → "Admins"): who gets the
+   * new registrations and receipts with "Confirm payment". `chatId` is learnt
+   * when the person presses Start in the bot (the webhook); `secret` checks
+   * that updates come from Telegram; `botUsername` makes the t.me link.
+   */
+  telegramAdmins: z.object({
+    notify: z.boolean(),
+    locale: z.enum(["fa", "tr", "en"]),
+    people: z.array(z.object({ adminId: z.uuid(), username: z.string().max(40), chatId: z.string().max(40).nullable() })).max(10),
+    secret: z.string().max(100),
+    botUsername: z.string().max(64),
+  }),
   telegram: z.object({
     botTokenEnc: z.string(),
     chatId: z.string().trim().max(100),
@@ -320,6 +333,7 @@ export const settingDefaults: { [K in SettingKey]: SettingValue<K> } = {
   backup: { auto: true },
   legal: { legalName: "", taxOffice: "", taxNumber: "", mersis: "", address: "", phone: "", email: "", kep: "" },
   telegram: { botTokenEnc: "", chatId: "", locale: "fa" },
+  telegramAdmins: { notify: true, locale: "fa", people: [], secret: "", botUsername: "" },
   email: {
     provider: "env",
     fromAddress: "",

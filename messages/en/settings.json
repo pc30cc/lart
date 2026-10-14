@@ -599,7 +599,30 @@
       "chat": "Write the channel’s name with @ (e.g. ‎@limer_atolye) or its numeric id.",
       "notSet": "First enter the bot and the channel in Settings → Telegram.",
       "unreachable": "Couldn’t reach Telegram. Please try again a little later.",
-      "refused": "Telegram refused: {reason}. Make sure the bot is an admin of the channel."
+      "refused": "Telegram refused: {reason}. Make sure the bot is an admin of the channel.",
+      "username": "A Telegram username is 5–32 letters, digits or _, like limer_mina."
+    },
+    "admins": {
+      "title": "Admins on Telegram",
+      "description": "The bot sends these admins every new registration and every transfer receipt (with the receipt’s photo and who registered); “Confirm payment” there records the payment and emails the participant.",
+      "step1": "Write each admin’s Telegram username next to their name and save.",
+      "step2": "Each admin opens the bot in Telegram once and presses Start (a bot can’t message anyone who hasn’t).",
+      "step3": "The bot:",
+      "step3Later": "After saving, the bot’s link appears here for the admins to open.",
+      "notify": "Send registrations and receipts to Telegram",
+      "notifyHint": "When off, the bot sends the admins nothing.",
+      "connected": "Connected",
+      "waiting": "Waiting for Start in the bot",
+      "none": "No Telegram",
+      "usernameOf": "{name}’s Telegram username",
+      "locale": "Language of the admins’ messages",
+      "localeHint": "Registration and receipt cards are sent in this language.",
+      "noneConnected": "No admin has pressed Start in the bot yet.",
+      "test": {
+        "action": "Test message to the admins",
+        "running": "Sending…",
+        "sent": "Test message sent to {count, plural, one {# admin} other {# admins}}."
+      }
     }
   }
 }

@@ -5,6 +5,7 @@ import { after } from "next/server"
 
 import { db } from "@/db"
 import { paymentSettingsSchema } from "@/features/settings/payments"
+import { refreshAdminNotices } from "@/features/telegram/admin-notices"
 import { adminAction } from "@/lib/action"
 import { changes } from "@/lib/audit"
 import { errorForLog } from "@/lib/errors"
@@ -46,6 +47,8 @@ export const recordPaymentAction = adminAction(recordPaymentSchema, async ({ id,
     )
   })
   after(() => sendPaymentReceived(id, method).catch(logFailure("payment email")))
+  // The admins' Telegram cards of this registration now say it is paid.
+  after(() => refreshAdminNotices(id))
   revalidate()
   return { id, method }
 })

@@ -169,5 +169,5 @@ export const config = {
   // and the upload endpoints of the admin and instructor panels and of members'
   // receipts (Next.js would
   // buffer upload bodies through the proxy and cut them at 10 MB).
-  matcher: ["/((?!_next|_vercel|media/|api/admin/uploads|api/instructor/uploads|api/account/receipts|api/view|.*\\..*).*)"],
+  matcher: ["/((?!_next|_vercel|media/|api/admin/uploads|api/instructor/uploads|api/account/receipts|api/view|api/telegram/webhook|.*\\..*).*)"],
 }
