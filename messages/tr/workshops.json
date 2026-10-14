@@ -590,6 +590,32 @@
       "submit": "Kaydet",
       "done": "Kayıt yapıldı, katılımcıya e-posta gönderildi.",
       "noWorkshops": "Şu anda kayıt alan bir atölye yok."
+    },
+    "holds": {
+      "action": "Yer ayır",
+      "title": "Misafir için yer ayır",
+      "description": "Bu yerler sitede sıradan bir kayıt gibi dolu görünür (ziyaretçiler fark görmez), ama ücretsizdir ve faturalara, finansa girmez. Gerekmediğinde silin, yeniden kayda açılsın.",
+      "count": "Kaç yer",
+      "note": "Kimin için",
+      "noteHint": "İsteğe bağlı; örn. “eğitmenin ailesi”.",
+      "confirm": "Ayır",
+      "done": "Yerler ayrıldı.",
+      "listTitle": "Misafirler için ayrılan yerler",
+      "listHint": "{count} yer ayrıldı; sitede dolu görünür, finansa girmez.",
+      "guests": "Misafir",
+      "by": "{name} ayırdı · {date}",
+      "release": {
+        "action": "Ayırmayı sil",
+        "title": "Bu ayırma silinsin mi?",
+        "description": "{count} yer boşalır ve yeniden kayıt alınabilir.",
+        "confirm": "Sil ve boşalt",
+        "done": "Ayırma silindi, yerler boşaldı."
+      },
+      "errors": {
+        "tooMany": "Bu kadar boş yer yok; şu anda {left} yer kaldı.",
+        "notOpen": "Bu atölye artık yer almıyor.",
+        "gone": "Bu ayırma artık yok."
+      }
     }
   },
   "gallery": {

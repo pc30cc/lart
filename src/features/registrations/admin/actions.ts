@@ -13,7 +13,9 @@ import { getSetting, setSetting } from "@/lib/settings"
 import { sendPaymentReceived, sendRefundChanged, sendRefundSent, sendRegistrationCancelled } from "./notify"
 import { cancelRegistration, momentOf, recordPayment, recordRefund, setRefund } from "./payments"
 import { sendRegistrationReceived } from "../notify"
+import { holdSeats, releaseHold } from "./holds"
 import { registerByAdmin, searchMembers } from "./register"
+import { holdSeatsSchema, releaseHoldSchema } from "./schema"
 import { addRegistrationSchema, cancelRegistrationSchema, markRefundedSchema, memberSearchSchema, recordPaymentSchema, setRefundSchema } from "./schema"
 
 /**
@@ -167,4 +169,30 @@ export const savePaymentSettings = adminAction(paymentSettingsSchema, async (inp
   })
   revalidate()
   return { changed: true }
+})
+
+/** "Hold places" for guests: taken on the site like registrations, no money (`holdSeats`). Audited "registration.hold". */
+export const holdSeatsAction = adminAction(holdSeatsSchema, async (input, ctx) => {
+  const held = await db.transaction(async (tx) => {
+    const held = await holdSeats(tx, input, ctx.admin.id)
+    await ctx.audit(
+      { action: "registration.hold", entity: "workshop", entityId: input.courseId, data: { count: input.count, day: held.day, note: input.note } },
+      tx,
+    )
+    return held
+  })
+  revalidate()
+  return held
+})
+
+/** Free the places of a hold, so people can register for them. Audited "registration.release". */
+export const releaseHoldAction = adminAction(releaseHoldSchema, async ({ id }, ctx) => {
+  await db.transaction(async (tx) => {
+    const row = await releaseHold(tx, id)
+    await ctx.audit(
+      { action: "registration.release", entity: "workshop", entityId: row.courseId, data: { count: row.count, day: row.day, note: row.note } },
+      tx,
+    )
+  })
+  revalidate()
 })

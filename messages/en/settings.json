@@ -339,7 +339,9 @@
         "refund": "Refund marked as paid back",
         "refundChange": "Refund changed",
         "export": "Registrations exported",
-        "added": "Registration added by an admin"
+        "added": "Registration added by an admin",
+        "hold": "Places held for guests",
+        "release": "Places hold deleted"
       },
       "setting": {
         "update": "Settings changed",

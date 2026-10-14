@@ -590,6 +590,32 @@
       "submit": "Register",
       "done": "Registered. We emailed the participant.",
       "noWorkshops": "No workshop takes registrations right now."
+    },
+    "holds": {
+      "action": "Hold places",
+      "title": "Hold places for guests",
+      "description": "These places show as taken on the site like any registration (visitors see no difference), but cost nothing and stay out of the invoices and finances. Delete the hold when it isn’t needed, and they are open for registration again.",
+      "count": "How many places",
+      "note": "Who for",
+      "noteHint": "Optional; e.g. “the instructor’s family”.",
+      "confirm": "Hold",
+      "done": "Places held.",
+      "listTitle": "Places held for guests",
+      "listHint": "{count, plural, one {# place} other {# places}} held; taken on the site, not in the finances.",
+      "guests": "Guests",
+      "by": "Held by {name} · {date}",
+      "release": {
+        "action": "Delete hold",
+        "title": "Delete this hold?",
+        "description": "{count, plural, one {# place is} other {# places are}} freed and can be registered for again.",
+        "confirm": "Delete and free",
+        "done": "Hold deleted; the places are free."
+      },
+      "errors": {
+        "tooMany": "Not that many places are free; {left, plural, one {# place is} other {# places are}} left.",
+        "notOpen": "This workshop takes no more people.",
+        "gone": "This hold no longer exists."
+      }
     }
   },
   "gallery": {

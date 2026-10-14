@@ -24,6 +24,7 @@ const flat = (obj: object, prefix = ""): string[] =>
 
 /** A value for every placeholder; numbers where they are formatted as numbers. */
 const values = {
+  left: 3,
   title: "Mum",
   name: "Ayşe",
   participant: "Deniz",

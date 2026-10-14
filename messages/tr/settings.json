@@ -339,7 +339,9 @@
         "refund": "İade geri ödendi olarak işaretlendi",
         "refundChange": "İade değiştirildi",
         "export": "Kayıtlar dışa aktarıldı",
-        "added": "Kayıt yönetici tarafından eklendi"
+        "added": "Kayıt yönetici tarafından eklendi",
+        "hold": "Misafir için yer ayrıldı",
+        "release": "Ayrılan yer silindi"
       },
       "setting": {
         "update": "Ayarlar değiştirildi",

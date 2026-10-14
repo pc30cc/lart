@@ -102,3 +102,13 @@ export const refundTable = {
   sort: ["cancelledAt", "amount"] as const,
   filters: { view: refundViews },
 }
+
+/** "Hold places": how many, the day (several days), and who for. */
+export const holdSeatsSchema = z.object({
+  courseId: z.uuid(),
+  day: z.number().int().min(0).max(30).optional(),
+  count: z.coerce.number().int().min(1).max(100),
+  note: z.string().trim().max(120),
+})
+export type HoldSeatsValues = z.input<typeof holdSeatsSchema>
+export const releaseHoldSchema = z.object({ id: z.uuid() })

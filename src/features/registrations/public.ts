@@ -3,7 +3,7 @@ import { and, asc, count, eq, gt, inArray, isNotNull, sql } from "drizzle-orm"
 import { cache } from "react"
 
 import { db, type Tx } from "@/db"
-import { categories, courses, instructors, media, registrations, templates } from "@/db/schema"
+import { categories, courses, instructors, media, registrations, seatHolds, templates } from "@/db/schema"
 import { profileLanguage, profileText } from "@/features/instructors/schema"
 import { fillTemplate } from "@/features/templates/placeholders"
 import { getMember } from "@/lib/auth/member"
@@ -36,31 +36,37 @@ export const openWorkshopsWhere = (now: Date) =>
 
 // ─── Seats ────────────────────────────────────────────────────────────────────
 
-/** Places held in a workshop: registered (not paid yet) and paid registrations. */
+/**
+ * Places taken in a workshop: registered (not paid yet) and paid
+ * registrations, and the places admins hold for guests (`seat_holds`).
+ */
 export async function seatsTaken(courseId: string, exec: Exec = db): Promise<number> {
-  const [row] = await exec
-    .select({ n: count() })
-    .from(registrations)
-    .where(and(eq(registrations.courseId, courseId), inArray(registrations.status, [...activeStatuses])))
-  return row.n
+  return (await seatsTakenByDay(courseId, exec)).reduce((a, b) => a + b, 0)
 }
 
 /** The registrations' day (null, a one-day workshop's, is the first). */
 const dayIndex = sql<number>`coalesce(${registrations.day}, 0)`.mapWith(Number)
+/** The same for the places held. */
+const holdDay = sql<number>`coalesce(${seatHolds.day}, 0)`.mapWith(Number)
+const holdCount = sql<number>`coalesce(sum(${seatHolds.count}), 0)`.mapWith(Number)
 
-/** Places held on each day of a workshop (index = day; one entry for a one-day workshop). */
+/** Places taken on each day of a workshop (index = day; one entry for a one-day workshop): registrations and holds. */
 export async function seatsTakenByDay(courseId: string, exec: Exec = db): Promise<number[]> {
-  const rows = await exec
-    .select({ day: dayIndex, n: count() })
-    .from(registrations)
-    .where(and(eq(registrations.courseId, courseId), inArray(registrations.status, [...activeStatuses])))
-    .groupBy(dayIndex)
-  return toDays(rows)
+  const [rows, held] = await Promise.all([
+    exec
+      .select({ day: dayIndex, n: count() })
+      .from(registrations)
+      .where(and(eq(registrations.courseId, courseId), inArray(registrations.status, [...activeStatuses])))
+      .groupBy(dayIndex),
+    exec.select({ day: holdDay, n: holdCount }).from(seatHolds).where(eq(seatHolds.courseId, courseId)).groupBy(holdDay),
+  ])
+  return toDays([...rows, ...held])
 }
 
+/** Per day, the counts added up (registrations and holds may give the same day twice). */
 const toDays = (rows: { day: number; n: number }[]) => {
   const out: number[] = []
-  for (const r of rows) out[r.day] = r.n
+  for (const r of rows) out[r.day] = (out[r.day] ?? 0) + r.n
   return Array.from(out, (n) => n ?? 0)
 }
 
@@ -70,11 +76,19 @@ export const seatsLeft = (limit: number, taken: number) => Math.max(0, limit - t
 /** Places held per workshop and day, for lists. */
 async function seatsTakenOf(courseIds: string[]): Promise<Map<string, number[]>> {
   if (!courseIds.length) return new Map()
-  const rows = await db
-    .select({ courseId: registrations.courseId, day: dayIndex, n: count() })
-    .from(registrations)
-    .where(and(inArray(registrations.courseId, courseIds), inArray(registrations.status, [...activeStatuses])))
-    .groupBy(registrations.courseId, dayIndex)
+  const [taken, held] = await Promise.all([
+    db
+      .select({ courseId: registrations.courseId, day: dayIndex, n: count() })
+      .from(registrations)
+      .where(and(inArray(registrations.courseId, courseIds), inArray(registrations.status, [...activeStatuses])))
+      .groupBy(registrations.courseId, dayIndex),
+    db
+      .select({ courseId: seatHolds.courseId, day: holdDay, n: holdCount })
+      .from(seatHolds)
+      .where(inArray(seatHolds.courseId, courseIds))
+      .groupBy(seatHolds.courseId, holdDay),
+  ])
+  const rows = [...taken, ...held]
   const byCourse = new Map<string, { day: number; n: number }[]>()
   for (const r of rows) byCourse.set(r.courseId, [...(byCourse.get(r.courseId) ?? []), r])
   return new Map([...byCourse].map(([id, list]) => [id, toDays(list)]))

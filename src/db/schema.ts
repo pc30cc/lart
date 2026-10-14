@@ -503,6 +503,24 @@ export const ledgerDiscrepancies = pgTable("ledger_discrepancies", {
 })
 
 /**
+ * Places an admin holds in a workshop for guests (Registrations → "Hold
+ * places"): they count as taken everywhere places are counted (the site, the
+ * register form, admins adding registrations), but are no registration: no
+ * money, not in the finances or the lists. Deleting one frees its places.
+ * `day`: the day's index on a workshop of several days (null: the first).
+ */
+export const seatHolds = pgTable("seat_holds", {
+  id: id(),
+  courseId: uuid("course_id").notNull().references(() => courses.id, { onDelete: "cascade" }),
+  day: integer("day"),
+  count: integer("count").notNull(),
+  /** Who the places are for (a guest's name, "the instructor's family"…); may be empty. */
+  note: text("note").notNull().default(""),
+  createdBy: uuid("created_by").references(() => admins.id),
+  createdAt: createdAt(),
+}, (t) => [index("seat_holds_course_idx").on(t.courseId), check("seat_holds_count", sql`${t.count} between 1 and 100`)])
+
+/**
  * The Telegram messages sent to the admins about a registration (a new one,
  * a receipt sent), so that "Confirm payment" (there or in the panel) can
  * update every copy: its chat, the message and how it was sent.

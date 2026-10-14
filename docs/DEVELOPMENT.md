@@ -1490,6 +1490,15 @@ none of the numbers leave the server (`seats` is null in
 `listOpenWorkshops` / `getPublicWorkshop`): the pill says "Registration
 open", and only "Full" when none are left. The panel always shows every count.
 
+**Places held for guests** (a workshop's Registrations → "Hold places",
+`features/registrations/admin/holds.ts`, table `seat_holds`): a number of
+places (on a workshop of several days, for one day) and who for. They count
+as taken wherever places are counted (`seatsTakenByDay`, `seatsTakenOf`), so
+the site, the register form and "Add registration" see them taken like any
+registration; visitors can't tell them apart. They are no registration: no
+money, no email, not in the finances or the registration lists. Deleting a
+hold frees its places. Audited `registration.hold` / `registration.release`.
+
 **Members need no email confirmation**: signing up makes the account
 confirmed, signs the member in (notice "welcome") and sends `member_welcome`.
 A super admin can also add one (Students → "Add participant",

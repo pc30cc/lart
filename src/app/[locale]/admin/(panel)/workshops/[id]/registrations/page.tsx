@@ -11,6 +11,8 @@ import { Money } from "@/components/admin/money"
 import { Button } from "@/components/ui/button"
 import { RegistrationActions } from "@/features/registrations/admin/components/dialogs"
 import { AddRegistrationDialog } from "@/features/registrations/admin/components/add-registration-dialog"
+import { HoldSeatsDialog, HoldsList } from "@/features/registrations/admin/components/hold-seats"
+import { listHolds } from "@/features/registrations/admin/holds"
 import { registrableWorkshops } from "@/features/registrations/admin/register"
 import { PaymentCell, refundOwed } from "@/features/registrations/admin/components/payment-cell"
 import { listWorkshopRegistrations, registrationSummary, type AdminRegistrationRow } from "@/features/registrations/admin/queries"
@@ -54,7 +56,7 @@ export default async function WorkshopRegistrationsPage({
     pageSize: 50,
     filters: registrationTable.filters,
   })
-  const [workshop, summary, { rows, total }, payment, t, locale, takenByDay] = await Promise.all([
+  const [workshop, summary, { rows, total }, payment, t, locale, takenByDay, holds] = await Promise.all([
     getWorkshop(id),
     registrationSummary(id),
     listWorkshopRegistrations(id, tableParams),
@@ -62,11 +64,14 @@ export default async function WorkshopRegistrationsPage({
     getTranslations("workshops.registrations"),
     getLocale(),
     seatsTakenByDay(id),
+    listHolds(id),
   ])
   if (!workshop) notFound()
   const exportHref = await localeHref(locale, `/admin/workshops/${workshop.id}/registrations/export`)
   // "Add registration" offers this workshop (when it still takes people) first.
   const addable = await registrableWorkshops(locale)
+  // "Hold places" needs this workshop still taking people (its days and the places left).
+  const holdable = addable.find((w) => w.id === id)
 
   const n = (v: number) => formatNumber(v, locale)
   // A cancelled workshop's registrations are all cancelled; closed books can't change.
@@ -224,6 +229,7 @@ export default async function WorkshopRegistrationsPage({
         active="registrations"
         actions={
           <>
+            {!locked && holdable && <HoldSeatsDialog workshop={holdable} />}
             {!locked && <AddRegistrationDialog workshops={addable} courseId={workshop.id} />}
             {summary.active + summary.cancelled > 0 && (
               <Button asChild variant="outline" size="lg" className="px-4">
@@ -236,6 +242,22 @@ export default async function WorkshopRegistrationsPage({
           </>
         }
       />
+      {holds.length > 0 && (
+        <div className="mb-5">
+          <HoldsList
+            locked={locked}
+            holds={holds.map((h) => ({
+              id: h.id,
+              day: h.day,
+              count: h.count,
+              note: h.note,
+              by: h.by,
+              createdAt: h.createdAt.toISOString(),
+              dayLabel: days.length > 1 ? dayLabel(h.day) : null,
+            }))}
+          />
+        </div>
+      )}
       {summary.active + summary.cancelled === 0 ? (
         <EmptyState
           icon={TicketIcon}
