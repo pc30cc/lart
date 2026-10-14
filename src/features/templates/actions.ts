@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache"
 import { db, type Tx } from "@/db"
 import { contracts, courses, registrations, settings, templates, type Locale, type LocalizedText } from "@/db/schema"
 import { checkEmailText, renderEmail, type EmailTexts } from "@/emails"
-import { emailTextFields, type EmailTemplate, type EmailTextField } from "@/emails/names"
+import { emailTextFields, isRequiredEmail, type EmailTemplate, type EmailTextField } from "@/emails/names"
 import { adminAction, UserError } from "@/lib/action"
 import { changes } from "@/lib/audit"
 import { PG, pgError } from "@/lib/errors"
@@ -16,6 +16,7 @@ import { unknownPlaceholders, type TemplateKind } from "./placeholders"
 import {
   emailPreviewSchema,
   emailTemplateSchema,
+  emailEnabledSchema,
   emailTextsSchema,
   templateIdSchema,
   templateSchema,
@@ -218,6 +219,24 @@ export const resetEmailTexts = adminAction(emailTemplateSchema, async ({ templat
     if (Object.keys(before).length) await ctx.audit({ action: "email.reset", entity: "email", entityId: template, data: before }, tx)
   })
   revalidate()
+})
+
+/** Turn an email on or off (Templates → Emails); a required one can't be turned off. */
+export const setEmailEnabled = adminAction(emailEnabledSchema, async ({ template, enabled }, ctx) => {
+  if (!enabled && isRequiredEmail(template)) throw new UserError("templates.emails.errors.required")
+  await db.transaction(async (tx) => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext('settings:emailsOff'))`)
+    const [row] = await tx.select({ value: settings.value }).from(settings).where(eq(settings.key, "emailsOff"))
+    const parsed = row ? settingSchemas.emailsOff.safeParse(row.value) : null
+    const off = new Set(parsed?.success ? parsed.data : settingDefaults.emailsOff)
+    if (off.has(template) !== enabled) return
+    if (enabled) off.delete(template)
+    else off.add(template)
+    await setSetting("emailsOff", [...off], tx)
+    await ctx.audit({ action: enabled ? "email.enable" : "email.disable", entity: "email", entityId: template }, tx)
+  })
+  revalidate()
+  return { enabled }
 })
 
 /** The email with unsaved texts and example details, in one language (nothing is saved or sent). */

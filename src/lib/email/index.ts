@@ -5,6 +5,7 @@ import { z } from "zod"
 
 import { type EmailLocale, type RenderedEmail, renderEmail } from "@/emails"
 import type { EmailProps, EmailTemplate } from "@/emails/templates"
+import { isRequiredEmail } from "@/emails/names"
 import { decrypt } from "@/lib/crypto"
 import { env } from "@/lib/env"
 import { getBrand, getSetting, type SettingValue } from "@/lib/settings"
@@ -24,7 +25,7 @@ export type SendEmailInput<T extends EmailTemplate> = {
 }
 
 /** `error` is for server logs and admins, never for showing to visitors. */
-export type SendEmailResult = { ok: true; id?: string } | { ok: false; error: string }
+export type SendEmailResult = { ok: true; id?: string; skipped?: true } | { ok: false; error: string }
 
 const recipients = z.union([z.email().max(254), z.array(z.email().max(254)).min(1).max(50)])
 const emailLocales: readonly string[] = ["fa", "tr", "en"] satisfies EmailLocale[]
@@ -111,6 +112,11 @@ export async function sendEmail<T extends EmailTemplate>(input: SendEmailInput<T
   try {
     const to = recipients.safeParse(input.to)
     if (!to.success) return fail(template, "invalid recipient address")
+    // Turned off in Templates → Emails: nothing is sent (the required ones never are off).
+    if (!isRequiredEmail(template) && (await getSetting("emailsOff")).includes(template)) {
+      console.info(`[email] ${template} is turned off; not sent`)
+      return { ok: true, skipped: true }
+    }
     const locale = await emailLocale(input.locale)
     const email = await renderEmail(template, input.props, locale)
     const config = emailConfig(await getSetting("email"))

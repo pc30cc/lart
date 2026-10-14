@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server"
 
 import type { Locale, LocalizedText } from "@/db/schema"
 import { defaultEmailTexts, type EmailLocale, type EmailTexts } from "@/emails"
-import { emailTemplateNames, emailTextFields, type EmailTemplate, type EmailTextField } from "@/emails/names"
+import { emailTemplateNames, emailTextFields, isRequiredEmail, type EmailTemplate, type EmailTextField } from "@/emails/names"
 import { accountEmailSamples } from "@/emails/samples"
 import { emailPlaceholders, type EmailProps } from "@/emails/templates"
 import { mainLocale } from "@/i18n/links"
@@ -24,11 +24,16 @@ function editedLanguages(texts: EmailTexts | undefined): Locale[] {
   return LOCALES.filter((l) => Object.values(texts ?? {}).some((text) => text?.[l]?.trim()))
 }
 
-/** The emails for the templates page, each with the languages whose texts were changed. */
+/** The emails for the templates page: the languages whose texts were changed, and whether each is sent (`required`: always). */
 export async function listEmails() {
   await requireAdmin()
-  const saved = await getSetting("emailTexts")
-  return emailTemplateNames.map((template) => ({ template, edited: editedLanguages(saved[template]) }))
+  const [saved, off] = await Promise.all([getSetting("emailTexts"), getSetting("emailsOff")])
+  return emailTemplateNames.map((template) => ({
+    template,
+    edited: editedLanguages(saved[template]),
+    required: isRequiredEmail(template),
+    enabled: isRequiredEmail(template) || !off.includes(template),
+  }))
 }
 
 export type EmailEditor = {

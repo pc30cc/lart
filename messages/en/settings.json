@@ -296,7 +296,9 @@
       },
       "email": {
         "update": "Email texts changed",
-        "reset": "Email texts reset to default"
+        "reset": "Email texts reset to default",
+        "enable": "Email turned on",
+        "disable": "Email turned off"
       },
       "instructor": {
         "create": "Instructor added",

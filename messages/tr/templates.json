@@ -135,7 +135,7 @@
   },
   "emails": {
     "title": "E-postalar",
-    "description": "Otomatik gönderilir, örneğin imzalanacak sözleşme veya kayıt onayı. Her metni her dilde değiştirebilirsiniz; boş bıraktığınız alanlarda varsayılan metin kullanılır.",
+    "description": "Otomatik gönderilir, örneğin imzalanacak sözleşme veya kayıt onayı. Her metni her dilde değiştirebilirsiniz; boş bıraktığınız yerde varsayılan metin kalır. İstemediğiniz bir e-postayı kartındaki anahtarla kapatın.",
     "edit": "Metinleri düzenle",
     "defaultTexts": "Varsayılan metinler",
     "edited": "Düzenlendi",
@@ -181,7 +181,8 @@
     "errors": {
       "syntax": "Süslü parantezleri kontrol edin: her '{' için bir '}' gerekir ve bunlar yalnızca yer tutucular içindir.",
       "placeholder": "{name} bu e-postanın yer tutucularından biri değil. Listeden birini kullanın veya kaldırın.",
-      "number": "Metin olan bir yer tutucu burada sayı veya çoğul olarak kullanılamaz."
+      "number": "Metin olan bir yer tutucu burada sayı veya çoğul olarak kullanılamaz.",
+      "required": "Bu e-posta zorunludur ve kapatılamaz."
     },
     "names": {
       "welcome_verify": {
@@ -268,6 +269,16 @@
         "title": "İade gönderildi",
         "to": "Katılımcılar"
       }
+    },
+    "switch": {
+      "on": "Gönderiliyor",
+      "off": "Kapalı",
+      "notSent": "Gönderilmiyor",
+      "label": "“{email}” gönderilsin",
+      "turnedOn": "“{email}” yeniden gönderilecek.",
+      "turnedOff": "“{email}” artık gönderilmeyecek.",
+      "required": "Her zaman gönderilir",
+      "requiredHint": "Bu e-posta zorunludur ve kapatılamaz: onsuz kimse hesabına giremez, şifre belirleyemez ya da sözleşmeyi imzalayamaz."
     }
   }
 }

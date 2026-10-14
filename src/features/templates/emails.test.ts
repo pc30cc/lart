@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 import { db } from "@/db"
 import { admins, auditLog, settings } from "@/db/schema"
 import { getSetting } from "@/lib/settings"
-import { previewEmailTexts, resetEmailTexts, saveEmailTexts } from "./actions"
+import { previewEmailTexts, resetEmailTexts, saveEmailTexts, setEmailEnabled } from "./actions"
 import { getEmailEditor, listEmails } from "./emails"
 
 vi.mock("next-intl/server", async () => {
@@ -133,5 +133,27 @@ describe("email texts", () => {
     // Other emails' texts stay.
     const [row] = await db.select().from(settings).where(eq(settings.key, "emailTexts"))
     expect(row?.value ?? {}).not.toHaveProperty(template)
+  })
+})
+
+describe("turning emails off", () => {
+  it("turns an email off and on again, audited, and never a required one", async () => {
+    try {
+      expect(await setEmailEnabled({ template, enabled: false })).toEqual({ ok: true, data: { enabled: false } })
+      expect(await getSetting("emailsOff")).toContain(template)
+      expect((await listEmails()).find((e) => e.template === template)).toMatchObject({ enabled: false, required: false })
+      expect((await audits("email.disable")).length).toBeGreaterThan(0)
+      // Twice is a no-op.
+      await setEmailEnabled({ template, enabled: false })
+      expect((await getSetting("emailsOff")).filter((t) => t === template)).toHaveLength(1)
+
+      expect(await setEmailEnabled({ template: "password_reset", enabled: false })).toMatchObject({ ok: false })
+      expect(await getSetting("emailsOff")).not.toContain("password_reset")
+      expect((await listEmails()).find((e) => e.template === "password_reset")).toMatchObject({ enabled: true, required: true })
+    } finally {
+      await setEmailEnabled({ template, enabled: true })
+    }
+    expect(await getSetting("emailsOff")).not.toContain(template)
+    expect((await audits("email.enable")).length).toBeGreaterThan(0)
   })
 })

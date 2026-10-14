@@ -653,6 +653,12 @@ await sendEmail({ to, template: "contract_ready", props: { … }, locale }) // n
   if one cannot be used, the email goes out with the bundled texts and the
   problem is logged. `checkEmailText` checks a text (braces, unknown
   placeholders) before it is saved.
+- Each email can be turned off on `/admin/templates` (the switch on its card
+  and on its page; `setEmailEnabled`, the `emailsOff` setting, audited
+  `email.disable` / `email.enable`): `sendEmail` then sends nothing and
+  returns `{ ok: true, skipped: true }`. The `requiredEmails` (an account's
+  way in, a new password, an invitation, a contract to sign) can't be
+  turned off and show a lock.
 - **How they are sent** is the `email` setting (Settings → Email,
   `features/settings/email.ts`): **Resend** (API key) or **SMTP** (our own
   mail server, a mail container on the server's network, or a service such

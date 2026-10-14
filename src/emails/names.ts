@@ -32,6 +32,22 @@ export const emailTemplateNames = [
 export type EmailTemplate = (typeof emailTemplateNames)[number]
 
 /**
+ * Emails that can't be turned off (Templates → Emails): without them nobody
+ * could get into an account, set a password or sign a contract.
+ */
+export const requiredEmails: readonly EmailTemplate[] = [
+  "welcome_verify",
+  "member_added",
+  "member_exists",
+  "instructor_invite",
+  "partner_invite",
+  "password_reset",
+  "contract_ready",
+]
+
+export const isRequiredEmail = (template: EmailTemplate) => requiredEmails.includes(template)
+
+/**
  * The texts of an email (messages/<locale>/emails.json: emails.<template>.<field>).
  * Admins can replace each of them per language (the `emailTexts` setting).
  */

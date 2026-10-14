@@ -21,13 +21,13 @@ const smtp = vi.hoisted(() => ({ createTransport: vi.fn(), sendMail: vi.fn() }))
 vi.mock("nodemailer", () => ({ default: { createTransport: smtp.createTransport } }))
 
 // The admin's email texts come from here, never from the shared test database (other files save some).
-const saved = vi.hoisted(() => ({ emailTexts: {} as Record<string, unknown>, email: undefined as unknown }))
+const saved = vi.hoisted(() => ({ emailTexts: {} as Record<string, unknown>, email: undefined as unknown, emailsOff: [] as string[] }))
 vi.mock("@/lib/settings", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/settings")>()
   return {
     ...actual,
     getSetting: async (key: string) =>
-      key === "emailTexts" ? saved.emailTexts : key === "email" ? (saved.email ?? actual.settingDefaults.email) : actual.getSetting(key as never),
+      key === "emailTexts" ? saved.emailTexts : key === "emailsOff" ? saved.emailsOff : key === "email" ? (saved.email ?? actual.settingDefaults.email) : actual.getSetting(key as never),
   }
 })
 
@@ -447,6 +447,21 @@ describe("sendEmail", () => {
     expect(output).toContain("Subject: Welcome to")
     expect(output).toContain(`${site}/account/verify?token=abc&next=1`)
     expect(output).toContain("Confirm my email")
+  })
+
+  it("sends nothing for an email turned off, but always sends a required one", async () => {
+    const log = vi.spyOn(console, "info").mockImplementation(() => {})
+    saved.emailsOff = ["workshop_reminder", "password_reset"]
+    try {
+      const off = await sendEmail({ to: "a@example.com", template: "workshop_reminder", props: samples.workshop_reminder, locale: "en" })
+      expect(off).toEqual({ ok: true, skipped: true })
+      expect(log.mock.calls.flat().join("\n")).not.toContain("To: a@example.com")
+      const required = await sendEmail({ to: "a@example.com", template: "password_reset", props: samples.password_reset, locale: "en" })
+      expect(required).toEqual({ ok: true })
+      expect(log.mock.calls.flat().join("\n")).toContain("To: a@example.com")
+    } finally {
+      saved.emailsOff = []
+    }
   })
 
   it("falls back to Turkish for an unknown language", async () => {

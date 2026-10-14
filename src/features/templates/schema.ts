@@ -65,3 +65,4 @@ export type EmailTextsValues = z.input<typeof emailTextsSchema>
 export const emailPreviewSchema = emailTextsSchema.extend({ locale: z.enum(["fa", "tr", "en"]) })
 
 export const emailTemplateSchema = z.object({ template: z.enum(emailTemplateNames) })
+export const emailEnabledSchema = z.object({ template: z.enum(emailTemplateNames), enabled: z.boolean() })

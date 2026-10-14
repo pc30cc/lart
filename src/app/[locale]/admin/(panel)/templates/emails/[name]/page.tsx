@@ -10,7 +10,10 @@ import { Button } from "@/components/ui/button"
 import { resetEmailTexts } from "@/features/templates/actions"
 import { getEmailEditor, isEmailTemplate } from "@/features/templates/emails"
 import { requireAdmin } from "@/lib/auth/admin"
+import { isRequiredEmail } from "@/emails/names"
+import { getSetting } from "@/lib/settings"
 import { EmailTextsForm } from "../../_components/email-form"
+import { EmailSwitch } from "../../_components/email-switch"
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/admin/templates/emails/[name]">): Promise<Metadata> {
   const { name } = await params
@@ -23,7 +26,13 @@ export default async function EmailTextsPage({ params }: PageProps<"/[locale]/ad
   await requireAdmin()
   const { name } = await params
   if (!isEmailTemplate(name)) notFound()
-  const [t, tc, editor] = await Promise.all([getTranslations("templates"), getTranslations("common"), getEmailEditor(name)])
+  const [t, tc, editor, off] = await Promise.all([
+    getTranslations("templates"),
+    getTranslations("common"),
+    getEmailEditor(name),
+    getSetting("emailsOff"),
+  ])
+  const required = isRequiredEmail(name)
 
   return (
     <>
@@ -40,6 +49,13 @@ export default async function EmailTextsPage({ params }: PageProps<"/[locale]/ad
             ) : (
               <StatusBadge tone="neutral">{t("emails.defaultTexts")}</StatusBadge>
             )}
+            <EmailSwitch
+              template={name}
+              title={t(`emails.names.${name}.title`)}
+              enabled={required || !off.includes(name)}
+              required={required}
+              className="bg-muted/60 rounded-full px-3 py-1"
+            />
           </span>
         }
         actions={

@@ -135,7 +135,7 @@
   },
   "emails": {
     "title": "Emails",
-    "description": "Sent automatically, for example the contract to sign or a registration confirmation. Change any text in any language; what you leave empty keeps the default text.",
+    "description": "Sent automatically, for example a contract to sign or a registration confirmation. You can change every text in every language; leave one empty to keep the default. Turn off any email you don’t want sent with the switch on its card.",
     "edit": "Edit texts",
     "defaultTexts": "Default texts",
     "edited": "Edited",
@@ -181,7 +181,8 @@
     "errors": {
       "syntax": "Check the curly brackets: each '{' needs a '}', and they are only for placeholders.",
       "placeholder": "{name} isn’t a placeholder of this email. Use one from the list, or remove it.",
-      "number": "A text placeholder can’t be used as a number or a plural here."
+      "number": "A text placeholder can’t be used as a number or a plural here.",
+      "required": "This email is required and can’t be turned off."
     },
     "names": {
       "welcome_verify": {
@@ -268,6 +269,16 @@
         "title": "Refund sent",
         "to": "Participants"
       }
+    },
+    "switch": {
+      "on": "Sent",
+      "off": "Off",
+      "notSent": "Not sent",
+      "label": "Send “{email}”",
+      "turnedOn": "“{email}” will be sent again.",
+      "turnedOff": "“{email}” won’t be sent any more.",
+      "required": "Always sent",
+      "requiredHint": "This email is required and can’t be turned off: without it nobody could get into their account, set a password or sign the contract."
     }
   }
 }

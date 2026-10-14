@@ -14,6 +14,7 @@ import { requireAdmin } from "@/lib/auth/admin"
 import { formatDate } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { TemplateMenu } from "./_components/template-actions"
+import { EmailSwitch } from "./_components/email-switch"
 import { usageText } from "./_components/usage"
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -166,12 +167,13 @@ async function EmailsSection() {
         </div>
       </div>
       <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {emails.map(({ template, edited }) => (
+        {emails.map(({ template, edited, enabled, required }) => (
           <li
             key={template}
             className={cn(
               "group bg-card relative flex items-center gap-3 rounded-xl p-4 shadow-xs ring-1 transition-all hover:shadow-md",
               edited.length ? "ring-primary/25" : "ring-foreground/8 hover:ring-foreground/15",
+              !enabled && "bg-muted/40 shadow-none",
             )}
           >
             <div className="min-w-0 flex-1 space-y-1">
@@ -179,17 +181,20 @@ async function EmailsSection() {
                 href={`/admin/templates/emails/${template}`}
                 className="group-hover:text-primary block truncate font-medium transition-colors after:absolute after:inset-0 after:rounded-xl"
               >
-                {t(`emails.names.${template}.title`)}
+                <span className={cn(!enabled && "text-muted-foreground")}>{t(`emails.names.${template}.title`)}</span>
               </Link>
               <p className="text-muted-foreground truncate text-xs">{t("emails.to", { who: t(`emails.names.${template}.to`) })}</p>
-              <div className="pt-1">
-                {edited.length ? (
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                {!enabled ? (
+                  <StatusBadge tone="neutral">{t("emails.switch.notSent")}</StatusBadge>
+                ) : edited.length ? (
                   <StatusBadge tone="brand">
                     {t("emails.edited")} · {edited.map((l) => tc(`locales.${l}`)).join(", ")}
                   </StatusBadge>
                 ) : (
                   <StatusBadge tone="neutral">{t("emails.defaultTexts")}</StatusBadge>
                 )}
+                <EmailSwitch template={template} title={t(`emails.names.${template}.title`)} enabled={enabled} required={required} />
               </div>
             </div>
             <ChevronRightIcon aria-hidden className="text-muted-foreground size-4 shrink-0 rtl:rotate-180" />

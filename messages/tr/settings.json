@@ -296,7 +296,9 @@
       },
       "email": {
         "update": "E-posta metinleri değiştirildi",
-        "reset": "E-posta metinleri varsayılana döndürüldü"
+        "reset": "E-posta metinleri varsayılana döndürüldü",
+        "enable": "E-posta açıldı",
+        "disable": "E-posta kapatıldı"
       },
       "instructor": {
         "create": "Eğitmen eklendi",

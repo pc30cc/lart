@@ -190,6 +190,8 @@ export const settingSchemas = {
    * The admin's own email texts (templates page): email → field → language,
    * laid over messages/<locale>/emails.json when an email is rendered.
    */
+  /** Emails turned off in Templates → Emails: not sent (never the `requiredEmails`). */
+  emailsOff: z.array(z.enum(emailTemplateNames)),
   emailTexts: z.partialRecord(z.enum(emailTemplateNames), z.partialRecord(z.enum(emailTextFields), emailText)),
   /**
    * How students pay for workshops (any combination). Payments are recorded by
@@ -307,6 +309,7 @@ export const settingDefaults: { [K in SettingKey]: SettingValue<K> } = {
     opacity: 0.7,
     marginPct: 3,
   },
+  emailsOff: [],
   emailTexts: {},
   payment: {
     cash: true,
