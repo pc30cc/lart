@@ -46,7 +46,8 @@
     "price": "Fiyat",
     "status": "Durum",
     "searchPlaceholder": "Ad, eğitmen ya da yere göre arayın…",
-    "fillValue": "{confirmed} / {max}"
+    "fillValue": "{confirmed} / {max}",
+    "dayN": "{n}. gün"
   },
   "empty": {
     "first": {

@@ -46,7 +46,8 @@
     "price": "قیمت",
     "status": "وضعیت",
     "searchPlaceholder": "جستجو با نام ورکشاپ، مدرس یا مکان…",
-    "fillValue": "{confirmed} از {max}"
+    "fillValue": "{confirmed} از {max}",
+    "dayN": "روز {n}"
   },
   "empty": {
     "first": {

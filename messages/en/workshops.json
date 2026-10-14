@@ -46,7 +46,8 @@
     "price": "Price",
     "status": "Status",
     "searchPlaceholder": "Search by title, instructor or place…",
-    "fillValue": "{confirmed} of {max}"
+    "fillValue": "{confirmed} of {max}",
+    "dayN": "Day {n}"
   },
   "empty": {
     "first": {

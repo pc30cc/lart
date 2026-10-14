@@ -12,10 +12,10 @@ import { countWorkshopViews, listWorkshops, type WorkshopRow } from "@/features/
 import { displayStatus, workshopTable, workshopViews, type WorkshopView } from "@/features/workshops/schema"
 import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
-import { formatDate, formatNumber, formatWeekday, localized } from "@/lib/format"
+import { formatDate, formatNumber, formatTimeRange, formatWeekday, localized } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { FillMeter, WorkshopStatusBadge } from "./_components/workshop-status"
-import { workshopHours } from "@/features/workshops/days"
+import { formatWorkshopDates, workshopDays, workshopHours } from "@/features/workshops/days"
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("workshops")
@@ -69,7 +69,7 @@ export default async function WorkshopsPage({ searchParams }: PageProps<"/[local
             </span>
             <span className="text-muted-foreground block truncate text-xs">
               <span className="sm:hidden">
-                <bdi>{formatDate(row.startsAt, locale, "medium")}</bdi> ·{" "}
+                <bdi>{formatWorkshopDates(row, locale, "medium")}</bdi> ·{" "}
               </span>
               {localized(row.category, locale)}
               <span className="md:hidden"> · {localized(row.instructor, locale)}</span>
@@ -83,14 +83,35 @@ export default async function WorkshopsPage({ searchParams }: PageProps<"/[local
       header: t("table.date"),
       sortable: true,
       hideBelow: "sm",
-      cell: (row) => (
-        <span className="block whitespace-nowrap">
-          <span className="block text-sm">{formatDate(row.startsAt, locale, "medium")}</span>
-          <span className="text-muted-foreground block text-xs">
-            {formatWeekday(row.startsAt, locale)} · <bdi className="tabular-nums">{workshopHours(row, locale)}</bdi>
+      // Several days: each day on its own line (date, weekday, hours).
+      cell: (row) => {
+        const days = workshopDays(row)
+        if (days.length > 1) {
+          return (
+            <span className="block space-y-1 whitespace-nowrap">
+              {days.map((d, i) => (
+                <span key={i} className="block">
+                  <span className="block text-sm">
+                    <span className="text-primary text-xs font-medium">{t("table.dayN", { n: formatNumber(i + 1, locale) })} · </span>
+                    {formatDate(d.startsAt, locale, "medium")}
+                  </span>
+                  <span className="text-muted-foreground block text-xs">
+                    {formatWeekday(d.startsAt, locale)} · <bdi className="tabular-nums">{formatTimeRange(d.startsAt, d.endsAt, locale)}</bdi>
+                  </span>
+                </span>
+              ))}
+            </span>
+          )
+        }
+        return (
+          <span className="block whitespace-nowrap">
+            <span className="block text-sm">{formatDate(row.startsAt, locale, "medium")}</span>
+            <span className="text-muted-foreground block text-xs">
+              {formatWeekday(row.startsAt, locale)} · <bdi className="tabular-nums">{workshopHours(row, locale)}</bdi>
+            </span>
           </span>
-        </span>
-      ),
+        )
+      },
     },
     {
       key: "instructor",
@@ -103,14 +124,39 @@ export default async function WorkshopsPage({ searchParams }: PageProps<"/[local
       header: t("table.fill"),
       sortable: true,
       hideBelow: "sm",
-      cell: (row) => (
-        <FillMeter
-          registered={row.registered}
-          min={row.minCapacity}
-          max={row.maxCapacity}
-          label={t("table.fillValue", { confirmed: formatNumber(row.registered, locale), max: formatNumber(row.maxCapacity, locale) })}
-        />
-      ),
+      // Several days: one meter per day, each against that day's places.
+      cell: (row) => {
+        const days = workshopDays(row)
+        if (days.length > 1 && row.takenByDay) {
+          return (
+            <span className="block space-y-2">
+              {days.map((d, i) => {
+                const taken = row.takenByDay?.[i] ?? 0
+                const max = d.maxCapacity ?? row.maxCapacity
+                return (
+                  <span key={i} className="block">
+                    <span className="text-muted-foreground block text-[0.7rem]">{t("table.dayN", { n: formatNumber(i + 1, locale) })}</span>
+                    <FillMeter
+                      registered={taken}
+                      min={d.minCapacity ?? row.minCapacity}
+                      max={max}
+                      label={t("table.fillValue", { confirmed: formatNumber(taken, locale), max: formatNumber(max, locale) })}
+                    />
+                  </span>
+                )
+              })}
+            </span>
+          )
+        }
+        return (
+          <FillMeter
+            registered={row.registered}
+            min={row.minCapacity}
+            max={row.maxCapacity}
+            label={t("table.fillValue", { confirmed: formatNumber(row.registered, locale), max: formatNumber(row.maxCapacity, locale) })}
+          />
+        )
+      },
     },
     {
       key: "price",
