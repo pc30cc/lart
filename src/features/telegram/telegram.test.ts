@@ -195,7 +195,7 @@ describe("the admins' bot", () => {
     expect(text(calls[0])).toContain(`Sara ${run}`)
     stub()
     await handleTelegramUpdate({ message: { chat: { id: 444, type: "private" }, from: { id: 444, username: "stranger" }, text: "/start" } })
-    expect(text(calls[0])).toContain("فقط برای مدیرهای سایت")
+    expect(text(calls[0])).toContain("به دنیای LIMER خوش آمدید")
   })
 
   it("lists the workshops running, their paid registrations and the cash to collect, and records cash brought to the workshop", async () => {
@@ -239,7 +239,7 @@ describe("the admins' bot", () => {
     // Not an admin: no menu.
     stub()
     await handleTelegramUpdate({ message: { chat: { id: 777, type: "private" }, from: { id: 777 }, text: "/menu" } })
-    expect(text(calls[0])).toContain("فقط برای مدیرهای سایت")
+    expect(text(calls[0])).toContain("به دنیای LIMER خوش آمدید")
   }, 30_000)
 
   it("takes updates only with the secret Telegram was given", async () => {

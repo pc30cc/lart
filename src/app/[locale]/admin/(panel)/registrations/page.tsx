@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/admin/empty-state"
 import { Money } from "@/components/admin/money"
 import { PageHeader } from "@/components/admin/page-header"
 import { AddRegistrationDialog } from "@/features/registrations/admin/components/add-registration-dialog"
-import { HoldSeatsDialog, HoldsList } from "@/features/registrations/admin/components/hold-seats"
+import { HoldSeatsDialog, HoldsButton } from "@/features/registrations/admin/components/hold-seats"
 import { listOpenHolds } from "@/features/registrations/admin/holds"
 import { registrableWorkshops } from "@/features/registrations/admin/register"
 import { RegistrationActions } from "@/features/registrations/admin/components/dialogs"
@@ -182,33 +182,29 @@ export default async function RegistrationsPage({ searchParams }: PageProps<"/[l
         description={t("all.description")}
         actions={
           <>
+            <HoldsButton
+              locked={false}
+              workshops={addable}
+              holds={holds.map((h) => ({
+                id: h.id,
+                courseId: h.courseId,
+                day: h.day,
+                count: h.count,
+                note: h.note,
+                by: h.by,
+                createdAt: h.createdAt.toISOString(),
+                workshopTitle: localized(h.title, locale),
+                dayLabel:
+                  workshopDays(h).length > 1
+                    ? t("table.day", { n: formatNumber((h.day ?? 0) + 1, locale), date: formatDate(registrationDay(h, h.day).startsAt, locale, "medium") })
+                    : null,
+              }))}
+            />
             <HoldSeatsDialog workshops={addable} />
             <AddRegistrationDialog workshops={addable} />
           </>
         }
       />
-      {holds.length > 0 && (
-        <div className="mb-5">
-          <HoldsList
-            locked={false}
-            workshops={addable}
-            holds={holds.map((h) => ({
-              id: h.id,
-              courseId: h.courseId,
-              day: h.day,
-              count: h.count,
-              note: h.note,
-              by: h.by,
-              createdAt: h.createdAt.toISOString(),
-              workshopTitle: localized(h.title, locale),
-              dayLabel:
-                workshopDays(h).length > 1
-                  ? t("table.day", { n: formatNumber((h.day ?? 0) + 1, locale), date: formatDate(registrationDay(h, h.day).startsAt, locale, "medium") })
-                  : null,
-            }))}
-          />
-        </div>
-      )}
       {counts.all === 0 ? (
         <EmptyState icon={TicketIcon} title={t("empty.title")} description={t("all.empty")} />
       ) : (

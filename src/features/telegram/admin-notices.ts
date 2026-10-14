@@ -242,7 +242,7 @@ export async function handleTelegramUpdate(update: Update): Promise<void> {
     const who = message.from.username ? handle(message.from.username) : ""
     const person = who ? setting.people.find((p) => handle(p.username) === who) : undefined
     if (!person) {
-      await call(token, "sendMessage", { chat_id: message.chat.id, text: t("start.unknown") }).catch(() => {})
+      await call(token, "sendMessage", { chat_id: message.chat.id, ...(await welcome()) }).catch(() => {})
       return
     }
     const chatId = String(message.chat.id)
@@ -269,7 +269,7 @@ export async function handleTelegramUpdate(update: Update): Promise<void> {
   // The menu: "🎨 Workshops running" (the keyboard's button, /menu or /workshops), only for the admins.
   if (message?.text && message.chat.type === "private" && message.from && (await isMenuButton(message.text))) {
     if (!(await adminOf(message.from.id))) {
-      await call(token, "sendMessage", { chat_id: message.chat.id, text: t("start.unknown") }).catch(() => {})
+      await call(token, "sendMessage", { chat_id: message.chat.id, ...(await welcome()) }).catch(() => {})
       return
     }
     const screen = await workshopsScreen(setting.locale)
@@ -371,6 +371,18 @@ export async function confirmPayment(registrationId: string, adminId: string, as
 }
 
 // ─── Settings ─────────────────────────────────────────────────────────────────
+
+/**
+ * What a visitor (anyone who is not one of the admins) gets from the bot: the
+ * welcome to LIMER in Persian, Turkish and English, each with the site's page
+ * in that language.
+ */
+async function welcome() {
+  const { locale } = await getSetting("telegramAdmins")
+  const t = await getTranslations({ locale, namespace: "telegram" })
+  const [fa, tr, en] = await Promise.all((["fa", "tr", "en"] as const).map((l) => absoluteLocaleUrl(l, "/")))
+  return { text: t("welcome", { fa, tr, en }), link_preview_options: { is_disabled: true } }
+}
 
 /** Telegram accepts a webhook only on https; the secret it sends back proves an update is its own. */
 export const webhookUrl = () => new URL("/api/telegram/webhook", env.APP_URL).href

@@ -11,7 +11,7 @@ import { Money } from "@/components/admin/money"
 import { Button } from "@/components/ui/button"
 import { RegistrationActions } from "@/features/registrations/admin/components/dialogs"
 import { AddRegistrationDialog } from "@/features/registrations/admin/components/add-registration-dialog"
-import { HoldSeatsDialog, HoldsList } from "@/features/registrations/admin/components/hold-seats"
+import { HoldSeatsDialog, HoldsButton } from "@/features/registrations/admin/components/hold-seats"
 import { listHolds } from "@/features/registrations/admin/holds"
 import { registrableWorkshops } from "@/features/registrations/admin/register"
 import { PaymentCell, refundOwed } from "@/features/registrations/admin/components/payment-cell"
@@ -229,6 +229,20 @@ export default async function WorkshopRegistrationsPage({
         active="registrations"
         actions={
           <>
+            <HoldsButton
+              locked={locked}
+              workshops={addable}
+              holds={holds.map((h) => ({
+                id: h.id,
+                courseId: workshop.id,
+                day: h.day,
+                count: h.count,
+                note: h.note,
+                by: h.by,
+                createdAt: h.createdAt.toISOString(),
+                dayLabel: days.length > 1 ? dayLabel(h.day) : null,
+              }))}
+            />
             {!locked && holdable && <HoldSeatsDialog workshops={addable} courseId={holdable.id} />}
             {!locked && <AddRegistrationDialog workshops={addable} courseId={workshop.id} />}
             {summary.active + summary.cancelled > 0 && (
@@ -242,24 +256,6 @@ export default async function WorkshopRegistrationsPage({
           </>
         }
       />
-      {holds.length > 0 && (
-        <div className="mb-5">
-          <HoldsList
-            locked={locked}
-            workshops={addable}
-            holds={holds.map((h) => ({
-              id: h.id,
-              courseId: workshop.id,
-              day: h.day,
-              count: h.count,
-              note: h.note,
-              by: h.by,
-              createdAt: h.createdAt.toISOString(),
-              dayLabel: days.length > 1 ? dayLabel(h.day) : null,
-            }))}
-          />
-        </div>
-      )}
       {summary.active + summary.cancelled === 0 ? (
         <EmptyState
           icon={TicketIcon}

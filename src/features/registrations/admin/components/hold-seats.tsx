@@ -175,8 +175,8 @@ export function HoldsList({ holds, locked, workshops }: { holds: HoldRow[]; lock
       else router.refresh()
     })
   return (
-    <section className="bg-card ring-foreground/8 rounded-xl shadow-xs ring-1">
-      <header className="flex items-center gap-3 border-b px-4 py-3">
+    <section className="bg-card rounded-xl">
+      <header className="flex items-center gap-3 border-b px-4 py-3 pe-12">
         <span className="bg-primary/10 text-primary flex size-8 items-center justify-center rounded-lg">
           <ArmchairIcon className="size-4" aria-hidden />
         </span>
@@ -254,5 +254,32 @@ export function HoldsList({ holds, locked, workshops }: { holds: HoldRow[]; lock
         })}
       </ul>
     </section>
+  )
+}
+
+/**
+ * "Places held · 3": the holds stay out of the page until asked for; the
+ * button opens them (with − / +, "Register on it" and "Delete hold").
+ */
+export function HoldsButton({ holds, locked, workshops }: { holds: HoldRow[]; locked: boolean; workshops: RegistrableWorkshop[] }) {
+  const t = useTranslations("workshops.registrations.holds")
+  const locale = useLocale()
+  if (!holds.length) return null
+  const total = holds.reduce((s, h) => s + h.count, 0)
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="lg" className="px-4">
+          <ArmchairIcon />
+          {t("show")}
+          <span className="bg-primary/10 text-primary rounded-full px-2 text-xs font-semibold tabular-nums">{formatNumber(total, locale)}</span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90dvh] gap-0 overflow-y-auto p-0 sm:max-w-2xl">
+        <DialogTitle className="sr-only">{t("listTitle")}</DialogTitle>
+        <DialogDescription className="sr-only">{t("listHint", { count: total })}</DialogDescription>
+        <HoldsList holds={holds} locked={locked} workshops={workshops} />
+      </DialogContent>
+    </Dialog>
   )
 }
