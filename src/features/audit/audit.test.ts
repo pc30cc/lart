@@ -205,7 +205,7 @@ describe("listAudit", () => {
       data: { reversalId: run },
       at: new Date("2026-03-09T12:00:00Z"),
     })
-    const day = { from: "2026-03-09", to: "2026-03-09" }
+    const day = { from: "2026-03-09", to: "2026-03-09", admin: adminA }
     expect(ids(await list({ q: "Transaction reversed", ...day }))).toContain(id)
     expect(ids(await list({ q: "برگرداندن تراکنش", ...day }, undefined, "fa"))).toContain(id)
     expect(ids(await list({ q: "işlem ters", ...day }, undefined, "tr"))).toContain(id)

@@ -672,6 +672,12 @@ await sendEmail({ to, template: "contract_ready", props: { … }, locale }) // n
   the way they chose, audited as that admin's, `via: "telegram"`), emails
   the participant and updates every copy (`telegram_notices`,
   `refreshAdminNotices`, also after a payment recorded in the panel).
+  The bot's menu (`bot-menu.ts`; the keyboard button "🎨 Workshops
+  running", or /menu) lists the workshops not over yet; one opens with its
+  numbers and two lists: the paid registrations (with the total) and the
+  cash still to collect, each with "✅ Paid" for money brought to the
+  workshop (`confirmPayment(…, "cash")`, the list updates in place). Only
+  connected, active admins get the menu or can press its buttons.
 - **How they are sent** is the `email` setting (Settings → Email,
   `features/settings/email.ts`): **Resend** (API key) or **SMTP** (our own
   mail server, a mail container on the server's network, or a service such

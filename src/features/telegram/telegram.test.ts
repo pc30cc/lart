@@ -198,6 +198,50 @@ describe("the admins' bot", () => {
     expect(text(calls[0])).toContain("فقط برای مدیرهای سایت")
   })
 
+  it("lists the workshops running, their paid registrations and the cash to collect, and records cash brought to the workshop", async () => {
+    const world = await makeWorld()
+    const admin = await makeAdmin(`Nora ${run}`)
+    const course = await makeCourse(world, admin.id, { status: "published", endsAt: new Date(Date.now() + 5 * 86_400_000) })
+    const cash = await addRegistration(world, course, { status: "pending", amount: 300_000 })
+    const paid = await addRegistration(world, course, { status: "confirmed", amount: 300_000 })
+    await db.update(registrations).set({ participantName: `Cash ${run}`, paymentChoice: "cash" }).where(eq(registrations.id, cash))
+    await db.update(registrations).set({ participantName: `Paid ${run}` }).where(eq(registrations.id, paid))
+    const current = await getSetting("telegramAdmins")
+    await setSetting("telegramAdmins", { ...current, people: [...current.people, { adminId: admin.id, username: "nora_tg", chatId: "555" }] })
+    const press = (data: string) => handleTelegramUpdate({ callback_query: { id: "q", from: { id: 555 }, data, message: { chat: { id: 555 }, message_id: 7 } } })
+
+    stub()
+    await handleTelegramUpdate({ message: { chat: { id: 555, type: "private" }, from: { id: 555 }, text: "🎨 ورکشاپ‌های در حال برگزاری" } })
+    expect(text(calls[0])).toContain("ورکشاپ‌های در حال برگزاری")
+    expect(buttons(calls[0])).toContain("ws:")
+
+    stub()
+    await press(`ws:${course}`)
+    const card = calls.find((c) => c.method === "editMessageText")!
+    expect(text(card)).toContain("ثبت‌نام: ۲ نفر")
+    expect(buttons(card)).toContain(`cash:${course}`)
+
+    stub()
+    await press(`paid:${course}`)
+    expect(text(calls.find((c) => c.method === "editMessageText")!)).toContain(`Paid ${run}`)
+
+    stub()
+    await press(`cash:${course}`)
+    const list = calls.find((c) => c.method === "editMessageText")!
+    expect(text(list)).toContain(`Cash ${run}`)
+    expect(buttons(list)).toContain(`cpay:${cash}`)
+
+    stub()
+    await press(`cpay:${cash}`)
+    expect((await db.select().from(registrations).where(eq(registrations.id, cash)))[0]).toMatchObject({ status: "confirmed", paymentMethod: "cash" })
+    expect(buttons(calls.find((c) => c.method === "editMessageText")!)).not.toContain(`cpay:${cash}`)
+
+    // Not an admin: no menu.
+    stub()
+    await handleTelegramUpdate({ message: { chat: { id: 777, type: "private" }, from: { id: 777 }, text: "/menu" } })
+    expect(text(calls[0])).toContain("فقط برای مدیرهای سایت")
+  }, 30_000)
+
   it("takes updates only with the secret Telegram was given", async () => {
     const post = (secret: string) =>
       webhook(new Request("http://x/api/telegram/webhook", { method: "POST", headers: { "x-telegram-bot-api-secret-token": secret }, body: "{}" }))

@@ -32,9 +32,32 @@
     "confirmed": "Payment recorded; the participant got the confirmation email.",
     "notAllowed": "This button works only for the admins connected in Settings → Telegram.",
     "start": {
-      "connected": "Hello {name} 👋\nFrom now on I’ll send every new registration and every transfer receipt here; confirm a payment with “✅ Confirm payment”.",
+      "connected": "Hello {name} 👋\nFrom now on I’ll send every new registration and every transfer receipt here; confirm a payment with “✅ Confirm payment”.\nFor the workshops, the successful registrations and the cash payments, press “🎨 Workshops running” below.",
       "unknown": "This bot is only for the site’s admins. If you are one, enter your Telegram username in Settings → Telegram and press Start again."
     },
-    "test": "✅ All set: registrations and receipts will arrive here from now on."
+    "test": "✅ All set: registrations and receipts will arrive here from now on.",
+    "menu": {
+      "button": "🎨 Workshops running",
+      "command": "Workshops running",
+      "workshopsTitle": "Workshops running",
+      "choose": "Pick one (🟢 means it has started):",
+      "none": "No workshop is running right now.",
+      "registered": "Registered: {n}",
+      "paidCount": "Paid: {n}",
+      "unpaidCount": "Waiting for payment: {n}",
+      "cashCount": "Cash still to collect: {n} · {sum}",
+      "paidButton": "Successful registrations",
+      "cashButton": "Cash payments",
+      "back": "All workshops",
+      "backToWorkshop": "Back to the workshop",
+      "paidTitle": "Successful registrations (paid)",
+      "nonePaid": "No payment recorded yet.",
+      "total": "Total received",
+      "cashTitle": "Cash payments",
+      "noneCash": "No cash left to collect. 👌",
+      "cashHint": "When the money is handed over at the workshop, press that person’s “Paid”.",
+      "markPaid": "Paid",
+      "gone": "This can’t be found any more; open the menu again."
+    }
   }
 }

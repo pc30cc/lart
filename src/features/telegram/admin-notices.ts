@@ -17,6 +17,7 @@ import { formatDate, formatDateTime, formatTimeRange, localized } from "@/lib/fo
 import { formatLira } from "@/lib/money"
 import { getSetting, setSetting } from "@/lib/settings"
 import { publicUrls } from "@/lib/storage"
+import { cashScreen, courseOf, isMenuButton, MENU, menuKeyboard, paidScreen, workshopScreen, workshopsScreen } from "./bot-menu"
 import { call, escape, telegramToken } from "./telegram"
 
 /**
@@ -220,7 +221,7 @@ export async function refreshAdminNotices(registrationId: string): Promise<void>
 
 type Update = {
   message?: { chat: { id: number; type: string }; from?: { id: number; username?: string; first_name?: string }; text?: string }
-  callback_query?: { id: string; from: { id: number }; data?: string; message?: { chat: { id: number } } }
+  callback_query?: { id: string; from: { id: number }; data?: string; message?: { chat: { id: number }; message_id?: number } }
 }
 
 const handle = (username: string) => username.replace(/^@/, "").toLowerCase()
@@ -250,41 +251,108 @@ export async function handleTelegramUpdate(update: Update): Promise<void> {
       await setSetting("telegramAdmins", { ...setting, people })
     }
     const [admin] = await db.select({ name: admins.name }).from(admins).where(eq(admins.id, person.adminId))
-    await call(token, "sendMessage", { chat_id: message.chat.id, text: t("start.connected", { name: admin?.name ?? message.from.first_name ?? "" }) }).catch(() => {})
+    await call(token, "sendMessage", {
+      chat_id: message.chat.id,
+      text: t("start.connected", { name: admin?.name ?? message.from.first_name ?? "" }),
+      reply_markup: await menuKeyboard(setting.locale),
+    }).catch(() => {})
+    return
+  }
+
+  /** A connected, active admin behind this Telegram user, or null. */
+  const adminOf = async (telegramId: number) => {
+    const person = setting.people.find((p) => p.chatId === String(telegramId))
+    const [admin] = person ? await db.select({ id: admins.id, active: admins.active }).from(admins).where(eq(admins.id, person.adminId)) : []
+    return admin?.active ? admin : null
+  }
+
+  // The menu: "🎨 Workshops running" (the keyboard's button, /menu or /workshops), only for the admins.
+  if (message?.text && message.chat.type === "private" && message.from && (await isMenuButton(message.text))) {
+    if (!(await adminOf(message.from.id))) {
+      await call(token, "sendMessage", { chat_id: message.chat.id, text: t("start.unknown") }).catch(() => {})
+      return
+    }
+    const screen = await workshopsScreen(setting.locale)
+    await call(token, "sendMessage", { chat_id: message.chat.id, parse_mode: "HTML", ...screen }).catch((err) => console.error("[telegram] menu", errorForLog(err)))
     return
   }
 
   const query = update.callback_query
-  if (!query?.data?.startsWith(PAY)) return
-  const answer = (text: string, alert = false) => call(token, "answerCallbackQuery", { callback_query_id: query.id, text, show_alert: alert }).catch(() => {})
-  const registrationId = query.data.slice(PAY.length)
-  const person = setting.people.find((p) => p.chatId === String(query.from.id))
-  const [admin] = person ? await db.select({ id: admins.id, active: admins.active }).from(admins).where(eq(admins.id, person.adminId)) : []
-  if (!admin?.active || !/^[0-9a-f-]{36}$/.test(registrationId)) {
+  if (!query?.data) return
+  const data = query.data
+  const answer = (text = "", alert = false) => call(token, "answerCallbackQuery", { callback_query_id: query.id, text, show_alert: alert }).catch(() => {})
+  const admin = await adminOf(query.from.id)
+  if (!admin) {
     await answer(t("notAllowed"), true)
     return
   }
+  const errorText = async (err: unknown) => {
+    if (!(err instanceof UserError)) throw err
+    const all = await getTranslations({ locale: setting.locale })
+    return (all as unknown as (key: string, values?: object) => string)(err.key, err.values)
+  }
+
+  // A screen of the menu, in place of the message the button was on.
+  const show = async (screen: Awaited<ReturnType<typeof workshopsScreen>> | null, note = "") => {
+    if (!screen || !query.message) return answer(t("menu.gone"), true)
+    await answer(note)
+    await call(token, "editMessageText", {
+      chat_id: query.message.chat.id,
+      message_id: (query.message as { message_id?: number }).message_id,
+      parse_mode: "HTML",
+      link_preview_options: { is_disabled: true },
+      ...screen,
+    }).catch(() => {})
+  }
+  if (data === MENU.list) return void (await show(await workshopsScreen(setting.locale)))
+  if (data.startsWith(MENU.workshop)) return void (await show(await workshopScreen(data.slice(MENU.workshop.length), setting.locale)))
+  if (data.startsWith(MENU.paid)) return void (await show(await paidScreen(data.slice(MENU.paid.length), setting.locale)))
+  if (data.startsWith(MENU.cash)) return void (await show(await cashScreen(data.slice(MENU.cash.length), setting.locale)))
+
+  // "✅ Paid" in the cash list: the cash brought to the workshop is recorded, and the list shown again.
+  if (data.startsWith(MENU.cashPay)) {
+    const registrationId = data.slice(MENU.cashPay.length)
+    const courseId = await courseOf(registrationId)
+    if (!courseId) return void (await answer(t("menu.gone"), true))
+    try {
+      await confirmPayment(registrationId, admin.id, "cash")
+      await sendPaymentReceived(registrationId, "cash").catch((err) => console.error("[telegram] payment email", errorForLog(err)))
+      await show(await cashScreen(courseId, setting.locale), `✅ ${t("confirmed")}`)
+    } catch (err) {
+      await answer(await errorText(err), true)
+    }
+    await refreshAdminNotices(registrationId)
+    return
+  }
+
+  if (!data.startsWith(PAY)) return
+  const registrationId = data.slice(PAY.length)
+  if (!/^[0-9a-f-]{36}$/.test(registrationId)) return void (await answer(t("notAllowed"), true))
   try {
     const method = await confirmPayment(registrationId, admin.id)
     await answer(`✅ ${t("confirmed")}`)
     await sendPaymentReceived(registrationId, method).catch((err) => console.error("[telegram] payment email", errorForLog(err)))
   } catch (err) {
-    if (!(err instanceof UserError)) throw err
-    const all = await getTranslations({ locale: setting.locale })
-    await answer((all as unknown as (key: string, values?: object) => string)(err.key, err.values), true)
+    await answer(await errorText(err), true)
   }
   await refreshAdminNotices(registrationId)
 }
 
-/** "Confirm payment" in Telegram: the payment is recorded now, the way they chose (a transfer when unknown), audited as that admin's. */
-export async function confirmPayment(registrationId: string, adminId: string): Promise<PaymentMethod> {
+/**
+ * "Confirm payment" in Telegram: the payment is recorded now, the way they
+ * chose (a transfer when unknown) or `as` ("✅ Paid" in the cash list),
+ * audited as that admin's.
+ */
+export async function confirmPayment(registrationId: string, adminId: string, as?: PaymentMethod): Promise<PaymentMethod> {
   return db.transaction(async (tx) => {
     const [reg] = await tx
       .select({ amount: registrations.amount, paymentChoice: registrations.paymentChoice })
       .from(registrations)
       .where(eq(registrations.id, registrationId))
     if (!reg) throw new UserError("workshops.registrations.errors.notFound")
-    const method: PaymentMethod = (paymentMethods as readonly string[]).includes(reg.paymentChoice ?? "")
+    const method: PaymentMethod = as
+      ? as
+      : (paymentMethods as readonly string[]).includes(reg.paymentChoice ?? "")
       ? (reg.paymentChoice as PaymentMethod)
       : "transfer"
     const paid = await recordPayment(tx, { registrationId, method, amount: reg.amount, paidAt: new Date(), createdBy: adminId })
@@ -311,6 +379,11 @@ export const newWebhookSecret = () => randomBytes(24).toString("base64url")
 /** Point the bot at this site (Settings → Telegram → Admins, on save); returns the bot's @username. */
 export async function connectBot(token: string, secret: string): Promise<string> {
   const me = await call<{ username?: string }>(token, "getMe", {})
+  // The bot's menu (the "/" list in the chat): the workshops running.
+  for (const language_code of ["fa", "tr", "en"] as const) {
+    const t = await getTranslations({ locale: language_code, namespace: "telegram.admin.menu" })
+    await call(token, "setMyCommands", { commands: [{ command: "menu", description: t("command") }], ...(language_code === "en" ? {} : { language_code }) }).catch(() => {})
+  }
   const url = webhookUrl()
   if (url.startsWith("https://")) {
     await call(token, "setWebhook", { url, secret_token: secret, allowed_updates: ["message", "callback_query"] })
