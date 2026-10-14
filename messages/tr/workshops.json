@@ -589,7 +589,8 @@
       "cancel": "Vazgeç",
       "submit": "Kaydet",
       "done": "Kayıt yapıldı, katılımcıya e-posta gönderildi.",
-      "noWorkshops": "Şu anda kayıt alan bir atölye yok."
+      "noWorkshops": "Şu anda kayıt alan bir atölye yok.",
+      "onHold": "Ayrılan yerlerden birine ({note}); ayırmadan bir yer düşer."
     },
     "holds": {
       "action": "Yer ayır",
@@ -615,7 +616,10 @@
         "tooMany": "Bu kadar boş yer yok; şu anda {left} yer kaldı.",
         "notOpen": "Bu atölye artık yer almıyor.",
         "gone": "Bu ayırma artık yok."
-      }
+      },
+      "less": "Bir yer az",
+      "more": "Bir yer fazla",
+      "register": "Bu yere kayıt"
     }
   },
   "gallery": {

@@ -589,7 +589,8 @@
       "cancel": "Cancel",
       "submit": "Register",
       "done": "Registered. We emailed the participant.",
-      "noWorkshops": "No workshop takes registrations right now."
+      "noWorkshops": "No workshop takes registrations right now.",
+      "onHold": "On one of the places held ({note}); the hold gives up one place."
     },
     "holds": {
       "action": "Hold places",
@@ -615,7 +616,10 @@
         "tooMany": "Not that many places are free; {left, plural, one {# place is} other {# places are}} left.",
         "notOpen": "This workshop takes no more people.",
         "gone": "This hold no longer exists."
-      }
+      },
+      "less": "One place fewer",
+      "more": "One place more",
+      "register": "Register on it"
     }
   },
   "gallery": {

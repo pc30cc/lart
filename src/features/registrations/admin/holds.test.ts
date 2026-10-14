@@ -6,7 +6,7 @@ import { courses, ledgerTransactions } from "@/db/schema"
 import { addRegistration, makeAdmin, makeCourse, makeWorld } from "@/features/money/testing"
 import { UserError } from "@/lib/errors"
 import { getPublicWorkshop, seatsTakenByDay } from "../public"
-import { holdSeats, listHolds, releaseHold } from "./holds"
+import { changeHold, holdSeats, listHolds, listOpenHolds, releaseHold } from "./holds"
 
 const DAY = 86_400_000
 const userError = async (p: Promise<unknown>) => {
@@ -56,5 +56,19 @@ describe("places held for guests", () => {
     expect(await userError(db.transaction((tx) => holdSeats(tx, { courseId: past, count: 1, note: "" }, admin.id)))).toBe("registration.errors.started")
     const cancelled = await makeCourse(world, admin.id, { status: "cancelled", endsAt: new Date(Date.now() + 10 * DAY) })
     expect(await userError(db.transaction((tx) => holdSeats(tx, { courseId: cancelled, count: 1, note: "" }, admin.id)))).toBe("registration.errors.cancelled")
+  })
+
+  it("take one place more or less, and are gone at zero", async () => {
+    const world = await makeWorld()
+    const admin = await makeAdmin("Holder 3")
+    const course = await makeCourse(world, admin.id, { status: "published", endsAt: new Date(Date.now() + 10 * DAY) })
+    const held = await db.transaction((tx) => holdSeats(tx, { courseId: course, count: 3, note: "Saturday" }, admin.id))
+    expect(await db.transaction((tx) => changeHold(tx, held.id, -1))).toMatchObject({ count: 2 })
+    expect(await db.transaction((tx) => changeHold(tx, held.id, 1))).toMatchObject({ count: 3 })
+    expect(await seatsTakenByDay(course)).toEqual([3])
+    expect((await listOpenHolds()).find((h) => h.id === held.id)).toMatchObject({ courseId: course, count: 3 })
+    for (let i = 0; i < 3; i++) await db.transaction((tx) => changeHold(tx, held.id, -1))
+    expect(await listHolds(course)).toEqual([])
+    expect(await seatsTakenByDay(course)).toEqual([])
   })
 })

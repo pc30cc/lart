@@ -1,8 +1,9 @@
 "use client"
 
-import { ArmchairIcon, Trash2Icon, UserRoundPlusIcon } from "lucide-react"
+import { ArmchairIcon, MinusIcon, PlusIcon, TicketPlusIcon, Trash2Icon, UserRoundPlusIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
-import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useState, useTransition } from "react"
 import { useWatch } from "react-hook-form"
 
 import { ConfirmAction } from "@/components/admin/confirm-action"
@@ -15,7 +16,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { formatDate, formatDateTime, formatNumber, formatTimeRange } from "@/lib/format"
 import { cn } from "@/lib/utils"
-import { holdSeatsAction, releaseHoldAction } from "../actions"
+import { toast } from "sonner"
+
+import { changeHoldAction, holdSeatsAction, releaseHoldAction } from "../actions"
+import { AddRegistrationDialog } from "./add-registration-dialog"
 import type { RegistrableWorkshop } from "../register"
 import { holdSeatsSchema, type HoldSeatsValues } from "../schema"
 
@@ -139,14 +143,37 @@ function HoldForm({ workshops, courseId, onDone }: { workshops: RegistrableWorks
   )
 }
 
-export type HoldRow = { id: string; day: number | null; count: number; note: string; createdAt: string; by: string | null; dayLabel: string | null }
+export type HoldRow = {
+  id: string
+  courseId: string
+  day: number | null
+  count: number
+  note: string
+  createdAt: string
+  by: string | null
+  dayLabel: string | null
+  /** The workshop's name, when the list shows several workshops' holds. */
+  workshopTitle?: string
+}
 
-/** The places held in this workshop, each with who for, by whom, and "Free these places". */
-export function HoldsList({ holds, locked }: { holds: HoldRow[]; locked: boolean }) {
+/**
+ * The places held: each with who for and by whom, "−" / "+" one place,
+ * "Register" (someone takes one of them: a registration on that place) and
+ * "Delete hold" (all its places freed).
+ */
+export function HoldsList({ holds, locked, workshops }: { holds: HoldRow[]; locked: boolean; workshops: RegistrableWorkshop[] }) {
   const t = useTranslations("workshops.registrations.holds")
   const locale = useLocale()
+  const [pending, start] = useTransition()
+  const router = useRouter()
   if (!holds.length) return null
   const total = holds.reduce((s, h) => s + h.count, 0)
+  const change = (id: string, delta: 1 | -1) =>
+    start(async () => {
+      const result = await changeHoldAction({ id, delta })
+      if (result && !result.ok) toast.error(result.error)
+      else router.refresh()
+    })
   return (
     <section className="bg-card ring-foreground/8 rounded-xl shadow-xs ring-1">
       <header className="flex items-center gap-3 border-b px-4 py-3">
@@ -159,39 +186,72 @@ export function HoldsList({ holds, locked }: { holds: HoldRow[]; locked: boolean
         </div>
       </header>
       <ul className="divide-y">
-        {holds.map((h) => (
-          <li key={h.id} className="flex items-center gap-3 px-4 py-3">
-            <span className="bg-muted flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-sm font-semibold tabular-nums">
-              {formatNumber(h.count, locale)}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="flex items-center gap-1.5 truncate text-sm font-medium" dir="auto">
-                <UserRoundPlusIcon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
-                {h.note || t("guests")}
-              </p>
-              <p className="text-muted-foreground truncate text-xs">
-                {h.dayLabel && <span className="text-primary font-medium">{h.dayLabel} · </span>}
-                {t("by", { name: h.by ?? "—", date: formatDateTime(h.createdAt, locale, "medium") })}
-              </p>
-            </div>
-            {!locked && (
-              <ConfirmAction
-                action={releaseHoldAction}
-                input={{ id: h.id }}
-                title={t("release.title")}
-                description={t("release.description", { count: h.count })}
-                confirmLabel={t("release.confirm")}
-                successMessage={t("release.done")}
-                trigger={
-                  <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
-                    <Trash2Icon />
-                    <span className="hidden sm:inline">{t("release.action")}</span>
-                  </Button>
-                }
-              />
-            )}
-          </li>
-        ))}
+        {holds.map((h) => {
+          const registrable = workshops.some((w) => w.id === h.courseId)
+          return (
+            <li key={h.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                {!locked ? (
+                  <span className="bg-muted inline-flex items-center rounded-full p-0.5" aria-label={t("count")}>
+                    <Button type="button" variant="ghost" size="icon-xs" className="rounded-full" disabled={pending} onClick={() => change(h.id, -1)} aria-label={t("less")}>
+                      <MinusIcon />
+                    </Button>
+                    <span className="min-w-6 text-center text-sm font-semibold tabular-nums">{formatNumber(h.count, locale)}</span>
+                    <Button type="button" variant="ghost" size="icon-xs" className="rounded-full" disabled={pending || !registrable} onClick={() => change(h.id, 1)} aria-label={t("more")}>
+                      <PlusIcon />
+                    </Button>
+                  </span>
+                ) : (
+                  <span className="bg-muted flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-sm font-semibold tabular-nums">
+                    {formatNumber(h.count, locale)}
+                  </span>
+                )}
+                <div className="min-w-0">
+                  {h.workshopTitle && <p className="text-primary truncate text-xs font-medium">{h.workshopTitle}</p>}
+                  <p className="flex items-center gap-1.5 truncate text-sm font-medium" dir="auto">
+                    <UserRoundPlusIcon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
+                    {h.note || t("guests")}
+                  </p>
+                  <p className="text-muted-foreground truncate text-xs">
+                    {h.dayLabel && <span className="text-primary font-medium">{h.dayLabel} · </span>}
+                    {t("by", { name: h.by ?? "—", date: formatDateTime(h.createdAt, locale, "medium") })}
+                  </p>
+                </div>
+              </div>
+              {!locked && (
+                <div className="flex items-center gap-1">
+                  {registrable && (
+                    <AddRegistrationDialog
+                      workshops={workshops}
+                      courseId={h.courseId}
+                      hold={{ id: h.id, note: h.note }}
+                      button={
+                        <Button variant="outline" size="sm">
+                          <TicketPlusIcon />
+                          {t("register")}
+                        </Button>
+                      }
+                    />
+                  )}
+                  <ConfirmAction
+                    action={releaseHoldAction}
+                    input={{ id: h.id }}
+                    title={t("release.title")}
+                    description={t("release.description", { count: h.count })}
+                    confirmLabel={t("release.confirm")}
+                    successMessage={t("release.done")}
+                    trigger={
+                      <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
+                        <Trash2Icon />
+                        <span className="hidden sm:inline">{t("release.action")}</span>
+                      </Button>
+                    }
+                  />
+                </div>
+              )}
+            </li>
+          )
+        })}
       </ul>
     </section>
   )

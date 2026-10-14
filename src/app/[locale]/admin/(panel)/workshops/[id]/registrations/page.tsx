@@ -246,8 +246,10 @@ export default async function WorkshopRegistrationsPage({
         <div className="mb-5">
           <HoldsList
             locked={locked}
+            workshops={addable}
             holds={holds.map((h) => ({
               id: h.id,
+              courseId: workshop.id,
               day: h.day,
               count: h.count,
               note: h.note,

@@ -43,6 +43,8 @@ export const addRegistrationSchema = z
     paid: z.boolean(),
     method: z.enum(paymentMethods).optional(),
     paidOn: entryDate().optional(),
+    /** Registered on a place held for guests: the hold gives one place (its workshop and day). */
+    holdId: uuid().optional(),
   })
   .refine((v) => !v.paid || v.method, { path: ["method"], error: "workshops.registrations.errors.chooseMethod" })
 export type AddRegistrationValues = z.input<typeof addRegistrationSchema>
@@ -112,3 +114,5 @@ export const holdSeatsSchema = z.object({
 })
 export type HoldSeatsValues = z.input<typeof holdSeatsSchema>
 export const releaseHoldSchema = z.object({ id: z.uuid() })
+/** One place more or less in a hold. */
+export const changeHoldSchema = z.object({ id: z.uuid(), delta: z.union([z.literal(1), z.literal(-1)]) })

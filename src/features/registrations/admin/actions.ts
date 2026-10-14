@@ -8,14 +8,14 @@ import { paymentSettingsSchema } from "@/features/settings/payments"
 import { refreshAdminNotices } from "@/features/telegram/admin-notices"
 import { adminAction } from "@/lib/action"
 import { changes } from "@/lib/audit"
-import { errorForLog } from "@/lib/errors"
+import { errorForLog, UserError } from "@/lib/errors"
 import { getSetting, setSetting } from "@/lib/settings"
 import { sendPaymentReceived, sendRefundChanged, sendRefundSent, sendRegistrationCancelled } from "./notify"
 import { cancelRegistration, momentOf, recordPayment, recordRefund, setRefund } from "./payments"
 import { sendRegistrationReceived } from "../notify"
-import { holdSeats, releaseHold } from "./holds"
+import { changeHold, holdSeats, releaseHold } from "./holds"
 import { registerByAdmin, searchMembers } from "./register"
-import { holdSeatsSchema, releaseHoldSchema } from "./schema"
+import { changeHoldSchema, holdSeatsSchema, releaseHoldSchema } from "./schema"
 import { addRegistrationSchema, cancelRegistrationSchema, markRefundedSchema, memberSearchSchema, recordPaymentSchema, setRefundSchema } from "./schema"
 
 /**
@@ -62,6 +62,13 @@ export const recordPaymentAction = adminAction(recordPaymentSchema, async ({ id,
  */
 export const addRegistrationAction = adminAction(addRegistrationSchema, async (input, ctx) => {
   const added = await db.transaction(async (tx) => {
+    // On a place held for guests: the hold gives that place first (same workshop, its day).
+    if (input.holdId) {
+      const hold = await changeHold(tx, input.holdId, -1)
+      if (hold.courseId !== input.courseId) throw new UserError("workshops.registrations.holds.errors.gone")
+      input = { ...input, day: hold.day ?? undefined }
+      await ctx.audit({ action: "registration.release", entity: "workshop", entityId: hold.courseId, data: { count: 1, day: hold.day, note: hold.note, registered: true } }, tx)
+    }
     const added = await registerByAdmin(tx, input, ctx.admin.id)
     await ctx.audit(
       {
@@ -191,6 +198,18 @@ export const releaseHoldAction = adminAction(releaseHoldSchema, async ({ id }, c
     const row = await releaseHold(tx, id)
     await ctx.audit(
       { action: "registration.release", entity: "workshop", entityId: row.courseId, data: { count: row.count, day: row.day, note: row.note } },
+      tx,
+    )
+  })
+  revalidate()
+})
+
+/** One place more (+1) or less (−1, at 0 the hold is gone) in a hold. Audited "registration.hold" / "registration.release" with the place. */
+export const changeHoldAction = adminAction(changeHoldSchema, async ({ id, delta }, ctx) => {
+  await db.transaction(async (tx) => {
+    const hold = await changeHold(tx, id, delta)
+    await ctx.audit(
+      { action: delta > 0 ? "registration.hold" : "registration.release", entity: "workshop", entityId: hold.courseId, data: { count: 1, day: hold.day, note: hold.note, total: hold.count } },
       tx,
     )
   })

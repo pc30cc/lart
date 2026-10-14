@@ -39,26 +39,37 @@ type Member = { id: string; name: string; email: string; phone: string | null }
  * The member is emailed. `courseId` / `member` start it on one workshop or
  * one member (their pages).
  */
+/** A place held for guests to register someone on: its workshop is `courseId`, its day is kept. */
+export type HoldPlace = { id: string; note: string }
+
 export function AddRegistrationDialog({
   workshops,
   courseId,
   member,
   trigger = "default",
+  hold,
+  button,
 }: {
   workshops: RegistrableWorkshop[]
   courseId?: string
   member?: Member
   trigger?: "default" | "outline"
+  /** Register on a place held for guests (the hold gives one place). */
+  hold?: HoldPlace
+  /** Another trigger button (e.g. a small one in a list). */
+  button?: React.ReactNode
 }) {
   const t = useTranslations("workshops.registrations.add")
   const [open, setOpen] = useState(false)
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant={trigger} size="lg" className="px-4">
-          <TicketPlusIcon />
-          {t("trigger")}
-        </Button>
+        {button ?? (
+          <Button variant={trigger} size="lg" className="px-4">
+            <TicketPlusIcon />
+            {t("trigger")}
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent showCloseButton={false} className="max-h-[92dvh] gap-5 overflow-y-auto p-5 sm:max-w-lg">
         <DialogHeader className="text-start">
@@ -68,7 +79,7 @@ export function AddRegistrationDialog({
         {workshops.length === 0 ? (
           <p className="bg-muted rounded-lg p-3 text-sm">{t("noWorkshops")}</p>
         ) : (
-          <AddForm workshops={workshops} courseId={courseId} member={member} onDone={() => setOpen(false)} />
+          <AddForm workshops={workshops} courseId={courseId} member={member} hold={hold} onDone={() => setOpen(false)} />
         )}
       </DialogContent>
     </Dialog>
@@ -79,11 +90,13 @@ function AddForm({
   workshops,
   courseId,
   member: preset,
+  hold,
   onDone,
 }: {
   workshops: RegistrableWorkshop[]
   courseId?: string
   member?: Member
+  hold?: HoldPlace
   onDone: () => void
 }) {
   const t = useTranslations("workshops.registrations.add")
@@ -100,6 +113,7 @@ function AddForm({
       participantName: preset?.name ?? "",
       paid: false,
       paidOn: todayIso(),
+      holdId: hold?.id,
     },
     successMessage: t("done"),
     onSuccess: onDone,
@@ -120,6 +134,12 @@ function AddForm({
         {() => (member ? <ChosenMember member={member} onChange={preset ? undefined : () => pick(null)} /> : <MemberSearch onPick={pick} />)}
       </FormField>
 
+      {hold ? (
+        <p className="bg-primary/5 ring-primary/15 rounded-lg px-3 py-2.5 text-sm ring-1">
+          <span className="font-medium">{workshop?.title}</span>
+          <span className="text-muted-foreground block text-xs">{t("onHold", { note: hold.note || "—" })}</span>
+        </p>
+      ) : (
       <FormField<AddRegistrationValues> name="courseId" label={t("workshop")} required>
         {(field) => (
           <Select
@@ -144,7 +164,9 @@ function AddForm({
         )}
       </FormField>
 
-      {workshop && (
+      )}
+
+      {workshop && !hold && (
         <FormField<AddRegistrationValues> name="day" label={workshop.days.length > 1 ? t("day") : t("when")}>
           {(field) => (
             <RadioGroup

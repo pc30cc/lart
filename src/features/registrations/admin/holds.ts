@@ -1,5 +1,5 @@
 import "server-only"
-import { and, asc, eq } from "drizzle-orm"
+import { and, asc, eq, gt } from "drizzle-orm"
 
 import { db, type Tx } from "@/db"
 import { admins, courses, seatHolds } from "@/db/schema"
@@ -50,6 +50,62 @@ export async function holdSeats(tx: Tx, input: { courseId: string; day?: number;
     .values({ courseId: course.id, day: several ? (day ?? null) : null, count: input.count, note: input.note, createdBy: adminId })
     .returning({ id: seatHolds.id })
   return { id: row.id, day: day ?? null }
+}
+
+/**
+ * One place more or less in a hold (−1 frees one; at 0 the hold is gone; +1
+ * takes one more of the day's free places). Under the workshop's lock.
+ * Returns the hold's workshop, day and new count (0: deleted).
+ */
+export async function changeHold(tx: Tx, id: string, delta: 1 | -1) {
+  const [ref] = await tx.select({ courseId: seatHolds.courseId }).from(seatHolds).where(eq(seatHolds.id, id))
+  if (!ref) throw new UserError("workshops.registrations.holds.errors.gone")
+  const [course] = await tx
+    .select({
+      id: courses.id,
+      startsAt: courses.startsAt,
+      endsAt: courses.endsAt,
+      days: courses.days,
+      maxCapacity: courses.maxCapacity,
+      finalParticipants: courses.finalParticipants,
+    })
+    .from(courses)
+    .where(eq(courses.id, ref.courseId))
+    .for("no key update")
+  const [hold] = await tx.select().from(seatHolds).where(eq(seatHolds.id, id)).for("update")
+  if (!hold || !course) throw new UserError("workshops.registrations.holds.errors.gone")
+  if (delta > 0) {
+    const left = daySeatsLeft(course, await seatsTakenByDay(course.id, tx)).days[hold.day ?? 0] ?? 0
+    if (left < 1) throw new UserError("workshops.registrations.holds.errors.tooMany", { values: { left: 0 } })
+    if (hold.count >= 100) throw new UserError("workshops.registrations.holds.errors.tooMany", { values: { left: 0 } })
+  }
+  const count = hold.count + delta
+  if (count <= 0) await tx.delete(seatHolds).where(eq(seatHolds.id, id))
+  else await tx.update(seatHolds).set({ count }).where(eq(seatHolds.id, id))
+  return { courseId: hold.courseId, day: hold.day, count, note: hold.note }
+}
+
+/** The holds of the workshops not over yet, every workshop's together (the Registrations page). */
+export async function listOpenHolds(now = new Date()) {
+  return db
+    .select({
+      id: seatHolds.id,
+      courseId: seatHolds.courseId,
+      title: courses.title,
+      startsAt: courses.startsAt,
+      endsAt: courses.endsAt,
+      days: courses.days,
+      day: seatHolds.day,
+      count: seatHolds.count,
+      note: seatHolds.note,
+      createdAt: seatHolds.createdAt,
+      by: admins.name,
+    })
+    .from(seatHolds)
+    .innerJoin(courses, eq(courses.id, seatHolds.courseId))
+    .leftJoin(admins, eq(admins.id, seatHolds.createdBy))
+    .where(gt(courses.endsAt, now))
+    .orderBy(asc(courses.startsAt), asc(seatHolds.createdAt))
 }
 
 /** Free the places of a hold. Returns what it was, for the log. */
