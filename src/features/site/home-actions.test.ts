@@ -318,7 +318,7 @@ describe("the Home page settings page", () => {
       en: "Make something beautiful with your own hands",
     })
     expect(defaults.steps.items).toHaveLength(4)
-    expect(defaults.steps.items[3].title.tr).toBe("Gel ve üret")
+    expect(defaults.steps.items[3].title.tr).toBe("Gelin ve birlikte üretelim")
     expect(defaults.footer.about.fa).toMatch(/ورکشاپ/)
   })
 })
