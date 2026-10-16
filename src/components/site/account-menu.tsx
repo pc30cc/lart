@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import { useTransition } from "react"
 
+import { PersonPlaceholder } from "@/components/person-placeholder"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -77,9 +78,7 @@ export function AccountMenu({ member, className }: { member: { name: string; ema
           className={cn("h-10 max-w-32 gap-1.5 rounded-full ps-2.5 pe-3 text-sm max-sm:w-10 max-sm:px-0 sm:max-w-44", className)}
           aria-label={t("account")}
         >
-          <span className="bg-primary/12 text-primary flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
-            {firstName.charAt(0).toUpperCase()}
-          </span>
+          <PersonPlaceholder className="bg-primary/12 text-primary size-7" />
           <span className="truncate max-sm:hidden">{firstName}</span>
           <ChevronDownIcon className="text-muted-foreground size-4 shrink-0 max-sm:hidden" />
         </Button>

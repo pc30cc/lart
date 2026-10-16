@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
+import { PersonPlaceholder } from "@/components/person-placeholder"
 import { Form, FormActions, FormField, FormSection, SubmitButton } from "@/components/admin/form/form"
 import { useActionForm } from "@/components/admin/form/use-action-form"
 import { Button } from "@/components/ui/button"
@@ -113,9 +114,7 @@ export function TelegramAdminsForm({
           {people.map((p, i) => (
             <li key={p.adminId} className="bg-muted/30 flex flex-col gap-3 rounded-xl border p-3.5 sm:flex-row sm:items-center">
               <div className="flex min-w-0 flex-1 items-center gap-3">
-                <span className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
-                  {Array.from(p.name.trim())[0] ?? "?"}
-                </span>
+                <PersonPlaceholder className="size-9" />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{p.name}</p>
                   {p.username ? (

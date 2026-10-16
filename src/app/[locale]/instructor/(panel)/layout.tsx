@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { getTranslations } from "next-intl/server"
 
-import { listContractsToSign } from "@/features/instructor-panel/queries"
+import { getMyPhotoUrl, listContractsToSign } from "@/features/instructor-panel/queries"
 import { profileText } from "@/features/instructors/schema"
 import { requireInstructor } from "@/lib/auth/instructor"
 import { getBrand } from "@/lib/settings"
@@ -29,12 +29,14 @@ export default async function InstructorPanelLayout({ children, params }: Layout
     getBrand(locale),
     listContractsToSign(),
   ])
+  const photoUrl = await getMyPhotoUrl(instructor.id)
 
   return (
     <PanelShell
       brand={brand}
       name={profileText(instructor.displayName, locale)}
       email={instructor.email}
+      photoUrl={photoUrl}
       emailVerified={instructor.emailVerified}
       approved={instructor.approved}
       toSign={toSign.length}

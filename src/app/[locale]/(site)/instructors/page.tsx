@@ -2,6 +2,7 @@ import { AwardIcon, CalendarDaysIcon } from "lucide-react"
 import type { Metadata } from "next"
 import { getTranslations } from "next-intl/server"
 
+import { PersonPlaceholder } from "@/components/person-placeholder"
 import { listPublicInstructors } from "@/features/instructor-documents/queries"
 import { Link } from "@/i18n/navigation"
 import { isRtl } from "@/i18n/locales"
@@ -39,9 +40,7 @@ export default async function InstructorsPage({ params }: PageProps<"/[locale]/i
                   // eslint-disable-next-line @next/next/no-img-element -- CDN URL, any host
                   <img src={p.photoUrl} alt="" loading="lazy" className="bg-muted size-16 shrink-0 rounded-full object-cover" />
                 ) : (
-                  <span className="bg-primary/10 text-primary flex size-16 shrink-0 items-center justify-center rounded-full text-xl font-semibold">
-                    {p.name.charAt(0)}
-                  </span>
+                  <PersonPlaceholder className="size-16" />
                 )}
                 <div className="min-w-0 flex-1 space-y-1">
                   <p className="group-hover:text-primary truncate font-semibold transition-colors">{p.name}</p>

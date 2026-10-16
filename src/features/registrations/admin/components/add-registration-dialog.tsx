@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl"
 import { useEffect, useState, useTransition } from "react"
 import { useWatch } from "react-hook-form"
 
+import { PersonPlaceholder } from "@/components/person-placeholder"
 import { DateField, todayIso } from "@/app/[locale]/admin/(panel)/money/_components/fields"
 import { Form, FormField, SubmitButton, TextField } from "@/components/admin/form/form"
 import { useActionForm } from "@/components/admin/form/use-action-form"
@@ -317,9 +318,7 @@ function MemberSearch({ onPick }: { onPick: (m: Member) => void }) {
                 onClick={() => onPick(m)}
                 className="hover:bg-muted focus-visible:bg-muted flex w-full items-center gap-3 p-2.5 text-start transition-colors outline-none"
               >
-                <span className="bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold">
-                  {m.name.charAt(0)}
-                </span>
+                <PersonPlaceholder className="size-8" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium">{m.name}</span>
                   <bdi className="text-muted-foreground block truncate text-xs">

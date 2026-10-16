@@ -1,4 +1,4 @@
-import { ArrowRightIcon } from "lucide-react"
+import { ArrowRightIcon, UserRoundIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Link } from "@/i18n/navigation"
@@ -97,9 +97,7 @@ function PartnerCard({ partner: p, alt, priority }: { partner: AboutPartner; alt
           />
         ) : (
           <div aria-hidden className="from-primary/15 to-chart-3/20 flex size-full items-center justify-center bg-linear-to-br">
-            <span className="text-primary/50 font-serif text-8xl [font-weight:var(--site-font-heading-weight)]">
-              {Array.from(p.name.trim())[0] ?? ""}
-            </span>
+            <UserRoundIcon className="text-primary/45 size-1/3" strokeWidth={1.25} />
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  ChevronDownIcon,
   CalendarHeartIcon,
   FileSignatureIcon,
   HouseIcon,
@@ -27,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Spinner } from "@/components/ui/spinner"
 import { instructorLogoutAction } from "@/features/accounts/actions"
+import { PersonPlaceholder } from "@/components/person-placeholder"
 import { Link, usePathname } from "@/i18n/navigation"
 import { locales } from "@/i18n/routing"
 import { formatNumber } from "@/lib/format"
@@ -58,6 +60,7 @@ export function PanelShell({
   brand,
   name,
   email,
+  photoUrl,
   emailVerified,
   approved,
   toSign,
@@ -67,6 +70,8 @@ export function PanelShell({
   brand: string
   name: string
   email: string
+  /** Their photo, or null: a person in a circle then. */
+  photoUrl: string | null
   emailVerified: boolean
   /** False while the team has not approved a self-registered instructor: a banner says so. */
   approved: boolean
@@ -128,7 +133,7 @@ export function PanelShell({
           <div className="ms-auto flex shrink-0 items-center gap-0.5">
             <LanguageMenu />
             <ThemeToggle />
-            <AccountMenu name={name} email={email} />
+            <AccountMenu name={name} email={email} photoUrl={photoUrl} />
           </div>
         </div>
       </header>
@@ -226,19 +231,23 @@ function LanguageMenu() {
   )
 }
 
-/** The instructor's initial, with their name and email, "My profile" and "Log out". */
-function AccountMenu({ name, email }: { name: string; email: string }) {
+/** The instructor's photo (or a person in a circle) and "Profile", opening their name and email, "My profile" and "Log out". */
+function AccountMenu({ name, email, photoUrl }: { name: string; email: string; photoUrl: string | null }) {
   const t = useTranslations("instructorPanel")
   const [leaving, startLeaving] = useTransition()
-  const initial = name.trim().charAt(0).toUpperCase() || "?"
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="size-10 rounded-full" aria-label={t("shell.account")}>
-          <span className="bg-primary/12 text-primary flex size-8 items-center justify-center rounded-full text-sm font-semibold">
-            {initial}
-          </span>
+        <Button variant="outline" className="h-10 gap-2 rounded-full ps-1 pe-3 max-sm:w-10 max-sm:px-0" aria-label={t("shell.account")}>
+          {photoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- the CDN, any host
+            <img src={photoUrl} alt="" className="bg-muted size-8 shrink-0 rounded-full object-cover" />
+          ) : (
+            <PersonPlaceholder className="size-8" />
+          )}
+          <span className="text-sm font-medium max-sm:hidden">{t("nav.profile")}</span>
+          <ChevronDownIcon className="text-muted-foreground size-4 shrink-0 max-sm:hidden" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-auto max-w-72 min-w-56">

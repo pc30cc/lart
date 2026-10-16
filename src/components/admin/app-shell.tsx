@@ -31,7 +31,7 @@ import type { LogoData } from "@/lib/logo"
 import { cn } from "@/lib/utils"
 import { LogoPicture } from "@/themes/logo"
 
-/** The signed-in partner in the header: `photoUrl` is the photo's CDN URL (`publicUrls()`), null for initials. */
+/** The signed-in partner in the header: `photoUrl` is the photo's CDN URL (`publicUrls()`), null for a person in a circle. */
 export type ShellAdmin = { name: string; email: string; photoUrl: string | null }
 
 // In RTL the sidebar sits on the right, so the inset's margins mirror.

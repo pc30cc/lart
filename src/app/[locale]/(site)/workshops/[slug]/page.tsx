@@ -16,6 +16,7 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 
+import { PersonPlaceholder } from "@/components/person-placeholder"
 import { Button } from "@/components/ui/button"
 import { PaymentBadge } from "@/features/registrations/components/payment-badge"
 import { getPublicWorkshop, myActiveRegistrations, type PublicWorkshop } from "@/features/registrations/public"
@@ -218,9 +219,7 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/work
                     className="bg-muted size-20 shrink-0 rounded-full object-cover sm:size-24"
                   />
                 ) : (
-                  <span className="bg-primary/10 text-primary flex size-20 shrink-0 items-center justify-center rounded-full text-2xl font-semibold sm:size-24">
-                    {w.instructor.name.charAt(0)}
-                  </span>
+                  <PersonPlaceholder className="size-20 sm:size-24" />
                 )}
                 <div className="min-w-0 space-y-1">
                   <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">

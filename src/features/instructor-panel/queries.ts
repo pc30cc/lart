@@ -429,6 +429,12 @@ function maskedId(encrypted: string): string | null {
   }
 }
 
+/** The signed-in instructor's photo for the panel's header, or null. */
+export async function getMyPhotoUrl(instructorId: string): Promise<string | null> {
+  const [row] = await db.select({ photoPath: instructors.photoPath }).from(instructors).where(eq(instructors.id, instructorId)).limit(1)
+  return row?.photoPath ? photoUrl(row.photoPath) : null
+}
+
 async function photoUrl(path: string): Promise<string | null> {
   try {
     return (await getStorage()).publicUrl(path)

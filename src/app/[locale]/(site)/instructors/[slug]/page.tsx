@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 
+import { PersonPlaceholder } from "@/components/person-placeholder"
 import { getPublicInstructor, type PublicInstructor } from "@/features/instructor-documents/queries"
 import { languageName } from "@/features/instructors/schema"
 import { formatWorkshopDates } from "@/features/workshops/days"
@@ -59,9 +60,7 @@ export default async function InstructorProfilePage({ params }: PageProps<"/[loc
             // eslint-disable-next-line @next/next/no-img-element -- CDN URL, any host
             <img src={person.photoUrl} alt="" className="bg-muted ring-background size-32 shrink-0 rounded-full object-cover shadow-md ring-4 sm:size-36" />
           ) : (
-            <span className="bg-primary/10 text-primary ring-background flex size-32 shrink-0 items-center justify-center rounded-full text-4xl font-semibold ring-4 sm:size-36">
-              {person.name.charAt(0)}
-            </span>
+            <PersonPlaceholder className="ring-background size-32 ring-4 sm:size-36" />
           )}
           <div className="min-w-0 flex-1 space-y-3">
             <div className="space-y-1">
