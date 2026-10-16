@@ -2,10 +2,13 @@
 
 import { AwardIcon, ExternalLinkIcon, FileTextIcon, FilePlus2Icon, PencilIcon, Trash2Icon, UploadIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
+import type { LocalizedText } from "@/db/schema"
+import { profileText } from "@/features/instructors/schema"
 import { useRef, useState, useTransition } from "react"
 import { toast } from "sonner"
 
-import { Form, SubmitButton, TextareaField, TextField } from "@/components/admin/form/form"
+import { Form, SubmitButton } from "@/components/admin/form/form"
+import { LocalizedInput } from "@/components/admin/form/localized-input"
 import { useActionForm } from "@/components/admin/form/use-action-form"
 import { checkFile, failureCode, uploadFile, useMediaText, type ClientUploadError } from "@/components/admin/upload/upload-client"
 import {
@@ -32,28 +35,38 @@ import {
   type EditDocumentValues,
 } from "@/features/instructor-documents/schema"
 import { useRouter } from "@/i18n/navigation"
-import { formatNumber } from "@/lib/format"
 import { DOCUMENT_ACCEPT, MAX_IMAGE_BYTES, type UploadResult } from "@/lib/storage/shared"
 import { cn } from "@/lib/utils"
 
 /** A document as the instructor and the admins see it (with the full file). */
 export type DocumentItem = {
   id: string
-  title: string
-  issuer: string
-  year: number | null
-  description: string
+  title: LocalizedText
   isPdf: boolean
   url: string | null
   thumbUrl: string | null
 }
 
-/** "Issuer · 2021", what is known of where a document comes from. */
-export function DocumentSource({ issuer, year, className }: { issuer: string; year: number | null; className?: string }) {
+const texts = (t: LocalizedText) => ({ fa: t.fa ?? "", tr: t.tr ?? "", en: t.en ?? "" })
+
+/** The title in each language it has: the page's own first. */
+function Titles({ title }: { title: LocalizedText }) {
   const locale = useLocale()
-  const parts = [issuer, year ? formatNumber(year, locale, { useGrouping: false }) : ""].filter(Boolean)
-  if (!parts.length) return null
-  return <p className={cn("text-muted-foreground text-sm", className)}>{parts.join(" · ")}</p>
+  const own = profileText(title, locale)
+  const others = (["fa", "tr", "en"] as const).filter((l) => title[l]?.trim() && title[l]?.trim() !== own)
+  return (
+    <div className="space-y-0.5">
+      <p className="font-medium" dir="auto">
+        {own}
+      </p>
+      {others.map((l) => (
+        <p key={l} lang={l} dir="auto" className="text-muted-foreground text-sm">
+          <span className="bg-muted me-1.5 rounded px-1 py-px font-mono text-[0.65rem] uppercase">{l}</span>
+          {title[l]}
+        </p>
+      ))}
+    </div>
+  )
 }
 
 /** A document's little picture: the photo, or a page icon for a PDF. */
@@ -88,18 +101,10 @@ export function DocumentsList({ documents, admin = false }: { documents: Documen
       ) : (
         <ul className="divide-y">
           {documents.map((d) => (
-            <li key={d.id} className="flex gap-4 py-4 first:pt-0 last:pb-0">
+            <li key={d.id} className="flex items-center gap-4 py-4 first:pt-0 last:pb-0">
               <Preview doc={d} className="size-20 sm:size-24" />
               <div className="min-w-0 flex-1 space-y-1">
-                <p className="font-medium" dir="auto">
-                  {d.title}
-                </p>
-                <DocumentSource issuer={d.issuer} year={d.year} />
-                {d.description && (
-                  <p className="text-foreground/80 line-clamp-3 text-sm whitespace-pre-line" dir="auto">
-                    {d.description}
-                  </p>
-                )}
+                <Titles title={d.title} />
                 <div className="-ms-2 flex flex-wrap items-center gap-1 pt-1">
                   {d.url && (
                     <Button asChild variant="ghost" size="sm">
@@ -124,6 +129,7 @@ export function DocumentsList({ documents, admin = false }: { documents: Documen
 
 function DeleteDocument({ doc, admin }: { doc: DocumentItem; admin: boolean }) {
   const t = useTranslations("instructorPanel.documents")
+  const locale = useLocale()
   const tc = useTranslations("common")
   const router = useRouter()
   const [pending, start] = useTransition()
@@ -150,7 +156,7 @@ function DeleteDocument({ doc, admin }: { doc: DocumentItem; admin: boolean }) {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
-          <AlertDialogDescription>{t("deleteDescription", { title: doc.title })}</AlertDialogDescription>
+          <AlertDialogDescription>{t("deleteDescription", { title: profileText(doc.title, locale) })}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>{tc("actions.cancel")}</AlertDialogCancel>
@@ -163,17 +169,16 @@ function DeleteDocument({ doc, admin }: { doc: DocumentItem; admin: boolean }) {
   )
 }
 
-function DetailsFields<T extends AddDocumentValues | EditDocumentValues>() {
+function TitleField() {
   const t = useTranslations("instructorPanel.documents.fields")
   return (
-    <>
-      <TextField<T> name={"title" as never} label={t("title")} description={t("titleHint")} required maxLength={120} className="[&_input]:h-11 [&_input]:text-base" />
-      <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_8rem]">
-        <TextField<T> name={"issuer" as never} label={t("issuer")} maxLength={120} className="[&_input]:h-11 [&_input]:text-base" />
-        <TextField<T> name={"year" as never} label={t("year")} inputMode="numeric" maxLength={4} dir="ltr" className="[&_input]:h-11 [&_input]:text-base" />
-      </div>
-      <TextareaField<T> name={"description" as never} label={t("description")} description={t("descriptionHint")} rows={3} maxLength={600} className="[&_textarea]:text-base" />
-    </>
+    <LocalizedInput
+      name="title"
+      label={t("title")}
+      description={t("titleHint")}
+      maxLength={120}
+      className="[&_input]:h-11 [&_input]:text-base [&_[data-slot=tabs-list]]:h-10!"
+    />
   )
 }
 
@@ -219,7 +224,7 @@ function EditForm({ doc, onDone }: { doc: DocumentItem; onDone: () => void }) {
   const { form, submit, pending } = useActionForm({
     schema: editDocumentSchema,
     action: editDocumentAction,
-    defaultValues: { id: doc.id, title: doc.title, issuer: doc.issuer, year: doc.year === null ? "" : String(doc.year), description: doc.description } as EditDocumentValues,
+    defaultValues: { id: doc.id, title: texts(doc.title) } as EditDocumentValues,
     successMessage: t("saved"),
     onSuccess: () => {
       onDone()
@@ -228,7 +233,7 @@ function EditForm({ doc, onDone }: { doc: DocumentItem; onDone: () => void }) {
   })
   return (
     <Form form={form} onSubmit={submit} className="space-y-5">
-      <DetailsFields<EditDocumentValues> />
+      <TitleField />
       <FormButtons pending={pending} label={t("save")} />
     </Form>
   )
@@ -269,7 +274,7 @@ function AddForm({ onDone }: { onDone: () => void }) {
   const { form, submit, pending } = useActionForm({
     schema: addDocumentSchema,
     action: addDocumentAction,
-    defaultValues: { path: "", title: "", issuer: "", year: "", description: "" } as AddDocumentValues,
+    defaultValues: { path: "", title: { fa: "", tr: "", en: "" } } as AddDocumentValues,
     successMessage: t("added"),
     onSuccess: () => {
       onDone()
@@ -288,7 +293,6 @@ function AddForm({ onDone }: { onDone: () => void }) {
       })
       setFile({ ...result, name: chosen.name })
       form.setValue("path", result.path, { shouldValidate: true, shouldDirty: true })
-      if (!form.getValues("title")) form.setValue("title", chosen.name.replace(/\.[^.]+$/, "").slice(0, 120))
       setPhase({ kind: "idle" })
     } catch (error) {
       const code = failureCode(error) as ClientUploadError | "rate_limited" | "aborted"
@@ -353,7 +357,7 @@ function AddForm({ onDone }: { onDone: () => void }) {
           {t("errors.needFile")}
         </p>
       )}
-      <DetailsFields<AddDocumentValues> />
+      <TitleField />
       <p className="text-muted-foreground text-xs text-pretty">{t("privacy")}</p>
       <FormButtons pending={pending || phase.kind === "uploading"} label={t("addConfirm")} />
     </Form>

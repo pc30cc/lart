@@ -242,6 +242,7 @@ export const getPublicWorkshop = cache(async (slug: string, locale: string) => {
       category: categories.name,
       // Public instructor fields only.
       instructor: {
+        slug: instructors.slug,
         displayName: instructors.displayName,
         teachingField: instructors.teachingField,
         bio: instructors.bio,
@@ -326,6 +327,8 @@ export const getPublicWorkshop = cache(async (slug: string, locale: string) => {
       return url ? [{ url, width: s.width, height: s.height }] : []
     }),
     instructor: {
+      /** Their page: /instructors/<slug>. */
+      slug: row.instructor.slug,
       name: profileText(row.instructor.displayName, locale),
       field: profileText(row.instructor.teachingField, locale),
       bio: profileText(row.instructor.bio, locale),

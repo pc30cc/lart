@@ -162,7 +162,7 @@ export default async function InstructorPage({ params }: PageProps<"/[locale]/ad
               badge={
                 instructor.active && instructor.approved && slug ? (
                   <Button asChild variant="ghost" size="sm">
-                    <Link href={`/workshops/${slug}/instructor`} target="_blank">
+                    <Link href={`/instructors/${slug}`} target="_blank">
                       <ExternalLinkIcon />
                       {t("documents.publicProfile")}
                     </Link>

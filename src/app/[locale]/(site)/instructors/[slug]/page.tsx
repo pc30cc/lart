@@ -9,14 +9,13 @@ import { formatWorkshopDates } from "@/features/workshops/days"
 import { Link } from "@/i18n/navigation"
 import { isRtl } from "@/i18n/locales"
 import { pageLocale } from "@/i18n/page-locale"
-import { formatNumber } from "@/lib/format"
 import { getBrand } from "@/lib/settings"
 import { cn } from "@/lib/utils"
 
 /** Never in search engines: a person's page, reached from their workshops only (not in the sitemap either). */
 const NOT_INDEXED: Metadata["robots"] = { index: false, follow: true, nocache: true, googleBot: { index: false, follow: true, noimageindex: true } }
 
-export async function generateMetadata({ params }: PageProps<"/[locale]/workshops/[slug]/instructor">): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps<"/[locale]/instructors/[slug]">): Promise<Metadata> {
   const { locale: raw, slug } = await params
   const locale = pageLocale(raw)
   const person = await getPublicInstructor(slug, locale)
@@ -26,12 +25,12 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/workshop
 }
 
 /**
- * The instructor of a workshop (/workshops/[slug]/instructor), opened from
- * "About the instructor" on the workshop's page: who they are, their certificates and
+ * An instructor's page (/instructors/[slug]), opened from "About the
+ * instructor" on their workshops and from the instructors list: who they are, their certificates and
  * licences as small marked copies (enough to see what they are, too small to
  * reuse) with their details, and the workshops they gave here. Not indexed.
  */
-export default async function InstructorProfilePage({ params }: PageProps<"/[locale]/workshops/[slug]/instructor">) {
+export default async function InstructorProfilePage({ params }: PageProps<"/[locale]/instructors/[slug]">) {
   const { locale: raw, slug } = await params
   const locale = pageLocale(raw)
   const person = await getPublicInstructor(slug, locale)
@@ -43,7 +42,7 @@ export default async function InstructorProfilePage({ params }: PageProps<"/[loc
   return (
     <article className="mx-auto w-full max-w-5xl px-4 pt-6 pb-16 sm:pt-8">
       <Link
-        href={`/workshops/${slug}`}
+        href="/instructors"
         className="text-muted-foreground hover:text-foreground focus-visible:ring-ring/50 mb-6 inline-flex h-10 items-center gap-1 rounded-md text-sm outline-none focus-visible:ring-3"
       >
         <ChevronLeftIcon className="size-4 rtl:rotate-180" aria-hidden />
@@ -92,7 +91,7 @@ export default async function InstructorProfilePage({ params }: PageProps<"/[loc
         <Section title={t("documents.title")} description={t("documents.description")} icon={AwardIcon}>
           <ul className="grid gap-4 sm:grid-cols-2">
             {person.documents.map((d) => (
-              <DocumentCard key={d.id} doc={d} locale={locale} pdfLabel={t("documents.pdf")} />
+              <DocumentCard key={d.id} doc={d} pdfLabel={t("documents.pdf")} />
             ))}
           </ul>
           <p className="text-muted-foreground flex items-start gap-2 text-xs text-pretty">
@@ -141,10 +140,9 @@ function Section({ title, description, icon: Icon, children }: { title: string; 
 }
 
 /** A certificate or licence: its small marked copy (never larger than its frame, not draggable) and its details. */
-function DocumentCard({ doc, locale, pdfLabel }: { doc: PublicInstructor["documents"][number]; locale: string; pdfLabel: string }) {
-  const source = [doc.issuer, doc.year ? formatNumber(doc.year, locale, { useGrouping: false }) : ""].filter(Boolean).join(" · ")
+function DocumentCard({ doc, pdfLabel }: { doc: PublicInstructor["documents"][number]; pdfLabel: string }) {
   return (
-    <li className="bg-card flex gap-4 rounded-2xl border p-4">
+    <li className="bg-card flex items-center gap-4 rounded-2xl border p-4">
       <div className="bg-muted ring-foreground/10 relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-xl ring-1 select-none">
         {doc.thumbUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- CDN URL, any host; the small copy only
@@ -156,21 +154,9 @@ function DocumentCard({ doc, locale, pdfLabel }: { doc: PublicInstructor["docume
           </span>
         )}
       </div>
-      <div className="min-w-0 flex-1 space-y-1">
-        <p className="leading-snug font-medium" dir="auto">
-          {doc.title}
-        </p>
-        {source && (
-          <p className="text-primary text-sm" dir="auto">
-            {source}
-          </p>
-        )}
-        {doc.description && (
-          <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line" dir="auto">
-            {doc.description}
-          </p>
-        )}
-      </div>
+      <p className="min-w-0 flex-1 leading-snug font-medium">
+        <bdi {...langProps(doc.titleLang)}>{doc.title}</bdi>
+      </p>
     </li>
   )
 }

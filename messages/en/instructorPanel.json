@@ -250,7 +250,7 @@
   },
   "documents": {
     "title": "Certificates and licences",
-    "description": "Add your diplomas, certificates and licences. Visitors see them on your page only as small, marked copies, with the details you write.",
+    "description": "Add your diplomas, certificates and licences, each with its title in Persian, Turkish or English. Visitors see them on your page only as small, marked copies.",
     "seeProfile": "See my public page",
     "empty": "No documents yet. Add your first certificate or licence.",
     "emptyAdmin": "No documents added yet.",
@@ -261,12 +261,12 @@
     "deleteTitle": "Remove this document?",
     "deleteDescription": "“{title}” will be removed from the profile, with its file.",
     "editTitle": "Edit the document",
-    "editDescription": "Change its title, who gave it, the year or the description.",
+    "editDescription": "Change its title in each language.",
     "save": "Save",
     "saved": "Saved.",
     "add": "Add a document",
     "addTitle": "Add a certificate or licence",
-    "addDescription": "Choose a photo or a PDF of it, then write what it is.",
+    "addDescription": "Choose a photo or a PDF of it, then write its title.",
     "addConfirm": "Add",
     "added": "Document added.",
     "choose": "Choose a photo or PDF",
@@ -276,17 +276,10 @@
     "privacy": "Only you and the team see the full file. Your public page shows a small copy (PDFs only by their title).",
     "fields": {
       "title": "Title",
-      "titleHint": "For example: Ceramics instructor certificate",
-      "issuer": "Given by",
-      "year": "Year",
-      "description": "Description",
-      "descriptionHint": "Optional: what it covers, hours, level…"
+      "titleHint": "In one or more languages. For example: Ceramics instructor certificate"
     },
     "errors": {
-      "title": "Write a title of 2 to 120 characters.",
-      "issuer": "At most 120 characters.",
-      "year": "Write a year, like 2021.",
-      "description": "At most 600 characters.",
+      "title": "Write a title of 2 to 120 characters in at least one language.",
       "file": "Upload the file again, please.",
       "needFile": "Choose the document's file first.",
       "tooMany": "You can keep up to 20 documents. Remove one to add another."

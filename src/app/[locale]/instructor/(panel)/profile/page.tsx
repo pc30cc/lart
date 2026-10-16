@@ -62,7 +62,7 @@ export default async function MyProfilePage({ params }: PageProps<"/[locale]/ins
             {slug && (
               <>
                 {" "}
-                <Link href={`/workshops/${slug}/instructor`} className="text-primary font-medium underline-offset-4 hover:underline">
+                <Link href={`/instructors/${slug}`} className="text-primary font-medium underline-offset-4 hover:underline">
                   {td("seeProfile")}
                 </Link>
               </>

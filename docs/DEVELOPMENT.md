@@ -270,7 +270,8 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 | `/workshops` | site | public | |
 | `/workshops/[slug]` | site | public | |
 | `/workshops/[slug]/register` | site | public | |
-| `/workshops/[slug]/instructor` | site | public | |
+| `/instructors` | site | public | |
+| `/instructors/[slug]` | site | public | |
 | `/about` | site | public | |
 | `/story` | site | public | |
 | `/contact` | site | public | |
@@ -1307,14 +1308,17 @@ a noindex next to a canonical to another page as contradicting itself); the
 sitemap lists only `/workshops`.
 
 **Instructor's page and documents.** "About the instructor", next to the
-instructor's name on a workshop's page, opens `/workshops/[slug]/instructor`
-(`getPublicInstructor(slug, locale)` in `src/features/instructor-documents/queries.ts`):
-the workshop's instructor while active and approved, with public fields only,
+instructor's name on a workshop's page, opens `/instructors/<instructors.slug>`
+(`getPublicInstructor(slug, locale)` in `src/features/instructor-documents/queries.ts`);
+`/instructors` lists them (`listPublicInstructors`). The slug is set once by
+the database when an instructor is added (trigger `instructors_slug`, from the
+English or Turkish name, "-2"… when taken), so a rename never breaks a link.
+The page shows the instructor while active and approved, with public fields only,
 their certificates and licences, and the workshops they gave or will give
 (published at least once, never cancelled). It is `noindex` and out of the
-sitemap. Instructors add documents in their panel (Profile → Certificates and
-licences: a photo or a PDF, a title, who gave it, the year, a description;
-at most 20), uploaded through `/api/instructor/uploads` with the purpose
+sitemap, like the list. Instructors add documents in their panel (Profile → Certificates and
+licences: a photo or a PDF and its title in Persian, Turkish and/or
+English; at most 20), uploaded through `/api/instructor/uploads` with the purpose
 `instructor_document`. A photo is stored twice under
 `instructors/<name>/documents/`: the file (`doc-…`, at most 2400 px, for the
 instructor and the admins) and its public copy (`thumb-…`,

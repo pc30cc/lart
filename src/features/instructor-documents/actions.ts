@@ -13,7 +13,7 @@ import { addDocumentSchema, documentIdSchema, editDocumentSchema, MAX_DOCUMENTS 
 
 const revalidate = () => {
   revalidatePath("/[locale]/instructor", "layout")
-  revalidatePath("/[locale]/workshops/[slug]/instructor", "page")
+  revalidatePath("/[locale]/instructors", "layout")
   revalidatePath("/[locale]/admin/instructors/[id]", "page")
 }
 
@@ -50,7 +50,7 @@ async function upload(tx: Tx, path: string, instructorId: string): Promise<{ thu
 
 /**
  * Add a certificate or licence to my profile: a file I uploaded (photo or
- * PDF) with its title, who gave it, the year and a description. At most
+ * PDF) with its title (Persian, Turkish and/or English). At most
  * MAX_DOCUMENTS. Audited as `instructor.document_add`.
  */
 export const addDocumentAction = instructorAction(addDocumentSchema, async (input, ctx) => {
@@ -72,9 +72,6 @@ export const addDocumentAction = instructorAction(addDocumentSchema, async (inpu
         thumbPath: file.thumbPath,
         contentType: mediaContentType(input.path) ?? "application/octet-stream",
         title: input.title,
-        issuer: input.issuer,
-        year: input.year,
-        description: input.description,
         sort: n,
       })
       .returning({ id: instructorDocuments.id })
@@ -85,13 +82,13 @@ export const addDocumentAction = instructorAction(addDocumentSchema, async (inpu
   return { id }
 })
 
-/** Change a document's details (not its file: a new file is a new document). */
+/** Change a document's title (not its file: a new file is a new document). */
 export const editDocumentAction = instructorAction(editDocumentSchema, async (input, ctx) => {
   const instructorId = ctx.instructor.id
   await db.transaction(async (tx) => {
     const [row] = await tx
       .update(instructorDocuments)
-      .set({ title: input.title, issuer: input.issuer, year: input.year, description: input.description })
+      .set({ title: input.title })
       .where(and(eq(instructorDocuments.id, input.id), eq(instructorDocuments.instructorId, instructorId)))
       .returning({ id: instructorDocuments.id })
     if (!row) throw new UserError("common.errors.notFound")

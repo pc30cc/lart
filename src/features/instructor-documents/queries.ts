@@ -1,5 +1,5 @@
 import "server-only"
-import { and, asc, desc, eq, inArray, isNotNull, isNull } from "drizzle-orm"
+import { and, asc, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm"
 import { cache } from "react"
 
 import { db } from "@/db"
@@ -33,9 +33,6 @@ const documentColumns = {
   thumbPath: instructorDocuments.thumbPath,
   contentType: instructorDocuments.contentType,
   title: instructorDocuments.title,
-  issuer: instructorDocuments.issuer,
-  year: instructorDocuments.year,
-  description: instructorDocuments.description,
   createdAt: instructorDocuments.createdAt,
 }
 
@@ -65,8 +62,8 @@ export type InstructorDocument = Awaited<ReturnType<typeof listDocuments>>[numbe
 const shownStatuses = ["published", "confirmed", "closed"] as const
 
 /**
- * The instructor of a workshop that was published, by the workshop's slug
- * (`/workshops/[slug]/instructor`, not indexed): only an
+ * An instructor's public page by their slug (`/instructors/[slug]`, not
+ * indexed): only an
  * approved, active instructor with public fields only, their documents as
  * small copies (no full file: `thumbUrl` only, none for a PDF) and the
  * workshops they gave or will give here (published at least once, not
@@ -74,13 +71,6 @@ const shownStatuses = ["published", "confirmed", "closed"] as const
  */
 export const getPublicInstructor = cache(async (slug: string, locale: string, now: Date = new Date()) => {
   if (!/^[a-z0-9-]{1,80}$/.test(slug)) return null
-  const [course] = await db
-    .select({ instructorId: courses.instructorId })
-    .from(courses)
-    .where(and(eq(courses.slug, slug), isNotNull(courses.publishedAt)))
-    .limit(1)
-  if (!course) return null
-  const id = course.instructorId
   const [row] = await db
     .select({
       id: instructors.id,
@@ -91,7 +81,7 @@ export const getPublicInstructor = cache(async (slug: string, locale: string, no
       photoPath: instructors.photoPath,
     })
     .from(instructors)
-    .where(and(eq(instructors.id, id), eq(instructors.active, true), isNotNull(instructors.approvedAt)))
+    .where(and(eq(instructors.slug, slug), eq(instructors.active, true), isNotNull(instructors.approvedAt)))
     .limit(1)
   if (!row) return null
   const [docs, workshops, files] = await Promise.all([
@@ -125,10 +115,8 @@ export const getPublicInstructor = cache(async (slug: string, locale: string, no
     photoUrl: urlOf(files, row.photoPath),
     documents: docs.map((d) => ({
       id: d.id,
-      title: d.title,
-      issuer: d.issuer,
-      year: d.year,
-      description: d.description,
+      title: profileText(d.title, locale),
+      titleLang: profileLanguage(d.title, locale),
       isPdf: d.contentType === "application/pdf",
       // Only the small marked copy leaves the server, never the document itself.
       thumbUrl: urlOf(files, d.thumbPath),
@@ -145,15 +133,44 @@ export const getPublicInstructor = cache(async (slug: string, locale: string, no
     })),
   }
 })
-/** A workshop of the instructor whose page shows their profile (the latest published), or null when none was. */
+/** An instructor's slug (their page's address), or null for an unknown id. */
 export async function profileSlug(instructorId: string): Promise<string | null> {
-  const [row] = await db
-    .select({ slug: courses.slug })
-    .from(courses)
-    .where(and(eq(courses.instructorId, instructorId), isNotNull(courses.publishedAt)))
-    .orderBy(desc(courses.startsAt))
-    .limit(1)
+  const [row] = await db.select({ slug: instructors.slug }).from(instructors).where(eq(instructors.id, instructorId)).limit(1)
   return row?.slug ?? null
+}
+
+/**
+ * The instructors list (/instructors, not indexed): approved, active
+ * instructors with public fields only, those with the most workshops here
+ * first, then by name.
+ */
+export async function listPublicInstructors(locale: string) {
+  const [rows, files] = await Promise.all([
+    db
+      .select({
+        slug: instructors.slug,
+        displayName: instructors.displayName,
+        teachingField: instructors.teachingField,
+        photoPath: instructors.photoPath,
+        workshops: sql<number>`(select count(*)::int from ${courses} c where c.instructor_id = "instructors"."id"
+          and c.published_at is not null and c.cancelled_at is null and c.status in ('published', 'confirmed', 'closed'))`,
+        documents: sql<number>`(select count(*)::int from ${instructorDocuments} d where d.instructor_id = "instructors"."id")`,
+      })
+      .from(instructors)
+      .where(and(eq(instructors.active, true), isNotNull(instructors.approvedAt))),
+    storage(),
+  ])
+  return rows
+    .map((r) => ({
+      slug: r.slug,
+      name: profileText(r.displayName, locale),
+      field: profileText(r.teachingField, locale),
+      fieldLang: profileLanguage(r.teachingField, locale),
+      photoUrl: urlOf(files, r.photoPath),
+      workshops: r.workshops,
+      documents: r.documents,
+    }))
+    .sort((a, b) => b.workshops - a.workshops || a.name.localeCompare(b.name, locale))
 }
 
 export type PublicInstructor = NonNullable<Awaited<ReturnType<typeof getPublicInstructor>>>

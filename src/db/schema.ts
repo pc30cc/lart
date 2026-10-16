@@ -114,6 +114,13 @@ export const instructors = pgTable("instructors", {
   mobile: text("mobile").notNull(),
   // Public.
   displayName: localized("display_name").notNull(),
+  /**
+   * Their public page's address (/instructors/<slug>): set once by the
+   * database when the row is added (trigger `instructors_slug`, from the
+   * English or Turkish name, "-2", "-3"… when taken; "instructor" when the
+   * name has no Latin letters), so links stay the same after a rename.
+   */
+  slug: text("slug").notNull().default("").unique(),
   teachingField: localized("teaching_field").notNull(),
   bio: localized("bio"),
   /** Locale-independent codes, e.g. ["fa", "tr", "en"]. */
@@ -149,11 +156,8 @@ export const instructorDocuments = pgTable("instructor_documents", {
   path: text("path").notNull(),
   thumbPath: text("thumb_path"),
   contentType: text("content_type").notNull(),
-  title: text("title").notNull(),
-  /** Who gave it (a school, an association…); may be empty. */
-  issuer: text("issuer").notNull().default(""),
-  year: smallint("year"),
-  description: text("description").notNull().default(""),
+  /** What it is, in Persian, Turkish and/or English (at least one). */
+  title: localized("title").notNull(),
   sort: integer("sort").notNull().default(0),
   createdAt: createdAt(),
 }, (t) => [index("instructor_documents_instructor_idx").on(t.instructorId)])

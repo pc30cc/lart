@@ -226,7 +226,7 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/work
                   <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                     <span className="text-lg font-semibold">{w.instructor.name}</span>
                     <Link
-                      href={`/workshops/${w.slug}/instructor`}
+                      href={`/instructors/${w.instructor.slug}`}
                       className="text-primary focus-visible:ring-ring/50 inline-flex items-center gap-1 rounded-sm text-sm font-medium underline-offset-4 outline-none hover:underline focus-visible:ring-3"
                     >
                       <IdCardIcon className="size-4" aria-hidden />

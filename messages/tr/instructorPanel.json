@@ -250,7 +250,7 @@
   },
   "documents": {
     "title": "Sertifikalar ve belgeler",
-    "description": "Diplomalarınızı, sertifikalarınızı ve lisanslarınızı ekleyin. Ziyaretçiler bunları sayfanızda yalnızca küçük, işaretli kopyalar olarak, yazdığınız bilgilerle görür.",
+    "description": "Diplomalarınızı, sertifikalarınızı ve lisanslarınızı Farsça, Türkçe veya İngilizce başlığıyla ekleyin. Ziyaretçiler bunları sayfanızda yalnızca küçük, işaretli kopyalar olarak görür.",
     "seeProfile": "Herkese açık sayfamı gör",
     "empty": "Henüz belge yok. İlk sertifikanızı veya lisansınızı ekleyin.",
     "emptyAdmin": "Henüz belge eklenmedi.",
@@ -261,12 +261,12 @@
     "deleteTitle": "Bu belge kaldırılsın mı?",
     "deleteDescription": "“{title}” dosyasıyla birlikte profilden kaldırılacak.",
     "editTitle": "Belgeyi düzenle",
-    "editDescription": "Başlığını, veren kurumu, yılını veya açıklamasını değiştirin.",
+    "editDescription": "Başlığını her dilde değiştirin.",
     "save": "Kaydet",
     "saved": "Kaydedildi.",
     "add": "Belge ekle",
     "addTitle": "Sertifika veya lisans ekle",
-    "addDescription": "Fotoğrafını ya da PDF'sini seçin, sonra ne olduğunu yazın.",
+    "addDescription": "Fotoğrafını ya da PDF'sini seçin, sonra başlığını yazın.",
     "addConfirm": "Ekle",
     "added": "Belge eklendi.",
     "choose": "Fotoğraf veya PDF seçin",
@@ -276,17 +276,10 @@
     "privacy": "Dosyanın tamamını yalnızca siz ve ekip görür. Herkese açık sayfanız küçük bir kopyasını gösterir (PDF yalnızca başlığıyla).",
     "fields": {
       "title": "Başlık",
-      "titleHint": "Örneğin: Seramik eğitmenliği sertifikası",
-      "issuer": "Veren kurum",
-      "year": "Yıl",
-      "description": "Açıklama",
-      "descriptionHint": "İsteğe bağlı: kapsamı, saat, seviye…"
+      "titleHint": "Bir veya birkaç dilde. Örneğin: Seramik eğitmenliği sertifikası"
     },
     "errors": {
-      "title": "2 ile 120 karakter arasında bir başlık yazın.",
-      "issuer": "En fazla 120 karakter.",
-      "year": "Bir yıl yazın, örneğin 2021.",
-      "description": "En fazla 600 karakter.",
+      "title": "En az bir dilde 2 ile 120 karakter arasında bir başlık yazın.",
       "file": "Lütfen dosyayı yeniden yükleyin.",
       "needFile": "Önce belgenin dosyasını seçin.",
       "tooMany": "En fazla 20 belge tutabilirsiniz. Yenisini eklemek için birini kaldırın."

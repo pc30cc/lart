@@ -52,7 +52,7 @@
   },
   "instructorProfile": {
     "metaTitle": "{name}، مدرس",
-    "back": "همهٔ ورکشاپ‌ها",
+    "back": "همهٔ مدرس‌ها",
     "eyebrow": "مدرس در {brand}",
     "workshopsCount": "{count, plural, other {# ورکشاپ}}",
     "documentsCount": "{count, plural, other {# مدرک}}",
@@ -67,5 +67,13 @@
     "held": "ورکشاپ‌ها در {brand}",
     "heldBadge": "برگزار شد",
     "noneHeld": "هنوز ورکشاپی اینجا برگزار نشده است."
+  },
+  "instructorsList": {
+    "metaTitle": "مدرس‌ها · {brand}",
+    "title": "مدرس‌های ما",
+    "description": "هنرمندانی که ورکشاپ‌های {brand} را برگزار می‌کنند.",
+    "empty": "هنوز مدرسی برای نمایش نیست.",
+    "workshops": "{count, plural, other {# ورکشاپ}}",
+    "documents": "{count, plural, other {# مدرک}}"
   }
 }

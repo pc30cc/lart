@@ -52,7 +52,7 @@
   },
   "instructorProfile": {
     "metaTitle": "{name}, eğitmen",
-    "back": "Tüm atölyeler",
+    "back": "Tüm eğitmenler",
     "eyebrow": "{brand} eğitmeni",
     "workshopsCount": "{count, plural, other {# atölye}}",
     "documentsCount": "{count, plural, other {# belge}}",
@@ -67,5 +67,13 @@
     "held": "{brand} atölyeleri",
     "heldBadge": "Yapıldı",
     "noneHeld": "Burada henüz atölye yapılmadı."
+  },
+  "instructorsList": {
+    "metaTitle": "Eğitmenler · {brand}",
+    "title": "Eğitmenlerimiz",
+    "description": "{brand} atölyelerini veren sanatçılar.",
+    "empty": "Henüz gösterilecek eğitmen yok.",
+    "workshops": "{count, plural, other {# atölye}}",
+    "documents": "{count, plural, other {# belge}}"
   }
 }

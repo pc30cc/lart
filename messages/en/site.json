@@ -52,7 +52,7 @@
   },
   "instructorProfile": {
     "metaTitle": "{name}, instructor",
-    "back": "All workshops",
+    "back": "All instructors",
     "eyebrow": "Instructor at {brand}",
     "workshopsCount": "{count, plural, one {# workshop} other {# workshops}}",
     "documentsCount": "{count, plural, one {# certificate} other {# certificates}}",
@@ -67,5 +67,13 @@
     "held": "Workshops at {brand}",
     "heldBadge": "Held",
     "noneHeld": "No workshops held here yet."
+  },
+  "instructorsList": {
+    "metaTitle": "Instructors · {brand}",
+    "title": "Our instructors",
+    "description": "The artists who teach the workshops at {brand}.",
+    "empty": "No instructors to show yet.",
+    "workshops": "{count, plural, one {# workshop} other {# workshops}}",
+    "documents": "{count, plural, one {# certificate} other {# certificates}}"
   }
 }
