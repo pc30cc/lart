@@ -5,18 +5,18 @@
     "evening": "İyi akşamlar, {name}"
   },
   "intro": "{date}. İşte işlerin son durumu.",
-  "newWorkshop": "Yeni workshop",
+  "newWorkshop": "Yeni atölye",
   "loading": "Güncel rakamlar hazırlanıyor…",
   "setup": {
     "progress": "{total} adımdan {done} tanesi tamamlandı",
-    "title": "Hoş geldiniz! İlk workshopunuzu birlikte hazırlayalım",
+    "title": "Hoş geldiniz! İlk atölyenizi birlikte hazırlayalım",
     "description": "Yalnızca birkaç kısa adım kaldı. İşler başladığında rakamlarınız ve grafikleriniz tam burada görünecek.",
-    "cta": "İlk workshopunuzu oluşturun",
+    "cta": "İlk atölyenizi oluşturun",
     "done": "Tamamlandı",
     "steps": {
       "category": {
         "title": "Bir kategori ekleyin",
-        "description": "Workshoplarınızı gruplayın; örneğin mum yapımı veya seramik.",
+        "description": "Atölyelerinizi gruplayın; örneğin mum yapımı veya seramik.",
         "action": "Kategori ekle"
       },
       "instructor": {
@@ -26,13 +26,13 @@
       },
       "contract": {
         "title": "Sözleşme metnini belirleyin",
-        "description": "Bu sözleşme her workshop için eğitmene e-postayla gönderilir.",
+        "description": "Bu sözleşme her atölye için eğitmene e-postayla gönderilir.",
         "action": "Şablonları aç"
       },
       "workshop": {
-        "title": "Bir workshop oluşturun",
+        "title": "Bir atölye oluşturun",
         "description": "Tarih, yer, kontenjan ve ücret. Sözleşme e-postayla gönderilir.",
-        "action": "Workshop oluştur"
+        "action": "Atölye oluştur"
       },
       "capital": {
         "title": "Başlangıç sermayesini kaydedin",
@@ -43,9 +43,9 @@
   },
   "attention": {
     "title": "Sizi bekleyen işler",
-    "decisions": "{count, plural, one {# workshop için karar zamanı geldi} other {# workshop için karar zamanı geldi}}",
+    "decisions": "{count, plural, one {# atölye için karar zamanı geldi} other {# atölye için karar zamanı geldi}}",
     "signatures": "{count, plural, one {# sözleşme imza bekliyor} other {# sözleşme imza bekliyor}}",
-    "toClose": "{count, plural, one {# workshop kapanmaya hazır} other {# workshop kapanmaya hazır}}"
+    "toClose": "{count, plural, one {# atölye kapanmaya hazır} other {# atölye kapanmaya hazır}}"
   },
   "kpi": {
     "wallet": "Kasadaki para",
@@ -58,18 +58,18 @@
     "noRevenueLastMonth": "Geçen ay gelir olmadı",
     "lastMonth": "Geçen ay: {amount}",
     "net": "Net kâr ({year})",
-    "netHint": "1 Ocak’tan bu yana. Eğitmen ücreti, workshop kapatılınca sayılır.",
-    "upcoming": "Yaklaşan workshoplar",
+    "netHint": "1 Ocak’tan bu yana. Eğitmen ücreti, atölye kapatılınca sayılır.",
+    "upcoming": "Yaklaşan atölyeler",
     "upcomingSeats": "{seats} yerin {taken} tanesi dolu",
     "upcomingNotOpen": "Sözleşmelerin imzalanması bekleniyor",
-    "upcomingNone": "Henüz planlanmış workshop yok",
+    "upcomingNone": "Henüz planlanmış atölye yok",
     "fill": "Ortalama doluluk",
-    "fillHint": "Son 12 ayda {count, plural, one {# workshop} other {# workshop}}: {seats} yerin {taken} tanesi doldu",
-    "fillNone": "Son 12 ayda henüz workshop yapılmadı"
+    "fillHint": "Son 12 ayda {count, plural, one {# atölye} other {# atölye}}: {seats} yerin {taken} tanesi doldu",
+    "fillNone": "Son 12 ayda henüz atölye yapılmadı"
   },
   "revenue": {
     "title": "Gelir, gider ve kâr",
-    "description": "Son 12 ay, her kaydın tarihine göre. Eğitmen ücreti, workshopun kapatıldığı gün hesaba katılır.",
+    "description": "Son 12 ay, her kaydın tarihine göre. Eğitmen ücreti, atölyenin kapatıldığı gün hesaba katılır.",
     "report": "Raporlar",
     "totals": "Son 12 ayın toplamları",
     "revenue": "Gelir",
@@ -92,23 +92,23 @@
     "capital": "Sermaye",
     "totalCapital": "Toplam sermaye",
     "former": "Artık ortak değil",
-    "sharesOff": "Payların toplamı {total}, oysa %100 olmalı. Bu düzeltilene kadar workshoplar kapatılamaz.",
+    "sharesOff": "Payların toplamı {total}, oysa %100 olmalı. Bu düzeltilene kadar atölyeler kapatılamaz.",
     "empty": {
       "title": "Henüz kâr payı belirlenmedi",
-      "description": "Her workshopun kârı adil paylaşılsın diye her ortağın payını belirleyin.",
+      "description": "Her atölyenin kârı adil paylaşılsın diye her ortağın payını belirleyin.",
       "action": "Payları belirle"
     }
   },
   "upcoming": {
-    "title": "Yaklaşan workshoplar",
-    "description": "Sıradaki workshoplara kısa bir bakış",
-    "all": "Tüm workshoplar",
+    "title": "Yaklaşan atölyeler",
+    "description": "Sıradaki atölyelere kısa bir bakış",
+    "all": "Tüm atölyeler",
     "today": "Bugün",
     "tomorrow": "Yarın",
     "now": "Şu anda sürüyor",
     "seats": "Dolu: {taken} / {max}",
     "paid": "{count, plural, =0 {Henüz ödeme yapan yok} other {# kişi ödedi}}",
-    "free": "Ücretsiz workshop",
+    "free": "Ücretsiz atölye",
     "final": "{count, plural, other {Kesin sayı: # katılımcı}}",
     "notOpen": "Kayıtlar imzadan sonra açılır",
     "alerts": {
@@ -119,14 +119,14 @@
       "minimumReached": "en az sayıya ulaşıldı"
     },
     "empty": {
-      "title": "Yaklaşan workshop yok",
+      "title": "Yaklaşan atölye yok",
       "description": "Bir sonrakini planlayın; kayıtlarıyla birlikte burada görünür.",
-      "action": "Yeni workshop"
+      "action": "Yeni atölye"
     }
   },
   "seats": {
     "title": "Kayıtlar ve doluluk",
-    "description": "Son ve yaklaşan workshoplar",
+    "description": "Son ve yaklaşan atölyeler",
     "registered": "Kayıtlı",
     "capacity": "Kontenjan",
     "minimum": "En az",
@@ -134,27 +134,27 @@
     "held": "Yapıldı",
     "upcoming": "Yaklaşıyor",
     "heldArea": "Yapılmış olanlar",
-    "workshop": "Workshop",
+    "workshop": "Atölye",
     "date": "Tarih",
-    "tableCaption": "Workshoplara göre kayıtlar ve doluluk",
+    "tableCaption": "Atölyelere göre kayıtlar ve doluluk",
     "empty": {
       "title": "Henüz gösterilecek kayıt yok",
-      "description": "Bir workshop kayda açıldığında ne kadar dolduğunu burada görürsünüz."
+      "description": "Bir atölye kayda açıldığında ne kadar dolduğunu burada görürsünüz."
     }
   },
   "profit": {
-    "title": "Workshop ve eğitmene göre kâr",
-    "description": "Son 12 ayda kapanan workshoplar",
+    "title": "Atölye ve eğitmene göre kâr",
+    "description": "Son 12 ayda kapanan atölyeler",
     "view": "Kârı göster",
-    "byWorkshop": "Workshopa göre",
+    "byWorkshop": "Atölyeye göre",
     "byInstructor": "Eğitmene göre",
-    "workshop": "Workshop",
+    "workshop": "Atölye",
     "instructor": "Eğitmen",
     "net": "Net kâr",
-    "workshops": "{count, plural, one {# workshop} other {# workshop}}",
+    "workshops": "{count, plural, one {# atölye} other {# atölye}}",
     "empty": {
-      "title": "Henüz kapanan workshop yok",
-      "description": "Bir workshopu kapattığınızda kesin kârı burada workshop ve eğitmen bazında görünür."
+      "title": "Henüz kapanan atölye yok",
+      "description": "Bir atölyeyi kapattığınızda kesin kârı burada atölye ve eğitmen bazında görünür."
     }
   }
 }

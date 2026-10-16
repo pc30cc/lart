@@ -38,10 +38,10 @@
     "errors": {
       "mainOff": "Ana dil açık kalmalı."
     },
-    "workshopsTitle": "Sitede workshoplar",
-    "workshopsDescription": "Ziyaretçilerin workshop kartlarında ve sayfalarında gördükleri.",
+    "workshopsTitle": "Sitede atölyeler",
+    "workshopsDescription": "Ziyaretçilerin atölye kartlarında ve sayfalarında gördükleri.",
     "showSeats": "Kayıt sayısını ve kalan yerleri göster",
-    "showSeatsHint": "Açık: “5 kişi kayıtlı · 3 yer kaldı” (birkaç günlük workshopta her gün ayrı). Kapalı: yalnızca “Kayıtlar açık” ya da “Dolu”."
+    "showSeatsHint": "Açık: “5 kişi kayıtlı · 3 yer kaldı” (birkaç günlük atölyede her gün ayrı). Kapalı: yalnızca “Kayıtlar açık” ya da “Dolu”."
   },
   "email": {
     "providerTitle": "E-postalar nasıl gönderilsin",
@@ -263,7 +263,7 @@
       "report": "Rapor",
       "setting": "Ayar",
       "template": "Şablon",
-      "workshop": "Workshop",
+      "workshop": "Atölye",
       "member": "Öğrenci"
     },
     "actions": {
@@ -354,11 +354,11 @@
         "delete": "Şablon silindi"
       },
       "workshop": {
-        "create": "Workshop oluşturuldu",
-        "update": "Workshop düzenlendi",
-        "confirm": "Workshop kesinleşti",
-        "cancel": "Workshop iptal edildi",
-        "close": "Workshop kapatıldı",
+        "create": "Atölye oluşturuldu",
+        "update": "Atölye düzenlendi",
+        "confirm": "Atölye kesinleşti",
+        "cancel": "Atölye iptal edildi",
+        "close": "Atölye kapatıldı",
         "gallery": "Galeri güncellendi",
         "raiseFinal": "Kesin katılımcı sayısı artırıldı",
         "telegram": "Telegram'a gönderildi"
@@ -374,13 +374,13 @@
     "viewingAs": "onun hesabını görüntülerken"
   },
   "payments": {
-    "intro": "Öğrencilerin nasıl ödeyebileceğini seçin. Kayıttan sonra burada açtığınız yolları görürler. Para geldiğinde workshopun Kayıtlar sekmesinden ödemeyi kaydedin: kayıt ödendi olarak işaretlenir.",
+    "intro": "Öğrencilerin nasıl ödeyebileceğini seçin. Kayıttan sonra burada açtığınız yolları görürler. Para geldiğinde atölyenin Kayıtlar sekmesinden ödemeyi kaydedin: kayıt ödendi olarak işaretlenir.",
     "on": "Açık",
     "off": "Kapalı",
     "lastOne": "En az bir yol açık kalmalı.",
     "cash": {
-      "title": "Workshopta nakit",
-      "description": "Öğrenciler workshop günü nakit öder."
+      "title": "Atölyede nakit",
+      "description": "Öğrenciler atölye günü nakit öder."
     },
     "transfer": {
       "title": "Banka havalesi",
@@ -398,8 +398,8 @@
     },
     "online": {
       "title": "Online ödeme linki",
-      "description": "Öğrenciler workshopun kendi ödeme sayfasında kartla öder.",
-      "howTo": "Her workshopun kendi ödeme linki olur: iyzico (iyziLink) ya da PayTR uygulamasında workshopun fiyatı için oluşturup workshop formuna yapıştırın. Biri ödeme yaptığında ödemeyi “Online” olarak kaydedin.",
+      "description": "Öğrenciler atölyenin kendi ödeme sayfasında kartla öder.",
+      "howTo": "Her atölyenin kendi ödeme linki olur: iyzico (iyziLink) ya da PayTR uygulamasında atölyenin fiyatı için oluşturup atölye formuna yapıştırın. Biri ödeme yaptığında ödemeyi “Online” olarak kaydedin.",
       "later": "Otomatik onay (iyzico ya da PayTR ile tam entegrasyon) bir şirket hesabı gerektirir ve daha sonra eklenecek.",
       "note": "Öğrencilere not",
       "noteHint": "İsteğe bağlı, her dilde.",
@@ -407,10 +407,10 @@
     },
     "preview": {
       "title": "Öğrencilerin gördüğü",
-      "description": "{amount} fiyatlı bir workshopa kayıttan sonra, sizin dilinizde.",
+      "description": "{amount} fiyatlı bir atölyeye kayıttan sonra, sizin dilinizde.",
       "unsaved": "Henüz kaydetmediğiniz değişiklikler gösteriliyor.",
       "participant": "Deniz",
-      "onlineHint": "“Online öde” düğmesi yalnızca ödeme linki olan workshoplarda görünür."
+      "onlineHint": "“Online öde” düğmesi yalnızca ödeme linki olan atölyelerde görünür."
     },
     "errors": {
       "oneWay": "Lütfen en az bir ödeme yolunu açık tutun.",
@@ -428,18 +428,18 @@
       "description": "Temiz hesaplarla yeniden başlamak için, örneğin siteyi denedikten sonra. Cüzdan ve tüm hesaplar sıfırlanır.",
       "removedTitle": "Silinecekler",
       "removed": {
-        "transactions": "{count, plural, =0 {Cüzdanda işlem yok} other {Cüzdanın {n} işleminin tümü (sermaye, giderler, avanslar, kayıt ödemeleri ve iadeler, workshop kapanışları)}}",
-        "contracts": "{count, plural, =0 {Silinecek sözleşme yok} other {İmzalanmamış ya da yapılmamış workshoplara ait {n} sözleşme}}",
+        "transactions": "{count, plural, =0 {Cüzdanda işlem yok} other {Cüzdanın {n} işleminin tümü (sermaye, giderler, avanslar, kayıt ödemeleri ve iadeler, atölye kapanışları)}}",
+        "contracts": "{count, plural, =0 {Silinecek sözleşme yok} other {İmzalanmamış ya da yapılmamış atölyelere ait {n} sözleşme}}",
         "audit": "{count, plural, =0 {Etkinlik kaydında para satırı yok} other {Etkinlik kaydındaki {n} para satırı}}"
       },
       "keptTitle": "Olduğu gibi kalır",
       "kept": {
         "people": "Tüm hesaplar: ortaklar, eğitmenler ve üyeler",
-        "workshops": "Workshoplar, kayıtlar, fotoğraflar ve videolar",
-        "heldContracts": "Yapılmış workshopların imzalı sözleşmeleri",
+        "workshops": "Atölyeler, kayıtlar, fotoğraflar ve videolar",
+        "heldContracts": "Yapılmış atölyelerin imzalı sözleşmeleri",
         "settings": "Şablonlar, kategoriler ve diğer tüm ayarlar"
       },
-      "irreversible": "Bu işlem geri alınamaz. Sözleşmesi silinen bir workshop yeniden kaydedildiğinde yeni bir sözleşme alır.",
+      "irreversible": "Bu işlem geri alınamaz. Sözleşmesi silinen bir atölye yeniden kaydedildiğinde yeni bir sözleşme alır.",
       "button": "Tüm işlemleri sil"
     },
     "confirm": {
@@ -460,7 +460,7 @@
   "money": {
     "spender": {
       "title": "Masrafların ödenmesi",
-      "description": "Masrafları ortak kasadan yalnızca bir ortak öder ve kaydeder: genel ve workshop masrafları, eğitmen avansları ve ücretleri. Diğer ortaklar yalnızca görür.",
+      "description": "Masrafları ortak kasadan yalnızca bir ortak öder ve kaydeder: genel ve atölye masrafları, eğitmen avansları ve ücretleri. Diğer ortaklar yalnızca görür.",
       "label": "Masrafları kim ödüyor?",
       "nobody": "Henüz kimse seçilmedi"
     },
@@ -475,7 +475,7 @@
     },
     "shares": {
       "title": "Kâr payları",
-      "description": "Her workshopun kârı ya da zararı, hesabı kapatılırken ortaklar arasında bu oranlarla bölünür. Paylar sabit ve kilitlidir; panelden değiştirilemez."
+      "description": "Her atölyenin kârı ya da zararı, hesabı kapatılırken ortaklar arasında bu oranlarla bölünür. Paylar sabit ve kilitlidir; panelden değiştirilemez."
     }
   },
   "backup": {
@@ -504,26 +504,26 @@
       "failed": "Dosya hazırlanamadı. Tekrar deneyin.",
       "expenses": {
         "title": "Tüm giderler",
-        "hint": "Workshop, genel ve mobilya giderleri, her biri kendi sayfasında, toplamlarıyla."
+        "hint": "Atölye, genel ve mobilya giderleri, her biri kendi sayfasında, toplamlarıyla."
       },
       "finance": {
         "title": "Tam mali rapor",
-        "hint": "Kasa özeti, ortak hesapları, her workshopun sonucu, giderler ve tüm defter kayıtları."
+        "hint": "Kasa özeti, ortak hesapları, her atölyenin sonucu, giderler ve tüm defter kayıtları."
       },
       "workshop": {
-        "title": "Workshop raporu",
-        "hint": "Bir workshopun geliri, giderleri, eğitmen ücreti ve kârı; kayıtlar ve ödemelerle.",
-        "none": "Henüz workshop yok"
+        "title": "Atölye raporu",
+        "hint": "Bir atölyenin geliri, giderleri, eğitmen ücreti ve kârı; kayıtlar ve ödemelerle.",
+        "none": "Henüz atölye yok"
       },
       "month": {
         "title": "Ay sonu raporu",
-        "hint": "Bir Hicri Şemsi ayın geliri ve gideri, o ay kapanan workshoplar ve kasa hareketi. Her ay bitince otomatik olarak da kaydedilir.",
+        "hint": "Bir Hicri Şemsi ayın geliri ve gideri, o ay kapanan atölyeler ve kasa hareketi. Her ay bitince otomatik olarak da kaydedilir.",
         "none": "Henüz kayıt yok",
         "current": "{month} (bu ay, bugüne kadar)"
       },
       "invoices": {
         "title": "Tüm faturalar ve fişler",
-        "hint": "Her dosya kendi klasöründe: her workshop ayrı, genel giderler ve mobilya."
+        "hint": "Her dosya kendi klasöründe: her atölye ayrı, genel giderler ve mobilya."
       }
     },
     "list": {
@@ -551,7 +551,7 @@
       "description": "Satıcının resmî bilgileri. Yasal sayfalarda (gizlilik, mesafeli satış sözleşmesi, iptal ve iade koşulları) ve İletişim sayfasında gösterilir; PayTR gibi ödeme kuruluşları bunları ister."
     },
     "legalName": "Resmî ad (ticari unvan)",
-    "legalNameHint": "Şirket için tescilli unvan (ör. «Limer Sanat Workshopu Ltd. Şti.»); şahıs işletmesi için işletme sahibinin adı soyadı.",
+    "legalNameHint": "Şirket için tescilli unvan (ör. «Limer Sanat Atölyesi Ltd. Şti.»); şahıs işletmesi için işletme sahibinin adı soyadı.",
     "taxOffice": "Vergi dairesi",
     "taxNumber": "Vergi numarası",
     "taxNumberHint": "10 haneli VKN ya da şahıs işletmesi için 11 haneli TCKN.",
@@ -574,7 +574,7 @@
   "telegram": {
     "setup": {
       "title": "Kurulum",
-      "description": "Bir kez yapılır; sonra her workshopu tek tuşla kanala gönderirsiniz.",
+      "description": "Bir kez yapılır; sonra her atölyeyi tek tuşla kanala gönderirsiniz.",
       "step1": "Telegram'da ‎@BotFather'a yazın, ‎/newbot gönderin ve bir bot oluşturun. Botun “token”ını kopyalayın.",
       "step2": "Botu kanalınıza ekleyin ve mesaj gönderme izniyle kanal yöneticisi yapın.",
       "step3": "Token'ı ve kanal adını (ör. ‎@limer_atolye) buraya girip kaydedin.",

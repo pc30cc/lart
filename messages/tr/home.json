@@ -1,24 +1,24 @@
 {
   "hero": {
     "title": "Kendi ellerinle güzel bir şey yarat",
-    "subtitle": "Mum, seramik, makrome ve daha fazlası: samimi workshoplarda birlikte öğreniyor, birlikte üretiyoruz.",
-    "button": "Workshopları keşfet"
+    "subtitle": "Mum, seramik, makrome ve daha fazlası: samimi atölyelerde birlikte öğreniyor, birlikte üretiyoruz.",
+    "button": "Atölyeleri keşfet"
   },
   "story": {
     "title": "Birlikte üretmek için bir alan",
-    "text": "Her workshop küçük bir buluşma: deneyimli eğitmenler, özenle seçilmiş malzemeler ve sıcak bir ortam. Daha önce hiç denememiş olman önemli değil; sadece gel, gerisini birlikte yaparız.",
-    "button": "Yaklaşan workshoplar"
+    "text": "Her atölye küçük bir buluşma: deneyimli eğitmenler, özenle seçilmiş malzemeler ve sıcak bir ortam. Daha önce hiç denememiş olman önemli değil; sadece gel, gerisini birlikte yaparız.",
+    "button": "Yaklaşan atölyeler"
   },
   "crafts": {
     "title": "Zanaata göre keşfet"
   },
   "past": {
-    "title": "Geçmiş workshoplardan"
+    "title": "Geçmiş atölyelerden"
   },
   "steps": {
     "title": "Nasıl katılırım?",
     "step1": {
-      "title": "Workshopunu seç",
+      "title": "Atölyeni seç",
       "text": "Tarihi, yeri ve fiyatı gör; sana uyanı seç."
     },
     "step2": {
@@ -35,7 +35,7 @@
     }
   },
   "footer": {
-    "about": "Mum, seramik, makrome ve daha birçok el sanatında küçük, samimi workshoplar düzenliyoruz. Deneyimli eğitmenler, kaliteli malzemeler ve evine götüreceğin kendi eserin.",
+    "about": "Mum, seramik, makrome ve daha birçok el sanatında küçük, samimi atölyeler düzenliyoruz. Deneyimli eğitmenler, kaliteli malzemeler ve evine götüreceğin kendi eserin.",
     "aboutTitle": "Hakkımızda",
     "explore": "Keşfet",
     "account": "Hesabım",
@@ -54,10 +54,10 @@
       "candlesPouring": "Ahşap bir masanın etrafında mum döken kadınlar",
       "candlesTable": "Gülerek birlikte mum yapan arkadaşlar",
       "candlesFriends": "Güneşli bir odada kavanozlara mum döken kadınlar",
-      "pottery": "Seramik workshopunda çömlek çarkında çalışan kadınlar",
+      "pottery": "Seramik atölyesinde çömlek çarkında çalışan kadınlar",
       "macrame": "Makrome düğümleri atan eller",
-      "painting": "Bir resim workshopunda yan yana resim yapan kadınlar",
-      "studio": "Ahşap masaları ve hazır malzemeleriyle aydınlık bir workshop salonu",
+      "painting": "Bir resim atölyesinde yan yana resim yapan kadınlar",
+      "studio": "Ahşap masaları ve hazır malzemeleriyle aydınlık bir atölye salonu",
       "closeUp": "Güzel bir şey yaratan ellerin yakından görünümü"
     }
   }

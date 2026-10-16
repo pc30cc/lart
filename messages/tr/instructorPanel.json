@@ -5,7 +5,7 @@
   "nav": {
     "label": "Eğitmen paneli",
     "home": "Ana sayfa",
-    "workshops": "Workshoplar",
+    "workshops": "Atölyeler",
     "contracts": "Sözleşmeler",
     "earnings": "Kazançlar",
     "profile": "Profil",
@@ -40,29 +40,29 @@
     "intro": "Sizi görmek çok güzel. Sırada bunlar var.",
     "toSign": {
       "title": "{count, plural, one {Bir sözleşme imzanızı bekliyor} other {# sözleşme imzanızı bekliyor}}",
-      "text": "Lütfen okuyup buradan imzalayın. Workshopunuz hemen ardından kayıtlara açılır.",
+      "text": "Lütfen okuyup buradan imzalayın. Atölyeniz hemen ardından kayıtlara açılır.",
       "button": "Oku ve imzala"
     },
     "upcoming": {
-      "title": "Sıradaki workshoplarınız",
+      "title": "Sıradaki atölyeleriniz",
       "all": "Tümünü gör",
-      "emptyTitle": "Henüz yaklaşan workshop yok",
-      "emptyText": "{brand} ekibi sizinle bir workshop planladığında burada göreceksiniz."
+      "emptyTitle": "Henüz yaklaşan atölye yok",
+      "emptyText": "{brand} ekibi sizinle bir atölye planladığında burada göreceksiniz."
     }
   },
   "workshops": {
-    "metaTitle": "Workshoplarım",
-    "title": "Workshoplarım",
-    "subtitle": "Yaklaşan ve geçmiş workshoplarınız, katılacak kişilerle birlikte.",
+    "metaTitle": "Atölyelerim",
+    "title": "Atölyelerim",
+    "subtitle": "Yaklaşan ve geçmiş atölyeleriniz, katılacak kişilerle birlikte.",
     "upcoming": "Yaklaşanlar",
-    "past": "Geçmiş workshoplar",
+    "past": "Geçmiş atölyeler",
     "noUpcoming": "Şu an planlanmış bir şey yok.",
-    "emptyTitle": "Henüz workshop yok",
-    "emptyText": "{brand} ekibi sizinle bir workshop planladığında burada göreceksiniz."
+    "emptyTitle": "Henüz atölye yok",
+    "emptyText": "{brand} ekibi sizinle bir atölye planladığında burada göreceksiniz."
   },
   "workshop": {
-    "metaTitle": "Workshop",
-    "back": "Tüm workshoplar",
+    "metaTitle": "Atölye",
+    "back": "Tüm atölyeler",
     "places": "{max, number} yerden {count, number} tanesi dolu",
     "date": "Tarih",
     "time": "Saat (İstanbul)",
@@ -84,9 +84,9 @@
       "photoNo": "Fotoğraf yok",
       "videoYes": "Videoya izin verdi",
       "videoNo": "Video yok",
-      "privacy": "Sözleşmenizde kararlaştırıldığı gibi, lütfen bu isimleri yalnızca bu workshop için kullanın.",
+      "privacy": "Sözleşmenizde kararlaştırıldığı gibi, lütfen bu isimleri yalnızca bu atölye için kullanın.",
       "none": "Henüz kayıt yok. Kayıt olanların isimleri burada görünecek.",
-      "cancelled": "Bu workshop iptal edildi."
+      "cancelled": "Bu atölye iptal edildi."
     }
   },
   "contracts": {
@@ -102,9 +102,9 @@
     "version": "Sürüm {version}",
     "sentOn": "Gönderildi: {date}",
     "signedOn": "İmzalandı: {date}",
-    "workshopOn": "Workshop: {date}",
+    "workshopOn": "Atölye: {date}",
     "emptyTitle": "Henüz sözleşme yok",
-    "emptyText": "{brand} ekibi sizinle bir workshop planladığında, sözleşmesi imzanız için burada olacak."
+    "emptyText": "{brand} ekibi sizinle bir atölye planladığında, sözleşmesi imzanız için burada olacak."
   },
   "contract": {
     "metaTitle": "Sözleşme",
@@ -121,7 +121,7 @@
         "open": "“{title}” artık kayıtlara açık. Kayıtların durumunu size bildireceğiz.",
         "confirmed": "“{title}” kesinleşti ve planlandığı gibi yapılacak."
       },
-      "toWorkshop": "Workshopa git"
+      "toWorkshop": "Atölyeye git"
     },
     "signedNotice": {
       "title": "Bu sözleşmeyi imzaladınız",
@@ -130,12 +130,12 @@
     },
     "replaced": {
       "title": "Bu sürümün yerine yenisi geldi",
-      "text": "Workshopla ilgili bir şey değiştiği için size bu sözleşmenin yeni bir sürümünü gönderdik.",
+      "text": "Atölyeyle ilgili bir şey değiştiği için size bu sözleşmenin yeni bir sürümünü gönderdik.",
       "open": "En yeni sürümü aç"
     },
     "closed": {
       "title": "Bu sözleşme artık imzalanamaz",
-      "text": "Workshop artık imza beklemiyor. Bir sorunuz varsa lütfen {brand} ekibine yazın."
+      "text": "Atölye artık imza beklemiyor. Bir sorunuz varsa lütfen {brand} ekibine yazın."
     },
     "check": {
       "title": "Bu kopyayı doğrulayamıyoruz",
@@ -165,17 +165,17 @@
   "earnings": {
     "metaTitle": "Kazançlarım",
     "title": "Kazançlarım",
-    "subtitle": "Her workshop için ücretiniz, aldıklarınız ve kalan tutar.",
+    "subtitle": "Her atölye için ücretiniz, aldıklarınız ve kalan tutar.",
     "total": {
       "owed": "Alacağınız",
       "received": "Şimdiye kadar aldığınız"
     },
     "fee": "Ücretiniz",
-    "feeFixed": "Workshop için sabit ücret",
+    "feeFixed": "Atölye için sabit ücret",
     "feePerParticipant": "Katılımcı başına {rate} × {count}",
-    "feeCancelled": "Ücret yok: workshop iptal edildi",
+    "feeCancelled": "Ücret yok: atölye iptal edildi",
     "advance": "Ön ödeme",
-    "advanceForCosts": "{amount} tutarı workshop masraflarına gitti",
+    "advanceForCosts": "{amount} tutarı atölye masraflarına gitti",
     "received": "Şimdiye kadar aldığınız",
     "owed": "Alacağınız",
     "toReturn": "Sözleşmeniz gereği ön ödemeden {amount} tutarın {brand} ekibine iade edilmesi gerekiyor.",
@@ -184,7 +184,7 @@
     "settled": "Hepsi ödendi. Teşekkürler!",
     "footnote": "Tutarlar sözleşmenizden ve {brand} ekibinin kaydettiği ödemelerden gelir. Bir şey yanlış mı görünüyor? Lütfen ekibe yazın.",
     "emptyTitle": "Henüz bir şey yok",
-    "emptyText": "Sözleşmeli bir workshopunuz olduğunda ücretleriniz burada görünecek."
+    "emptyText": "Sözleşmeli bir atölyeniz olduğunda ücretleriniz burada görünecek."
   },
   "profile": {
     "metaTitle": "Profilim",
@@ -194,7 +194,7 @@
     "saved": "Profiliniz kaydedildi.",
     "public": {
       "title": "Herkese açık profil",
-      "description": "Sitede workshoplarınızla birlikte gösterilir. Farsça metin boşsa Farsça sitede İngilizcesi kullanılır."
+      "description": "Sitede atölyelerinizle birlikte gösterilir. Farsça metin boşsa Farsça sitede İngilizcesi kullanılır."
     },
     "fields": {
       "photo": "Profil fotoğrafı",
@@ -246,7 +246,7 @@
   },
   "approvalBanner": {
     "label": "Onay bekleniyor",
-    "text": "Kaydolduğunuz için teşekkürler! Ekip bilgilerinizi kontrol ediyor. Profiliniz onaylanınca sizinle workshoplar planlayabiliriz. Bu arada “Profilim” sayfasından fotoğrafınızı ekleyebilirsiniz."
+    "text": "Kaydolduğunuz için teşekkürler! Ekip bilgilerinizi kontrol ediyor. Profiliniz onaylanınca sizinle atölyeler planlayabiliriz. Bu arada “Profilim” sayfasından fotoğrafınızı ekleyebilirsiniz."
   },
   "documents": {
     "title": "Sertifikalar ve belgeler",

@@ -15,7 +15,7 @@
     "terms": {
       "title": "Kayıt koşulları",
       "plural": "Kayıt koşulları",
-      "description": "Katılımcıların kayıt olurken kabul ettiği koşullar: iptal, iade ve diğerleri. Her workshop, siz başka bir şablon seçmedikçe varsayılanı kullanır.",
+      "description": "Katılımcıların kayıt olurken kabul ettiği koşullar: iptal, iade ve diğerleri. Her atölye, siz başka bir şablon seçmedikçe varsayılanı kullanır.",
       "hint": "Katılımcılar kayıt olurken kabul eder.",
       "new": "Yeni koşullar",
       "emptyTitle": "Henüz kayıt koşulu yok",
@@ -24,20 +24,20 @@
     "contract": {
       "title": "Eğitmen sözleşmesi",
       "plural": "Eğitmen sözleşmeleri",
-      "description": "Eğitmenin her workshop için imzaladığı sözleşmenin sabit maddeleri. Yeni sözleşmeler varsayılanı kullanır.",
-      "hint": "Eğitmen her workshop için imzalar.",
+      "description": "Eğitmenin her atölye için imzaladığı sözleşmenin sabit maddeleri. Yeni sözleşmeler varsayılanı kullanır.",
+      "hint": "Eğitmen her atölye için imzalar.",
       "new": "Yeni sözleşme",
       "emptyTitle": "Henüz sözleşme şablonu yok",
-      "emptyDescription": "Sözleşme şablonu olmadan workshop oluşturulamaz. İlk şablonu oluşturun; varsayılan o olur."
+      "emptyDescription": "Sözleşme şablonu olmadan atölye oluşturulamaz. İlk şablonu oluşturun; varsayılan o olur."
     }
   },
   "usage": {
-    "workshops": "{count, plural, one {# workshopta seçili} other {# workshopta seçili}}",
+    "workshops": "{count, plural, one {# atölyede seçili} other {# atölyede seçili}}",
     "contracts": "{count, plural, one {# sözleşme} other {# sözleşme}} ({signed, plural, =0 {henüz imzalanan yok} other {# imzalı}})",
     "registrations": "{count, plural, one {# kayıtta kabul edildi} other {# kayıtta kabul edildi}}",
     "none": "Henüz kullanılmıyor",
     "default": {
-      "terms": "Kendi koşulları seçilmemiş tüm workshoplarda kullanılır",
+      "terms": "Kendi koşulları seçilmemiş tüm atölyelerde kullanılır",
       "contract": "Tüm yeni sözleşmelerde kullanılır"
     }
   },
@@ -48,7 +48,7 @@
   "makeDefault": {
     "title": "“{name}” varsayılan yapılsın mı?",
     "description": {
-      "terms": "Kendi koşulları olmayan workshoplar bundan sonra bu metni kullanır. Daha önce kayıt olanlar, kabul ettikleri koşulları korur.",
+      "terms": "Kendi koşulları olmayan atölyeler bundan sonra bu metni kullanır. Daha önce kayıt olanlar, kabul ettikleri koşulları korur.",
       "contract": "Bundan sonra gönderilecek sözleşmeler bu metni kullanır. Daha önce gönderilmiş veya imzalanmış sözleşmeler değişmez."
     },
     "confirm": "Evet, varsayılan yap"
@@ -61,7 +61,7 @@
     "dangerTitle": "Bu şablonu sil",
     "dangerDescription": "Yalnızca varsayılan olmayan ve hiçbir yerde kullanılmayan şablonlar silinebilir.",
     "isDefault": "Bu şablon varsayılan olduğu için silinemez. Önce başka bir şablonu varsayılan yapın.",
-    "inUse": "Workshoplar, sözleşmeler veya kayıtlar bu şablona bağlı; bu yüzden kayıt olarak saklanır ve silinemez."
+    "inUse": "Atölyeler, sözleşmeler veya kayıtlar bu şablona bağlı; bu yüzden kayıt olarak saklanır ve silinemez."
   },
   "toast": {
     "created": "Şablon oluşturuldu.",
@@ -76,7 +76,7 @@
   "fields": {
     "kind": "Kullanım amacı",
     "name": "Ad",
-    "nameHint": "Bu adı yalnızca yöneticiler görür; örneğin “Yaz koşulları” veya “Çocuk workshopları sözleşmesi”.",
+    "nameHint": "Bu adı yalnızca yöneticiler görür; örneğin “Yaz koşulları” veya “Çocuk atölyeleri sözleşmesi”.",
     "body": "Metin"
   },
   "form": {
@@ -85,7 +85,7 @@
     "textTitle": "Metin",
     "textDescription": {
       "terms": "Kayıt sayfasında, katılımcıların kabul etmek için işaretlediği kutunun üstünde gösterilir. Üç dilde de yazın.",
-      "contract": "Sözleşmenin maddeleri. Üst kısım (taraflar, workshop bilgileri, ücret ve ön ödeme) workshoptan otomatik olarak eklenir; burada yalnızca maddeleri, üç dilde de yazın."
+      "contract": "Sözleşmenin maddeleri. Üst kısım (taraflar, atölye bilgileri, ücret ve ön ödeme) atölyeden otomatik olarak eklenir; burada yalnızca maddeleri, üç dilde de yazın."
     },
     "placeholdersTitle": "Otomatik alanlar",
     "placeholdersHint": "İmlecin bulunduğu yere eklemek için birine tıklayın. Metin gösterilirken otomatik olarak doldurulur.",
@@ -101,8 +101,8 @@
     "brand": "Ayarlardaki marka adınız",
     "instructor_name": "Eğitmenin resmî adı soyadı",
     "instructor_id_number": "Eğitmenin kimlik numarası",
-    "workshop_title": "Workshopun adı",
-    "date": "Workshop tarihi",
+    "workshop_title": "Atölyenin adı",
+    "date": "Atölye tarihi",
     "weekday": "Haftanın günü",
     "start_time": "Başlangıç saati",
     "end_time": "Bitiş saati",
@@ -112,7 +112,7 @@
     "fee_type": "Ücret türü: katılımcı başına veya sabit",
     "fee_amount": "Kararlaştırılan ücret",
     "advance_amount": "Ön ödeme tutarı",
-    "decision_deadline": "Workshopun yapılıp yapılmayacağına karar verilecek tarih ve saat"
+    "decision_deadline": "Atölyenin yapılıp yapılmayacağına karar verilecek tarih ve saat"
   },
   "preview": {
     "open": "Önizleme",
@@ -124,7 +124,7 @@
       "instructorName": "Ayşe Demir",
       "idNumber": "12345678901",
       "workshopTitle": "Yeni başlayanlar için mum yapımı",
-      "venue": "Moda Sanat Workshopu, Kadıköy, İstanbul"
+      "venue": "Moda Sanat Atölyesi, Kadıköy, İstanbul"
     }
   },
   "errors": {
@@ -230,11 +230,11 @@
         "to": "Katılımcılar"
       },
       "workshop_reminder": {
-        "title": "Workshop hatırlatması",
+        "title": "Atölye hatırlatması",
         "to": "Katılımcılar"
       },
       "workshop_cancelled": {
-        "title": "Workshop iptali + iade",
+        "title": "Atölye iptali + iade",
         "to": "Katılımcılar"
       },
       "password_reset": {

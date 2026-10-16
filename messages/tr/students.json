@@ -29,7 +29,7 @@
       "title": "Kayıtlar",
       "count": "{count, plural, =0 {Henüz yok} other {# kayıt}}",
       "empty": "Henüz kaydı yok.",
-      "workshop": "Workshop",
+      "workshop": "Atölye",
       "date": "Tarih",
       "participant": "Katılımcı",
       "payment": "Ödeme"

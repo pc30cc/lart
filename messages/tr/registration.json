@@ -1,12 +1,12 @@
 {
   "list": {
-    "metaTitle": "Workshoplar",
-    "metaDescription": "{brand} sanat workshopları: yaklaşan workshoplara göz atın, yerinizi bir dakikada ayırtın.",
-    "title": "Workshoplar",
-    "subtitle": "Kendi ellerinizle güzel bir şey yapın. Bir workshop seçin ve yerinizi ayırtın.",
-    "emptyTitle": "Yeni workshoplar çok yakında",
-    "emptyText": "Şu anda kayda açık bir workshop yok. Lütfen biraz sonra yeniden bakın!",
-    "filterLabel": "Zanaata göre workshoplar",
+    "metaTitle": "Atölyeler",
+    "metaDescription": "{brand} sanat atölyeleri: yaklaşan atölyelere göz atın, yerinizi bir dakikada ayırtın.",
+    "title": "Atölyeler",
+    "subtitle": "Kendi ellerinizle güzel bir şey yapın. Bir atölye seçin ve yerinizi ayırtın.",
+    "emptyTitle": "Yeni atölyeler çok yakında",
+    "emptyText": "Şu anda kayda açık bir atölye yok. Lütfen biraz sonra yeniden bakın!",
+    "filterLabel": "Zanaata göre atölyeler",
     "all": "Tümü",
     "with": "Eğitmen: {name}"
   },
@@ -33,8 +33,8 @@
     "paused": "Kayıtlara kısa ara"
   },
   "workshop": {
-    "metaDescription": "{title}: {date}, {venue}. {brand} workshopunda yerinizi ayırtın.",
-    "back": "Tüm workshoplar",
+    "metaDescription": "{title}: {date}, {venue}. {brand} atölyesinde yerinizi ayırtın.",
+    "back": "Tüm atölyeler",
     "by": "Eğitmen: {name}",
     "facts": {
       "date": "Tarih",
@@ -49,7 +49,7 @@
     },
     "register": "Kaydol",
     "registerHint": "Bir dakika sürer. Ödemeyi kayıttan sonra yaparsınız.",
-    "about": "Workshop hakkında",
+    "about": "Atölye hakkında",
     "includes": "Ücrete neler dahil",
     "bring": "Yanınızda getirin",
     "bringNothing": "Hiçbir şey: ihtiyacınız olan her şey sizi bekliyor.",
@@ -57,36 +57,36 @@
     "experienceNeeded": "Biraz deneyim gerekiyor.",
     "noExperience": "Deneyim gerekmez: yeni başlayanlar da çok hoş karşılanır.",
     "notes": "Bilmeniz gerekenler",
-    "samples": "Bu workshopta yapılanlar",
-    "sampleAlt": "Bu workshopta yapılmış bir çalışma, fotoğraf {n, number}",
+    "samples": "Bu atölyede yapılanlar",
+    "sampleAlt": "Bu atölyede yapılmış bir çalışma, fotoğraf {n, number}",
     "instructor": "Eğitmeniniz",
     "registered": {
       "title": "Kaydınız var",
       "text": "{count, plural, one {Yeriniz ayrıldı.} other {Yerleriniz ayrıldı.}}",
-      "myWorkshops": "Workshoplarım’de görün",
+      "myWorkshops": "Atölyelerim’de görün",
       "another": "Başka birini kaydet"
     },
     "state": {
-      "fullTitle": "Bu workshop doldu",
-      "fullText": "Tüm yerler doldu. Sık sık yeni workshoplar ekliyoruz: göz atmayı unutmayın!",
+      "fullTitle": "Bu atölye doldu",
+      "fullText": "Tüm yerler doldu. Sık sık yeni atölyeler ekliyoruz: göz atmayı unutmayın!",
       "closedTitle": "Kayıtlar kapandı",
-      "closedText": "Bu workshopun kayıtları {date} tarihinde kapandı.",
-      "startedTitle": "Bu workshop başladı",
-      "startedText": "Kayıtlar kapandı. Yaklaşan workshoplara göz atabilirsiniz.",
-      "pastTitle": "Bu workshop gerçekleşti",
-      "pastText": "Yaklaşan workshoplara göz atabilirsiniz.",
-      "cancelledTitle": "Bu workshop iptal edildi",
-      "cancelledText": "Üzgünüz. Diğer workshoplara göz atabilirsiniz.",
+      "closedText": "Bu atölyenin kayıtları {date} tarihinde kapandı.",
+      "startedTitle": "Bu atölye başladı",
+      "startedText": "Kayıtlar kapandı. Yaklaşan atölyelere göz atabilirsiniz.",
+      "pastTitle": "Bu atölye gerçekleşti",
+      "pastText": "Yaklaşan atölyelere göz atabilirsiniz.",
+      "cancelledTitle": "Bu atölye iptal edildi",
+      "cancelledText": "Üzgünüz. Diğer atölyelere göz atabilirsiniz.",
       "pausedTitle": "Kayıtlara kısa bir ara verdik",
       "pausedText": "Birkaç ayrıntıyı güncelliyoruz. Lütfen kısa süre sonra yeniden bakın."
     },
-    "allWorkshops": "Tüm workshopları gör",
+    "allWorkshops": "Tüm atölyeleri gör",
     "instructorDetails": "Eğitmen hakkında"
   },
   "register": {
     "metaTitle": "Kayıt: {title}",
     "title": "Kaydol",
-    "for": "“{title}” workshopu için",
+    "for": "“{title}” atölyesi için",
     "signIn": {
       "title": "Kaydolmak için giriş yapın",
       "text": "Kayıt bir dakika sürer. Giriş yapın; ilk kez geliyorsanız ücretsiz bir hesap oluşturun.",
@@ -102,27 +102,27 @@
     },
     "participant": "Kim katılacak?",
     "participantHint": "Adı ve soyadı; onu adıyla karşılayabilmemiz için.",
-    "childNote": "Bu workshop {min, number}–{max, number} yaş arası çocuklar için. Velisi olarak lütfen buraya çocuğunuzun adını yazın.",
-    "terms": "LIMER workshop ve kurslarına kayıt ve katılım koşulları",
+    "childNote": "Bu atölye {min, number}–{max, number} yaş arası çocuklar için. Velisi olarak lütfen buraya çocuğunuzun adını yazın.",
+    "terms": "LIMER atölye ve kurslarına kayıt ve katılım koşulları",
     "acceptTerms": "Kayıt ve iptal koşullarını ve Mesafeli Satış Sözleşmesi'ni okudum, kabul ediyorum.",
     "acceptTermsRich": "<terms>Kayıt ve iptal koşullarını</terms> ve <sales>Mesafeli Satış Sözleşmesi</sales>'ni okudum, kabul ediyorum.",
     "consent": {
       "title": "Fotoğraf ve video kullanım izni",
       "optional": "isteğe bağlı",
-      "text": "LIMER, kurs ve workshoplar sırasında fotoğraf ve video çekimi yapar. Hazırlanan içerik web sitesinde ve resmî sayfalarımızda yayımlanabilir. Bu izni vermek tamamen isteğe bağlıdır; kaydınızı veya kurslara katılımınızı etkilemez.",
+      "text": "LIMER, kurs ve atölyeler sırasında fotoğraf ve video çekimi yapar. Hazırlanan içerik web sitesinde ve resmî sayfalarımızda yayımlanabilir. Bu izni vermek tamamen isteğe bağlıdır; kaydınızı veya kurslara katılımınızı etkilemez.",
       "guardian": "Reşit olmayan katılımcılar için bu seçimi veli veya yasal temsilci yapar.",
       "both": "Fotoğraf ve videolarımın LIMER'in web sitesinde ve resmî sayfalarında yayımlanmasını kabul ediyorum."
     },
     "pay": {
       "title": "Ücret",
       "none": "Ödemeyi kayıttan sonra yaparsınız: nasıl ödeyeceğiniz konusunda sizinle iletişime geçeceğiz.",
-      "free": "Bu workshop ücretsiz: ödenecek bir şey yok.",
-      "cash": "Workshopta nakit",
+      "free": "Bu atölye ücretsiz: ödenecek bir şey yok.",
+      "cash": "Atölyede nakit",
       "transfer": "Banka havalesi / EFT",
       "online": "Kartla online",
       "choose": "Nasıl ödeyeceksiniz?",
       "hint": {
-        "cash": "Ücreti workshop günü nakit ödersiniz.",
+        "cash": "Ücreti atölye günü nakit ödersiniz.",
         "transfer": "Kayıttan sonra hesap bilgilerini görür, dekontu aynı sayfadan gönderirsiniz.",
         "online": "Kayıttan sonra kartla çevrim içi ödersiniz."
       }
@@ -136,7 +136,7 @@
     "impersonating": {
       "title": "Kaydı yalnızca kendisi yapabilir",
       "text": "Bu kişinin hesabını görüntülüyorsunuz. Kayıt olurken koşullar ile fotoğraf ve video izni kabul edilir; bu yüzden bunu yalnızca kişinin kendisi yapabilir.",
-      "account": "Workshoplarını gör"
+      "account": "Atölyelerini gör"
     },
     "day": {
       "choose": "Hangi gün geleceksiniz?",
@@ -145,17 +145,17 @@
   },
   "errors": {
     "notFound": "Bunu bulamadık. Kaldırılmış olabilir.",
-    "notOpen": "Bu workshop şu anda kayda açık değil.",
-    "full": "Üzgünüz, son yer az önce doldu: bu workshop artık dolu.",
-    "deadline": "Üzgünüz, bu workshopun kayıtları kapandı.",
-    "started": "Bu workshop başladı, bu yüzden kayıtlar kapandı.",
-    "cancelled": "Bu workshop iptal edildi, bu yüzden kayıtlar kapandı.",
-    "duplicate": "{name} bu workshopa zaten kayıtlı.",
-    "tooMany": "Bir workshopa en fazla {max, number} kişi kaydedebilirsiniz. Daha fazlası için lütfen bizimle iletişime geçin.",
+    "notOpen": "Bu atölye şu anda kayda açık değil.",
+    "full": "Üzgünüz, son yer az önce doldu: bu atölye artık dolu.",
+    "deadline": "Üzgünüz, bu atölyenin kayıtları kapandı.",
+    "started": "Bu atölye başladı, bu yüzden kayıtlar kapandı.",
+    "cancelled": "Bu atölye iptal edildi, bu yüzden kayıtlar kapandı.",
+    "duplicate": "{name} bu atölyeye zaten kayıtlı.",
+    "tooMany": "Bir atölyeye en fazla {max, number} kişi kaydedebilirsiniz. Daha fazlası için lütfen bizimle iletişime geçin.",
     "termsChanged": "Koşullar az önce güncellendi. Lütfen sayfayı yenileyin, koşulları okuyun ve yeniden kaydolun.",
     "alreadyCancelled": "Bu kayıt zaten iptal edilmiş.",
     "cannotCancel": "Bu kayıt artık iptal edilemiyor.",
-    "startedCancel": "Workshop başladı, bu yüzden bu kayıt artık iptal edilemiyor.",
+    "startedCancel": "Atölye başladı, bu yüzden bu kayıt artık iptal edilemiyor.",
     "cannotChangeWay": "Bu kaydın ödeme yolu artık değiştirilemez.",
     "dayFull": "O gün şimdi doldu. Lütfen başka bir gün seçin.",
     "dayStarted": "O gün başladı. Lütfen başka bir gün seçin."
@@ -167,15 +167,15 @@
     "cancelled": "İptal edildi",
     "refundDue": "{amount} iadeniz yolda",
     "refundSent": "İade edildi: {amount}",
-    "workshopCancelled": "Bu workshop ekibimiz tarafından iptal edildi."
+    "workshopCancelled": "Bu atölye ekibimiz tarafından iptal edildi."
   },
   "payment": {
     "title": "Nasıl ödenir",
     "intro": "{count, plural, one {Lütfen {amount} tutarını şu yolla ödeyin:} other {Lütfen {amount} tutarını size en uygun yolla ödeyin:}}",
     "none": "{amount} tutarını nasıl ödeyeceğiniz konusunda yakında sizinle iletişime geçeceğiz.",
     "cash": {
-      "title": "Workshopta nakit",
-      "text": "{amount} tutarını nakit olarak getirip workshop günü ödeyin."
+      "title": "Atölyede nakit",
+      "text": "{amount} tutarını nakit olarak getirip atölye günü ödeyin."
     },
     "transfer": {
       "title": "Banka havalesi / EFT",
@@ -199,15 +199,15 @@
     "confirmNote": "Ödemeniz bize ulaşır ulaşmaz burada “Ödendi” olarak işaretleyip size e-posta göndereceğiz."
   },
   "account": {
-    "metaTitle": "Workshoplarım",
-    "title": "Workshoplarım",
+    "metaTitle": "Atölyelerim",
+    "title": "Atölyelerim",
     "hello": "Merhaba {name}!",
     "subtitle": "Kayıtlarınız ve nasıl ödeyeceğiniz, hepsi tek bir yerde.",
     "upcoming": "Yaklaşanlar",
     "past": "Geçmiş ve iptal edilenler",
-    "emptyTitle": "Henüz bir workshopa kaydolmadınız",
-    "emptyText": "Sevdiğiniz bir workshop bulun ve yerinizi bir dakikada ayırtın.",
-    "browse": "Workshopları gör",
+    "emptyTitle": "Henüz bir atölyeye kaydolmadınız",
+    "emptyText": "Sevdiğiniz bir atölye bulun ve yerinizi bir dakikada ayırtın.",
+    "browse": "Atölyeleri gör",
     "details": "Bilgilerim",
     "detailsText": "Adınız, telefon numaranız ve e-postalarımızın dili.",
     "email": "E-posta",
@@ -230,16 +230,16 @@
     "amount": "Ücret",
     "howToPay": "Nasıl ödenir",
     "details": "Ayrıntılar",
-    "workshopPage": "Workshop sayfası"
+    "workshopPage": "Atölye sayfası"
   },
   "cancel": {
     "button": "Kaydımı iptal et",
     "title": "Bu kayıt iptal edilsin mi?",
     "unpaid": "{name} için ayrılan yer başka birine açılacak. Henüz ödeme yapmadığınız için başka bir şey yapmanıza gerek yok.",
-    "free": "{name} için ayrılan yer başka birine açılacak. Bu workshop ücretsiz, başka bir şey yapmanıza gerek yok.",
+    "free": "{name} için ayrılan yer başka birine açılacak. Bu atölye ücretsiz, başka bir şey yapmanıza gerek yok.",
     "full": "{paid} ödediniz. Koşullara göre tamamı iade edilir: {refund} tutarını beş iş günü içinde size geri göndereceğiz.",
-    "partial": "Workshopun başlamasına 72 saatten az kaldı; koşullara göre ödemenizin %{percent, number} kadarı iade edilir: {refund} tutarını beş iş günü içinde size geri göndereceğiz.",
-    "none": "Workshop başladı; koşullara göre bu ödeme iade edilemiyor.",
+    "partial": "Atölyenin başlamasına 72 saatten az kaldı; koşullara göre ödemenizin %{percent, number} kadarı iade edilir: {refund} tutarını beş iş günü içinde size geri göndereceğiz.",
+    "none": "Atölye başladı; koşullara göre bu ödeme iade edilemiyor.",
     "keep": "Yerimi koru",
     "confirm": "Evet, iptal et",
     "done": "Kaydınız iptal edildi.",
@@ -247,7 +247,7 @@
   },
   "detail": {
     "metaTitle": "Kaydım",
-    "back": "Workshoplarım",
+    "back": "Atölyelerim",
     "welcomeTitle": "Kaydınız tamam!",
     "welcomeText": "{name} için bir yer ayırdık. Ayrıntıları size e-postayla da gönderdik.",
     "paidTitle": "Ödendi. Görüşmek üzere!",
@@ -295,7 +295,7 @@
   },
   "changeWay": {
     "question": "Başka bir yolla mı ödemek istersiniz?",
-    "cash": "Bunun yerine workshopta nakit öderim",
+    "cash": "Bunun yerine atölyede nakit öderim",
     "transfer": "Bunun yerine havale ile öderim",
     "online": "Bunun yerine kartla çevrim içi öderim",
     "done": "Ödeme yolu değiştirildi."

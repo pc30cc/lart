@@ -2,27 +2,27 @@
   "header": {
     "home": "{brand}: ana sayfa",
     "nav": "Ana menü",
-    "workshops": "Workshoplar",
+    "workshops": "Atölyeler",
     "about": "Hakkımızda",
     "story": "Hikâyemiz",
     "logIn": "Giriş yap",
     "logInOrSignUp": "Giriş yap / Üye ol",
     "account": "Hesabınız",
-    "myWorkshops": "Workshoplarım",
+    "myWorkshops": "Atölyelerim",
     "language": "Dil",
     "logOut": "Çıkış yap"
   },
   "home": {
-    "metaTitle": "İstanbul’da sanat workshopları",
-    "metaDescription": "{brand} sanat workshopları: yaklaşan workshoplara göz atın, yerinizi ayırtın.",
-    "tagline": "Kendi ellerinizle güzel bir şey yapın. Bir workshop seçin ve yerinizi ayırtın.",
-    "cta": "Tüm workshopları gör",
-    "upcomingTitle": "Yaklaşan workshoplar",
-    "allWorkshops": "Tüm workshoplar"
+    "metaTitle": "İstanbul’da sanat atölyeleri",
+    "metaDescription": "{brand} sanat atölyeleri: yaklaşan atölyelere göz atın, yerinizi ayırtın.",
+    "tagline": "Kendi ellerinizle güzel bir şey yapın. Bir atölye seçin ve yerinizi ayırtın.",
+    "cta": "Tüm atölyeleri gör",
+    "upcomingTitle": "Yaklaşan atölyeler",
+    "allWorkshops": "Tüm atölyeler"
   },
   "verifyBanner": {
     "label": "E-postanızı doğrulayın",
-    "text": "Lütfen e-postanızı doğrulayın: {email} adresine bir bağlantı gönderdik. Workshoplara kaydolabilmek için bağlantıyı açın.",
+    "text": "Lütfen e-postanızı doğrulayın: {email} adresine bir bağlantı gönderdik. Atölyelere kaydolabilmek için bağlantıyı açın.",
     "textSent": "{email} adresine yeni bir bağlantı gönderdik. Lütfen gelen kutunuza, istenmeyen klasörüne de bakın.",
     "resend": "Tekrar gönder",
     "sent": "Gönderildi! Lütfen gelen kutunuzu kontrol edin.",
@@ -32,18 +32,18 @@
     "checkEmail": "Hoş geldiniz! Size bir e-posta gönderdik. Adresinizi doğrulamak için lütfen açın.",
     "signedOut": "Çıkış yaptınız. Görüşmek üzere!",
     "passwordSaved": "Yeni şifreniz kaydedildi ve giriş yaptınız.",
-    "welcome": "Hoş geldiniz! Giriş yaptınız; workshoplara hemen kayıt olabilirsiniz."
+    "welcome": "Hoş geldiniz! Giriş yaptınız; atölyelere hemen kayıt olabilirsiniz."
   },
   "error": {
-    "workshops": "Tüm workshopları görün"
+    "workshops": "Tüm atölyeleri görün"
   },
   "notFound": {
     "metaTitle": "Sayfa bulunamadı",
     "eyebrow": "Sayfa bulunamadı",
     "title": "Bu sayfayı bulamadık",
     "description": "Bağlantı eski ya da hatalı olabilir veya sayfa taşınmış olabilir. Geri dönmenin birkaç yolu:",
-    "workshopDescription": "Bu workshop sona ermiş ya da adresi değişmiş olabilir. Yaklaşan workshoplar bir tık uzağınızda.",
-    "workshops": "Yaklaşan workshoplar",
+    "workshopDescription": "Bu atölye sona ermiş ya da adresi değişmiş olabilir. Yaklaşan atölyeler bir tık uzağınızda.",
+    "workshops": "Yaklaşan atölyeler",
     "home": "Ana sayfaya git"
   },
   "footer": {
@@ -62,12 +62,12 @@
       "note": "Eğitmenin belgelerini korumak için yalnızca küçük kopyalar gösterilir. Asılları {brand}'da kayıtlıdır.",
       "none": "Henüz paylaşılan belge yok."
     },
-    "coming": "Yaklaşan workshoplar",
-    "held": "{brand} workshopları",
+    "coming": "Yaklaşan atölyeler",
+    "held": "{brand} atölyeleri",
     "heldBadge": "Yapıldı",
-    "noneHeld": "Burada henüz workshop yapılmadı.",
+    "noneHeld": "Burada henüz atölye yapılmadı.",
     "tabs": {
-      "workshops": "Workshoplar",
+      "workshops": "Atölyeler",
       "documents": "Belgeler"
     },
     "comingBadge": "Yakında"
@@ -75,9 +75,9 @@
   "instructorsList": {
     "metaTitle": "Eğitmenler · {brand}",
     "title": "Eğitmenlerimiz",
-    "description": "{brand} workshoplarını veren sanatçılar.",
+    "description": "{brand} atölyelerini veren sanatçılar.",
     "empty": "Henüz gösterilecek eğitmen yok.",
-    "workshops": "{count, plural, other {# workshop}}",
+    "workshops": "{count, plural, other {# atölye}}",
     "documents": "{count, plural, other {# belge}}"
   }
 }

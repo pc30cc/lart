@@ -1,15 +1,15 @@
 {
-  "title": "Workshoplar",
-  "description": "Workshopları planlayın, sözleşmeleri gönderin ve her workshopu imzadan galeriye kadar takip edin.",
-  "new": "Yeni workshop",
-  "newTitle": "Yeni workshop",
-  "newDescription": "Workshop bilgilerini bir kez girin. Kaydettiğinizde sözleşme bu bilgilerden hazırlanır ve eğitmene e-postayla gönderilir.",
-  "editTitle": "“{title}” workshopunu düzenle",
+  "title": "Atölyeler",
+  "description": "Atölyeleri planlayın, sözleşmeleri gönderin ve her atölyeyi imzadan galeriye kadar takip edin.",
+  "new": "Yeni atölye",
+  "newTitle": "Yeni atölye",
+  "newDescription": "Atölye bilgilerini bir kez girin. Kaydettiğinizde sözleşme bu bilgilerden hazırlanır ve eğitmene e-postayla gönderilir.",
+  "editTitle": "“{title}” atölyesini düzenle",
   "editDescription": "Bağlantı simgesiyle işaretli alanlardaki değişiklikler sözleşmeyi de değiştirir.",
-  "backToList": "Tüm workshoplar",
-  "backToWorkshop": "Workshopa dön",
+  "backToList": "Tüm atölyeler",
+  "backToWorkshop": "Atölyeye dön",
   "views": {
-    "label": "Workshop listeleri",
+    "label": "Atölye listeleri",
     "upcoming": "Yaklaşanlar",
     "awaiting_signature": "İmza bekleyenler",
     "published": "Kayda açık",
@@ -31,7 +31,7 @@
     "void": "Geçersiz"
   },
   "tabs": {
-    "label": "Workshop bölümleri",
+    "label": "Atölye bölümleri",
     "overview": "Genel bakış",
     "contract": "Sözleşme",
     "registrations": "Kayıtlar",
@@ -39,7 +39,7 @@
     "finances": "Finans"
   },
   "table": {
-    "workshop": "Workshop",
+    "workshop": "Atölye",
     "date": "Tarih",
     "instructor": "Eğitmen",
     "fill": "Kayıtlı",
@@ -51,43 +51,43 @@
   },
   "empty": {
     "first": {
-      "title": "Henüz workshop yok",
-      "description": "İlk workshopunuzu oluşturun. Sözleşmeyi biz hazırlayıp eğitmene e-postayla göndereceğiz."
+      "title": "Henüz atölye yok",
+      "description": "İlk atölyenizi oluşturun. Sözleşmeyi biz hazırlayıp eğitmene e-postayla göndereceğiz."
     },
     "views": {
       "upcoming": {
-        "title": "Yaklaşan workshop yok",
-        "description": "Şu anda yaklaşan bir workshop yok. Bir sonrakini planlamaya ne dersiniz?"
+        "title": "Yaklaşan atölye yok",
+        "description": "Şu anda yaklaşan bir atölye yok. Bir sonrakini planlamaya ne dersiniz?"
       },
       "awaiting_signature": {
         "title": "İmza bekleyen sözleşme yok",
         "description": "Tüm eğitmenler sözleşmelerini imzaladı. Harika!"
       },
       "published": {
-        "title": "Kayda açık workshop yok",
-        "description": "Eğitmen sözleşmeyi imzaladığında workshop burada görünür."
+        "title": "Kayda açık atölye yok",
+        "description": "Eğitmen sözleşmeyi imzaladığında atölye burada görünür."
       },
       "confirmed": {
-        "title": "Kesinleşen workshop yok",
-        "description": "Karar zamanında onayladığınız workshoplar burada görünür."
+        "title": "Kesinleşen atölye yok",
+        "description": "Karar zamanında onayladığınız atölyeler burada görünür."
       },
       "cancelled": {
-        "title": "İptal edilen workshop yok",
-        "description": "Güzel haber: Hiçbir workshop iptal edilmedi."
+        "title": "İptal edilen atölye yok",
+        "description": "Güzel haber: Hiçbir atölye iptal edilmedi."
       },
       "closed": {
-        "title": "Henüz kapanan workshop yok",
-        "description": "Finans sayfasından kapatılan workshoplar burada görünür."
+        "title": "Henüz kapanan atölye yok",
+        "description": "Finans sayfasından kapatılan atölyeler burada görünür."
       },
       "all": {
-        "title": "Workshop yok",
-        "description": "Başlamak için ilk workshopunuzu oluşturun."
+        "title": "Atölye yok",
+        "description": "Başlamak için ilk atölyenizi oluşturun."
       }
     }
   },
   "prerequisites": {
     "title": "Önce birkaç hazırlık",
-    "description": "Her workshopun bir kategorisi, bir eğitmeni ve bir sözleşme metni olmalı. Bunlar hazır olduğunda workshop oluşturabilirsiniz.",
+    "description": "Her atölyenin bir kategorisi, bir eğitmeni ve bir sözleşme metni olmalı. Bunlar hazır olduğunda atölye oluşturabilirsiniz.",
     "category": "En az bir kategori ekleyin",
     "instructor": "En az bir eğitmen ekleyin",
     "contract": "Varsayılan sözleşme metnini belirleyin",
@@ -97,10 +97,10 @@
   },
   "form": {
     "lockedTitle": "Sözleşme koşulları artık değiştirilemez",
-    "lockedDescription": "Bu workshop iptal edildi ya da kapandı, ya da kesinleştikten sonra başladı; bu yüzden tarih, yer, kontenjan, eğitmen ve ücret olduğu gibi kalır. Metinleri ve fotoğrafları yine de düzenleyebilir, adın ya da yerin eksik çevirisini ekleyebilirsiniz.",
+    "lockedDescription": "Bu atölye iptal edildi ya da kapandı, ya da kesinleştikten sonra başladı; bu yüzden tarih, yer, kontenjan, eğitmen ve ücret olduğu gibi kalır. Metinleri ve fotoğrafları yine de düzenleyebilir, adın ya da yerin eksik çevirisini ekleyebilirsiniz.",
     "createAndSend": "Oluştur ve sözleşmeyi gönder",
     "basics": {
-      "title": "Workshop",
+      "title": "Atölye",
       "description": "Her dildeki adı, kategorisi ve kimin vereceği."
     },
     "when": {
@@ -116,30 +116,30 @@
       "description": "Bir kişilik kaydın ücreti ve katılımcıların kabul edeceği kayıt koşulları."
     },
     "about": {
-      "title": "Workshop hakkında",
-      "description": "Ziyaretçilerin workshop sayfasında okuyacağı bilgiler. Kısa ve sıcak cümleler en iyisi."
+      "title": "Atölye hakkında",
+      "description": "Ziyaretçilerin atölye sayfasında okuyacağı bilgiler. Kısa ve sıcak cümleler en iyisi."
     },
     "photos": {
       "title": "Fotoğraflar",
-      "description": "Bir kapak fotoğrafı ve bu workshopta yapılan işlerden birkaç örnek."
+      "description": "Bir kapak fotoğrafı ve bu atölyede yapılan işlerden birkaç örnek."
     },
     "contract": {
       "title": "Eğitmen sözleşmesi",
-      "description": "Eğitmene nasıl ödeme yapılacağı. Bu bilgiler, workshop bilgileriyle birlikte sözleşmede yer alır.",
+      "description": "Eğitmene nasıl ödeme yapılacağı. Bu bilgiler, atölye bilgileriyle birlikte sözleşmede yer alır.",
       "markHint": "Bu işareti taşıyan alanlar sözleşmede de yer alır.",
       "mark": "Sözleşmede de yer alır"
     },
     "reissue": {
       "title": "Bu değişiklikler sözleşmeyi günceller",
       "sent": "Sözleşmenin {version}. sürümü henüz imzalanmadı. Kaydettiğinizde yerine yeni bir sürüm hazırlanır ve eğitmene yeniden e-postayla gönderilir.",
-      "signed": "Sözleşmenin {version}. sürümü zaten imzalandı. Kaydettiğinizde yerine yeni bir sürüm hazırlanır ve eğitmen yeniden imzalayana kadar workshop sitede görünmez. Kesinleşmiş bir workshopun kararı ve kesin katılımcı sayısı korunur.",
+      "signed": "Sözleşmenin {version}. sürümü zaten imzalandı. Kaydettiğinizde yerine yeni bir sürüm hazırlanır ve eğitmen yeniden imzalayana kadar atölye sitede görünmez. Kesinleşmiş bir atölyenin kararı ve kesin katılımcı sayısı korunur.",
       "confirmTitle": "Yeni sözleşme gönderilsin mi?",
-      "confirmDescription": "Mevcut sözleşmenin yerine {version}. sürüm hazırlanıp {name} adlı eğitmene e-postayla gönderilecek. İmzalanana kadar workshop imza bekler ve sitede görünmez. Kayıt yaptıranların yerleri korunur; kesinleşmiş bir workshop, imzalandığında aynı kesin katılımcı sayısıyla yeniden kesinleşir.",
+      "confirmDescription": "Mevcut sözleşmenin yerine {version}. sürüm hazırlanıp {name} adlı eğitmene e-postayla gönderilecek. İmzalanana kadar atölye imza bekler ve sitede görünmez. Kayıt yaptıranların yerleri korunur; kesinleşmiş bir atölye, imzalandığında aynı kesin katılımcı sayısıyla yeniden kesinleşir.",
       "confirm": "Evet, kaydet ve gönder"
     }
   },
   "fields": {
-    "title": "Workshop adı",
+    "title": "Atölye adı",
     "titlePlaceholder": "ör. Soya mumu yapımı",
     "category": "Kategori",
     "categoryPlaceholder": "Bir kategori seçin",
@@ -147,12 +147,12 @@
     "instructorPlaceholder": "Bir eğitmen seçin",
     "instructorHint": "Sözleşme bu eğitmene e-postayla gönderilir.",
     "slug": "Sayfa adresi",
-    "slugHint": "Workshop bağlantısının bir parçasıdır ve Türkçe addan oluşturulur. Yalnızca gerekirse değiştirin.",
+    "slugHint": "Atölye bağlantısının bir parçasıdır ve Türkçe addan oluşturulur. Yalnızca gerekirse değiştirin.",
     "dateTime": "Tarih ve saat",
     "registrationDeadline": "Son kayıt zamanı",
     "registrationDeadlineHint": "Kayıtlar bu saatte kendiliğinden kapanır",
     "decisionAt": "Karar zamanı",
-    "decisionAtHint": "Bu saatte kayıt sayısını size e-postayla bildiririz; workshopun yapılıp yapılmayacağına o zaman karar verirsiniz",
+    "decisionAtHint": "Bu saatte kayıt sayısını size e-postayla bildiririz; atölyenin yapılıp yapılmayacağına o zaman karar verirsiniz",
     "venue": "Yer",
     "venuePlaceholder": "ör. Moda Sanat Evi, Kadıköy",
     "venueHint": "Türkçesi gerekli. Boş bırakılan dillerde Türkçesi gösterilir; bunları sonradan doldurmak yeni bir sözleşme göndermez.",
@@ -187,28 +187,28 @@
     "notes": "Ek notlar",
     "notesHint": "Yalnızca yukarıdaki alanlara sığmayan bilgiler için.",
     "cover": "Kapak fotoğrafı",
-    "coverHint": "Workshop sayfasının üstünde ve listelerde görünür. Yatay bir fotoğraf en iyi sonucu verir.",
+    "coverHint": "Atölye sayfasının üstünde ve listelerde görünür. Yatay bir fotoğraf en iyi sonucu verir.",
     "samples": "Örnek çalışmalar",
-    "samplesHint": "Bu workshopta yapılan işlerden en fazla 12 fotoğraf.",
+    "samplesHint": "Bu atölyede yapılan işlerden en fazla 12 fotoğraf.",
     "feeType": "Eğitmen ücreti nasıl ödenecek?",
     "feeTypes": {
       "per_participant": "Katılımcı başına",
       "per_participantHint": "Her katılımcı için bir tutar; sayı, karar zamanında kesinleşir.",
-      "fixed": "Workshop için sabit",
-      "fixedHint": "Katılımcı sayısı ne olursa olsun, workshopun tamamı için tek bir tutar."
+      "fixed": "Atölye için sabit",
+      "fixedHint": "Katılımcı sayısı ne olursa olsun, atölyenin tamamı için tek bir tutar."
     },
     "feeAmountPerParticipant": "Katılımcı başına tutar",
-    "feeAmountFixed": "Workshopun tamamı için tutar",
-    "feeAtFullCapacity": "Workshop tamamen dolarsa toplam {amount} olur.",
+    "feeAmountFixed": "Atölyenin tamamı için tutar",
+    "feeAtFullCapacity": "Atölye tamamen dolarsa toplam {amount} olur.",
     "hasAdvance": "Ön ödeme",
-    "hasAdvanceHint": "Ücretin bir kısmı workshoptan önce ödenir ve hesap kapatılırken düşülür.",
+    "hasAdvanceHint": "Ücretin bir kısmı atölyeden önce ödenir ve hesap kapatılırken düşülür.",
     "advanceAmount": "Ön ödeme tutarı",
     "advanceMax": "En fazla {amount}.",
     "dayNumber": "{n, number}. gün",
     "addDay": "Gün ekle",
     "removeDay": "Bu günü kaldır",
-    "extraDays": "Diğer günler (birkaç günlük workshop)",
-    "extraDaysHint": "Workshop birden fazla gün sürüyorsa sonraki günleri ekleyin. Her günün kendi saatleri ve katılımcı sayısı vardır (yeni gün bir önceki günün değerleriyle başlar); bunlar eğitmen sözleşmesine yazılır. Ücret tüm günler içindir; kayıtları workshopun kontenjanı sınırlar.",
+    "extraDays": "Diğer günler (birkaç günlük atölye)",
+    "extraDaysHint": "Atölye birden fazla gün sürüyorsa sonraki günleri ekleyin. Her günün kendi saatleri ve katılımcı sayısı vardır (yeni gün bir önceki günün değerleriyle başlar); bunlar eğitmen sözleşmesine yazılır. Ücret tüm günler içindir; kayıtları atölyenin kontenjanı sınırlar.",
     "dayDate": "Tarih",
     "dayStart": "Başlangıç",
     "dayEnd": "Bitiş",
@@ -219,8 +219,8 @@
     "chooseCategory": "Lütfen bir kategori seçin.",
     "chooseInstructor": "Lütfen bir eğitmen seçin.",
     "maxBelowMin": "En fazla katılımcı sayısı, en az sayıdan küçük olamaz.",
-    "deadlineBeforeStart": "Kayıtlar workshop başlamadan önce kapanmalı.",
-    "decisionBeforeStart": "Karar zamanı, workshop başlamadan önce olmalı.",
+    "deadlineBeforeStart": "Kayıtlar atölye başlamadan önce kapanmalı.",
+    "decisionBeforeStart": "Karar zamanı, atölye başlamadan önce olmalı.",
     "ageRange": "Üst yaş, alt yaştan küçük olamaz.",
     "advanceRequired": "Lütfen ön ödeme tutarını girin ya da ön ödemeyi kapatın.",
     "advanceTooBig": "Ön ödeme toplam ücreti geçemez (katılımcı başına ücrette: tutar × en fazla katılımcı).",
@@ -230,28 +230,28 @@
     "dayMaxBelowMin": "Bir günün en çok katılımcı sayısı en azından küçük olamaz."
   },
   "toast": {
-    "created": "Workshop oluşturuldu. Sözleşme e-postayla gönderildi: {name}",
-    "createdNoEmail": "Workshop oluşturuldu ama sözleşme e-postayla gönderilemedi. Sözleşme sekmesinden yeniden gönderebilirsiniz.",
+    "created": "Atölye oluşturuldu. Sözleşme e-postayla gönderildi: {name}",
+    "createdNoEmail": "Atölye oluşturuldu ama sözleşme e-postayla gönderilemedi. Sözleşme sekmesinden yeniden gönderebilirsiniz.",
     "reissued": "Değişiklikler kaydedildi. Sözleşmenin {version}. sürümü e-postayla gönderildi: {name}",
     "reissuedNoEmail": "Değişiklikler kaydedildi ve sözleşmenin {version}. sürümü hazır, ama e-postayla gönderilemedi. Sözleşme sekmesinden yeniden gönderebilirsiniz.",
     "updated": "Değişiklikler kaydedildi."
   },
   "errors": {
-    "slugTaken": "Bu sayfa adresini başka bir workshop kullanıyor. Lütfen farklı bir adres seçin.",
+    "slugTaken": "Bu sayfa adresini başka bir atölye kullanıyor. Lütfen farklı bir adres seçin.",
     "choiceGone": "Seçtiğiniz seçeneklerden biri artık yok. Lütfen yeniden seçin.",
     "noContractTemplate": "Henüz varsayılan bir sözleşme metni yok. Lütfen önce Şablonlar bölümünden belirleyin.",
     "instructorUnavailable": "Bu eğitmen aktif değil. Lütfen başka bir eğitmen seçin.",
     "advanceHeld": "Mevcut eğitmende hâlâ {amount} ön ödeme var. Başka bir eğitmen seçmeden önce Finans sayfasında iade edildiğini kaydedin.",
-    "notFound": "Bu workshop artık yok.",
-    "contractLocked": "Bu workshop iptal edildi ya da kapandı, ya da kesinleştikten sonra başladı; bu yüzden tarihi, yeri, kontenjanı, eğitmeni ve ücreti değiştirilemez.",
+    "notFound": "Bu atölye artık yok.",
+    "contractLocked": "Bu atölye iptal edildi ya da kapandı, ya da kesinleştikten sonra başladı; bu yüzden tarihi, yeri, kontenjanı, eğitmeni ve ücreti değiştirilemez.",
     "priceLocked": "Bu fiyattan kayıt yaptıranlar var, bu yüzden fiyat değiştirilemez.",
     "capacityBelowRegistrations": "Şimdiden {count, plural, one {# kişi} other {# kişi}} kayıt yaptırdı; en fazla katılımcı sayısı bundan az olamaz.",
-    "cannotConfirm": "Yalnızca kayda açık bir workshop onaylanabilir.",
-    "cannotCancel": "Bu workshop zaten iptal edildi ya da kapandı.",
-    "galleryClosedOnly": "Fotoğraf ve videolar, workshop kapandıktan sonra eklenebilir.",
-    "galleryCancelled": "Bu workshop iptal edildi, bu yüzden galerisi yok.",
+    "cannotConfirm": "Yalnızca kayda açık bir atölye onaylanabilir.",
+    "cannotCancel": "Bu atölye zaten iptal edildi ya da kapandı.",
+    "galleryClosedOnly": "Fotoğraf ve videolar, atölye kapandıktan sonra eklenebilir.",
+    "galleryCancelled": "Bu atölye iptal edildi, bu yüzden galerisi yok.",
     "mediaInUse": "Bu dosyalardan biri başka bir yerde kullanılıyor. Lütfen yeniden yükleyin.",
-    "cannotRaiseFinal": "Kesin sayı yalnızca onaylanmış ve henüz başlamamış bir workshopta artırılabilir.",
+    "cannotRaiseFinal": "Kesin sayı yalnızca onaylanmış ve henüz başlamamış bir atölyede artırılabilir.",
     "finalNotHigher": "Yeni sayı şu anki kesin sayıdan ({count, number}) büyük olmalı.",
     "finalAboveMax": "Yeni sayı en fazla katılımcı sayısından ({max, number}) fazla olamaz.",
     "dayHasRegistrations": "Kayıtlı kişilerin olduğu bir gün kaldırılamaz; önce o günün kayıtlarını taşıyın ya da iptal edin."
@@ -293,39 +293,39 @@
     "viewContract": "Sözleşmeyi gör",
     "awaiting": {
       "title": "İmza bekleniyor: {name}",
-      "text": "Sözleşmenin {version}. sürümü {date} tarihinde e-postayla gönderildi. İmzalandığı anda workshop sitede yayına girer.",
-      "noContract": "İmzalanacak bir sözleşme yok. Yenisini göndermek için workshopu düzenleyip kaydedin."
+      "text": "Sözleşmenin {version}. sürümü {date} tarihinde e-postayla gönderildi. İmzalandığı anda atölye sitede yayına girer.",
+      "noContract": "İmzalanacak bir sözleşme yok. Yenisini göndermek için atölyeyi düzenleyip kaydedin."
     },
     "published": {
       "title": "Kayıtlar açık",
       "dueTitle": "Karar zamanı geldi",
       "startedTitle": "Karar verilmeden başladı",
-      "startedText": "Bu workshop {date} tarihinde başladı ama hiç onaylanmadı. Yapıldıysa şimdi onaylayın: böylece kapatılabilir ve eğitmene sözleşmedeki ücret ödenir. Yapılmadıysa iptal edin.",
+      "startedText": "Bu atölye {date} tarihinde başladı ama hiç onaylanmadı. Yapıldıysa şimdi onaylayın: böylece kapatılabilir ve eğitmene sözleşmedeki ücret ödenir. Yapılmadıysa iptal edin.",
       "text": "Son kayıt: {deadline}. Karar zamanı: {decision}. {confirmed, plural, =0 {Henüz kimse kayıt yaptırmadı} one {Şu ana kadar # kişi kayıt yaptırdı} other {Şu ana kadar # kişi kayıt yaptırdı}}; en az {minimum} kişi gerekiyor."
     },
     "confirmed": {
-      "title": "Kesinleşti: workshop yapılıyor!",
+      "title": "Kesinleşti: atölye yapılıyor!",
       "text": "{count, plural, one {# katılımcı} other {# katılımcı}} bekleniyor. Tarih: {date}."
     },
     "held": {
-      "title": "Workshopu kapatma zamanı",
-      "text": "Giderleri ekleyin ve workshopu finans sayfasından kapatın. Kapattığınızda rakamlar kilitlenir.",
+      "title": "Atölyeyi kapatma zamanı",
+      "text": "Giderleri ekleyin ve atölyeyi finans sayfasından kapatın. Kapattığınızda rakamlar kilitlenir.",
       "action": "Finansa git"
     },
     "cancelled": {
-      "title": "Bu workshop iptal edildi",
+      "title": "Bu atölye iptal edildi",
       "text": "İptal tarihi: {date}. {count, plural, =0 {İptal edilecek kayıt yoktu.} one {# kayıt iptal edildi; ödeme yapıldıysa tutarın tamamı iade edilir.} other {# kayıt iptal edildi; ödeme yapan herkese tutarın tamamı iade edilir.}}"
     },
     "closed": {
       "title": "Kapandı. Sıra fotoğraflarda!",
       "titleDone": "Kapandı ve galeride",
-      "text": "Fotoğraf ve videoları ekleyin; workshop geçmiş workshoplar arasında yer alsın.",
+      "text": "Fotoğraf ve videoları ekleyin; atölye geçmiş atölyeler arasında yer alsın.",
       "textDone": "Galeride {count, plural, one {# fotoğraf ya da video} other {# fotoğraf ve video}} var.",
       "action": "Galeriyi aç"
     }
   },
   "timeline": {
-    "label": "Workshopun aşamaları",
+    "label": "Atölyenin aşamaları",
     "sent": "Sözleşme gönderildi",
     "signed": "İmzalandı",
     "decision": "Kesinleşti",
@@ -339,19 +339,19 @@
   },
   "lifecycle": {
     "confirm": {
-      "trigger": "Workshopu onayla",
+      "trigger": "Atölyeyi onayla",
       "title": "“{title}” onaylansın mı?",
       "description": "{count, plural, =0 {Henüz kimse kayıt yaptırmadı.} other {# kişi kayıt yaptırdı (ödeyen de henüz ödemeyen de).}} Bu sayı kesin katılımcı sayısı olur ve eğitmen ücreti buna göre hesaplanır.",
       "belowMinimum": "Bu sayı, gereken en az {minimum} kişinin altında.",
       "action": "Evet, yapılıyor",
-      "done": "Workshop onaylandı."
+      "done": "Atölye onaylandı."
     },
     "cancel": {
-      "trigger": "Workshopu iptal et",
+      "trigger": "Atölyeyi iptal et",
       "title": "“{title}” iptal edilsin mi?",
       "description": "{count, plural, =0 {Henüz kayıt yok.} one {# kayıt iptal edilecek.} other {# kayıt iptal edilecek.}} Kayıtlı herkese nazik bir e-posta gönderilir; ödeme yapanlara tutarın tamamı iade edilir. Bu işlem geri alınamaz.",
       "action": "Evet, iptal et",
-      "done": "Workshop iptal edildi."
+      "done": "Atölye iptal edildi."
     },
     "resend": {
       "trigger": "Sözleşmeyi yeniden gönder",
@@ -381,11 +381,11 @@
     "signedLine": "{name} tarafından {date} tarihinde elektronik olarak imzalandı.",
     "none": {
       "title": "Henüz sözleşme yok",
-      "description": "Workshop kaydedildiğinde sözleşme kendiliğinden hazırlanır."
+      "description": "Atölye kaydedildiğinde sözleşme kendiliğinden hazırlanır."
     },
     "noText": {
       "title": "Bu sürüm imzalanmadı",
-      "description": "Eğitmen imzalamadan önce geçersiz hale geldi (yeni bir sürüm gönderildi ya da workshop iptal edildi), bu yüzden gösterilecek imzalı bir metin yok."
+      "description": "Eğitmen imzalamadan önce geçersiz hale geldi (yeni bir sürüm gönderildi ya da atölye iptal edildi), bu yüzden gösterilecek imzalı bir metin yok."
     },
     "check": {
       "unreadable": {
@@ -411,13 +411,13 @@
     "voidedAt": "Geçersiz oldu",
     "fingerprint": "İmzalı metnin parmak izi (SHA-256)",
     "history": "Tüm sürümler",
-    "howToChange": "Sözleşme, workshop bilgilerinden hazırlanır. Değiştirmek için workshopu düzenleyin; eğitmene yeni bir sürüm gönderilir."
+    "howToChange": "Sözleşme, atölye bilgilerinden hazırlanır. Değiştirmek için atölyeyi düzenleyin; eğitmene yeni bir sürüm gönderilir."
   },
   "registrations": {
     "metaTitle": "Kayıtlar · {title}",
     "export": "CSV indir",
     "search": "Ad, e-posta ya da telefonla ara",
-    "locked": "Bu workshop iptal edildi ya da hesapları kapatıldı; kayıtları artık değiştirilemez.",
+    "locked": "Bu atölye iptal edildi ya da hesapları kapatıldı; kayıtları artık değiştirilemez.",
     "actionsFor": "{name} için işlemler",
     "summary": {
       "registered": "Kayıtlı",
@@ -432,7 +432,7 @@
     },
     "empty": {
       "title": "Henüz kayıt yok",
-      "description": "Bu workshopa kayıt yaptıranlar burada görünür.",
+      "description": "Bu atölyeye kayıt yaptıranlar burada görünür.",
       "awaiting": "Kayıtlar, eğitmen sözleşmeyi imzaladığında açılır."
     },
     "filter": {
@@ -470,9 +470,9 @@
       "online": "Online ödeme linki"
     },
     "methodHints": {
-      "cash": "Nakit ödendi, örneğin workshopta.",
+      "cash": "Nakit ödendi, örneğin atölyede.",
       "transfer": "Para banka hesabına geldi.",
-      "online": "Workshopun iyzico ya da PayTR linkiyle kartla ödendi."
+      "online": "Atölyenin iyzico ya da PayTR linkiyle kartla ödendi."
     },
     "consent": {
       "photoYes": "Fotoğrafları yayımlanabilir",
@@ -493,7 +493,7 @@
       "trigger": "Kaydı iptal et",
       "title": "{participant} kaydı iptal edilsin mi?",
       "unpaid": "Henüz ödeme yapılmadı, bu yüzden iade edilecek bir şey yok. {name} kısa bir e-posta alacak.",
-      "free": "Bu workshop ücretsiz, bu yüzden iade edilecek bir şey yok. {name} kısa bir e-posta alacak.",
+      "free": "Bu atölye ücretsiz, bu yüzden iade edilecek bir şey yok. {name} kısa bir e-posta alacak.",
       "paid": "{amount} ödendi. Ne kadarı iade edilsin?",
       "refund": "İade",
       "terms": "Koşullara göre: {percent} · {amount}",
@@ -520,7 +520,7 @@
     },
     "paymentLink": {
       "label": "Online ödeme linki",
-      "hint": "İsteğe bağlı. iyzico ya da PayTR uygulamasında bu workshopun fiyatı için bir ödeme linki oluşturup buraya yapıştırın. Kayıt olan öğrenciler “Online öde” düğmesini görür.",
+      "hint": "İsteğe bağlı. iyzico ya da PayTR uygulamasında bu atölyenin fiyatı için bir ödeme linki oluşturup buraya yapıştırın. Kayıt olan öğrenciler “Online öde” düğmesini görür.",
       "invalid": "Lütfen ödeme linkinin tamamını, https:// ile başlayacak şekilde yapıştırın.",
       "offWarning": "Online ödeme ayarlarda kapalı, bu yüzden öğrenciler bu linki şimdilik görmüyor.",
       "offNote": "Online ödeme ayarlarda kapalı.",
@@ -549,30 +549,30 @@
     },
     "all": {
       "title": "Kayıtlar",
-      "description": "Tüm workshoplardaki kayıtlar. Bir havalenin kimden geldiğini bulmak için açıklamadaki ismi arayın.",
-      "workshop": "Workshop",
-      "empty": "Bir workshopa kaydolanlar burada görünür."
+      "description": "Tüm atölyelerdeki kayıtlar. Bir havalenin kimden geldiğini bulmak için açıklamadaki ismi arayın.",
+      "workshop": "Atölye",
+      "empty": "Bir atölyeye kaydolanlar burada görünür."
     },
     "dayCount": "{taken} / {max}",
     "byDay": "Günlere göre",
     "add": {
       "trigger": "Kayıt ekle",
       "title": "Kayıt ekle",
-      "description": "Bir katılımcıyı workshopa kendiniz kaydedin. Sitede kayıt olduğunda giden e-postanın aynısı ona gider.",
+      "description": "Bir katılımcıyı atölyeye kendiniz kaydedin. Sitede kayıt olduğunda giden e-postanın aynısı ona gider.",
       "member": "Katılımcının hesabı",
       "searchPlaceholder": "Ad, e-posta veya telefonla ara",
       "searching": "Aranıyor…",
       "noMembers": "Kimse bulunamadı. Önce Katılımcılar'dan ekleyin.",
       "change": "Değiştir",
-      "workshop": "Workshop",
-      "chooseWorkshop": "Bir workshop seçin",
+      "workshop": "Atölye",
+      "chooseWorkshop": "Bir atölye seçin",
       "day": "Hangi gün",
       "when": "Tarih ve saat",
       "begun": "Başladı",
       "left": "{count} yer kaldı",
       "full": "Dolu",
       "participant": "Katılımcının adı",
-      "participantHint": "Workshopa katılan kişi (ör. çocuğu).",
+      "participantHint": "Atölyeye katılan kişi (ör. çocuğu).",
       "payment": "Ödeme",
       "paymentState": {
         "unpaid": "Henüz ödenmedi",
@@ -590,7 +590,7 @@
       "cancel": "Vazgeç",
       "submit": "Kaydet",
       "done": "Kayıt yapıldı, katılımcıya e-posta gönderildi.",
-      "noWorkshops": "Şu anda kayıt alan bir workshop yok.",
+      "noWorkshops": "Şu anda kayıt alan bir atölye yok.",
       "onHold": "Ayrılan yerlerden birine ({note}); ayırmadan bir yer düşer."
     },
     "holds": {
@@ -615,7 +615,7 @@
       },
       "errors": {
         "tooMany": "Bu kadar boş yer yok; şu anda {left} yer kaldı.",
-        "notOpen": "Bu workshop artık yer almıyor.",
+        "notOpen": "Bu atölye artık yer almıyor.",
         "gone": "Bu ayırma artık yok."
       },
       "less": "Bir yer az",
@@ -630,18 +630,18 @@
     "title": "Fotoğraflar ve videolar",
     "description": "Fotoğraflara filigran kendiliğinden eklenir. Değişiklikler anında kaydedilir.",
     "notYet": {
-      "title": "Galeri, workshop kapandıktan sonra açılır",
-      "description": "Önce workshopu finans sayfasından kapatın. Ardından fotoğraf ve videoları buraya ekleyin.",
+      "title": "Galeri, atölye kapandıktan sonra açılır",
+      "description": "Önce atölyeyi finans sayfasından kapatın. Ardından fotoğraf ve videoları buraya ekleyin.",
       "action": "Finansa git"
     },
     "cancelled": {
-      "title": "İptal edilen workshopun galerisi olmaz",
-      "description": "Bu workshop yapılmadı, bu yüzden fotoğrafı ya da videosu yok."
+      "title": "İptal edilen atölyenin galerisi olmaz",
+      "description": "Bu atölye yapılmadı, bu yüzden fotoğrafı ya da videosu yok."
     },
     "consent": {
       "title": "Kimler tanınabilir?",
       "description": "İnsanların tanınabildiği fotoğraf ve videoları yalnızca kayıt sırasında izin verdilerse yayımlayın.",
-      "nobody": "Bu workshopa kayıtlı kimse yoktu.",
+      "nobody": "Bu atölyeye kayıtlı kimse yoktu.",
       "summary": "{total} kişiden {photos} kişi fotoğrafa, {videos} kişi videoya izin verdi.",
       "photoYes": "Fotoğraf: evet",
       "photoNo": "Fotoğraf: hayır",
@@ -662,17 +662,17 @@
     "notSet": "Henüz bir Telegram kanalı bağlanmadı.",
     "setUp": "Ayarlardan kurun",
     "postedAt": "{date} tarihinde kanala gönderildi.",
-    "notPublic": "Sözleşme imzalanıp workshop yayımlandıktan sonra kanala gönderebilirsiniz.",
+    "notPublic": "Sözleşme imzalanıp atölye yayımlandıktan sonra kanala gönderebilirsiniz.",
     "send": "Kanala gönder",
     "sendAgain": "Kanala yeniden gönder",
-    "confirmTitle": "Bu workshop Telegram'a gönderilsin mi?",
+    "confirmTitle": "Bu atölye Telegram'a gönderilsin mi?",
     "confirmText": "Bu gönderi {chat} kanalında yayımlanacak.",
-    "sent": "Workshop Telegram kanalında yayımlandı.",
-    "notPublicError": "Bu workshop henüz yayımlanmadı."
+    "sent": "Atölye Telegram kanalında yayımlandı.",
+    "notPublicError": "Bu atölye henüz yayımlanmadı."
   },
   "qr": {
     "title": "Afiş için QR kod",
-    "alt": "Workshop sayfasının QR kodu",
-    "hint": "Bu kod okutulunca workshop sayfası ve kayıt açılır. Baskı için PNG veya SVG indirin."
+    "alt": "Atölye sayfasının QR kodu",
+    "hint": "Bu kod okutulunca atölye sayfası ve kayıt açılır. Baskı için PNG veya SVG indirin."
   }
 }

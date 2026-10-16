@@ -6,7 +6,7 @@
   "seats": "{count, plural, one {# boş yer} other {# boş yer}}",
   "full": "Kontenjan doldu",
   "signoff": "{brand}'da görüşmek üzere",
-  "register": "✨ Workshopa kaydol",
+  "register": "✨ Atölyeye kaydol",
   "admin": {
     "title": {
       "registration": "Yeni kayıt",
@@ -16,7 +16,7 @@
     "registeredBy": "Kaydı yapan",
     "free": "Ücretsiz",
     "ways": {
-      "cash": "Nakit, workshop günü",
+      "cash": "Nakit, atölye günü",
       "transfer": "Havale / EFT",
       "online": "Online ödeme"
     },
@@ -32,33 +32,33 @@
     "confirmed": "Ödeme kaydedildi, katılımcıya onay e-postası gitti.",
     "notAllowed": "Bu düğme yalnızca “Ayarlar → Telegram”da bağlı yöneticiler için çalışır.",
     "start": {
-      "connected": "Merhaba {name} 👋\nBundan sonra her yeni kaydı ve her dekontu buraya göndereceğim; “✅ Ödemeyi onayla” ile ödemeyi onaylayabilirsiniz.\nAtölyeler, başarılı kayıtlar ve nakit ödemeler için alttaki “🎨 Devam eden workshoplar” düğmesine basın.",
+      "connected": "Merhaba {name} 👋\nBundan sonra her yeni kaydı ve her dekontu buraya göndereceğim; “✅ Ödemeyi onayla” ile ödemeyi onaylayabilirsiniz.\nAtölyeler, başarılı kayıtlar ve nakit ödemeler için alttaki “🎨 Devam eden atölyeler” düğmesine basın.",
       "unknown": "Bu bot yalnızca sitenin yöneticileri içindir. Yöneticiyseniz Telegram kullanıcı adınızı “Ayarlar → Telegram”a girip Start'a yeniden basın."
     },
     "test": "✅ Her şey hazır: kayıtlar ve dekontlar bundan sonra buraya gelecek.",
     "menu": {
-      "button": "🎨 Devam eden workshoplar",
-      "command": "Devam eden workshoplar",
-      "workshopsTitle": "Devam eden workshoplar",
+      "button": "🎨 Devam eden atölyeler",
+      "command": "Devam eden atölyeler",
+      "workshopsTitle": "Devam eden atölyeler",
       "choose": "Birini seçin (🟢 başladı demek):",
-      "none": "Şu anda devam eden workshop yok.",
+      "none": "Şu anda devam eden atölye yok.",
       "registered": "Kayıt: {n} kişi",
       "paidCount": "Ödeyen: {n} kişi",
       "unpaidCount": "Ödeme bekleyen: {n} kişi",
       "cashCount": "Nakit, henüz alınmadı: {n} kişi · {sum}",
       "paidButton": "Başarılı kayıtlar",
       "cashButton": "Nakit ödemeler",
-      "back": "Tüm workshoplar",
-      "backToWorkshop": "Workshopa dön",
+      "back": "Tüm atölyeler",
+      "backToWorkshop": "Atölyeye dön",
       "paidTitle": "Başarılı kayıtlar (ödenmiş)",
       "nonePaid": "Henüz ödeme kaydedilmedi.",
       "total": "Toplam alınan",
       "cashTitle": "Nakit ödemeler",
       "noneCash": "Alınmamış nakit ödeme kalmadı. 👌",
-      "cashHint": "Parayı workshopta aldığınızda o kişinin “Ödendi” düğmesine basın.",
+      "cashHint": "Parayı atölyede aldığınızda o kişinin “Ödendi” düğmesine basın.",
       "markPaid": "Ödendi",
       "gone": "Bu artık bulunamıyor; menüyü yeniden açın."
     }
   },
-  "welcome": "🤎 به دنیای LIMER خوش آمدید!\n\nخوشحالیم که همراه ما هستید. 🌿\n\nاینجا دنیایی از هنر، خلاقیت و تجربه‌های متفاوت در انتظارتان است؛ از ورکشاپ‌های هنری تا لحظاتی برای خلق کردن، الهام گرفتن و لذت بردن.\n\nبرای آشنایی بیشتر با ما و مشاهده ورکشاپ‌ها، به وب‌سایت لیمر سر بزنید:\n\n🌐 {fa}\n\nLIMER Sanat Workshopu\nCurated Creative Experiences ✨\n_________\n\n🤎 LIMER Dünyasına Hoş Geldiniz!\n\nBizimle olduğunuz için mutluyuz. 🌿\n\nBurada sanat, yaratıcılık ve ilham dolu deneyimler sizi bekliyor. Sanat workshoplarımızdan yeni keşiflere, üretmenin ve keyifli anlar paylaşmanın dünyasına davetlisiniz.\n\nBizi daha yakından tanımak ve workshoplarımızı keşfetmek için web sitemizi ziyaret edin:\n\n🌐 {tr}\n\nLIMER Sanat Workshopu\nCurated Creative Experiences ✨\n_________\n\n🤎 Welcome to the world of LIMER!\n\nWe are happy to have you with us. 🌿\n\nA world of art, creativity and new experiences awaits you here: from art workshops to moments to create, be inspired and enjoy.\n\nTo get to know us and discover our workshops, visit our website:\n\n🌐 {en}\n\nLIMER Sanat Workshopu\nCurated Creative Experiences ✨"
+  "welcome": "🤎 به دنیای LIMER خوش آمدید!\n\nخوشحالیم که همراه ما هستید. 🌿\n\nاینجا دنیایی از هنر، خلاقیت و تجربه‌های متفاوت در انتظارتان است؛ از ورکشاپ‌های هنری تا لحظاتی برای خلق کردن، الهام گرفتن و لذت بردن.\n\nبرای آشنایی بیشتر با ما و مشاهده ورکشاپ‌ها، به وب‌سایت لیمر سر بزنید:\n\n🌐 {fa}\n\nLIMER Sanat Atölyesi\nCurated Creative Experiences ✨\n_________\n\n🤎 LIMER Dünyasına Hoş Geldiniz!\n\nBizimle olduğunuz için mutluyuz. 🌿\n\nBurada sanat, yaratıcılık ve ilham dolu deneyimler sizi bekliyor. Sanat atölyelerimizden yeni keşiflere, üretmenin ve keyifli anlar paylaşmanın dünyasına davetlisiniz.\n\nBizi daha yakından tanımak ve atölyelerimizi keşfetmek için web sitemizi ziyaret edin:\n\n🌐 {tr}\n\nLIMER Sanat Atölyesi\nCurated Creative Experiences ✨\n_________\n\n🤎 Welcome to the world of LIMER!\n\nWe are happy to have you with us. 🌿\n\nA world of art, creativity and new experiences awaits you here: from art workshops to moments to create, be inspired and enjoy.\n\nTo get to know us and discover our workshops, visit our website:\n\n🌐 {en}\n\nLIMER Sanat Atölyesi\nCurated Creative Experiences ✨"
 }

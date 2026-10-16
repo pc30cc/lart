@@ -47,6 +47,6 @@ describe("dashboard messages", () => {
     const t = translator("fa", fa, [])
     expect(t("dashboard.profit.workshops", { count: 12 })).toBe("۱۲ ورکشاپ")
     expect(t("dashboard.attention.signatures", { count: 2 })).toContain("۲")
-    expect(translator("tr", tr, [])("dashboard.profit.workshops", { count: 12 })).toBe("12 workshop")
+    expect(translator("tr", tr, [])("dashboard.profit.workshops", { count: 12 })).toBe("12 atölye")
   })
 })
