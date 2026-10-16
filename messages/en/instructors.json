@@ -204,5 +204,10 @@
     "approvedNoEmail": "Approved. The email couldn’t be sent, so please let them know yourself.",
     "waiting": "{count, plural, one {# instructor signed up and is} other {# instructors signed up and are}} waiting for your approval.",
     "show": "Show"
+  },
+  "documents": {
+    "title": "Certificates and licences",
+    "description": "What the instructor added in their panel. Their public page shows only small, marked copies.",
+    "publicProfile": "Public page"
   }
 }

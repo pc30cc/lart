@@ -49,5 +49,23 @@
   "footer": {
     "rights": "© {year} {brand}",
     "legal": "Yasal"
+  },
+  "instructorProfile": {
+    "metaTitle": "{name}, eğitmen",
+    "back": "Tüm atölyeler",
+    "eyebrow": "{brand} eğitmeni",
+    "workshopsCount": "{count, plural, other {# atölye}}",
+    "documentsCount": "{count, plural, other {# belge}}",
+    "listSeparator": ", ",
+    "documents": {
+      "title": "Sertifikalar ve belgeler",
+      "description": "Eğitmenin paylaştığı yeterlilikleri.",
+      "pdf": "PDF",
+      "note": "Eğitmenin belgelerini korumak için yalnızca küçük kopyalar gösterilir. Asılları {brand}'da kayıtlıdır."
+    },
+    "coming": "Yaklaşan atölyeler",
+    "held": "{brand} atölyeleri",
+    "heldBadge": "Yapıldı",
+    "noneHeld": "Burada henüz atölye yapılmadı."
   }
 }

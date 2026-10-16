@@ -80,7 +80,8 @@
       "pausedTitle": "Kayıtlara kısa bir ara verdik",
       "pausedText": "Birkaç ayrıntıyı güncelliyoruz. Lütfen kısa süre sonra yeniden bakın."
     },
-    "allWorkshops": "Tüm atölyeleri gör"
+    "allWorkshops": "Tüm atölyeleri gör",
+    "instructorDetails": "Eğitmen hakkında"
   },
   "register": {
     "metaTitle": "Kayıt: {title}",

@@ -4,6 +4,7 @@ import {
   ChevronLeftIcon,
   ClockIcon,
   HourglassIcon,
+  IdCardIcon,
   MapPinIcon,
   PaletteIcon,
   PartyPopperIcon,
@@ -222,7 +223,16 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/work
                   </span>
                 )}
                 <div className="min-w-0 space-y-1">
-                  <p className="text-lg font-semibold">{w.instructor.name}</p>
+                  <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <span className="text-lg font-semibold">{w.instructor.name}</span>
+                    <Link
+                      href={`/workshops/${w.slug}/instructor`}
+                      className="text-primary focus-visible:ring-ring/50 inline-flex items-center gap-1 rounded-sm text-sm font-medium underline-offset-4 outline-none hover:underline focus-visible:ring-3"
+                    >
+                      <IdCardIcon className="size-4" aria-hidden />
+                      {t("instructorDetails")}
+                    </Link>
+                  </p>
                   {w.instructor.field && (
                     <p className="text-primary text-sm" {...langProps(w.instructor.fieldLang)}>
                       {w.instructor.field}

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState, type DragEvent } from "react"
 import {
   folderName,
   isImagePurpose,
+  takesPdf,
   MAX_MEGAPIXELS,
   maxUploadBytes,
   VIDEO_PART_BYTES,
@@ -44,7 +45,7 @@ const isVideoOf = (file: File, formats: readonly VideoType[]) =>
 /** Quick checks before sending anything; the server checks the real content again. */
 export function checkFile(file: File, purpose: UploadPurpose): ClientUploadError | null {
   const ok = isImagePurpose(purpose)
-    ? isImageFile(file) || (purpose === "receipt" && isPdfFile(file))
+    ? isImageFile(file) || (takesPdf(purpose) && isPdfFile(file))
     : isVideoFile(file) && isVideoOf(file, videoFormats[purpose])
   if (!file.size || !ok) return "unsupported_type"
   if (file.size > maxUploadBytes(purpose)) return "too_large"
@@ -56,9 +57,9 @@ export function checkFile(file: File, purpose: UploadPurpose): ClientUploadError
  * every browser plays (MP4, WebM).
  */
 export const fileKind = (purpose: UploadPurpose) =>
-  purpose === "receipt" ? "receipt" : isImagePurpose(purpose) ? "image" : videoFormats[purpose].includes("mov") ? "video" : "webVideo"
+  purpose === "receipt" ? "receipt" : purpose === "instructor_document" ? "document" : isImagePurpose(purpose) ? "image" : videoFormats[purpose].includes("mov") ? "video" : "webVideo"
 
-/** Upload routes: the super-admin panel's (default) and the instructor panel's (profile photo only). */
+/** Upload routes: the super-admin panel's (default) and the instructor panel's (profile photo, documents). */
 export type UploadEndpoint = "/api/admin/uploads" | "/api/instructor/uploads"
 
 type Options = {

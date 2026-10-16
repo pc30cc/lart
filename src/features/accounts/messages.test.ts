@@ -18,7 +18,7 @@ const flat = (obj: object, prefix = ""): [string, string][] =>
   )
 
 /** Values for every placeholder the messages use; numbers where they are formatted as numbers. */
-const values = { brand: "Lart", email: "a@b.c", name: "Ayşe", min: 10, minutes: 30, days: 7, year: "2026" }
+const values = { brand: "Lart", email: "a@b.c", name: "Ayşe", min: 10, minutes: 30, days: 7, year: "2026", count: 2 }
 
 describe("accounts messages", () => {
   it("have the same keys in fa, tr and en", async () => {

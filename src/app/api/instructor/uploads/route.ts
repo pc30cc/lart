@@ -12,17 +12,19 @@ import { storeImage } from "@/lib/storage/upload"
 
 /** Room for the multipart framing around the file. */
 const FRAMING_BYTES = 16 * 1024
-/** Instructors upload one thing: their profile photo. */
-const fieldsSchema = z.strictObject({ purpose: z.literal("instructor_photo") })
+/** Instructors upload their profile photo and their certificates and licences. */
+const fieldsSchema = z.strictObject({ purpose: z.enum(["instructor_photo", "instructor_document"]) })
 /** Plenty for choosing a photo, too few to fill the storage. */
 const uploads = createRateLimiter({ limit: 20, windowMs: 60 * 60_000 })
 
 const fail = (code: UploadErrorCode) => Response.json({ error: code }, { status: uploadErrorStatus[code] })
 
 /**
- * The instructor's profile photo upload (the instructor panel's profile page):
- * multipart/form-data with "purpose" ("instructor_photo", the only one) first,
- * then "file". Same checks and processing as the admin upload route (type from
+ * The instructor's uploads (the instructor panel's profile page): their photo
+ * and their documents. multipart/form-data with "purpose" ("instructor_photo"
+ * or "instructor_document") first, then "file". A document may be a PDF
+ * (kept as it is); a document photo also gets its small public copy
+ * (`thumbPath`, audited with it). Same checks and processing as the admin upload route (type from
  * the bytes, size and pixel limits, re-encoded square WebP, no metadata),
  * stored under instructors/<the instructor's English or Turkish name>/.
  * Answers UploadResult (201) or { error }. Each upload is audited with the
@@ -52,14 +54,15 @@ export async function POST(request: Request) {
 
     const [storage, watermark] = await Promise.all([getStorage(), getSetting("watermark")])
     const { displayName } = session.instructor
+    const { purpose } = fields.data
     const result = await storeImage({
       storage,
-      purpose: "instructor_photo",
+      purpose,
       file: form.file(MAX_IMAGE_BYTES),
       watermark,
       folder: folderName([displayName.en, displayName.tr]),
     })
-    const { path, width, height } = result
+    const { path, width, height, thumbPath } = result
     try {
       await audit({
         adminId: viewer?.id ?? null,
@@ -67,7 +70,8 @@ export async function POST(request: Request) {
         entity: "media",
         entityId: path,
         data: {
-          purpose: "instructor_photo",
+          purpose,
+          ...(thumbPath ? { thumbPath } : {}),
           width,
           height,
           by: "instructor",
@@ -78,6 +82,7 @@ export async function POST(request: Request) {
     } catch (error) {
       // No unaudited files: undo the upload.
       await storage.remove(path).catch(() => {})
+      if (thumbPath) await storage.remove(thumbPath).catch(() => {})
       throw error
     }
     return Response.json(result, { status: 201 })

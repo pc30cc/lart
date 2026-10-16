@@ -6,11 +6,12 @@ import os from "node:os"
 import path from "node:path"
 import { pipeline } from "node:stream/promises"
 
-import { processImage, type WatermarkSettings } from "@/lib/images"
+import { documentThumbnail, processImage, type WatermarkSettings } from "@/lib/images"
 import { newObjectPath, type Storage } from "./index"
 import {
   folderName,
   maxUploadBytes,
+  takesPdf,
   UploadError,
   videoFormats,
   type ImagePurpose,
@@ -36,6 +37,7 @@ const layouts: Record<UploadPurpose, (name: string) => [dir: string, prefix: str
   site_image: () => ["site", "img-"],
   site_video: () => ["site", "video-"],
   receipt: () => ["receipts", ""],
+  instructor_document: (name) => [`instructors/${name}/documents`, "doc-"],
 }
 
 /**
@@ -69,17 +71,29 @@ export async function storeImage({
   folder?: string
 }): Promise<UploadResult> {
   const input = Buffer.from(await new Response(file).arrayBuffer())
-  // A receipt may be a PDF: kept as it is (a document, not a picture), recognised by its header.
-  if (purpose === "receipt" && isPdf(input)) {
+  // A receipt or an instructor's document may be a PDF: kept as it is (a document, not a picture), recognised by its header.
+  if (takesPdf(purpose) && isPdf(input)) {
     const path = uploadPath(purpose, folder, "pdf")
     await storage.put(path, input, "application/pdf")
-    return { path, url: storage.publicUrl(path) }
+    return { path, url: storage.publicUrl(path), contentType: "application/pdf" }
   }
   const mark = purpose === "gallery_photo" ? { settings: watermark, logo: await readLogo(storage, watermark.logoPath) } : null
   const image = await processImage(input, purpose, mark)
   const path = uploadPath(purpose, folder, image.ext)
   await storage.put(path, image.data, image.contentType)
-  return { path, url: storage.publicUrl(path), width: image.width, height: image.height }
+  const result: UploadResult = { path, url: storage.publicUrl(path), width: image.width, height: image.height }
+  if (purpose !== "instructor_document") return result
+  // The public profile's copy: small and marked, made from the stored one (already upright, no metadata).
+  try {
+    const logo = watermark.logoPath ? await storage.read(watermark.logoPath).then((f) => (f ? new Response(f.body).arrayBuffer() : null)).catch(() => null) : null
+    const thumb = await documentThumbnail(image.data, logo ? Buffer.from(logo) : null)
+    const thumbPath = newObjectPath(layouts.instructor_document(folderName([folder]))[0], thumb.ext, "thumb-")
+    await storage.put(thumbPath, thumb.data, thumb.contentType)
+    return { ...result, contentType: image.contentType, thumbPath, thumbUrl: storage.publicUrl(thumbPath) }
+  } catch (error) {
+    await storage.remove(path).catch(() => {})
+    throw error
+  }
 }
 
 /** A PDF starts with "%PDF-" (a few bytes of junk before it are allowed by readers, not here). */

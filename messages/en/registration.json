@@ -80,7 +80,8 @@
       "pausedTitle": "Registration is paused for a moment",
       "pausedText": "We’re updating a few details. Please check back soon."
     },
-    "allWorkshops": "See all workshops"
+    "allWorkshops": "See all workshops",
+    "instructorDetails": "About the instructor"
   },
   "register": {
     "metaTitle": "Register: {title}",

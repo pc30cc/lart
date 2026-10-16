@@ -66,7 +66,7 @@ async function folderOf(purpose: UploadPurpose, fields: Fields, admin: AdminSess
     if (purpose === "partner_portrait") return folderName([latin], "partner")
     return folderName([latin, admin.email.split("@")[0]]) // the logo's folder is always brand/
   }
-  if (purpose === "instructor_photo") {
+  if (purpose === "instructor_photo" || purpose === "instructor_document") {
     if (courseId) return null
     if (!instructorId) return folderName([folder], "new")
     const [row] = await db

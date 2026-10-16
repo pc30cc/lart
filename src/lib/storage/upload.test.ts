@@ -84,6 +84,20 @@ describe("storeImage", () => {
     await expect(storeImage({ storage, purpose: "receipt", file: toStream(Buffer.from("<html>")), watermark: noWatermark })).rejects.toMatchObject({ code: "unsupported_type" })
   })
 
+  it("keeps an instructor's document with a small public copy (a PDF as it is, with none)", async () => {
+    const photo = await storeImage({ storage, purpose: "instructor_document", file: toStream(await jpeg(3000, 2000)), watermark: noWatermark, folder: "zeynep" })
+    expect(photo.path).toMatch(/^instructors\/zeynep\/documents\/doc-[\w-]{22}\.webp$/)
+    expect(photo.thumbPath).toMatch(/^instructors\/zeynep\/documents\/thumb-[\w-]{22}\.webp$/)
+    expect(photo).toMatchObject({ width: 2400, height: 1600, contentType: "image/webp" })
+    const thumb = await sharp(await read(photo.thumbPath!)).metadata()
+    expect(Math.max(thumb.width!, thumb.height!)).toBeLessThanOrEqual(320)
+    const pdf = Buffer.from("%PDF-1.4\n1 0 obj << >> endobj\ntrailer << >>\n%%EOF\n")
+    const doc = await storeImage({ storage, purpose: "instructor_document", file: toStream(pdf), watermark: noWatermark, folder: "zeynep" })
+    expect(doc.path).toMatch(/^instructors\/zeynep\/documents\/doc-[\w-]{22}\.pdf$/)
+    expect(doc).toMatchObject({ contentType: "application/pdf" })
+    expect(doc.thumbPath).toBeUndefined()
+  })
+
   it("stores a processed image in the workshop's folder", async () => {
     const result = await storeImage({
       storage,

@@ -3,7 +3,11 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 
+import { DocumentsList } from "@/features/instructor-documents/components/documents"
+import { listDocuments, profileSlug } from "@/features/instructor-documents/queries"
 import { getMyProfile } from "@/features/instructor-panel/queries"
+import { requireInstructor } from "@/lib/auth/instructor"
+import { Link } from "@/i18n/navigation"
 import { getBrand } from "@/lib/settings"
 import { cn } from "@/lib/utils"
 import { LanguageChoice } from "../_components/language-choice"
@@ -23,7 +27,15 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function MyProfilePage({ params }: PageProps<"/[locale]/instructor/profile">) {
   const { locale } = await params
-  const [profile, t, brand] = await Promise.all([getMyProfile(), getTranslations("instructorPanel.profile"), getBrand(locale)])
+  const { instructor } = await requireInstructor()
+  const [profile, t, td, brand, documents, slug] = await Promise.all([
+    getMyProfile(),
+    getTranslations("instructorPanel.profile"),
+    getTranslations("instructorPanel.documents"),
+    getBrand(locale),
+    listDocuments(instructor.id),
+    profileSlug(instructor.id),
+  ])
   if (!profile) notFound()
 
   return (
@@ -41,6 +53,25 @@ export default async function MyProfilePage({ params }: PageProps<"/[locale]/ins
           photoUrl: profile.photoUrl,
         }}
       />
+
+      <Block
+        title={td("title")}
+        description={
+          <>
+            {td("description")}
+            {slug && (
+              <>
+                {" "}
+                <Link href={`/workshops/${slug}/instructor`} className="text-primary font-medium underline-offset-4 hover:underline">
+                  {td("seeProfile")}
+                </Link>
+              </>
+            )}
+          </>
+        }
+      >
+        <DocumentsList documents={documents} />
+      </Block>
 
       <Block title={t("language.title")} description={t("language.description")} id="language-title">
         <LanguageChoice labelledBy="language-title" />

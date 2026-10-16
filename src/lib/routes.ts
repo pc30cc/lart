@@ -25,6 +25,8 @@ const table: [path: string, area: Area, access: Access, kind?: RouteKind][] = [
   ["/workshops", "site", "public"],
   ["/workshops/[slug]", "site", "public"],
   ["/workshops/[slug]/register", "site", "public"],
+  // The workshop's instructor: their page (noindex, not in the sitemap).
+  ["/workshops/[slug]/instructor", "site", "public"],
   ["/about", "site", "public"],
   ["/story", "site", "public"],
   ["/contact", "site", "public"],

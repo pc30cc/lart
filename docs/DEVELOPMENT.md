@@ -270,6 +270,7 @@ languages `/fa` or `/en` comes in front (`/` is `/fa`).
 | `/workshops` | site | public | |
 | `/workshops/[slug]` | site | public | |
 | `/workshops/[slug]/register` | site | public | |
+| `/workshops/[slug]/instructor` | site | public | |
 | `/about` | site | public | |
 | `/story` | site | public | |
 | `/contact` | site | public | |
@@ -1304,6 +1305,24 @@ without open workshops shows the whole list, without an error. A filtered
 view is `noindex, follow` with no canonical or language links (Google reads
 a noindex next to a canonical to another page as contradicting itself); the
 sitemap lists only `/workshops`.
+
+**Instructor's page and documents.** "About the instructor", next to the
+instructor's name on a workshop's page, opens `/workshops/[slug]/instructor`
+(`getPublicInstructor(slug, locale)` in `src/features/instructor-documents/queries.ts`):
+the workshop's instructor while active and approved, with public fields only,
+their certificates and licences, and the workshops they gave or will give
+(published at least once, never cancelled). It is `noindex` and out of the
+sitemap. Instructors add documents in their panel (Profile → Certificates and
+licences: a photo or a PDF, a title, who gave it, the year, a description;
+at most 20), uploaded through `/api/instructor/uploads` with the purpose
+`instructor_document`. A photo is stored twice under
+`instructors/<name>/documents/`: the file (`doc-…`, at most 2400 px, for the
+instructor and the admins) and its public copy (`thumb-…`,
+`documentThumbnail`: at most 320 px, softened, low quality, the watermark logo
+tiled over it when one is set). Only the copy's address ever reaches the
+public page, shown at 80 px and not draggable; a PDF shows only its title
+there. Adding one checks the upload's audit entry (it must be this
+instructor's), and the admins see and can remove them on the instructor's page.
 
 The home page is `(site)/page.tsx` (`/`, `/fa`, `/en`). The classic theme
 (`src/themes/default`) shows two sections: `HomeHero` (the brand, the

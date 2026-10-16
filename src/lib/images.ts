@@ -103,6 +103,8 @@ async function encode(image: Sharp, format: "webp" | "png"): Promise<ProcessedIm
  * - watermark_logo: PNG with its transparency, at most 1000 on the longest side
  * - site_image: at most 2560 wide (the home page's photos, shown full width), never watermarked
  * - receipt: at most 2400 on the longest side (a receipt's small print stays readable)
+ * - instructor_document: at most 2400 on the longest side (seen only by the instructor and the admins;
+ *   the public profile gets `documentThumbnail`)
  */
 export async function processImage(
   input: Buffer,
@@ -130,6 +132,7 @@ export async function processImage(
       case "course_sample":
         return encode(image.resize(1600, 1600, { fit: "inside", withoutEnlargement: true }), "webp")
       case "receipt":
+      case "instructor_document":
         return encode(image.resize(2400, 2400, { fit: "inside", withoutEnlargement: true }), "webp")
       case "watermark_logo":
         return encode(image.resize(1000, 1000, { fit: "inside", withoutEnlargement: true }), "png")
@@ -141,6 +144,29 @@ export async function processImage(
       }
     }
   })
+}
+
+/** Longest side of a document's public copy: enough to see what it is, too small to read its details or reuse it. */
+export const DOCUMENT_THUMB_SIDE = 320
+
+/**
+ * The public copy of an instructor's certificate or licence: at most 320 on
+ * its longest side, slightly softened, low quality, with the brand's logo
+ * tiled over it when one is set (Settings → Watermark). Made from the stored
+ * (re-encoded, metadata-free) image.
+ */
+export async function documentThumbnail(input: Buffer, logo: Buffer | null): Promise<ProcessedImage> {
+  const sharp = await loadSharp()
+  const small = await sharp(input, { limitInputPixels: MAX_INPUT_PIXELS })
+    .resize(DOCUMENT_THUMB_SIDE, DOCUMENT_THUMB_SIDE, { fit: "inside", withoutEnlargement: true })
+    .blur(0.6)
+    .toBuffer()
+  let image: Sharp = sharp(small)
+  if (logo) {
+    image = await applyWatermark(small, { position: "tiled", sizePct: 34, opacity: 0.3, marginPct: 4 }, logo).catch(() => sharp(small))
+  }
+  const { data, info } = await image.webp({ quality: 55 }).toBuffer({ resolveWithObject: true })
+  return { data, width: info.width, height: info.height, ext: "webp", contentType: "image/webp" }
 }
 
 const GRID: Record<Exclude<WatermarkSettings["position"], "tiled">, [column: 0 | 1 | 2, row: 0 | 1 | 2]> = {

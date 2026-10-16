@@ -136,6 +136,28 @@ export const instructors = pgTable("instructors", {
   updatedAt: updatedAt(),
 })
 
+/**
+ * An instructor's certificates and licences, uploaded from their panel. The
+ * full file (a photo, re-encoded, or a PDF) is seen only by the instructor
+ * and the admins; the public profile shows only `thumbPath`: a small,
+ * watermarked copy, too small to be used as the document itself (a PDF has
+ * none: the profile shows its title with an icon).
+ */
+export const instructorDocuments = pgTable("instructor_documents", {
+  id: id(),
+  instructorId: uuid("instructor_id").notNull().references(() => instructors.id, { onDelete: "cascade" }),
+  path: text("path").notNull(),
+  thumbPath: text("thumb_path"),
+  contentType: text("content_type").notNull(),
+  title: text("title").notNull(),
+  /** Who gave it (a school, an association…); may be empty. */
+  issuer: text("issuer").notNull().default(""),
+  year: smallint("year"),
+  description: text("description").notNull().default(""),
+  sort: integer("sort").notNull().default(0),
+  createdAt: createdAt(),
+}, (t) => [index("instructor_documents_instructor_idx").on(t.instructorId)])
+
 // ─── Auth ──────────────────────────────────────────────────────────────────
 
 export const principalKind = pgEnum("principal_kind", ["admin", "instructor", "member"])

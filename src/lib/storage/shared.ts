@@ -16,6 +16,8 @@ export const imagePurposes = [
   "site_image",
   // A receipt or invoice kept with an expense (Money → Receipts): a photo, or a PDF stored as it is.
   "receipt",
+  // An instructor's certificate or licence (their panel): a photo, or a PDF stored as it is; a photo also gets a small public copy.
+  "instructor_document",
 ] as const
 export type ImagePurpose = (typeof imagePurposes)[number]
 
@@ -57,6 +59,10 @@ export const VIDEO_PART_BYTES = 8 * MB
 export const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,.heic,.heif"
 /** A receipt: a photo, or a PDF. */
 export const RECEIPT_ACCEPT = `${IMAGE_ACCEPT},application/pdf,.pdf`
+/** An instructor's certificate or licence: a photo or a PDF, like a receipt. */
+export const DOCUMENT_ACCEPT = RECEIPT_ACCEPT
+/** The image purposes that also take a PDF (kept as it is). */
+export const takesPdf = (purpose: UploadPurpose) => purpose === "receipt" || purpose === "instructor_document"
 export const VIDEO_ACCEPT = "video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
 /** `<input accept>` of each video purpose. */
 export const videoAccept: Record<VideoPurpose, string> = {
@@ -98,6 +104,11 @@ export type UploadResult = {
   url: string
   width?: number
   height?: number
+  /** An instructor's document photo: its small watermarked copy, the only one the public profile shows. */
+  thumbPath?: string
+  thumbUrl?: string
+  /** What was stored: "application/pdf" or the image's type. */
+  contentType?: string
 }
 
 /** Answer for a video part that is not the last one (HTTP 202), or after an offset mismatch (409). */

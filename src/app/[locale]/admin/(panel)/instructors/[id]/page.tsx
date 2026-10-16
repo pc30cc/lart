@@ -1,4 +1,5 @@
 import {
+  AwardIcon,
   CalendarRangeIcon,
   ExternalLinkIcon,
   FileSignatureIcon,
@@ -18,6 +19,8 @@ import { PageHeader } from "@/components/admin/page-header"
 import { StatusBadge, type StatusTone } from "@/components/admin/status-badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { DocumentsList } from "@/features/instructor-documents/components/documents"
+import { listDocuments, profileSlug } from "@/features/instructor-documents/queries"
 import { getInstructor, getInstructorContracts, getInstructorWorkshops } from "@/features/instructors/queries"
 import { languageName, profileText } from "@/features/instructors/schema"
 import { Link } from "@/i18n/navigation"
@@ -51,12 +54,14 @@ export default async function InstructorPage({ params }: PageProps<"/[locale]/ad
   await requireAdmin()
   const { id } = await params
   if (!z.uuid().safeParse(id).success) notFound()
-  const [instructor, workshops, contracts, t, locale] = await Promise.all([
+  const [instructor, workshops, contracts, t, locale, documents, slug] = await Promise.all([
     getInstructor(id),
     getInstructorWorkshops(id),
     getInstructorContracts(id),
     getTranslations("instructors"),
     getLocale(),
+    listDocuments(id),
+    profileSlug(id),
   ])
   if (!instructor) notFound()
 
@@ -148,6 +153,24 @@ export default async function InstructorPage({ params }: PageProps<"/[locale]/ad
                   )}
                 </Detail>
               </dl>
+            </Panel>
+
+            <Panel
+              icon={AwardIcon}
+              title={t("documents.title")}
+              description={t("documents.description")}
+              badge={
+                instructor.active && instructor.approved && slug ? (
+                  <Button asChild variant="ghost" size="sm">
+                    <Link href={`/workshops/${slug}/instructor`} target="_blank">
+                      <ExternalLinkIcon />
+                      {t("documents.publicProfile")}
+                    </Link>
+                  </Button>
+                ) : undefined
+              }
+            >
+              <DocumentsList documents={documents} admin />
             </Panel>
 
             <Panel

@@ -204,5 +204,10 @@
     "approvedNoEmail": "Onaylandı. E-posta gönderilemedi, lütfen kendisine siz haber verin.",
     "waiting": "{count, plural, other {# eğitmen kaydoldu ve onayınızı bekliyor.}}",
     "show": "Göster"
+  },
+  "documents": {
+    "title": "Sertifikalar ve belgeler",
+    "description": "Eğitmenin kendi panelinden eklediği belgeler. Herkese açık sayfasında yalnızca küçük, işaretli kopyaları görünür.",
+    "publicProfile": "Herkese açık sayfa"
   }
 }
