@@ -622,7 +622,8 @@
       "more": "Bir yer fazla",
       "register": "Bu yere kayıt",
       "show": "Ayrılan yerler"
-    }
+    },
+    "allDays": "Tüm günler"
   },
   "gallery": {
     "metaTitle": "Galeri · {title}",

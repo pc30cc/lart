@@ -622,7 +622,8 @@
       "more": "One place more",
       "register": "Register on it",
       "show": "Places held"
-    }
+    },
+    "allDays": "All days"
   },
   "gallery": {
     "metaTitle": "Gallery · {title}",

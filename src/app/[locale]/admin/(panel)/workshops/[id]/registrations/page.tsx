@@ -15,9 +15,8 @@ import { HoldSeatsDialog, HoldsButton } from "@/features/registrations/admin/com
 import { listHolds } from "@/features/registrations/admin/holds"
 import { registrableWorkshops } from "@/features/registrations/admin/register"
 import { PaymentCell, refundOwed } from "@/features/registrations/admin/components/payment-cell"
-import { listWorkshopRegistrations, registrationSummary, type AdminRegistrationRow } from "@/features/registrations/admin/queries"
+import { listWorkshopRegistrations, participantsByDay, registrationSummary, type AdminRegistrationRow } from "@/features/registrations/admin/queries"
 import { paymentMethods, registrationTable, registrationViews, type PaymentMethod } from "@/features/registrations/admin/schema"
-import { seatsTakenByDay } from "@/features/registrations/public"
 import { registrationDay, workshopDays } from "@/features/workshops/days"
 import { getWorkshop } from "@/features/workshops/queries"
 import { isCancelled } from "@/features/workshops/schema"
@@ -56,15 +55,15 @@ export default async function WorkshopRegistrationsPage({
     pageSize: 50,
     filters: registrationTable.filters,
   })
-  const [workshop, summary, { rows, total }, payment, t, locale, takenByDay, holds] = await Promise.all([
+  const [workshop, summary, { rows, total }, payment, t, locale, holds, perDay] = await Promise.all([
     getWorkshop(id),
     registrationSummary(id),
     listWorkshopRegistrations(id, tableParams),
     getSetting("payment"),
     getTranslations("workshops.registrations"),
     getLocale(),
-    seatsTakenByDay(id),
     listHolds(id),
+    participantsByDay(id),
   ])
   if (!workshop) notFound()
   const exportHref = await localeHref(locale, `/admin/workshops/${workshop.id}/registrations/export`)
@@ -81,6 +80,7 @@ export default async function WorkshopRegistrationsPage({
     paymentMethods.find((m) => (m === "cash" ? payment.cash : payment[m].enabled)) ?? "cash"
   // Several days: each registration's day (cancelling and refunds count to it).
   const days = workshopDays(workshop)
+  const dayTab = tableParams.filters.day
   const dayLabel = (day: number | null) =>
     t("table.day", { n: n((day ?? 0) + 1), date: formatDate(registrationDay(workshop, day).startsAt, locale, "medium") })
 
@@ -273,17 +273,28 @@ export default async function WorkshopRegistrationsPage({
               </div>
             ))}
           </dl>
+          {/* Several days: a tab per day with that day's participants only (no cancelled ones). */}
           {days.length > 1 && (
-            <ul className="flex flex-wrap gap-2" aria-label={t("byDay")}>
-              {days.map((d, i) => (
-                <li key={i} className="bg-card ring-foreground/8 rounded-lg px-3 py-1.5 text-sm shadow-xs ring-1">
-                  {dayLabel(i)}:{" "}
-                  <span className="font-semibold tabular-nums">
-                    {t("dayCount", { taken: n(takenByDay[i] ?? 0), max: n(i === 0 ? workshop.maxCapacity : (d.maxCapacity ?? workshop.maxCapacity)) })}
-                  </span>
+            <nav aria-label={t("byDay")} className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+              <ul className="bg-muted/60 inline-flex gap-1 rounded-xl p-1">
+                <li>
+                  <DayTab href={`/admin/workshops/${workshop.id}/registrations`} active={dayTab === undefined}>
+                    {t("allDays")}
+                    <span className="bg-background/70 rounded-full px-1.5 text-xs tabular-nums">{n(summary.active + summary.cancelled)}</span>
+                  </DayTab>
                 </li>
-              ))}
-            </ul>
+                {days.map((d, i) => (
+                  <li key={i}>
+                    <DayTab href={`/admin/workshops/${workshop.id}/registrations?day=${i}`} active={dayTab === String(i)}>
+                      {dayLabel(i)}
+                      <span className="bg-background/70 rounded-full px-1.5 text-xs tabular-nums">
+                        {t("dayCount", { taken: n(perDay[i] ?? 0), max: n(d.maxCapacity ?? workshop.maxCapacity) })}
+                      </span>
+                    </DayTab>
+                  </li>
+                ))}
+              </ul>
+            </nav>
           )}
 
           <DataTable
@@ -331,5 +342,20 @@ function Consent({
       <Icon className="size-3.5" />
       <span className="sr-only">{children}</span>
     </span>
+  )
+}
+
+function DayTab({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
+        active ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {children}
+    </Link>
   )
 }

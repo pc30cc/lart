@@ -81,9 +81,12 @@ export type SetRefundValues = z.input<typeof setRefundSchema>
 export const registrationViews = ["unpaid", "paid", "cancelled"] as const
 export type RegistrationView = (typeof registrationViews)[number]
 
+/** A workshop of several days: one tab per day ("0" = the first), its participants only (never the cancelled). */
+export const dayTabs = Array.from({ length: 14 }, (_, i) => String(i))
+
 export const registrationTable = {
   sort: ["createdAt", "participant"] as const,
-  filters: { status: registrationViews },
+  filters: { status: registrationViews, day: dayTabs },
 }
 
 /**

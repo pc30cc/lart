@@ -57,9 +57,12 @@ type RegistrationParams = TableParams<(typeof registrationTable.sort)[number], k
 export async function listWorkshopRegistrations(courseId: string, params: RegistrationParams) {
   await requireAdmin()
   const view = params.filters.status as RegistrationView | undefined
+  // A day's tab: that day's participants, the cancelled left out.
+  const day = params.filters.day === undefined ? undefined : Number(params.filters.day)
   const where = and(
     eq(registrations.courseId, courseId),
     view ? eq(registrations.status, statusOf[view]) : undefined,
+    day === undefined ? undefined : and(sql`coalesce(${registrations.day}, 0) = ${day}`, sql`${registrations.status} <> 'cancelled'`),
     search(params.q),
   )
   const direction = params.dir === "desc" ? desc : asc
@@ -84,6 +87,19 @@ export async function listWorkshopRegistrations(courseId: string, params: Regist
       .where(where),
   ])
   return { rows, total }
+}
+
+/** A workshop's participants on each day (the cancelled left out), index = day. */
+export async function participantsByDay(courseId: string): Promise<number[]> {
+  await requireAdmin()
+  const rows = await db
+    .select({ day: sql<number>`coalesce(${registrations.day}, 0)`.mapWith(Number), n: count() })
+    .from(registrations)
+    .where(and(eq(registrations.courseId, courseId), sql`${registrations.status} <> 'cancelled'`))
+    .groupBy(sql`coalesce(${registrations.day}, 0)`)
+  const out: number[] = []
+  for (const r of rows) out[r.day] = r.n
+  return Array.from(out, (n) => n ?? 0)
 }
 
 export type AdminRegistrationRow = Awaited<ReturnType<typeof listWorkshopRegistrations>>["rows"][number]
