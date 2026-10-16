@@ -31,11 +31,11 @@
   },
   "pages": {
     "title": "En çok görülen sayfalar",
-    "description": "Ziyaretçiye göre; atölye sayfaları adıyla.",
+    "description": "Ziyaretçiye göre; workshop sayfaları adıyla.",
     "views": "{n} görüntüleme",
     "names": {
       "/": "Ana sayfa",
-      "/workshops": "Atölyeler",
+      "/workshops": "Workshoplar",
       "/about": "Hakkımızda",
       "/story": "Hikâyemiz",
       "/contact": "İletişim",

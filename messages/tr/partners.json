@@ -86,7 +86,7 @@
     "savedEmail": "Kaydedildi. Bundan sonra yeni e-postanızla giriş yapın.",
     "share": {
       "title": "Kâr payı",
-      "description": "Kapanan her atölyenin sonucundaki payınız. Payları ortaklar Finans → Ortaklar sayfasında birlikte belirler.",
+      "description": "Kapanan her workshopun sonucundaki payınız. Payları ortaklar Finans → Ortaklar sayfasında birlikte belirler.",
       "label": "şu anki payınız",
       "manage": "Ortaklar ve paylar"
     },

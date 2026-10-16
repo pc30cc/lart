@@ -8,7 +8,7 @@
     "instructor_advance": "Eğitmen ön ödemesi",
     "instructor_payment": "Eğitmen ödemesi",
     "course_settlement": "Kapanışta eğitmen ücreti",
-    "course_close": "Atölye sonucunun ortaklara aktarımı",
+    "course_close": "Workshop sonucunun ortaklara aktarımı",
     "reversal": "Düzeltme",
     "reversalOf": "Düzeltme: {kind}"
   },
@@ -19,7 +19,7 @@
     "partner_capital": "Ortak sermayesi",
     "revenue": "Gelir",
     "instructor_fees": "Eğitmen ücretleri",
-    "course_expenses": "Atölye giderleri",
+    "course_expenses": "Workshop giderleri",
     "general_expenses": "Genel giderler"
   },
   "columns": {
@@ -28,8 +28,8 @@
     "entry": "Kayıt",
     "type": "Tür",
     "description": "Açıklama",
-    "workshop": "Atölye",
-    "workshops": "Atölyeler",
+    "workshop": "Workshop",
+    "workshops": "Workshoplar",
     "instructor": "Eğitmen",
     "status": "Durum",
     "participants": "Katılımcı",
@@ -42,7 +42,7 @@
     "revenue": "Gelir",
     "instructorFees": "Eğitmen ücreti",
     "estimatedFee": "Henüz kaydedilmemiş ücret",
-    "courseExpenses": "Atölye giderleri",
+    "courseExpenses": "Workshop giderleri",
     "generalExpenses": "Genel giderler",
     "net": "Net kâr",
     "total": "Toplam",
@@ -55,11 +55,11 @@
     "balanceHint": "Şu anda ortak kasada bulunan nakit.",
     "negative": "Kasa sıfırın altına düştü: içindekinden fazla ödeme kaydedildi. Bir ortak para koyduysa bunu sermaye girişi olarak kaydedin.",
     "advances": "Ön ödemeler",
-    "advancesHint": "Atölyeden önce eğitmenlere ödenen tutarlar.",
+    "advancesHint": "Workshoptan önce eğitmenlere ödenen tutarlar.",
     "owed": "Eğitmenlere borç",
-    "owedHint": "Kapanan atölyelerin henüz ödenmemiş ücretleri.",
+    "owedHint": "Kapanan workshopların henüz ödenmemiş ücretleri.",
     "open": "Paylaştırılmamış",
-    "openHint": "Henüz kapanmamış atölyelerin eğitmen ücretleri düşülmüş sonucu, genel giderler de düşüldükten sonra.",
+    "openHint": "Henüz kapanmamış workshopların eğitmen ücretleri düşülmüş sonucu, genel giderler de düşüldükten sonra.",
     "recent": "Son hareketler",
     "allTransactions": "Tüm işlemler",
     "empty": {
@@ -68,8 +68,8 @@
     },
     "toClose": {
       "title": "Kapanmaya hazır",
-      "description": "Biten veya iptal edilen atölyeler.",
-      "none": "Kapanmayı bekleyen atölye yok."
+      "description": "Biten veya iptal edilen workshoplar.",
+      "none": "Kapanmayı bekleyen workshop yok."
     },
     "instructors": {
       "title": "Eğitmen hesapları",
@@ -82,8 +82,8 @@
       "overhead": "Genel giderler ve demirbaş",
       "remaining": "Kalan sermaye",
       "remainingHint": "Sermaye eksi işletmenin genel giderleri",
-      "workshops": "Atölyelerin net kârı",
-      "workshopsHint": "Atölye gelirleri eksi malzeme ve eğitmen ücreti",
+      "workshops": "Workshopların net kârı",
+      "workshopsHint": "Workshop gelirleri eksi malzeme ve eğitmen ücreti",
       "other": "Avans ve borçlar",
       "otherHint": "Eğitmenlerdeki avanslar veya henüz ödenmemiş ücret ve iadeler"
     }
@@ -123,8 +123,8 @@
       "decor": "Dekorasyon",
       "electronics": "Elektrikli eşya"
     },
-    "workshop": "Atölye",
-    "chooseWorkshop": "Atölye seçin"
+    "workshop": "Workshop",
+    "chooseWorkshop": "Workshop seçin"
   },
   "capital": {
     "contribution": {
@@ -146,31 +146,31 @@
     "done": "Gider kaydedildi.",
     "workshop": {
       "trigger": "Gider ekle",
-      "title": "Atölye gideri ekle",
-      "description": "Bu atölyenin ihtiyacı olan şeyler: mekân, malzeme veya ikram gibi."
+      "title": "Workshop gideri ekle",
+      "description": "Bu workshopun ihtiyacı olan şeyler: mekân, malzeme veya ikram gibi."
     },
     "general": {
       "trigger": "Genel gider",
       "title": "Genel gider ekle",
-      "description": "Belirli bir atölyeye ait olmayan gider: web sitesi veya muhasebe gibi."
+      "description": "Belirli bir workshopa ait olmayan gider: web sitesi veya muhasebe gibi."
     },
     "furnishing": {
       "trigger": "Demirbaş gideri",
       "title": "Demirbaş gideri ekle",
-      "description": "Atölye için alınan eşya ve ekipman: masa, sandalye veya alet gibi. Eşyanın fotoğrafını ve fişini ayrı ayrı yükleyin.",
+      "description": "Workshop için alınan eşya ve ekipman: masa, sandalye veya alet gibi. Eşyanın fotoğrafını ve fişini ayrı ayrı yükleyin.",
       "done": "Demirbaş gideri kaydedildi."
     },
     "pick": {
-      "trigger": "Atölye gideri",
-      "title": "Atölye gideri ekle",
-      "description": "Atölyeyi seçin ve giderini ayrıntıları ve fişiyle kaydedin. O atölyenin gelirinden düşülür."
+      "trigger": "Workshop gideri",
+      "title": "Workshop gideri ekle",
+      "description": "Workshopu seçin ve giderini ayrıntıları ve fişiyle kaydedin. O workshopun gelirinden düşülür."
     }
   },
   "advance": {
     "paid": {
       "trigger": "Ön ödeme yapıldı",
       "title": "Yapılan ön ödemeyi kaydedin",
-      "description": "Atölyeden önce eğitmene ödenen para. Atölye kapatılırken ücretinden düşülür.",
+      "description": "Workshoptan önce eğitmene ödenen para. Workshop kapatılırken ücretinden düşülür.",
       "done": "Ön ödeme kaydedildi."
     },
     "returned": {
@@ -183,7 +183,7 @@
   "pay": {
     "trigger": "Eğitmene öde",
     "title": "Eğitmene ödeme",
-    "description": "Bu atölye için eğitmene kalan ödeme: {amount} ({name}).",
+    "description": "Bu workshop için eğitmene kalan ödeme: {amount} ({name}).",
     "submit": "Ödemeyi kaydet",
     "done": "Ödeme kaydedildi."
   },
@@ -209,7 +209,7 @@
     "description": "Her ortağın sermaye hesabı, adım adım. Kâr payları sabit ve eşittir (Ayarlar → Para).",
     "sharesWarning": {
       "title": "Payların toplamı %100 değil.",
-      "description": "Düzeltilene kadar hiçbir atölye kapatılamaz."
+      "description": "Düzeltilene kadar hiçbir workshop kapatılamaz."
     },
     "empty": {
       "title": "Henüz ortak yok",
@@ -220,23 +220,23 @@
       "inactive": "Artık aktif değil",
       "contributions": "Sermaye girişi",
       "withdrawals": "Para çekme",
-      "profitShares": "Kapanan atölyelerden pay",
+      "profitShares": "Kapanan workshoplardan pay",
       "capital": "Güncel sermaye",
       "openShare": "Açık sonuçtan pay",
       "equity": "Bugün hesaplaşılsa",
       "capitalTitle": "Sermaye hesabı",
       "contributionsHint": "Ortak kasaya konan para",
       "withdrawalsHint": "Ortak kasadan çekilen para",
-      "profitSharesHint": "Hesabı kapanan atölyelerin kârı ya da zararı",
-      "openShareHint": "Henüz kapanmamış atölyeler ve genel giderler",
+      "profitSharesHint": "Hesabı kapanan workshopların kârı ya da zararı",
+      "openShareHint": "Henüz kapanmamış workshoplar ve genel giderler",
       "equityHint": "Güncel sermaye ile açık sonuçtan payın toplamı",
       "lastMovement": "Son hareket: {date}",
       "noMovement": "Henüz hareket yok",
       "statement": "Tam döküm",
-      "workshopsTitle": "Atölye başına kâr",
-      "noWorkshops": "Henüz kapanan atölye yok. Her atölye kapandığında kâr payı burada kendiliğinden görünür.",
+      "workshopsTitle": "Workshop başına kâr",
+      "noWorkshops": "Henüz kapanan workshop yok. Her workshop kapandığında kâr payı burada kendiliğinden görünür.",
       "closedOn": "Kapandı: {date}",
-      "moreWorkshops": "ve tam hesap dökümünde {count} atölye daha",
+      "moreWorkshops": "ve tam hesap dökümünde {count} workshop daha",
       "owed": "Alacak kâr",
       "owedHintClosed": "Çekilmemiş kâr. Para çekme kapalıyken ortak kasada kalır.",
       "owedHintOpen": "Henüz çekilmemiş, ortak kasadaki kâr."
@@ -249,14 +249,14 @@
   "ledger": {
     "title": "İşlemler",
     "description": "Paranın tüm hareketleri, çift taraflı kayıtla. Kayıtlar düzenlenebilir ama asla silinmez; hatalı bir işlem “Uyuşmazlık” ile sıfırlanır ve nedeni yanında kalır.",
-    "search": "Açıklamalarda, atölyelerde ve katılımcı adlarında ara…",
+    "search": "Açıklamalarda, workshoplarda ve katılımcı adlarında ara…",
     "details": "Borç ve alacak satırlarını göster",
     "wallet": "kasa",
     "reversed": "Geri alındı",
     "correction": "Düzeltme",
     "recordedBy": "Kaydeden: {name} · {date}",
     "recordedAuto": "Otomatik kayıt · {date}",
-    "openWorkshop": "Atölyenin finans sayfasını aç",
+    "openWorkshop": "Workshopun finans sayfasını aç",
     "registrationEntry": "Bir kaydın ödemesi veya iadesi burada geri alınmaz. Bir ödemeyi geri almak için kaydı iptal edin; ödenmesi gereken iade İadeler listesinde görünür.",
     "openRegistrations": "Kayıtları aç",
     "showing": "{from}–{to} / {total}",
@@ -264,7 +264,7 @@
     "noResultsHint": "Başka tarihler veya başka bir arama deneyin ya da filtreleri temizleyin.",
     "empty": {
       "title": "Henüz işlem yok",
-      "description": "Sermaye girişleri, giderler ve atölye ödemeleri kaydettikçe burada görünür."
+      "description": "Sermaye girişleri, giderler ve workshop ödemeleri kaydettikçe burada görünür."
     },
     "edited": "Düzenlendi",
     "participant": "Katılımcı: {name}",
@@ -274,7 +274,7 @@
   },
   "reports": {
     "title": "Raporlar",
-    "description": "Döneme, atölyeye ve eğitmene göre kâr ve zarar, ayrıca her ortağın hesap dökümü.",
+    "description": "Döneme, workshopa ve eğitmene göre kâr ve zarar, ayrıca her ortağın hesap dökümü.",
     "exportCsv": "CSV indir",
     "print": "Yazdır veya PDF",
     "groupBy": "Gruplama",
@@ -285,7 +285,7 @@
     },
     "tabs": {
       "pnl": "Kâr ve zarar",
-      "workshops": "Atölyelere göre",
+      "workshops": "Workshoplara göre",
       "instructors": "Eğitmenlere göre",
       "partner": "Ortak hesap dökümü"
     },
@@ -295,9 +295,9 @@
     "change": "Dönemdeki değişim",
     "openingOn": "Bakiye · {date}",
     "closingOn": "Bakiye · {date}",
-    "pnlNote": "Her kayıt gerçekleştiği güne, eğitmen ücreti ise atölyenin kapatıldığı güne yazılır; bu yüzden henüz kapatılmamış atölyeler eğitmen ücreti olmadan görünür. Yalnızca atölye sonucunu ortaklara aktaran kapanış kaydı bu rapora dahil değildir.",
+    "pnlNote": "Her kayıt gerçekleştiği güne, eğitmen ücreti ise workshopun kapatıldığı güne yazılır; bu yüzden henüz kapatılmamış workshoplar eğitmen ücreti olmadan görünür. Yalnızca workshop sonucunu ortaklara aktaran kapanış kaydı bu rapora dahil değildir.",
     "estimated": "tahmini",
-    "estimatedNote": "* Tahmini: kesinleşen bir atölyenin sözleşmeye göre eğitmenine ödeyeceği ücret. Ücret, atölye kapatılınca kaydedilir.",
+    "estimatedNote": "* Tahmini: kesinleşen bir workshopun sözleşmeye göre eğitmenine ödeyeceği ücret. Ücret, workshop kapatılınca kaydedilir.",
     "cancelledClosed": "İptal · kapatıldı",
     "partnerNote": "Artı tutarlar ortağın sermayesini artırır; eksi tutarlar (para çekme veya zarar payı) azaltır.",
     "empty": {
@@ -310,7 +310,7 @@
     "print": "Yazdır veya PDF",
     "registrations": "Kayıtlar",
     "registrationsPaid": "{count, plural, =0 {Henüz ödeme yapan yok} other {# kişi ödedi}}{pending, plural, =0 {} other {, # kişi henüz ödemedi}}",
-    "registrationsFree": "Ücretsiz atölye: ödenecek bir şey yok.",
+    "registrationsFree": "Ücretsiz workshop: ödenecek bir şey yok.",
     "finalNumber": "Kesin karardaki katılımcı sayısı: {count}",
     "revenueHint": "Ödenmiş kayıtlar, iadeler düşüldükten sonra.",
     "revenueInBooks": "Şimdiye kadar deftere işlenen: {amount}",
@@ -318,7 +318,7 @@
     "fee": {
       "fixed": "Sözleşmedeki sabit ücret.",
       "perParticipant": "{count} katılımcı × {amount}",
-      "cancelled": "Atölye iptal edildi, ücret ödenmez.",
+      "cancelled": "Workshop iptal edildi, ücret ödenmez.",
       "noContract": "Henüz geçerli bir sözleşme yok."
     },
     "expensesCount": "{count, plural, =0 {Henüz gider yok.} other {# gider}}",
@@ -326,17 +326,17 @@
     "advanceAgreed": "Sözleşmedeki ön ödeme: {amount}",
     "noAdvanceAgreed": "Sözleşmede ön ödeme yok.",
     "projectedNet": "Beklenen net kâr",
-    "projectedHint": "Atölye bu rakamlarla kapatılırsa.",
+    "projectedHint": "Workshop bu rakamlarla kapatılırsa.",
     "fromWallet": "ortak kasadan",
     "fromAdvance": "eğitmenin ön ödemesinden",
     "expenses": {
       "title": "Giderler",
-      "description": "Bu atölyenin tüm harcamaları ve kimin ödediği.",
+      "description": "Bu workshopun tüm harcamaları ve kimin ödediği.",
       "empty": "Henüz gider kaydedilmedi."
     },
     "advance": {
       "title": "Eğitmen ön ödemesi",
-      "description": "Atölyeden önce ödenir ve kapanışta ücretten düşülür. Ücretten fazla kalan kısım iade edilmeli ya da ön ödemeden ödenen bir gider olarak kaydedilmelidir.",
+      "description": "Workshoptan önce ödenir ve kapanışta ücretten düşülür. Ücretten fazla kalan kısım iade edilmeli ya da ön ödemeden ödenen bir gider olarak kaydedilmelidir.",
       "empty": "Ön ödeme yapılmadı.",
       "paid": "Ön ödeme yapıldı",
       "returned": "Ön ödeme iade edildi"
@@ -362,13 +362,13 @@
     }
   },
   "errors": {
-    "workshopGone": "Bu atölyeyi bulamadık. Silinmiş olabilir.",
-    "workshopClosed": "Bu atölye kapatıldı; rakamları artık değiştirilemez.",
+    "workshopGone": "Bu workshopu bulamadık. Silinmiş olabilir.",
+    "workshopClosed": "Bu workshop kapatıldı; rakamları artık değiştirilemez.",
     "partnerGone": "Bu ortağı bulamadık. Lütfen sayfayı yenileyip tekrar deneyin.",
     "partnerInactive": "Bu kişi artık aktif bir ortak değil. Lütfen başka birini seçin.",
     "moreThanAdvance": "Bu tutar, eğitmende kalan ön ödemeden fazla.",
-    "advanceNotNow": "Ön ödeme yalnızca hâlâ yapılacak bir atölye için yapılabilir.",
-    "moreThanOwed": "Bu tutar, bu atölye için eğitmene kalan borçtan fazla.",
+    "advanceNotNow": "Ön ödeme yalnızca hâlâ yapılacak bir workshop için yapılabilir.",
+    "moreThanOwed": "Bu tutar, bu workshop için eğitmene kalan borçtan fazla.",
     "nothingToPay": "Bu kaydın ödenecek bir tutarı yok.",
     "alreadyPaid": "Bu kayıt zaten ödenmiş.",
     "moreThanPaid": "Bu tutar, bu kayıt için ödenip henüz iade edilmemiş tutardan fazla.",
@@ -378,13 +378,13 @@
     "closingIsFinal": "Kapanış kayıtları kesindir ve geri alınamaz.",
     "alreadyReversed": "Bu kayıt zaten geri alındı.",
     "reverseLaterFirst": "Sonraki kayıtlar buna bağlı. Lütfen önce onları geri alın.",
-    "registrationEntry": "Bir kaydın ödemesi veya iadesi geri alınamaz. Bir ödemeyi geri almak için kaydı atölyenin kayıtlarından iptal edin; ödenmesi gereken iade İadeler listesinde görünür.",
+    "registrationEntry": "Bir kaydın ödemesi veya iadesi geri alınamaz. Bir ödemeyi geri almak için kaydı workshopun kayıtlarından iptal edin; ödenmesi gereken iade İadeler listesinde görünür.",
     "withdrawalsClosed": "Ortak kasadan para çekme şimdilik kapalı (Ayarlar → Para).",
     "noSpender": "Masrafları ortak kasadan ödeyecek ortak henüz seçilmedi. Ayarlar → Para bölümünden seçin.",
     "notSpender": "Masrafları ortak kasadan yalnızca {name} ödeyip kaydedebilir.",
     "fileGone": "Dosyalardan biri bulunamadı. Lütfen yeniden yükleyin.",
     "notEditable": "Bu kayıt düzenlenemez.",
-    "noDiscrepancy": "Bu işlem için uyuşmazlık kaydedilemez: katılımcı ve eğitmen ödemeleri ile atölye kapanış kayıtları yalnızca kendi yollarıyla düzeltilir."
+    "noDiscrepancy": "Bu işlem için uyuşmazlık kaydedilemez: katılımcı ve eğitmen ödemeleri ile workshop kapanış kayıtları yalnızca kendi yollarıyla düzeltilir."
   },
   "validation": {
     "amountPositive": "Lütfen sıfırdan büyük bir tutar girin.",
@@ -393,13 +393,13 @@
     "notInFuture": "Tarih ileri bir gün olamaz.",
     "chooseSource": "Lütfen kimin ödediğini seçin.",
     "choosePartner": "Lütfen bir ortak seçin.",
-    "chooseWorkshop": "Lütfen bir atölye seçin."
+    "chooseWorkshop": "Lütfen bir workshop seçin."
   },
   "close": {
-    "panelTitle": "Atölyeyi kapat",
+    "panelTitle": "Workshopu kapat",
     "panelDescription": "Kapatınca rakamlar kilitlenir, ön ödeme ücretten düşülür ve sonuç ortaklar arasında paylaştırılır.",
     "ready": "Her şey hazır.",
-    "trigger": "Atölyeyi kapat…",
+    "trigger": "Workshopu kapat…",
     "title": "“{title}” kapatılsın mı?",
     "description": "Kesin rakamlar bunlar. Kapatıldıktan sonra kilitlenir ve değiştirilemez.",
     "profitTo": "Ortaklara kâr",
@@ -407,20 +407,20 @@
     "instructorWithAdvance": "Eğitmenin {advance} tutarındaki ön ödemesi ücretinden düşülür. Eğitmene kalan ödeme: {owed}.",
     "instructorOwed": "Eğitmene kalan ödeme: {owed}.",
     "confirm": "Kapat ve kilitle",
-    "done": "Atölye kapatıldı. Rakamlar kilitlendi.",
+    "done": "Workshop kapatıldı. Rakamlar kilitlendi.",
     "fixShares": "Payları düzeltin",
     "openRefunds": "İadeler listesini aç",
     "openRegistrations": "Kayıtları aç",
     "changed": "Siz incelerken rakamlar değişti. Lütfen yeni rakamlara bakıp tekrar kapatın.",
     "issues": {
-      "closed": "Bu atölye zaten kapatıldı.",
-      "notClosable": "Bir atölye, onaylanıp yapıldıktan sonra ya da iptal edildiğinde kapatılabilir.",
-      "notEnded": "Atölye henüz bitmedi. Bittikten sonra kapatabilirsiniz.",
-      "noContract": "Bu atölyenin geçerli bir sözleşmesi yok, bu yüzden eğitmen ücreti bilinmiyor.",
-      "refundsOwed": "Bu atölyenin bazı iadeleri henüz geri ödenmedi. Önce iadeleri geri ödeyip iade edildi olarak işaretleyin; sonra atölyeyi kapatabilirsiniz.",
-      "unpaidRegistrations": "{count, plural, other {# kaydın ödemesi henüz alınmadı}}. Her ödemeyi kaydedin ya da gelmeyen kişinin kaydını iptal edin; sonra atölyeyi kapatabilirsiniz.",
-      "revenueMismatch": "Bu atölyenin bazı ödemeleri veya iadeleri henüz deftere işlenmedi.",
-      "advanceTooBig": "Eğitmende ücretinden fazla ön ödeme kaldı. Önce iade ettiği tutarı ya da atölye için harcadığını kaydedin.",
+      "closed": "Bu workshop zaten kapatıldı.",
+      "notClosable": "Bir workshop, onaylanıp yapıldıktan sonra ya da iptal edildiğinde kapatılabilir.",
+      "notEnded": "Workshop henüz bitmedi. Bittikten sonra kapatabilirsiniz.",
+      "noContract": "Bu workshopun geçerli bir sözleşmesi yok, bu yüzden eğitmen ücreti bilinmiyor.",
+      "refundsOwed": "Bu workshopun bazı iadeleri henüz geri ödenmedi. Önce iadeleri geri ödeyip iade edildi olarak işaretleyin; sonra workshopu kapatabilirsiniz.",
+      "unpaidRegistrations": "{count, plural, other {# kaydın ödemesi henüz alınmadı}}. Her ödemeyi kaydedin ya da gelmeyen kişinin kaydını iptal edin; sonra workshopu kapatabilirsiniz.",
+      "revenueMismatch": "Bu workshopun bazı ödemeleri veya iadeleri henüz deftere işlenmedi.",
+      "advanceTooBig": "Eğitmende ücretinden fazla ön ödeme kaldı. Önce iade ettiği tutarı ya da workshop için harcadığını kaydedin.",
       "sharesNot100": "Ortakların paylarının toplamı %100 değil."
     }
   },
@@ -438,7 +438,7 @@
     "columns": {
       "person": "Kim",
       "contact": "İletişim",
-      "workshop": "Atölye",
+      "workshop": "Workshop",
       "reason": "Neden",
       "cancelledOn": "İptal tarihi",
       "refundedOn": "Geri ödeme tarihi",
@@ -447,7 +447,7 @@
     },
     "for": "{name} için",
     "reason": {
-      "workshopCancelled": "Atölye iptal edildi",
+      "workshopCancelled": "Workshop iptal edildi",
       "registrationCancelled": "Kayıt iptal edildi",
       "share": "{total} iade"
     },
@@ -476,7 +476,7 @@
     },
     "empty": {
       "title": "Geri ödenecek iade yok",
-      "description": "Ödeme yapmış biri kaydını iptal ettiğinde ya da bir atölye iptal edildiğinde iade burada görünür."
+      "description": "Ödeme yapmış biri kaydını iptal ettiğinde ya da bir workshop iptal edildiğinde iade burada görünür."
     },
     "errors": {
       "alreadyRefunded": "Bu iade zaten geri ödendi olarak işaretlenmiş. Yapılacak başka bir şey yok.",
@@ -494,7 +494,7 @@
     "description": "Giderlerle birlikte kaydedilen tüm fişler, faturalar ve fotoğraflar.",
     "tabs": {
       "all": "Tümü",
-      "workshops": "Atölyeler",
+      "workshops": "Workshoplar",
       "general": "Genel giderler",
       "furnishing": "Demirbaş"
     },
@@ -508,7 +508,7 @@
     },
     "kind": {
       "general": "Genel gider",
-      "workshop": "Atölye gideri",
+      "workshop": "Workshop gideri",
       "furnishing": "Demirbaş"
     },
     "reversed": "İptal edildi",
@@ -525,7 +525,7 @@
       "remove": "{name} kaldır",
       "tooMany": "Bir gider için en fazla {max} dosya."
     },
-    "allWorkshops": "Tüm atölyeler"
+    "allWorkshops": "Tüm workshoplar"
   },
   "edit": {
     "action": "Düzenle",

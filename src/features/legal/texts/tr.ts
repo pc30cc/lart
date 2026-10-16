@@ -6,7 +6,7 @@ export const tr: LegalTexts = {
 
 Son güncelleme: {updated}
 
-{seller} olarak kişisel verilerinizi 6698 sayılı Kişisel Verilerin Korunması Kanunu'na (KVKK) uygun olarak işliyoruz. Bu metin, {website} adresindeki sitemizde ve atölyelerimizde hangi verileri, hangi amaçla ve hangi hukuki sebeple işlediğimizi, kimlerle paylaştığımızı ve haklarınızı açıklar.
+{seller} olarak kişisel verilerinizi 6698 sayılı Kişisel Verilerin Korunması Kanunu'na (KVKK) uygun olarak işliyoruz. Bu metin, {website} adresindeki sitemizde ve workshoplarımızda hangi verileri, hangi amaçla ve hangi hukuki sebeple işlediğimizi, kimlerle paylaştığımızı ve haklarınızı açıklar.
 
 ## Veri sorumlusu
 
@@ -20,9 +20,9 @@ Son güncelleme: {updated}
 ## İşlediğimiz kişisel veriler
 
 - Kimlik ve iletişim: hesap açarken veya bize yazarken verdiğiniz ad soyad, e-posta adresi ve telefon numarası.
-- Katılımcı bilgisi: atölyeye katılacak kişinin adı (katılımcı çocuksa, bu bilgiyi velisi verir).
+- Katılımcı bilgisi: workshopa katılacak kişinin adı (katılımcı çocuksa, bu bilgiyi velisi verir).
 - İşlem bilgileri: kayıtlarınız, ödeme yolu ve tutarı, iptal ve iadeler, kabul ettiğiniz koşulların metni ve kabul zamanı.
-- Görsel kayıtlar: yalnızca izin verdiyseniz, atölyede çekilen ve sizi tanınır biçimde gösteren fotoğraf ve videolar.
+- Görsel kayıtlar: yalnızca izin verdiyseniz, workshopta çekilen ve sizi tanınır biçimde gösteren fotoğraf ve videolar.
 - Eğitmen bilgileri: eğitmenlerimizin ad soyadı, T.C. kimlik numarası, iletişim bilgileri, sözleşme ve ödeme bilgileri.
 - İşlem güvenliği: oturum bilgileri, IP adresi ve sistem kayıtları.
 - Ziyaret istatistikleri: sitenin hangi sayfalarının görüldüğü, geldiğiniz site, cihaz türü, dil ve ülke; her gün değişen anonim bir kod altında. IP adresiniz bunlarla birlikte saklanmaz ve bunlar size geri götürülemez.
@@ -32,11 +32,11 @@ Kart bilgileriniz bize ulaşmaz ve tarafımızca saklanmaz. Çevrim içi ödemel
 ## İşleme amaçları
 
 - Hesabınızı açmak ve yönetmek, sizi tanımak ve oturumunuzu güvenle sürdürmek.
-- Atölye kaydınızı almak, kesinleştirmek, sizi tarih, saat ve değişiklikler hakkında bilgilendirmek.
+- Workshop kaydınızı almak, kesinleştirmek, sizi tarih, saat ve değişiklikler hakkında bilgilendirmek.
 - Ödemeleri almak, iptal ve iadeleri yapmak, muhasebe ve vergi yükümlülüklerimizi yerine getirmek.
 - Eğitmenlerle sözleşme yapmak ve ödemelerini yapmak.
 - Başvurularınızı ve şikâyetlerinizi yanıtlamak.
-- İzin verdiyseniz, atölyelerimizi sitemizde ve resmî hesaplarımızda tanıtmak.
+- İzin verdiyseniz, workshoplarımızı sitemizde ve resmî hesaplarımızda tanıtmak.
 - Sitenin ve sistemlerimizin güvenliğini sağlamak, hukuki uyuşmazlıklarda haklarımızı korumak.
 
 ## Hukuki sebepler
@@ -99,7 +99,7 @@ Bu metni gerektiğinde güncelleyebiliriz. Güncel metin her zaman bu sayfadadı
 
 Son güncelleme: {updated}
 
-Bu sözleşme, {website} adresindeki sitemizden atölyeye kayıt olduğunuzda, 6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği uyarınca aramızda kurulur. Kayıt formundaki onay kutusunu işaretleyerek bu metni okuduğunuzu ve kabul ettiğinizi beyan edersiniz. Bu sayfa aynı zamanda ön bilgilendirme formudur.
+Bu sözleşme, {website} adresindeki sitemizden workshopa kayıt olduğunuzda, 6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği uyarınca aramızda kurulur. Kayıt formundaki onay kutusunu işaretleyerek bu metni okuduğunuzu ve kabul ettiğinizi beyan edersiniz. Bu sayfa aynı zamanda ön bilgilendirme formudur.
 
 ## 1. Hizmet sağlayıcı (satıcı)
 
@@ -113,46 +113,46 @@ Bu sözleşme, {website} adresindeki sitemizden atölyeye kayıt olduğunuzda, 6
 
 ## 2. Alıcı
 
-Sitede hesap açarak atölyeye kayıt olan kişidir. Alıcının adı, e-posta adresi ve telefon numarası hesabındaki bilgilerdir. Katılımcı alıcıdan farklı bir kişi (örneğin çocuğu) olabilir.
+Sitede hesap açarak workshopa kayıt olan kişidir. Alıcının adı, e-posta adresi ve telefon numarası hesabındaki bilgilerdir. Katılımcı alıcıdan farklı bir kişi (örneğin çocuğu) olabilir.
 
 ## 3. Sözleşmenin konusu
 
-Sözleşmenin konusu, alıcının sitede seçtiği atölye hizmetinin sunulması ve bedelinin ödenmesidir. Atölyenin adı, içeriği, tarihi, başlangıç ve bitiş saati, yeri, eğitmeni, katılımcı sayısı ve vergiler dahil toplam ücreti, atölye sayfasında ve kayıt onayında yazılıdır. Bu bilgiler sözleşmenin parçasıdır.
+Sözleşmenin konusu, alıcının sitede seçtiği workshop hizmetinin sunulması ve bedelinin ödenmesidir. Workshopun adı, içeriği, tarihi, başlangıç ve bitiş saati, yeri, eğitmeni, katılımcı sayısı ve vergiler dahil toplam ücreti, workshop sayfasında ve kayıt onayında yazılıdır. Bu bilgiler sözleşmenin parçasıdır.
 
 ## 4. Ücret ve ödeme
 
 - Ücretler Türk lirasıdır ve vergiler dahildir. Ek bir masraf alınmaz.
-- Ödeme, atölyede sunulan yollardan biriyle yapılır: atölye günü nakit, banka havalesi veya EFT ya da kredi veya banka kartıyla çevrim içi ödeme.
+- Ödeme, workshopta sunulan yollardan biriyle yapılır: workshop günü nakit, banka havalesi veya EFT ya da kredi veya banka kartıyla çevrim içi ödeme.
 - Çevrim içi ödemeler, lisanslı ödeme kuruluşunun (PayTR Ödeme ve Elektronik Para Kuruluşu A.Ş.) güvenli ödeme sayfasında yapılır. Kart bilgileri tarafımıza ulaşmaz ve saklanmaz.
 - Taksit imkânı varsa ödeme sayfasında gösterilir.
 
 ## 5. Hizmetin sunulması
 
 - Formu doldurmak ve ücreti ödemek tek başına kaydı kesinleştirmez. Kayıt, {brand}'in son onayından sonra kesinleşir ve alıcıya onay mesajı gönderilir.
-- Atölye, sayfasında yazılı tarihte, saatte ve yerde yüz yüze yapılır.
-- Atölyenin yapılması için gereken en az katılımcı sayısına ulaşılamazsa {brand} atölyeyi iptal edebilir. Bu durumda alıcıya haber verilir ve ödediği ücretin tamamı iade edilir.
+- Workshop, sayfasında yazılı tarihte, saatte ve yerde yüz yüze yapılır.
+- Workshopun yapılması için gereken en az katılımcı sayısına ulaşılamazsa {brand} workshopu iptal edebilir. Bu durumda alıcıya haber verilir ve ödediği ücretin tamamı iade edilir.
 - Tarih, yer veya eğitmen değişirse alıcıya haber verilir. Alıcı yeni koşulları kabul edebilir ya da ücretin tamamını geri alabilir.
 
 ## 6. Cayma hakkı
 
-Mesafeli Sözleşmeler Yönetmeliği'nin 15. maddesinin 1. fıkrasının (ğ) bendi uyarınca, belirli bir tarihte veya dönemde yapılması gereken boş zamanın değerlendirilmesine ilişkin sözleşmelerde cayma hakkı kullanılamaz. Atölyelerimiz belirli bir tarihte yapıldığı için 14 günlük cayma hakkı uygulanmaz. Bunun yerine, aşağıdaki iptal ve iade koşullarımız geçerlidir ve alıcıya bu sınırın ötesinde iptal imkânı tanır.
+Mesafeli Sözleşmeler Yönetmeliği'nin 15. maddesinin 1. fıkrasının (ğ) bendi uyarınca, belirli bir tarihte veya dönemde yapılması gereken boş zamanın değerlendirilmesine ilişkin sözleşmelerde cayma hakkı kullanılamaz. Workshoplarımız belirli bir tarihte yapıldığı için 14 günlük cayma hakkı uygulanmaz. Bunun yerine, aşağıdaki iptal ve iade koşullarımız geçerlidir ve alıcıya bu sınırın ötesinde iptal imkânı tanır.
 
 ## 7. İptal ve iade
 
-- Atölyenin başlangıcına 72 saat veya daha fazla süre varken yapılan iptallerde ücretin tamamı iade edilir.
+- Workshopun başlangıcına 72 saat veya daha fazla süre varken yapılan iptallerde ücretin tamamı iade edilir.
 - Başlangıca 72 saatten az süre kala yapılan iptallerde ödenen tutarın %50'si kesilir, kalanı iade edilir.
-- Atölyeye katılınmadığında ücret iade edilmez.
+- Workshopa katılınmadığında ücret iade edilmez.
 - Katılamayacak alıcı, önceden haber vererek ve {brand}'in onayıyla yerine başka birini gönderebilir.
-- Atölye {brand} tarafından iptal edilirse ücretin tamamı iade edilir.
+- Workshop {brand} tarafından iptal edilirse ücretin tamamı iade edilir.
 - İadeler beş iş günü içinde, ödemenin yapıldığı yolla yapılır. Karta yapılan iadelerin hesaba yansıma süresi bankaya göre değişebilir.
 
-Alıcı kaydını sitedeki hesabından (Atölyelerim) iptal edebilir veya bize yukarıdaki iletişim bilgilerinden yazabilir. Ayrıntılar İptal ve İade Koşulları sayfasındadır.
+Alıcı kaydını sitedeki hesabından (Workshoplarım) iptal edebilir veya bize yukarıdaki iletişim bilgilerinden yazabilir. Ayrıntılar İptal ve İade Koşulları sayfasındadır.
 
 ## 8. Tarafların yükümlülükleri
 
-- {brand}, atölyeyi sayfasında anlatıldığı gibi, gereken malzeme ve ortamla sunar.
-- Alıcı, kayıtta doğru bilgi verir, atölyeye zamanında gelir ve atölyenin kurallarına uyar. Geç gelinmesi atölyenin bitiş saatini değiştirmez.
-- Katılımcı çocuksa, kaydı velisi veya yasal temsilcisi yapar ve atölye boyunca gerekli bilgileri sağlar.
+- {brand}, workshopu sayfasında anlatıldığı gibi, gereken malzeme ve ortamla sunar.
+- Alıcı, kayıtta doğru bilgi verir, workshopa zamanında gelir ve workshopun kurallarına uyar. Geç gelinmesi workshopun bitiş saatini değiştirmez.
+- Katılımcı çocuksa, kaydı velisi veya yasal temsilcisi yapar ve workshop boyunca gerekli bilgileri sağlar.
 
 ## 9. Kişisel veriler
 
@@ -170,22 +170,22 @@ Alıcı, kayıt formunda bu sözleşmeyi onayladığında sözleşme kurulur. On
 
 Son güncelleme: {updated}
 
-Bu koşullar {seller} tarafından {website} adresindeki sitede sunulan tüm atölyeler için geçerlidir ve kayıt olurken kabul ettiğiniz koşullarla aynıdır.
+Bu koşullar {seller} tarafından {website} adresindeki sitede sunulan tüm workshoplar için geçerlidir ve kayıt olurken kabul ettiğiniz koşullarla aynıdır.
 
 ## Sizin iptaliniz
 
-- Atölyenin başlangıcına 72 saat veya daha fazla süre varken iptal ederseniz ücretin tamamı iade edilir.
+- Workshopun başlangıcına 72 saat veya daha fazla süre varken iptal ederseniz ücretin tamamı iade edilir.
 - Başlangıca 72 saatten az süre kala iptal ederseniz ödediğiniz tutarın %50'si kesilir, kalanı iade edilir.
-- Atölyeye katılmazsanız ücret iade edilmez.
+- Workshopa katılmazsanız ücret iade edilmez.
 - Katılamayacaksanız, önceden haber vererek ve {brand}'in onayıyla yerinize başka birini gönderebilirsiniz.
 
 ## Nasıl iptal edilir
 
-Kaydınızı sitedeki hesabınızda, Atölyelerim bölümünden iptal edebilirsiniz; iade edilecek tutar iptalden önce gösterilir. Dilerseniz {email} adresine veya {phone} numarasına da yazabilirsiniz. Süreler, iptal talebinizin bize ulaştığı zamana göre hesaplanır.
+Kaydınızı sitedeki hesabınızda, Workshoplarım bölümünden iptal edebilirsiniz; iade edilecek tutar iptalden önce gösterilir. Dilerseniz {email} adresine veya {phone} numarasına da yazabilirsiniz. Süreler, iptal talebinizin bize ulaştığı zamana göre hesaplanır.
 
 ## {brand} tarafından iptal ve değişiklikler
 
-- En az katılımcı sayısına ulaşılamaması veya başka bir nedenle atölye {brand} tarafından iptal edilirse ücretin tamamı iade edilir.
+- En az katılımcı sayısına ulaşılamaması veya başka bir nedenle workshop {brand} tarafından iptal edilirse ücretin tamamı iade edilir.
 - Tarih, yer veya eğitmen değişirse size haber verilir. Yeni koşulları kabul edebilir ya da ücretin tamamını geri alabilirsiniz.
 
 ## İadeler
@@ -197,7 +197,7 @@ Kaydınızı sitedeki hesabınızda, Atölyelerim bölümünden iptal edebilirsi
 
 ## Cayma hakkı
 
-Atölyeler belirli bir tarihte yapılan boş zaman etkinlikleri olduğundan, Mesafeli Sözleşmeler Yönetmeliği'nin 15. maddesinin 1. fıkrasının (ğ) bendi uyarınca 14 günlük cayma hakkı uygulanmaz. Yukarıdaki iptal koşulları bunun yerine geçerlidir. Yasal haklarınız saklıdır.
+Workshoplar belirli bir tarihte yapılan boş zaman etkinlikleri olduğundan, Mesafeli Sözleşmeler Yönetmeliği'nin 15. maddesinin 1. fıkrasının (ğ) bendi uyarınca 14 günlük cayma hakkı uygulanmaz. Yukarıdaki iptal koşulları bunun yerine geçerlidir. Yasal haklarınız saklıdır.
 
 ## İletişim
 

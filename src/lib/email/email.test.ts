@@ -260,7 +260,7 @@ describe("payment emails", () => {
   it("shows only the ways that are on", async () => {
     const base = { ...received, cash: undefined, transfer: undefined, paymentUrl: undefined }
     const cashOnly = await renderEmail("registration_received", { ...base, cash: true }, "tr")
-    expect(cashOnly.text).toContain("Atölyede nakit")
+    expect(cashOnly.text).toContain("Workshopta nakit")
     expect(cashOnly.text).not.toContain("IBAN")
     expect(cashOnly.text).toContain("Şöyle ödeyebilirsiniz")
     expect(cashOnly.html).not.toContain(`class="e-btn-quiet"`)
@@ -498,7 +498,7 @@ describe("sendEmail", () => {
       subject: "Zeynep, “Mum Yapımı” sözleşmesini imzaladı",
     })
     expect(payload.html).toContain("<!DOCTYPE html")
-    expect(payload.text).toContain("Atölyeyi görüntüle")
+    expect(payload.text).toContain("Workshopu görüntüle")
     expect(options).toEqual({ idempotencyKey: "contract_signed:c1" })
   })
 

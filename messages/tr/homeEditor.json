@@ -1,6 +1,6 @@
 {
   "intro": "Ana sayfanızda nelerin görüneceğini seçin. Boş bıraktığınız her alanda temanın kendi metni ya da fotoğrafı görünür; yalnızca değiştirmek istediklerinizi doldurmanız yeter. Boş bir alandaki soluk yazı, sitenin orada gösterdiği metindir.",
-  "classicNote": "Sitenizin şu anki teması yalnızca karşılama cümlesini ve atölyeleri gösteriyor. Bu sayfadaki bölümler, bu bölümleri olan bir temayla görünür.",
+  "classicNote": "Sitenizin şu anki teması yalnızca karşılama cümlesini ve workshopları gösteriyor. Bu sayfadaki bölümler, bu bölümleri olan bir temayla görünür.",
   "chooseTheme": "Tema seç",
   "show": "Ana sayfada göster",
   "hidden": "Bu bölüm gizli: ziyaretçiler görmez.",
@@ -8,7 +8,7 @@
   "unsaved": "Henüz kaydedilmemiş değişiklikleriniz var.",
   "hero": {
     "title": "Sayfanın üstü",
-    "description": "Ziyaretçilerin ilk gördüğü yer: başlığınız ve atölyelere giden bir düğmeyle büyük bir fotoğraf ya da video.",
+    "description": "Ziyaretçilerin ilk gördüğü yer: başlığınız ve workshoplara giden bir düğmeyle büyük bir fotoğraf ya da video.",
     "background": "Arka plan",
     "media": {
       "theme": {
@@ -33,11 +33,11 @@
     "heading": "Başlık",
     "subtitle": "Başlığın altındaki cümle",
     "button": "Düğme yazısı",
-    "buttonHint": "Düğme atölye listesini açar."
+    "buttonHint": "Düğme workshop listesini açar."
   },
   "story": {
     "title": "Hikâyemiz",
-    "description": "Hakkınızda birkaç sıcak cümle ve yaklaşan atölyelere giden bir düğmeyle bir fotoğraf.",
+    "description": "Hakkınızda birkaç sıcak cümle ve yaklaşan workshoplara giden bir düğmeyle bir fotoğraf.",
     "heading": "Başlık",
     "text": "Metin",
     "textHint": "Birkaç cümle, en fazla {max, number} karakter.",
@@ -46,18 +46,18 @@
   },
   "crafts": {
     "title": "Zanaata göre keşfet",
-    "description": "Her atölye türü için bir düğmeyle bir fotoğraf (mum, seramik…). Açık atölye olduğunda görünür.",
+    "description": "Her workshop türü için bir düğmeyle bir fotoğraf (mum, seramik…). Açık workshop olduğunda görünür.",
     "heading": "Başlık",
     "photo": "Fotoğraf"
   },
   "past": {
-    "title": "Geçmiş atölyeler",
-    "description": "Biten atölyelerden fotoğraflar. Böyle atölyeler olduğunda görünür.",
+    "title": "Geçmiş workshoplar",
+    "description": "Biten workshoplardan fotoğraflar. Böyle workshoplar olduğunda görünür.",
     "heading": "Başlık"
   },
   "steps": {
     "title": "Nasıl katılırım?",
-    "description": "Bir fotoğrafın üzerinde, bir atölyeye nasıl katılınacağını anlatan en fazla {max, number} kısa adım.",
+    "description": "Bir fotoğrafın üzerinde, bir workshopa nasıl katılınacağını anlatan en fazla {max, number} kısa adım.",
     "heading": "Başlık",
     "step": "{n, number}. adım",
     "stepTitle": "Adımın başlığı",

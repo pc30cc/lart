@@ -11,7 +11,7 @@
       "system": "Sistem"
     },
     "dashboard": "Pano",
-    "workshops": "Atölyeler",
+    "workshops": "Workshoplar",
     "registrations": "Kayıtlar",
     "instructors": "Eğitmenler",
     "categories": "Kategoriler",
@@ -80,7 +80,7 @@
       },
       "member": {
         "title": "Öğrenci hesabı",
-        "description": "Siteyi ve hesabı {name} nasıl görüyorsa öyle görün, en fazla bir saat. Görüntülerken atölyeye kayıt yapılamaz.",
+        "description": "Siteyi ve hesabı {name} nasıl görüyorsa öyle görün, en fazla bir saat. Görüntülerken workshopa kayıt yapılamaz.",
         "trigger": "Hesabına gir",
         "confirmTitle": "{name} olarak hesaba girilsin mi?",
         "confirmDescription": "Siteyi en fazla bir saat onun gördüğü gibi görürsünüz; üstteki bir şerit bunu gösterir. Buraya dönmek için şeritteki “Bitir” düğmesine basın. Orada yaptığınız değişiklikler sizin adınıza kaydedilir.",
@@ -97,7 +97,7 @@
     "receipt": "{name} dekont gönderdi",
     "paid": "Ödendi",
     "cancelled": "İptal edildi",
-    "workshop": "Yeni atölye yayımlandı · Telegram'a göndermek için onaylayın",
+    "workshop": "Yeni workshop yayımlandı · Telegram'a göndermek için onaylayın",
     "posted": "Telegram'da"
   }
 }
