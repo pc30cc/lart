@@ -54,19 +54,23 @@
     "metaTitle": "{name}, instructor",
     "back": "All instructors",
     "eyebrow": "Instructor at {brand}",
-    "workshopsCount": "{count, plural, one {# workshop} other {# workshops}}",
-    "documentsCount": "{count, plural, one {# certificate} other {# certificates}}",
     "listSeparator": ", ",
     "documents": {
       "title": "Certificates and licences",
       "description": "The instructor's qualifications, as they shared them.",
       "pdf": "PDF",
-      "note": "Shown as small copies to protect the instructor's documents. {brand} has the originals on file."
+      "note": "Shown as small copies to protect the instructor's documents. {brand} has the originals on file.",
+      "none": "No certificates shared yet."
     },
     "coming": "Coming up",
     "held": "Workshops at {brand}",
     "heldBadge": "Held",
-    "noneHeld": "No workshops held here yet."
+    "noneHeld": "No workshops held here yet.",
+    "tabs": {
+      "workshops": "Workshops",
+      "documents": "Certificates"
+    },
+    "comingBadge": "Coming up"
   },
   "instructorsList": {
     "metaTitle": "Instructors · {brand}",

@@ -6,9 +6,11 @@ import { getTranslations } from "next-intl/server"
 import { getPublicInstructor, type PublicInstructor } from "@/features/instructor-documents/queries"
 import { languageName } from "@/features/instructors/schema"
 import { formatWorkshopDates } from "@/features/workshops/days"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Link } from "@/i18n/navigation"
 import { isRtl } from "@/i18n/locales"
 import { pageLocale } from "@/i18n/page-locale"
+import { formatNumber } from "@/lib/format"
 import { getBrand } from "@/lib/settings"
 import { cn } from "@/lib/utils"
 
@@ -38,6 +40,7 @@ export default async function InstructorProfilePage({ params }: PageProps<"/[loc
   const [t, brand] = await Promise.all([getTranslations("site.instructorProfile"), getBrand(locale)])
   const held = person.workshops.filter((w) => w.held)
   const coming = person.workshops.filter((w) => !w.held)
+  const n = (v: number) => formatNumber(v, locale)
 
   return (
     <article className="mx-auto w-full max-w-5xl px-4 pt-6 pb-16 sm:pt-8">
@@ -71,46 +74,60 @@ export default async function InstructorProfilePage({ params }: PageProps<"/[loc
                 </p>
               )}
             </div>
-            <ul className="flex flex-wrap justify-center gap-2 sm:justify-start">
-              {person.workshops.length > 0 && (
-                <Chip icon={CalendarDaysIcon}>{t("workshopsCount", { count: person.workshops.length })}</Chip>
-              )}
-              {person.documents.length > 0 && (
-                <Chip icon={AwardIcon}>{t("documentsCount", { count: person.documents.length })}</Chip>
-              )}
-              {person.teachingLanguages.length > 0 && (
+            {person.teachingLanguages.length > 0 && (
+              <ul className="flex flex-wrap justify-center gap-2 sm:justify-start">
                 <Chip icon={LanguagesIcon}>{person.teachingLanguages.map((c) => languageName(c, locale)).join(t("listSeparator"))}</Chip>
-              )}
-            </ul>
+              </ul>
+            )}
           </div>
         </div>
         {person.bio && <Paragraphs text={person.bio} lang={person.bioLang} className="text-foreground/85 relative mt-8 border-t pt-6 text-base leading-relaxed" />}
       </header>
 
-      {person.documents.length > 0 && (
-        <Section title={t("documents.title")} description={t("documents.description")} icon={AwardIcon}>
-          <ul className="grid gap-4 sm:grid-cols-2">
-            {person.documents.map((d) => (
-              <DocumentCard key={d.id} doc={d} pdfLabel={t("documents.pdf")} />
-            ))}
-          </ul>
-          <p className="text-muted-foreground flex items-start gap-2 text-xs text-pretty">
-            <ShieldCheckIcon className="mt-px size-3.5 shrink-0" aria-hidden />
-            {t("documents.note", { brand })}
-          </p>
-        </Section>
-      )}
+      <Tabs defaultValue="workshops" className="mt-10 gap-0">
+        <TabsList className="bg-muted/60 ring-foreground/5 grid h-auto! w-full grid-cols-2 gap-1 rounded-2xl p-1.5 ring-1 sm:max-w-md">
+          <ProfileTab value="workshops" icon={PaletteIcon} label={t("tabs.workshops")} count={n(person.workshops.length)} />
+          <ProfileTab value="documents" icon={AwardIcon} label={t("tabs.documents")} count={n(person.documents.length)} />
+        </TabsList>
 
-      {coming.length > 0 && (
-        <Section title={t("coming")} icon={CalendarDaysIcon}>
-          <WorkshopList workshops={coming} locale={locale} />
-        </Section>
-      )}
-      {(held.length > 0 || coming.length === 0) && (
-        <Section title={t("held", { brand })} icon={PaletteIcon}>
-          {held.length > 0 ? <WorkshopList workshops={held} locale={locale} done={t("heldBadge")} /> : <p className="text-muted-foreground text-sm">{t("noneHeld")}</p>}
-        </Section>
-      )}
+        <TabsContent value="workshops" className="animate-in fade-in-0 mt-8 space-y-10 duration-300">
+          {person.workshops.length === 0 ? (
+            <Empty icon={PaletteIcon}>{t("noneHeld")}</Empty>
+          ) : (
+            <>
+              {coming.length > 0 && (
+                <Group title={t("coming")} count={n(coming.length)}>
+                  <WorkshopGrid workshops={coming} locale={locale} badge={t("comingBadge")} tone="coming" />
+                </Group>
+              )}
+              {held.length > 0 && (
+                <Group title={t("held", { brand })} count={n(held.length)}>
+                  <WorkshopGrid workshops={held} locale={locale} badge={t("heldBadge")} tone="held" />
+                </Group>
+              )}
+            </>
+          )}
+        </TabsContent>
+
+        <TabsContent value="documents" className="animate-in fade-in-0 mt-8 space-y-5 duration-300">
+          {person.documents.length === 0 ? (
+            <Empty icon={AwardIcon}>{t("documents.none")}</Empty>
+          ) : (
+            <>
+              <p className="text-muted-foreground text-sm text-pretty">{t("documents.description")}</p>
+              <ul className="grid gap-3 sm:grid-cols-2">
+                {person.documents.map((d) => (
+                  <DocumentCard key={d.id} doc={d} pdfLabel={t("documents.pdf")} />
+                ))}
+              </ul>
+              <p className="text-muted-foreground flex items-start gap-2 text-xs text-pretty">
+                <ShieldCheckIcon className="mt-px size-3.5 shrink-0" aria-hidden />
+                {t("documents.note", { brand })}
+              </p>
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
     </article>
   )
 }
@@ -124,18 +141,43 @@ function Chip({ icon: Icon, children }: { icon: typeof AwardIcon; children: Reac
   )
 }
 
-function Section({ title, description, icon: Icon, children }: { title: string; description?: string; icon: typeof AwardIcon; children: React.ReactNode }) {
+/** One tab: its icon, name and how many, a raised pill when chosen. */
+function ProfileTab({ value, icon: Icon, label, count }: { value: string; icon: typeof AwardIcon; label: string; count: string }) {
   return (
-    <section className="mt-12 space-y-5">
-      <div className="space-y-1">
-        <h2 className="flex items-center gap-2 text-xl font-semibold">
-          <Icon className="text-primary size-5" aria-hidden />
-          {title}
-        </h2>
-        {description && <p className="text-muted-foreground text-sm text-pretty">{description}</p>}
-      </div>
+    <TabsTrigger
+      value={value}
+      className="group/tab data-active:bg-background data-active:text-foreground h-11 gap-2 rounded-xl px-5 text-[0.95rem] data-active:shadow-sm sm:min-w-44"
+    >
+      <Icon className="group-data-active/tab:text-primary size-4 transition-colors" aria-hidden />
+      {label}
+      <span className="bg-foreground/[0.06] group-data-active/tab:bg-primary/10 group-data-active/tab:text-primary min-w-6 rounded-full px-1.5 text-xs tabular-nums transition-colors">
+        {count}
+      </span>
+    </TabsTrigger>
+  )
+}
+
+function Group({ title, count, children }: { title: string; count: string; children: React.ReactNode }) {
+  return (
+    <section className="space-y-4">
+      <h2 className="flex items-center gap-3 text-lg font-semibold">
+        {title}
+        <span className="text-muted-foreground text-sm font-normal tabular-nums">{count}</span>
+        <span className="bg-border h-px flex-1" aria-hidden />
+      </h2>
       {children}
     </section>
+  )
+}
+
+function Empty({ icon: Icon, children }: { icon: typeof AwardIcon; children: React.ReactNode }) {
+  return (
+    <div className="bg-card/60 flex flex-col items-center gap-3 rounded-3xl border border-dashed px-6 py-14 text-center">
+      <span className="bg-primary/10 text-primary flex size-12 items-center justify-center rounded-full">
+        <Icon className="size-6" aria-hidden />
+      </span>
+      <p className="text-muted-foreground max-w-sm text-sm text-pretty">{children}</p>
+    </div>
   )
 }
 
@@ -146,7 +188,7 @@ function DocumentCard({ doc, pdfLabel }: { doc: PublicInstructor["documents"][nu
       <div className="bg-muted ring-foreground/10 relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-xl ring-1 select-none">
         {doc.thumbUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- CDN URL, any host; the small copy only
-          <img src={doc.thumbUrl} alt="" loading="lazy" draggable={false} className="pointer-events-none size-full object-cover" />
+          <img src={doc.thumbUrl} alt="" draggable={false} className="pointer-events-none size-full object-cover" />
         ) : (
           <span className="text-primary/70 flex flex-col items-center gap-0.5 text-[0.65rem] font-medium">
             <FileTextIcon className="size-7" aria-hidden />
@@ -161,31 +203,55 @@ function DocumentCard({ doc, pdfLabel }: { doc: PublicInstructor["documents"][nu
   )
 }
 
-function WorkshopList({ workshops, locale, done }: { workshops: PublicInstructor["workshops"]; locale: string; done?: string }) {
+/** The workshops as cards: the cover, a badge (coming / held), the craft, the title and the dates. */
+function WorkshopGrid({
+  workshops,
+  locale,
+  badge,
+  tone,
+}: {
+  workshops: PublicInstructor["workshops"]
+  locale: string
+  badge: string
+  tone: "coming" | "held"
+}) {
   return (
-    <ul className="grid gap-3 sm:grid-cols-2">
+    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {workshops.map((w) => (
         <li key={w.slug}>
           <Link
             href={`/workshops/${w.slug}`}
-            className="group bg-card hover:border-primary/40 focus-visible:ring-ring/50 flex items-center gap-4 rounded-2xl border p-3 outline-none transition-colors focus-visible:ring-3"
+            className="group bg-card hover:border-primary/40 focus-visible:ring-ring/50 flex h-full flex-col overflow-hidden rounded-2xl border shadow-xs outline-none transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-3"
           >
-            <div className="bg-muted size-16 shrink-0 overflow-hidden rounded-xl">
+            <div className="bg-muted relative aspect-[16/10] overflow-hidden">
               {w.coverUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- CDN URL, any host
-                <img src={w.coverUrl} alt="" loading="lazy" className="size-full object-cover transition-transform group-hover:scale-105" />
+                <img
+                  src={w.coverUrl}
+                  alt=""
+                  loading="lazy"
+                  className={cn("size-full object-cover transition-transform duration-500 group-hover:scale-105", tone === "held" && "saturate-[.85]")}
+                />
               ) : (
                 <span className="from-primary/15 to-chart-3/20 flex size-full items-center justify-center bg-linear-to-br">
-                  <PaletteIcon className="text-primary/50 size-6" aria-hidden />
+                  <PaletteIcon className="text-primary/50 size-10" aria-hidden />
                 </span>
               )}
+              <span
+                className={cn(
+                  "absolute start-3 top-3 rounded-full px-2.5 py-1 text-xs font-medium shadow-sm backdrop-blur",
+                  tone === "coming" ? "bg-primary text-primary-foreground" : "bg-background/85 text-foreground",
+                )}
+              >
+                {badge}
+              </span>
             </div>
-            <div className="min-w-0 flex-1 space-y-0.5">
-              <p className="text-primary truncate text-xs font-medium">{w.category}</p>
-              <p className="truncate font-medium">{w.title}</p>
-              <p className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-sm">
+            <div className="flex flex-1 flex-col gap-1 p-4">
+              <p className="text-primary text-xs font-medium">{w.category}</p>
+              <p className="group-hover:text-primary leading-snug font-semibold text-balance transition-colors">{w.title}</p>
+              <p className="text-muted-foreground mt-auto flex items-center gap-1.5 pt-2 text-sm">
+                <CalendarDaysIcon className="size-3.5 shrink-0" aria-hidden />
                 {formatWorkshopDates(w, locale, "medium")}
-                {done && <span className="bg-muted rounded-full px-2 text-xs">{done}</span>}
               </p>
             </div>
           </Link>

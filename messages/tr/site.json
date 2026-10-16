@@ -54,19 +54,23 @@
     "metaTitle": "{name}, eğitmen",
     "back": "Tüm eğitmenler",
     "eyebrow": "{brand} eğitmeni",
-    "workshopsCount": "{count, plural, other {# atölye}}",
-    "documentsCount": "{count, plural, other {# belge}}",
     "listSeparator": ", ",
     "documents": {
       "title": "Sertifikalar ve belgeler",
       "description": "Eğitmenin paylaştığı yeterlilikleri.",
       "pdf": "PDF",
-      "note": "Eğitmenin belgelerini korumak için yalnızca küçük kopyalar gösterilir. Asılları {brand}'da kayıtlıdır."
+      "note": "Eğitmenin belgelerini korumak için yalnızca küçük kopyalar gösterilir. Asılları {brand}'da kayıtlıdır.",
+      "none": "Henüz paylaşılan belge yok."
     },
     "coming": "Yaklaşan atölyeler",
     "held": "{brand} atölyeleri",
     "heldBadge": "Yapıldı",
-    "noneHeld": "Burada henüz atölye yapılmadı."
+    "noneHeld": "Burada henüz atölye yapılmadı.",
+    "tabs": {
+      "workshops": "Atölyeler",
+      "documents": "Belgeler"
+    },
+    "comingBadge": "Yakında"
   },
   "instructorsList": {
     "metaTitle": "Eğitmenler · {brand}",

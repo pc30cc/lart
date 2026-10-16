@@ -54,19 +54,23 @@
     "metaTitle": "{name}، مدرس",
     "back": "همهٔ مدرس‌ها",
     "eyebrow": "مدرس در {brand}",
-    "workshopsCount": "{count, plural, other {# ورکشاپ}}",
-    "documentsCount": "{count, plural, other {# مدرک}}",
     "listSeparator": "، ",
     "documents": {
       "title": "مدارک و گواهینامه‌ها",
       "description": "مدارک و صلاحیت‌های مدرس، همان‌طور که خودش به اشتراک گذاشته است.",
       "pdf": "PDF",
-      "note": "برای حفاظت از مدارک مدرس، فقط نسخه‌ای کوچک نمایش داده می‌شود. اصل مدارک نزد {brand} است."
+      "note": "برای حفاظت از مدارک مدرس، فقط نسخه‌ای کوچک نمایش داده می‌شود. اصل مدارک نزد {brand} است.",
+      "none": "هنوز مدرکی به اشتراک گذاشته نشده است."
     },
     "coming": "ورکشاپ‌های پیش رو",
     "held": "ورکشاپ‌ها در {brand}",
     "heldBadge": "برگزار شد",
-    "noneHeld": "هنوز ورکشاپی اینجا برگزار نشده است."
+    "noneHeld": "هنوز ورکشاپی اینجا برگزار نشده است.",
+    "tabs": {
+      "workshops": "ورکشاپ‌ها",
+      "documents": "مدارک"
+    },
+    "comingBadge": "به‌زودی"
   },
   "instructorsList": {
     "metaTitle": "مدرس‌ها · {brand}",
