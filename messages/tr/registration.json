@@ -15,8 +15,8 @@
     "perPerson": "kişi başı"
   },
   "seats": {
-    "full": "Dolu",
-    "left": "{count, plural, one {# yer kaldı} other {# yer kaldı}}",
+    "full": "Kontenjan Doldu",
+    "left": "{count, plural, other {Kalan Kontenjan: #}}",
     "registered": "{count, plural, =0 {henüz kayıt yok} one {# kişi kayıt oldu} other {# kişi kayıt oldu}}"
   },
   "age": {
@@ -25,7 +25,7 @@
   },
   "window": {
     "open": "Kayıtlar açık",
-    "full": "Dolu",
+    "full": "Kontenjan Doldu",
     "closed": "Kayıtlar kapandı",
     "started": "Başladı",
     "past": "Gerçekleşti",
@@ -44,22 +44,22 @@
       "price": "Ücret",
       "seats": "Yerler",
       "deadline": "Son kayıt",
-      "days": "Günler (kayıtta birini seçin)",
+      "days": "Atölye tarihleri (kayıt sırasında bir tarih seçin)",
       "dayFull": "Dolu"
     },
-    "register": "Kaydol",
+    "register": "Atölyeye Kayıt Ol",
     "registerHint": "Bir dakika sürer. Ödemeyi kayıttan sonra yaparsınız.",
-    "about": "Atölye hakkında",
+    "about": "Atölye Hakkında",
     "includes": "Ücrete neler dahil",
     "bring": "Yanınızda getirin",
     "bringNothing": "Hiçbir şey: ihtiyacınız olan her şey sizi bekliyor.",
     "experience": "Deneyim",
     "experienceNeeded": "Biraz deneyim gerekiyor.",
-    "noExperience": "Deneyim gerekmez: yeni başlayanlar da çok hoş karşılanır.",
+    "noExperience": "Deneyim gerekmiyor. Yeni başlayanlar da atölyemize katılabilir.",
     "notes": "Bilmeniz gerekenler",
     "samples": "Bu atölyede yapılanlar",
     "sampleAlt": "Bu atölyede yapılmış bir çalışma, fotoğraf {n, number}",
-    "instructor": "Eğitmeniniz",
+    "instructor": "Eğitmen",
     "registered": {
       "title": "Kaydınız var",
       "text": "{count, plural, one {Yeriniz ayrıldı.} other {Yerleriniz ayrıldı.}}",
@@ -85,7 +85,7 @@
   },
   "register": {
     "metaTitle": "Kayıt: {title}",
-    "title": "Kaydol",
+    "title": "Atölyeye Kayıt Ol",
     "for": "“{title}” atölyesi için",
     "signIn": {
       "title": "Kaydolmak için giriş yapın",
@@ -127,11 +127,11 @@
         "online": "Kayıttan sonra kartla çevrim içi ödersiniz."
       }
     },
-    "submit": "Kaydol",
+    "submit": "Atölyeye Kayıt Ol",
     "errors": {
       "acceptTerms": "Kaydolmak için lütfen bu kutuyu işaretleyin.",
       "paymentChoice": "Lütfen bir ödeme yolu seçin.",
-      "day": "Lütfen bir gün seçin."
+      "day": "Lütfen bir tarih seçin."
     },
     "impersonating": {
       "title": "Kaydı yalnızca kendisi yapabilir",
@@ -139,8 +139,8 @@
       "account": "Atölyelerini gör"
     },
     "day": {
-      "choose": "Hangi gün geleceksiniz?",
-      "full": "Dolu"
+      "choose": "Tarih Seçin",
+      "full": "Kontenjan Doldu"
     }
   },
   "errors": {

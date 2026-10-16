@@ -314,7 +314,7 @@ describe("the Home page settings page", () => {
     const defaults = await getHomeDefaults()
     expect(defaults.hero.title).toEqual({
       fa: "با دست‌های خودت چیزی زیبا بساز",
-      tr: "Kendi ellerinle güzel bir şey yarat",
+      tr: "Kendi ellerinizle güzel bir şey yaratın",
       en: "Make something beautiful with your own hands",
     })
     expect(defaults.steps.items).toHaveLength(4)

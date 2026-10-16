@@ -1,16 +1,16 @@
 {
   "hero": {
-    "title": "Kendi ellerinle güzel bir şey yarat",
+    "title": "Kendi ellerinizle güzel bir şey yaratın",
     "subtitle": "Mum, seramik, makrome ve daha fazlası: samimi atölyelerde birlikte öğreniyor, birlikte üretiyoruz.",
     "button": "Atölyeleri keşfet"
   },
   "story": {
     "title": "Birlikte üretmek için bir alan",
-    "text": "Her atölye küçük bir buluşma: deneyimli eğitmenler, özenle seçilmiş malzemeler ve sıcak bir ortam. Daha önce hiç denememiş olman önemli değil; sadece gel, gerisini birlikte yaparız.",
-    "button": "Yaklaşan atölyeler"
+    "text": "Her atölye küçük bir buluşma: deneyimli eğitmenler, özenle seçilmiş malzemeler ve sıcak bir ortam. Daha önce hiç denememiş olmanız önemli değil; sadece gelin, gerisini birlikte yaparız.",
+    "button": "Yaklaşan Atölyeler"
   },
   "crafts": {
-    "title": "Zanaata göre keşfet"
+    "title": "Sanat dalına göre keşfedin"
   },
   "past": {
     "title": "Geçmiş atölyelerden"
@@ -18,24 +18,24 @@
   "steps": {
     "title": "Nasıl katılırım?",
     "step1": {
-      "title": "Atölyeni seç",
-      "text": "Tarihi, yeri ve fiyatı gör; sana uyanı seç."
+      "title": "Atölyenizi seçin",
+      "text": "Tarihi, yeri ve fiyatı görün; size uyanı seçin."
     },
     "step2": {
-      "title": "Yerini ayırt",
-      "text": "Birkaç adımda kaydol, yerin hemen ayrılsın."
+      "title": "Yerinizi ayırtın",
+      "text": "Birkaç adımda kaydolun, yeriniz hemen ayrılsın."
     },
     "step3": {
-      "title": "Ödemeni yap",
-      "text": "Nakit, havale ya da ödeme linkiyle; nasıl istersen."
+      "title": "Ödemenizi yapın",
+      "text": "Nakit, havale ya da ödeme linkiyle; nasıl isterseniz."
     },
     "step4": {
-      "title": "Gel ve üret",
-      "text": "Her şey hazır; kendi eserini evine götür."
+      "title": "Gelin ve birlikte üretelim",
+      "text": "Her şey hazır; kendi eserinizi evinize götürün."
     }
   },
   "footer": {
-    "about": "Mum, seramik, makrome ve daha birçok el sanatında küçük, samimi atölyeler düzenliyoruz. Deneyimli eğitmenler, kaliteli malzemeler ve evine götüreceğin kendi eserin.",
+    "about": "Mum, seramik, makrome ve daha birçok el sanatında samimi ve keyifli sanat atölyeleri düzenliyoruz. Deneyimli eğitmenler, kaliteli malzemeler ve evinize götüreceğiniz kendi eseriniz.",
     "aboutTitle": "Hakkımızda",
     "explore": "Keşfet",
     "account": "Hesabım",
