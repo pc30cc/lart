@@ -89,3 +89,18 @@ describe("workshops on several days", () => {
     expect(issues([{ ...day2, minCapacity: 9, maxCapacity: 4 }])).toHaveLength(1)
   })
 })
+
+describe("two sessions on the same day", () => {
+  it("names the date once and gives both hours", () => {
+    const c = {
+      startsAt: new Date("2026-10-24T09:00:00Z"),
+      endsAt: new Date("2026-10-24T16:00:00Z"),
+      days: [
+        { startsAt: "2026-10-24T09:00:00.000Z", endsAt: "2026-10-24T12:00:00.000Z" },
+        { startsAt: "2026-10-24T13:00:00.000Z", endsAt: "2026-10-24T16:00:00.000Z" },
+      ],
+    }
+    expect(formatWorkshopDates(c, "en", "long")).not.toContain(" · ")
+    expect(workshopHours(c, "en")).toContain(" · ")
+  })
+})

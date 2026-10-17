@@ -42,11 +42,12 @@ export function sameHours(c: WithDays): boolean {
   return days.every((d) => key(d) === key(days[0]))
 }
 
-/** "Saturday 17 October, Tuesday 20 October": every day, in the language's calendar. */
+/**
+ * "Saturday 17 October, Tuesday 20 October": every day, in the language's
+ * calendar; two sessions on the same day name it once.
+ */
 export function formatWorkshopDates(c: WithDays, locale: string, style: "full" | "long" | "medium" = "full"): string {
-  return workshopDays(c)
-    .map((d) => formatDate(d.startsAt, locale, style))
-    .join(separator(locale))
+  return [...new Set(workshopDays(c).map((d) => formatDate(d.startsAt, locale, style)))].join(separator(locale))
 }
 
 /**
