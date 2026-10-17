@@ -1326,7 +1326,7 @@ instructor and the admins) and its public copy (`thumb-…`,
 tiled over it when one is set). Only the copy's address ever reaches the
 public page, shown at 80 px and not draggable; a PDF shows only its title
 there. Adding one checks the upload's audit entry (it must be this
-instructor's), and the admins see and can remove them on the instructor's page.
+instructor's), and the admins see them on the instructor's page, correct their titles in each language (`adminEditDocumentAction`) and can remove them.
 
 The home page is `(site)/page.tsx` (`/`, `/fa`, `/en`). The classic theme
 (`src/themes/default`) shows two sections: `HomeHero` (the brand, the

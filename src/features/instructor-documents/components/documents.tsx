@@ -26,7 +26,13 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Progress } from "@/components/ui/progress"
 import { Spinner } from "@/components/ui/spinner"
-import { addDocumentAction, adminDeleteDocumentAction, deleteDocumentAction, editDocumentAction } from "@/features/instructor-documents/actions"
+import {
+  addDocumentAction,
+  adminDeleteDocumentAction,
+  adminEditDocumentAction,
+  deleteDocumentAction,
+  editDocumentAction,
+} from "@/features/instructor-documents/actions"
 import {
   addDocumentSchema,
   editDocumentSchema,
@@ -86,8 +92,8 @@ function Preview({ doc, className }: { doc: DocumentItem; className?: string }) 
 
 /**
  * My certificates and licences (instructor panel), or an instructor's (admin
- * page, `admin`: view and remove only). Each one: its picture, title, who
- * gave it and when, the description, "Open" for the full file.
+ * page, `admin`: view, correct the title in each language, remove). Each one:
+ * its picture, its title in each language, "Open" for the full file.
  */
 export function DocumentsList({ documents, admin = false }: { documents: DocumentItem[]; admin?: boolean }) {
   const t = useTranslations("instructorPanel.documents")
@@ -114,7 +120,7 @@ export function DocumentsList({ documents, admin = false }: { documents: Documen
                       </a>
                     </Button>
                   )}
-                  {!admin && <EditDocument doc={d} />}
+                  <EditDocument doc={d} admin={admin} />
                   <DeleteDocument doc={d} admin={admin} />
                 </div>
               </div>
@@ -196,7 +202,7 @@ function FormButtons({ pending, label }: { pending: boolean; label: string }) {
   )
 }
 
-function EditDocument({ doc }: { doc: DocumentItem }) {
+function EditDocument({ doc, admin }: { doc: DocumentItem; admin: boolean }) {
   const t = useTranslations("instructorPanel.documents")
   const [open, setOpen] = useState(false)
   return (
@@ -212,18 +218,18 @@ function EditDocument({ doc }: { doc: DocumentItem }) {
           <DialogTitle>{t("editTitle")}</DialogTitle>
           <DialogDescription>{t("editDescription")}</DialogDescription>
         </DialogHeader>
-        {open && <EditForm doc={doc} onDone={() => setOpen(false)} />}
+        {open && <EditForm doc={doc} admin={admin} onDone={() => setOpen(false)} />}
       </DialogContent>
     </Dialog>
   )
 }
 
-function EditForm({ doc, onDone }: { doc: DocumentItem; onDone: () => void }) {
+function EditForm({ doc, admin, onDone }: { doc: DocumentItem; admin: boolean; onDone: () => void }) {
   const t = useTranslations("instructorPanel.documents")
   const router = useRouter()
   const { form, submit, pending } = useActionForm({
     schema: editDocumentSchema,
-    action: editDocumentAction,
+    action: admin ? adminEditDocumentAction : editDocumentAction,
     defaultValues: { id: doc.id, title: texts(doc.title) } as EditDocumentValues,
     successMessage: t("saved"),
     onSuccess: () => {

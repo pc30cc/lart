@@ -6,7 +6,7 @@ import { auditLog, courses, instructorDocuments, instructors } from "@/db/schema
 import { createAdmin, createCategory, createInstructor, runId } from "@/features/workshops/test-fixtures"
 import type { InstructorSession } from "@/lib/auth/instructor"
 import { remove } from "@/lib/storage"
-import { addDocumentAction, deleteDocumentAction, editDocumentAction } from "./actions"
+import { addDocumentAction, adminEditDocumentAction, deleteDocumentAction, editDocumentAction } from "./actions"
 import { getPublicInstructor, listPublicInstructors } from "./queries"
 import { addDocumentSchema, MAX_DOCUMENTS } from "./schema"
 
@@ -26,7 +26,11 @@ vi.mock("@/lib/storage", async (original) => ({
   ...(await original<typeof import("@/lib/storage")>()),
   remove: vi.fn(async () => {}),
 }))
-const signedIn = vi.hoisted(() => ({ id: "" }))
+const signedIn = vi.hoisted(() => ({ id: "", adminId: "" }))
+vi.mock("@/lib/auth/admin", () => {
+  const session = () => ({ sessionId: "s", admin: { id: signedIn.adminId, email: "a@test.local", name: "Admin", shareBp: 0 } })
+  return { requireAdmin: async () => session(), requireAdminApi: async () => session(), getAdmin: async () => session() }
+})
 vi.mock("@/lib/auth/instructor", () => {
   const session = (): InstructorSession => ({
     sessionId: "test",
@@ -48,6 +52,7 @@ beforeAll(async () => {
   other = b.id
   categoryId = category.id
   adminId = admin.id
+  signedIn.adminId = admin.id
 })
 beforeEach(() => {
   signedIn.id = zeynep
@@ -95,6 +100,16 @@ describe("instructor documents", () => {
     expect((await editDocumentAction({ id: added.data.id, title: { fa: "", tr: "", en: "Glass art" } })).ok).toBe(true)
     expect((await deleteDocumentAction({ id: added.data.id })).ok).toBe(true)
     expect(vi.mocked(remove).mock.calls.map((c) => c[0])).toEqual([path, thumbPath])
+  })
+
+  it("lets an admin correct a title in every language", async () => {
+    const { path } = await uploaded(zeynep)
+    const added = await addDocumentAction({ path, title: { fa: "", tr: "", en: "Wood" } })
+    if (!added.ok) throw new Error(added.error)
+    const result = await adminEditDocumentAction({ id: added.data.id, title: { fa: "چوب", tr: "Ahşap", en: "Woodwork" } })
+    expect(result.ok).toBe(true)
+    const [row] = await db.select().from(instructorDocuments).where(eq(instructorDocuments.id, added.data.id))
+    expect(row.title).toEqual({ fa: "چوب", tr: "Ahşap", en: "Woodwork" })
   })
 
   it("checks titles and paths", () => {

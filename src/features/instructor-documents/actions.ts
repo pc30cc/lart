@@ -115,6 +115,21 @@ export const deleteDocumentAction = instructorAction(documentIdSchema, async (in
   return { deleted: true }
 })
 
+/** A super admin corrects a document's title, in any of the three languages. Audited as `instructor.document_edit`. */
+export const adminEditDocumentAction = adminAction(editDocumentSchema, async (input, ctx) => {
+  await db.transaction(async (tx) => {
+    const [row] = await tx
+      .update(instructorDocuments)
+      .set({ title: input.title })
+      .where(eq(instructorDocuments.id, input.id))
+      .returning({ id: instructorDocuments.id, instructorId: instructorDocuments.instructorId })
+    if (!row) throw new UserError("common.errors.notFound")
+    await ctx.audit({ action: "instructor.document_edit", entity: "instructor", entityId: row.instructorId, data: { documentId: row.id, title: input.title } }, tx)
+  })
+  revalidate()
+  return { saved: true }
+})
+
 /**
  * A super admin removes an instructor's document (one that should not be on
  * their public profile). Audited as `instructor.document_delete`.
