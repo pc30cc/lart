@@ -1,6 +1,6 @@
 "use client"
 
-import { ArmchairIcon, MinusIcon, PlusIcon, TicketPlusIcon, Trash2Icon, UserRoundPlusIcon } from "lucide-react"
+import { ArmchairIcon, GiftIcon, MinusIcon, PlusIcon, TicketPlusIcon, Trash2Icon, UserRoundPlusIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
@@ -62,11 +62,12 @@ function HoldForm({ workshops, courseId, onDone }: { workshops: RegistrableWorks
   const { form, submit, pending } = useActionForm({
     schema: holdSeatsSchema,
     action: holdSeatsAction,
-    defaultValues: { courseId: courseId ?? "", day: firstOpenDay(workshops.find((w) => w.id === courseId)), count: 1, note: "" },
+    defaultValues: { courseId: courseId ?? "", day: firstOpenDay(workshops.find((w) => w.id === courseId)), count: 1, note: "", invited: false },
     successMessage: t("done"),
     onSuccess: onDone,
   })
   const chosen = useWatch({ control: form.control, name: "courseId" })
+  const invited = useWatch({ control: form.control, name: "invited" })
   const workshop = workshops.find((w) => w.id === chosen)
   const several = (workshop?.days.length ?? 0) > 1
   return (
@@ -125,12 +126,40 @@ function HoldForm({ workshops, courseId, onDone }: { workshops: RegistrableWorks
           )}
         </FormField>
       )}
+      <FormField<HoldSeatsValues> name="invited" label={t("kind.label")}>
+        {(field) => (
+          <RadioGroup value={field.value ? "invited" : "held"} onValueChange={(v) => field.onChange(v === "invited")} className="grid gap-2 sm:grid-cols-2">
+            {(["held", "invited"] as const).map((kind) => (
+              <label
+                key={kind}
+                htmlFor={`hold-kind-${kind}`}
+                className="has-data-[state=checked]:border-primary/60 has-data-[state=checked]:bg-primary/5 flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-colors"
+              >
+                <RadioGroupItem id={`hold-kind-${kind}`} value={kind} className="mt-0.5" />
+                <span className="min-w-0">
+                  <span className="flex items-center gap-1.5 text-sm font-medium">
+                    {kind === "invited" ? <GiftIcon className="text-primary size-4" aria-hidden /> : <ArmchairIcon className="text-primary size-4" aria-hidden />}
+                    {t(`kind.${kind}`)}
+                  </span>
+                  <span className="text-muted-foreground block text-xs text-pretty">{t(`kind.${kind}Hint`)}</span>
+                </span>
+              </label>
+            ))}
+          </RadioGroup>
+        )}
+      </FormField>
       <FormField<HoldSeatsValues> name="count" label={t("count")} description={workshop && !several ? tr("left", { count: workshop.days[0]?.left ?? 0 }) : undefined}>
         {({ value, ...field }) => (
           <Input {...field} value={String(value ?? "")} type="number" inputMode="numeric" min={1} max={100} className="w-28 tabular-nums" />
         )}
       </FormField>
-      <TextField<HoldSeatsValues> name="note" label={t("note")} description={t("noteHint")} maxLength={120} />
+      <TextField<HoldSeatsValues>
+        name="note"
+        label={invited ? t("name") : t("note")}
+        description={invited ? t("nameHint") : t("noteHint")}
+        required={Boolean(invited)}
+        maxLength={120}
+      />
       <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
         <DialogClose asChild>
           <Button type="button" variant="ghost" size="lg" disabled={pending}>
@@ -149,6 +178,8 @@ export type HoldRow = {
   day: number | null
   count: number
   note: string
+  /** An invited guest (free), not just places kept aside. */
+  invited: boolean
   createdAt: string
   by: string | null
   dayLabel: string | null
@@ -209,8 +240,20 @@ export function HoldsList({ holds, locked, workshops }: { holds: HoldRow[]; lock
                 <div className="min-w-0">
                   {h.workshopTitle && <p className="text-primary truncate text-xs font-medium">{h.workshopTitle}</p>}
                   <p className="flex items-center gap-1.5 truncate text-sm font-medium" dir="auto">
-                    <UserRoundPlusIcon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
+                    {h.invited ? (
+                      <GiftIcon className="text-primary size-3.5 shrink-0" aria-hidden />
+                    ) : (
+                      <UserRoundPlusIcon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
+                    )}
                     {h.note || t("guests")}
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-[0.7rem] font-medium",
+                        h.invited ? "bg-success/10 text-success" : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {h.invited ? t("kind.invitedBadge") : t("kind.heldBadge")}
+                    </span>
                   </p>
                   <p className="text-muted-foreground truncate text-xs">
                     {h.dayLabel && <span className="text-primary font-medium">{h.dayLabel} · </span>}

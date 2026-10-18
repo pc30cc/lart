@@ -15,7 +15,8 @@ import { HoldSeatsDialog, HoldsButton } from "@/features/registrations/admin/com
 import { listHolds } from "@/features/registrations/admin/holds"
 import { registrableWorkshops } from "@/features/registrations/admin/register"
 import { PaymentCell, refundOwed } from "@/features/registrations/admin/components/payment-cell"
-import { listWorkshopRegistrations, participantsByDay, registrationSummary, type AdminRegistrationRow } from "@/features/registrations/admin/queries"
+import { listWorkshopRegistrations, registrationSummary, type AdminRegistrationRow } from "@/features/registrations/admin/queries"
+import { seatsTakenByDay } from "@/features/registrations/public"
 import { paymentMethods, registrationTable, registrationViews, type PaymentMethod } from "@/features/registrations/admin/schema"
 import { registrationDay, workshopDays } from "@/features/workshops/days"
 import { getWorkshop } from "@/features/workshops/queries"
@@ -63,7 +64,8 @@ export default async function WorkshopRegistrationsPage({
     getTranslations("workshops.registrations"),
     getLocale(),
     listHolds(id),
-    participantsByDay(id),
+    // Places taken on each day as the site counts them: registrations (not cancelled) and held places.
+    seatsTakenByDay(id),
   ])
   if (!workshop) notFound()
   const exportHref = await localeHref(locale, `/admin/workshops/${workshop.id}/registrations/export`)
@@ -73,6 +75,8 @@ export default async function WorkshopRegistrationsPage({
   const holdable = addable.find((w) => w.id === id)
 
   const n = (v: number) => formatNumber(v, locale)
+  // Held places and invited guests: taken like registrations, so the totals match the site's.
+  const held = holds.reduce((s, h) => s + h.count, 0)
   // A cancelled workshop's registrations are all cancelled; closed books can't change.
   const locked = isCancelled(workshop) || workshop.closedAt !== null || workshop.status === "closed"
   const url = await publicUrls()
@@ -189,8 +193,10 @@ export default async function WorkshopRegistrationsPage({
   const cards = [
     {
       label: t("summary.registered"),
-      value: n(summary.active),
-      sub: t("summary.places", { max: n(workshop.maxCapacity), min: n(workshop.minCapacity) }),
+      value: n(summary.active + held),
+      sub: held
+        ? t("summary.withHolds", { registered: n(summary.active), held: n(held), max: n(workshop.maxCapacity) })
+        : t("summary.places", { max: n(workshop.maxCapacity), min: n(workshop.minCapacity) }),
     },
     {
       label: t("summary.paid"),
@@ -238,6 +244,7 @@ export default async function WorkshopRegistrationsPage({
                 day: h.day,
                 count: h.count,
                 note: h.note,
+                invited: h.invited,
                 by: h.by,
                 createdAt: h.createdAt.toISOString(),
                 dayLabel: days.length > 1 ? dayLabel(h.day) : null,
@@ -256,7 +263,7 @@ export default async function WorkshopRegistrationsPage({
           </>
         }
       />
-      {summary.active + summary.cancelled === 0 ? (
+      {summary.active + summary.cancelled === 0 && held === 0 ? (
         <EmptyState
           icon={TicketIcon}
           title={t("empty.title")}

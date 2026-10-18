@@ -1,0 +1,1 @@
+ALTER TABLE "seat_holds" ADD COLUMN "invited" boolean DEFAULT false NOT NULL;

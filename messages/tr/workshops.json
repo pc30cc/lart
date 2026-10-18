@@ -428,7 +428,8 @@
       "refundsOwed": "Ödenecek iadeler",
       "consent": "Fotoğraf / video izni",
       "consentValue": "{photos} / {videos}",
-      "consentHint": "Katılacaklar arasında"
+      "consentHint": "Katılacaklar arasında",
+      "withHolds": "{registered} kayıt + {held} ayrılmış veya davetli · {max} kontenjan"
     },
     "empty": {
       "title": "Henüz kayıt yok",
@@ -616,12 +617,24 @@
       "errors": {
         "tooMany": "Bu kadar boş yer yok; şu anda {left} yer kaldı.",
         "notOpen": "Bu atölye artık yer almıyor.",
-        "gone": "Bu ayırma artık yok."
+        "gone": "Bu ayırma artık yok.",
+        "name": "Misafirin adını yazın."
       },
       "less": "Bir yer az",
       "more": "Bir yer fazla",
       "register": "Bu yere kayıt",
-      "show": "Ayrılan yerler"
+      "show": "Ayrılan yerler",
+      "name": "Misafirin adı",
+      "nameHint": "Hesap gerekmez; ad yeterli.",
+      "kind": {
+        "label": "Ne için?",
+        "held": "Yer ayır",
+        "heldHint": "Yer bir kenara ayrılır; örneğin sonra kaydolacak biri için.",
+        "invited": "Davetli misafir",
+        "invitedHint": "Ücretsiz, adıyla; hesap gerekmez.",
+        "heldBadge": "Ayrıldı",
+        "invitedBadge": "Davetli · ücretsiz"
+      }
     },
     "allDays": "Tüm günler"
   },

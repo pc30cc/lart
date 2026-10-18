@@ -7,6 +7,7 @@ import { addRegistration, makeAdmin, makeCourse, makeWorld } from "@/features/mo
 import { UserError } from "@/lib/errors"
 import { getPublicWorkshop, seatsTakenByDay } from "../public"
 import { changeHold, holdSeats, listHolds, listOpenHolds, releaseHold } from "./holds"
+import { holdSeatsSchema } from "./schema"
 
 const DAY = 86_400_000
 const userError = async (p: Promise<unknown>) => {
@@ -70,5 +71,16 @@ describe("places held for guests", () => {
     for (let i = 0; i < 3; i++) await db.transaction((tx) => changeHold(tx, held.id, -1))
     expect(await listHolds(course)).toEqual([])
     expect(await seatsTakenByDay(course)).toEqual([])
+  })
+
+  it("keep an invited guest by name, free, counted like any place", async () => {
+    const world = await makeWorld()
+    const admin = await makeAdmin("Holder 4")
+    const course = await makeCourse(world, admin.id, { status: "published", endsAt: new Date(Date.now() + 10 * DAY) })
+    await db.transaction((tx) => holdSeats(tx, { courseId: course, count: 1, note: "Ipek", invited: true }, admin.id))
+    expect(await listHolds(course)).toMatchObject([{ note: "Ipek", invited: true, count: 1 }])
+    expect(await seatsTakenByDay(course)).toEqual([1])
+    expect(holdSeatsSchema.safeParse({ courseId: course, count: 1, note: "", invited: true }).success).toBe(false)
+    expect(holdSeatsSchema.safeParse({ courseId: course, count: 1, note: "" }).data?.invited).toBe(false)
   })
 })

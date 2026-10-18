@@ -25,6 +25,8 @@ const flat = (obj: object, prefix = ""): string[] =>
 /** A value for every placeholder; numbers where they are formatted as numbers. */
 const values = {
   note: "Family",
+  registered: "5",
+  held: "3",
   left: 3,
   title: "Mum",
   name: "Ayşe",

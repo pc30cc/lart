@@ -73,8 +73,8 @@ const toDays = (rows: { day: number; n: number }[]) => {
 /** Places still free (never below zero); `limit` is `seatLimit(course)`. */
 export const seatsLeft = (limit: number, taken: number) => Math.max(0, limit - taken)
 
-/** Places held per workshop and day, for lists. */
-async function seatsTakenOf(courseIds: string[]): Promise<Map<string, number[]>> {
+/** Places taken (registrations and held places) per workshop and day, for lists. */
+export async function seatsTakenOf(courseIds: string[]): Promise<Map<string, number[]>> {
   if (!courseIds.length) return new Map()
   const [taken, held] = await Promise.all([
     db

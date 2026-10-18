@@ -428,7 +428,8 @@
       "refundsOwed": "Refunds to pay back",
       "consent": "Photos / videos allowed",
       "consentValue": "{photos} / {videos}",
-      "consentHint": "Among the people coming"
+      "consentHint": "Among the people coming",
+      "withHolds": "{registered} registered + {held} held or invited · {max} places"
     },
     "empty": {
       "title": "No registrations yet",
@@ -616,12 +617,24 @@
       "errors": {
         "tooMany": "Not that many places are free; {left, plural, one {# place is} other {# places are}} left.",
         "notOpen": "This workshop takes no more people.",
-        "gone": "This hold no longer exists."
+        "gone": "This hold no longer exists.",
+        "name": "Write the guest's name."
       },
       "less": "One place fewer",
       "more": "One place more",
       "register": "Register on it",
-      "show": "Places held"
+      "show": "Places held",
+      "name": "Guest's name",
+      "nameHint": "No account needed: the name is enough.",
+      "kind": {
+        "label": "What for?",
+        "held": "Hold places",
+        "heldHint": "Kept aside, e.g. for someone who will register later.",
+        "invited": "Invited guest",
+        "invitedHint": "Free, by name; no account needed.",
+        "heldBadge": "Held",
+        "invitedBadge": "Invited · free"
+      }
     },
     "allDays": "All days"
   },

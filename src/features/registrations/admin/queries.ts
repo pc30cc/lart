@@ -89,19 +89,6 @@ export async function listWorkshopRegistrations(courseId: string, params: Regist
   return { rows, total }
 }
 
-/** A workshop's participants on each day (the cancelled left out), index = day. */
-export async function participantsByDay(courseId: string): Promise<number[]> {
-  await requireAdmin()
-  const rows = await db
-    .select({ day: sql<number>`coalesce(${registrations.day}, 0)`.mapWith(Number), n: count() })
-    .from(registrations)
-    .where(and(eq(registrations.courseId, courseId), sql`${registrations.status} <> 'cancelled'`))
-    .groupBy(sql`coalesce(${registrations.day}, 0)`)
-  const out: number[] = []
-  for (const r of rows) out[r.day] = r.n
-  return Array.from(out, (n) => n ?? 0)
-}
-
 export type AdminRegistrationRow = Awaited<ReturnType<typeof listWorkshopRegistrations>>["rows"][number]
 
 const sum = (condition: SQL, value: SQL | typeof registrations.amount = registrations.amount) =>

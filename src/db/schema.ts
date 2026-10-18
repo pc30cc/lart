@@ -542,6 +542,8 @@ export const seatHolds = pgTable("seat_holds", {
   count: integer("count").notNull(),
   /** Who the places are for (a guest's name, "the instructor's family"…); may be empty. */
   note: text("note").notNull().default(""),
+  /** Invited guests (named in `note`), free; otherwise places kept aside, maybe registered on later. */
+  invited: boolean("invited").notNull().default(false),
   createdBy: uuid("created_by").references(() => admins.id),
   createdAt: createdAt(),
 }, (t) => [index("seat_holds_course_idx").on(t.courseId), check("seat_holds_count", sql`${t.count} between 1 and 100`)])

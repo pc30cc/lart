@@ -182,12 +182,13 @@ export default async function WorkshopPage({ params }: PageProps<"/[locale]/admi
                 t={t}
               />
             ) : (
+              // Registrations and held places, as the site counts them.
               <FillMeter
                 size="lg"
-                registered={w.registered.pending + w.registered.confirmed}
+                registered={takenByDay[0] ?? 0}
                 min={w.minCapacity}
                 max={w.maxCapacity}
-                label={t("table.fillValue", { confirmed: n(w.registered.pending + w.registered.confirmed), max: n(w.maxCapacity) })}
+                label={t("table.fillValue", { confirmed: n(takenByDay[0] ?? 0), max: n(w.maxCapacity) })}
               />
             )}
             <ul className="text-muted-foreground mt-4 space-y-1.5 text-sm">

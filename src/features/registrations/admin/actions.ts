@@ -183,7 +183,7 @@ export const holdSeatsAction = adminAction(holdSeatsSchema, async (input, ctx) =
   const held = await db.transaction(async (tx) => {
     const held = await holdSeats(tx, input, ctx.admin.id)
     await ctx.audit(
-      { action: "registration.hold", entity: "workshop", entityId: input.courseId, data: { count: input.count, day: held.day, note: input.note } },
+      { action: "registration.hold", entity: "workshop", entityId: input.courseId, data: { count: input.count, day: held.day, note: input.note, invited: input.invited } },
       tx,
     )
     return held

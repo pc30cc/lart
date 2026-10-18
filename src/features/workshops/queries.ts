@@ -18,8 +18,7 @@ import { requireAdmin } from "@/lib/auth/admin"
 import { errorForLog } from "@/lib/errors"
 import { getStorage, type Storage } from "@/lib/storage"
 import type { WorkshopView, workshopTable } from "./schema"
-import { seatsTakenByDay } from "@/features/registrations/public"
-import { workshopDays } from "./days"
+import { seatsTakenOf } from "@/features/registrations/public"
 
 type Sort = (typeof workshopTable.sort)[number]
 type Filter = keyof typeof workshopTable.filters
@@ -126,10 +125,8 @@ export async function listWorkshops(params: TableParams<Sort, Filter>, locale: s
       .where(where),
     storage(),
   ])
-  // Several days: each day's places taken (registrations and holds), for one meter per day.
-  const byDay = new Map(
-    await Promise.all(rows.filter((r) => workshopDays(r).length > 1).map(async (r) => [r.id, await seatsTakenByDay(r.id)] as const)),
-  )
+  // Each day's places taken as the site counts them (registrations and held places), for the meters.
+  const byDay = await seatsTakenOf(rows.map((r) => r.id))
   return {
     view,
     rows: rows.map((r) => ({ ...r, coverUrl: urlOf(files, r.coverPath), takenByDay: byDay.get(r.id) ?? null })),

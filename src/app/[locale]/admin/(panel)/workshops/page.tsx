@@ -148,12 +148,14 @@ export default async function WorkshopsPage({ searchParams }: PageProps<"/[local
             </span>
           )
         }
+        // Registrations and held places, as the site counts them.
+        const taken = row.takenByDay?.[0] ?? row.registered
         return (
           <FillMeter
-            registered={row.registered}
+            registered={taken}
             min={row.minCapacity}
             max={row.maxCapacity}
-            label={t("table.fillValue", { confirmed: formatNumber(row.registered, locale), max: formatNumber(row.maxCapacity, locale) })}
+            label={t("table.fillValue", { confirmed: formatNumber(taken, locale), max: formatNumber(row.maxCapacity, locale) })}
           />
         )
       },

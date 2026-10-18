@@ -17,7 +17,12 @@ import { daySeatsLeft } from "../schema"
  * a published or confirmed workshop with open books, a day not begun, and no
  * more than the places left. Deleting a hold frees its places.
  */
-export async function holdSeats(tx: Tx, input: { courseId: string; day?: number; count: number; note: string }, adminId: string, now = new Date()) {
+export async function holdSeats(
+  tx: Tx,
+  input: { courseId: string; day?: number; count: number; note: string; invited?: boolean },
+  adminId: string,
+  now = new Date(),
+) {
   const [course] = await tx
     .select({
       id: courses.id,
@@ -47,7 +52,7 @@ export async function holdSeats(tx: Tx, input: { courseId: string; day?: number;
   if (input.count > left) throw new UserError("workshops.registrations.holds.errors.tooMany", { field: "count", values: { left } })
   const [row] = await tx
     .insert(seatHolds)
-    .values({ courseId: course.id, day: several ? (day ?? null) : null, count: input.count, note: input.note, createdBy: adminId })
+    .values({ courseId: course.id, day: several ? (day ?? null) : null, count: input.count, note: input.note, invited: input.invited ?? false, createdBy: adminId })
     .returning({ id: seatHolds.id })
   return { id: row.id, day: day ?? null }
 }
@@ -98,6 +103,7 @@ export async function listOpenHolds(now = new Date()) {
       day: seatHolds.day,
       count: seatHolds.count,
       note: seatHolds.note,
+      invited: seatHolds.invited,
       createdAt: seatHolds.createdAt,
       by: admins.name,
     })
@@ -118,7 +124,15 @@ export async function releaseHold(tx: Tx, id: string) {
 /** A workshop's holds, oldest first, with who made each. */
 export async function listHolds(courseId: string) {
   return db
-    .select({ id: seatHolds.id, day: seatHolds.day, count: seatHolds.count, note: seatHolds.note, createdAt: seatHolds.createdAt, by: admins.name })
+    .select({
+      id: seatHolds.id,
+      day: seatHolds.day,
+      count: seatHolds.count,
+      note: seatHolds.note,
+      invited: seatHolds.invited,
+      createdAt: seatHolds.createdAt,
+      by: admins.name,
+    })
     .from(seatHolds)
     .leftJoin(admins, eq(admins.id, seatHolds.createdBy))
     .where(and(eq(seatHolds.courseId, courseId)))

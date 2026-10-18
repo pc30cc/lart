@@ -191,6 +191,7 @@ export default async function RegistrationsPage({ searchParams }: PageProps<"/[l
                 day: h.day,
                 count: h.count,
                 note: h.note,
+                invited: h.invited,
                 by: h.by,
                 createdAt: h.createdAt.toISOString(),
                 workshopTitle: localized(h.title, locale),

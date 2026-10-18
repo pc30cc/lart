@@ -109,12 +109,16 @@ export const refundTable = {
 }
 
 /** "Hold places": how many, the day (several days), and who for. */
-export const holdSeatsSchema = z.object({
-  courseId: z.uuid(),
-  day: z.number().int().min(0).max(30).optional(),
-  count: z.coerce.number().int().min(1).max(100),
-  note: z.string().trim().max(120),
-})
+export const holdSeatsSchema = z
+  .object({
+    courseId: z.uuid(),
+    day: z.number().int().min(0).max(30).optional(),
+    count: z.coerce.number().int().min(1).max(100),
+    note: z.string().trim().max(120),
+    /** An invited guest, free: then a name is needed. */
+    invited: z.boolean().default(false),
+  })
+  .refine((v) => !v.invited || v.note.length >= 2, { error: "workshops.registrations.holds.errors.name", path: ["note"] })
 export type HoldSeatsValues = z.input<typeof holdSeatsSchema>
 export const releaseHoldSchema = z.object({ id: z.uuid() })
 /** One place more or less in a hold. */
