@@ -13,7 +13,7 @@ import {
   templates,
 } from "@/db/schema"
 import { partnerCapitals, walletBalance } from "@/features/money/ledger"
-import { seatsTakenOf } from "@/features/registrations/public"
+import { registeredOf, seatsTakenOf } from "@/features/registrations/public"
 import { workshopDays, type StoredDays } from "@/features/workshops/days"
 import { requireAdmin } from "@/lib/auth/admin"
 import { calendarFields, periodStart } from "@/lib/calendar"
@@ -89,11 +89,12 @@ type DaysOf = { startsAt: Date; endsAt: Date; days: StoredDays; minCapacity: num
 /**
  * Each day of a workshop (one for a one-day workshop) with its places:
  * `taken` counts registrations and held places, as the site and the
- * workshops list do; `min` and `max` are that day's. `session`: all the days
- * are on one date (sessions, named by their hours); `sharedDate`: another day
- * is on this one's date.
+ * workshops list do; `registered` the registrations alone, which the go
+ * decision counts against the minimum; `min` and `max` are that day's.
+ * `session`: all the days are on one date (sessions, named by their hours);
+ * `sharedDate`: another day is on this one's date.
  */
-function placesOf(w: DaysOf, taken: number[] | undefined) {
+function placesOf(w: DaysOf, taken: number[] | undefined, registered?: number[]) {
   const days = workshopDays(w)
   const date = (d: Date) => zonedParts(d).date
   const session = days.every((d) => date(d.startsAt) === date(days[0].startsAt))
@@ -104,6 +105,7 @@ function placesOf(w: DaysOf, taken: number[] | undefined) {
     min: d.minCapacity ?? w.minCapacity,
     max: d.maxCapacity ?? w.maxCapacity,
     taken: taken?.[i] ?? 0,
+    registered: registered?.[i] ?? 0,
     session,
     sharedDate: days.some((o, j) => j !== i && date(o.startsAt) === date(d.startsAt)),
   }))
@@ -356,7 +358,9 @@ export async function getDashboard(now: Date = new Date(), exec: Exec = db, cale
     () => partners(exec),
   ])
   // Places taken per day, live (registrations and held places), as the site and the workshops list count them.
-  const takenOf = await seatsTakenOf([...new Set([...upcomingRows, ...openRows].map((w) => w.id))], exec)
+  const ids = [...new Set([...upcomingRows, ...openRows].map((w) => w.id))]
+  const takenOf = await seatsTakenOf(ids, exec)
+  const registeredByDay = await registeredOf(upcomingRows.map((w) => w.id), exec)
   const open = openRows.map((w) => placesOf(w, takenOf.get(w.id)))
 
   const figures = fillMonths(months, monthRows)
@@ -364,7 +368,7 @@ export async function getDashboard(now: Date = new Date(), exec: Exec = db, cale
   const year = calendarFields(today, calendar).year
   const yearStart = periodStart(today, "year", calendar)
   const upcoming = upcomingRows.map((w) => {
-    const places = placesOf(w, takenOf.get(w.id))
+    const places = placesOf(w, takenOf.get(w.id), registeredByDay.get(w.id))
     const taken = sumOf(places, (p) => p.taken)
     return {
       ...w,
@@ -373,8 +377,9 @@ export async function getDashboard(now: Date = new Date(), exec: Exec = db, cale
       /** Each day (or session) with its own places; one entry for a one-day workshop. */
       places,
       running: w.startsAt <= now,
-      // Several days: each day must reach its own minimum.
-      alert: workshopAlert({ ...w, registered: taken, days: places.map((p) => ({ taken: p.taken, minCapacity: p.min })) }, now),
+      // Registrations against the minimum, as the go decision counts them (held places are no registration);
+      // several days: each day must reach its own.
+      alert: workshopAlert({ ...w, days: places.map((p) => ({ registered: p.registered, minCapacity: p.min })) }, now),
       payment: paymentNote(w),
     }
   })

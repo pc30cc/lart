@@ -1691,8 +1691,9 @@ holds a seat, not paid yet; `confirmed` = paid (or a free workshop);
   (registrations and held places, `seatsTakenOf`), also after the go
   decision, with `final_participants` beside it; a workshop of several days
   or sessions has a meter (and a bar in the seats chart) per day, each
-  against that day's places, and its "short of the minimum" adds up each
-  day's own shortfall. The places card counts every day's places.
+  against that day's places. "Short of the minimum" counts registrations
+  only (`registeredOf`), as the go decision does; on several days it adds
+  up each day's own shortfall. The places card counts every day's places.
 - **Places after the go decision** are capped at `final_participants`
   (`seatLimit(course)` in `features/registrations/schema.ts`, used by
   `registerForWorkshop` and the site's seats left). A cancelled place can be

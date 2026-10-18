@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto"
-import { and, eq, inArray } from "drizzle-orm"
+import { eq, inArray } from "drizzle-orm"
 import { TransactionRollbackError } from "drizzle-orm/errors"
 import { describe, expect, it, vi } from "vitest"
 
@@ -334,12 +334,13 @@ describe("dashboard queries", () => {
 
       const d = await getDashboard(NOW, tx)
       const row = d.upcoming.find((x) => x.id === two)!
-      expect(row.places.map((p) => [p.n, p.taken, p.min, p.max, p.session, p.sharedDate])).toEqual([
-        [1, 5, 4, 8, true, true],
-        [2, 3, 3, 6, true, true],
+      expect(row.places.map((p) => [p.n, p.taken, p.registered, p.min, p.max, p.session, p.sharedDate])).toEqual([
+        [1, 5, 2, 4, 8, true, true],
+        [2, 3, 1, 3, 6, true, true],
       ])
-      // `registered` stays the registrations (for the paid count); `taken` adds the held places.
-      expect(row).toMatchObject({ registered: 3, paid: 1, taken: 8, alert: { kind: "decisionSoon", missing: 0 } })
+      // `registered` stays the registrations (for the paid count); `taken` adds the held places. The minimum
+      // counts registrations only, as the go decision does: 2 short in each session.
+      expect(row).toMatchObject({ registered: 3, paid: 1, taken: 8, alert: { kind: "decisionSoon", missing: 2 + 2 } })
       expect(d.kpis.upcomingSeats - before.kpis.upcomingSeats).toBe(8 + 6)
       expect(d.kpis.upcomingTaken - before.kpis.upcomingTaken).toBe(8)
       // A bar per session, each against its own places.
@@ -353,9 +354,8 @@ describe("dashboard queries", () => {
       const pastBar = d.seats.find((x) => x.id === past)
       if (pastBar) expect(pastBar).toMatchObject({ registered: 13, minCapacity: 1 + 2, maxCapacity: 16, place: null })
 
-      // Without the invited guests the second session is 2 short of its own minimum, even though
-      // the first has places to spare.
-      await tx.delete(seatHolds).where(and(eq(seatHolds.courseId, two), eq(seatHolds.day, 1)))
+      // Four more in the first session: it is above its minimum, but the second is still 2 short of its own.
+      for (let i = 0; i < 4; i++) await register(two, "pending")
       const later = await getDashboard(NOW, tx)
       expect(later.upcoming.find((x) => x.id === two)!.alert).toMatchObject({ kind: "decisionSoon", missing: 2 })
     })

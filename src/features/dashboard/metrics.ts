@@ -70,8 +70,8 @@ export function workshopAlert(
     decisionAt: Date
     registered: number
     minCapacity: number
-    /** Several days or sessions: each one's places taken and minimum (each must reach its own). */
-    days?: { taken: number; minCapacity: number }[]
+    /** Several days or sessions: each one's registrations and minimum (each must reach its own). */
+    days?: { registered: number; minCapacity: number }[]
   },
   now: Date,
 ): WorkshopAlert {
@@ -79,7 +79,7 @@ export function workshopAlert(
   if (w.status !== "published") return null
   const missing =
     w.days && w.days.length > 1
-      ? w.days.reduce((sum, d) => sum + Math.max(0, d.minCapacity - d.taken), 0)
+      ? w.days.reduce((sum, d) => sum + Math.max(0, d.minCapacity - d.registered), 0)
       : Math.max(0, w.minCapacity - w.registered)
   if (w.decisionAt <= now) return { kind: "decisionDue", missing }
   if (w.decisionAt.getTime() - now.getTime() <= DECISION_SOON_MS) return { kind: "decisionSoon", at: w.decisionAt, missing }

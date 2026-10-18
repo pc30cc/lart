@@ -73,25 +73,42 @@ const toDays = (rows: { day: number; n: number }[]) => {
 /** Places still free (never below zero); `limit` is `seatLimit(course)`. */
 export const seatsLeft = (limit: number, taken: number) => Math.max(0, limit - taken)
 
+/** Active registrations per workshop and day. */
+const registrationsByDay = (courseIds: string[], exec: Exec) =>
+  exec
+    .select({ courseId: registrations.courseId, day: dayIndex, n: count() })
+    .from(registrations)
+    .where(and(inArray(registrations.courseId, courseIds), inArray(registrations.status, [...activeStatuses])))
+    .groupBy(registrations.courseId, dayIndex)
+
+/** Per workshop, the counts added up per day. */
+const perCourse = (rows: { courseId: string; day: number; n: number }[]) => {
+  const byCourse = new Map<string, { day: number; n: number }[]>()
+  for (const r of rows) byCourse.set(r.courseId, [...(byCourse.get(r.courseId) ?? []), r])
+  return new Map([...byCourse].map(([id, list]) => [id, toDays(list)]))
+}
+
 /** Places taken (registrations and held places) per workshop and day, for lists. */
 export async function seatsTakenOf(courseIds: string[], exec: Exec = db): Promise<Map<string, number[]>> {
   if (!courseIds.length) return new Map()
   const [taken, held] = await Promise.all([
-    exec
-      .select({ courseId: registrations.courseId, day: dayIndex, n: count() })
-      .from(registrations)
-      .where(and(inArray(registrations.courseId, courseIds), inArray(registrations.status, [...activeStatuses])))
-      .groupBy(registrations.courseId, dayIndex),
+    registrationsByDay(courseIds, exec),
     exec
       .select({ courseId: seatHolds.courseId, day: holdDay, n: holdCount })
       .from(seatHolds)
       .where(inArray(seatHolds.courseId, courseIds))
       .groupBy(seatHolds.courseId, holdDay),
   ])
-  const rows = [...taken, ...held]
-  const byCourse = new Map<string, { day: number; n: number }[]>()
-  for (const r of rows) byCourse.set(r.courseId, [...(byCourse.get(r.courseId) ?? []), r])
-  return new Map([...byCourse].map(([id, list]) => [id, toDays(list)]))
+  return perCourse([...taken, ...held])
+}
+
+/**
+ * Active registrations per workshop and day, without held places: what the
+ * go decision counts (`final_participants`), so what the minimum is measured by.
+ */
+export async function registeredOf(courseIds: string[], exec: Exec = db): Promise<Map<string, number[]>> {
+  if (!courseIds.length) return new Map()
+  return perCourse(await registrationsByDay(courseIds, exec))
 }
 
 /**
