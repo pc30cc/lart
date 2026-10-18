@@ -277,11 +277,21 @@ describe("receipts and furnishing", () => {
     const [row] = await db.select({ furnishing: ledgerTransactions.furnishing }).from(ledgerTransactions).where(eq(ledgerTransactions.id, furnished.id))
     expect(row.furnishing).toBe(true)
 
+    // One card per expense: the item's photo first, then the receipt.
+    const before = await listReceipts("furnishing", 1)
     const gallery = await listReceipts("furnishing", 1)
-    expect(gallery.rows.filter((r) => r.transactionId === furnished.id).map((r) => [r.role, r.subject, r.amount])).toEqual([
-      ["receipt", "Work table", 2500],
-      ["photo", "Work table", 2500],
-    ])
+    const card = gallery.rows.filter((r) => r.transactionId === furnished.id)
+    expect(card.map((r) => [r.subject, r.amount, r.files.map((f) => f.role)])).toEqual([["Work table", 2500, ["photo", "receipt"]]])
+    expect(gallery.total).toBe(gallery.counts.furnishing)
+
+    // The tab's total adds up its expenses, a reversed one left out.
+    const chair = ok(await recordExpense({ ...entry(), amount: 1200, category: "Chair", furnishing: true, files: [file("c1", "photo")] }))
+    const withChair = await listReceipts("furnishing", 1)
+    expect([withChair.sum - before.sum, withChair.counted - before.counted, withChair.total - before.total]).toEqual([1200, 1, 1])
+    ok(await reverseEntry({ id: chair.id }))
+    const reversed = await listReceipts("furnishing", 1)
+    expect([reversed.sum - before.sum, reversed.counted - before.counted, reversed.total - before.total]).toEqual([0, 0, 1])
+    expect(reversed.rows.find((r) => r.transactionId === chair.id)?.reversed).toBe(true)
     expect((await listReceipts("general", 1)).rows.some((r) => r.transactionId === furnished.id)).toBe(false)
 
     // A workshop's receipts: in "workshops", and alone when that workshop is chosen.

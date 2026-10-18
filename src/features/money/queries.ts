@@ -538,26 +538,29 @@ export type ReceiptGroup = (typeof receiptGroups)[number]
 export const RECEIPTS_PER_PAGE = 48
 
 /**
- * The files kept with expenses (Money → Receipts), newest expense first, with
- * what each expense was: its subject, amount, date, workshop, who recorded it
- * and whether it was reversed since. `workshopId` narrows "workshops" to one;
- * `workshops` lists those with receipts, for that choice.
+ * The expenses that kept files (Money → Receipts), newest first, each with
+ * its files (receipts and invoices, photos of what was bought) and what it
+ * was: its subject, amount, date, workshop, who recorded it and whether it
+ * was reversed since. One expense is one card, however many files it has.
+ * `workshopId` narrows "workshops" to one; `workshops` lists those with
+ * receipts, for that choice. `sum` adds up the amounts of the expenses of
+ * the tab (every page), reversed ones left out (`counted` of them).
  */
 export async function listReceipts(group: ReceiptGroup, page: number, workshopId?: string) {
   await requireAdmin()
-  const kind = sql<ReceiptGroup>`case when ${t.furnishing} then 'furnishing' when ${t.courseId} is not null then 'workshops' else 'general' end`
+  const kind = sql<ReceiptGroup>`case when ${q(t, t.furnishing)} then 'furnishing' when ${q(t, t.courseId)} is not null then 'workshops' else 'general' end`
+  const withFiles = sql`exists (select 1 from ${expenseFiles} f where f.transaction_id = ${q(t, t.id)})`
+  const kept = and(current, withFiles)
   const where = and(
-    current,
+    kept,
     group === "all" ? undefined : and(sql`${kind} = ${group}`, group === "workshops" && workshopId ? eq(t.courseId, workshopId) : undefined),
   )
   const reversal = alias(ledgerTransactions, "reversal")
-  const [rows, [{ total }], counts, workshops, url] = await Promise.all([
+  // The expense's amount: its debit to the workshop's or the general expenses.
+  const amount = sql<number>`(select coalesce(sum(l.amount), 0) from ${ledgerLines} l where l.transaction_id = ${q(t, t.id)} and l.account in ('course_expenses', 'general_expenses'))`.mapWith(Number)
+  const [rows, [totals], counts, workshops, url] = await Promise.all([
     db
       .select({
-        id: expenseFiles.id,
-        path: expenseFiles.path,
-        contentType: expenseFiles.contentType,
-        role: expenseFiles.role,
         transactionId: t.id,
         subject: t.description,
         occurredOn: t.occurredOn,
@@ -566,39 +569,55 @@ export async function listReceipts(group: ReceiptGroup, page: number, workshopId
         courseTitle: courses.title,
         recordedBy: creator.name,
         reversed: sql<boolean>`${reversal.id} is not null`,
-        // The expense's amount: its debit to the workshop's or the general expenses.
-        amount: sql<number>`(select coalesce(sum(l.amount), 0) from ${ledgerLines} l where l.transaction_id = ${t.id} and l.account in ('course_expenses', 'general_expenses'))`.mapWith(Number),
+        amount,
       })
-      .from(expenseFiles)
-      .innerJoin(t, eq(t.id, expenseFiles.transactionId))
+      .from(t)
       .leftJoin(courses, eq(courses.id, t.courseId))
       .leftJoin(creator, eq(creator.id, t.createdBy))
       .leftJoin(reversal, eq(reversal.reversalOf, t.id))
       .where(where)
-      .orderBy(desc(t.occurredOn), desc(t.createdAt), asc(expenseFiles.role), asc(expenseFiles.createdAt))
+      .orderBy(desc(t.occurredOn), desc(t.createdAt), desc(t.id))
       .limit(RECEIPTS_PER_PAGE)
       .offset((Math.max(1, page) - 1) * RECEIPTS_PER_PAGE),
-    db.select({ total: count() }).from(expenseFiles).innerJoin(t, eq(t.id, expenseFiles.transactionId)).where(where),
     db
-      .select({ kind, n: count() })
-      .from(expenseFiles)
-      .innerJoin(t, eq(t.id, expenseFiles.transactionId))
-      .where(current)
-      .groupBy(kind),
+      .select({
+        total: count(),
+        counted: sql<number>`count(*) filter (where ${reversal.id} is null)`.mapWith(Number),
+        sum: sql<number>`coalesce(sum(${amount}) filter (where ${reversal.id} is null), 0)`.mapWith(Number),
+      })
+      .from(t)
+      .leftJoin(reversal, eq(reversal.reversalOf, t.id))
+      .where(where),
+    db.select({ kind, n: count() }).from(t).where(kept).groupBy(kind),
     db
       .select({ id: courses.id, title: courses.title, startsAt: courses.startsAt, n: count() })
-      .from(expenseFiles)
-      .innerJoin(t, eq(t.id, expenseFiles.transactionId))
+      .from(t)
       .innerJoin(courses, eq(courses.id, t.courseId))
-      .where(and(current, eq(t.furnishing, false)))
+      .where(and(kept, eq(t.furnishing, false)))
       .groupBy(courses.id)
       .orderBy(desc(courses.startsAt)),
     publicUrls(),
   ])
+  const files = rows.length
+    ? await db
+        .select({ id: expenseFiles.id, transactionId: expenseFiles.transactionId, path: expenseFiles.path, contentType: expenseFiles.contentType, role: expenseFiles.role })
+        .from(expenseFiles)
+        .where(inArray(expenseFiles.transactionId, rows.map((r) => r.transactionId)))
+        .orderBy(asc(expenseFiles.createdAt), asc(expenseFiles.id))
+    : []
   const n = (g: ReceiptGroup) => counts.find((c) => c.kind === g)?.n ?? 0
   return {
-    rows: rows.map(({ path, ...r }) => ({ ...r, url: url(path), pdf: r.contentType === "application/pdf" })),
-    total,
+    rows: rows.map((r) => ({
+      ...r,
+      // A photo of what was bought first (it shows the thing best), then the receipts, in the order they were added.
+      files: files
+        .filter((f) => f.transactionId === r.transactionId)
+        .sort((a, b) => Number(b.role === "photo") - Number(a.role === "photo"))
+        .map(({ id, path, contentType, role }) => ({ id, role, url: url(path), pdf: contentType === "application/pdf" })),
+    })),
+    total: totals.total,
+    counted: totals.counted,
+    sum: totals.sum,
     counts: {
       all: n("workshops") + n("general") + n("furnishing"),
       workshops: n("workshops"),
@@ -610,6 +629,7 @@ export async function listReceipts(group: ReceiptGroup, page: number, workshopId
 }
 
 export type ReceiptRow = Awaited<ReturnType<typeof listReceipts>>["rows"][number]
+export type ReceiptFile = ReceiptRow["files"][number]
 
 /** The edit forms' starting values of some entries (the receipts page), by id; absent when one can't be edited. */
 export async function editTargetsOf(ids: string[]): Promise<Map<string, EditTarget>> {

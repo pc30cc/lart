@@ -513,6 +513,8 @@
     },
     "reversed": "İptal edildi",
     "by": "Kaydeden: {name}",
+    "sum": "{count, plural, other {# harcamanın}} toplamı",
+    "sumReversed": "(iptal edilen {count, plural, other {# harcama}} sayılmadı)",
     "open": "Dosyayı aç",
     "pdf": "PDF",
     "unavailable": "Dosyaya ulaşılamıyor",

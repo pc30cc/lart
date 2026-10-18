@@ -1,4 +1,4 @@
-import { ArmchairIcon, ChevronLeftIcon, ChevronRightIcon, FileTextIcon, ReceiptTextIcon } from "lucide-react"
+import { ArmchairIcon, ChevronLeftIcon, ChevronRightIcon, FileTextIcon, ImageIcon, ReceiptTextIcon } from "lucide-react"
 import type { Metadata } from "next"
 import { getLocale, getTranslations } from "next-intl/server"
 
@@ -6,7 +6,16 @@ import { EmptyState } from "@/components/admin/empty-state"
 import { Money } from "@/components/admin/money"
 import { PageHeader } from "@/components/admin/page-header"
 import { StatusBadge } from "@/components/admin/status-badge"
-import { editTargetsOf, listReceipts, receiptGroups, RECEIPTS_PER_PAGE, type EditTarget, type ReceiptGroup, type ReceiptRow } from "@/features/money/queries"
+import {
+  editTargetsOf,
+  listReceipts,
+  receiptGroups,
+  RECEIPTS_PER_PAGE,
+  type EditTarget,
+  type ReceiptFile,
+  type ReceiptGroup,
+  type ReceiptRow,
+} from "@/features/money/queries"
 import { Link } from "@/i18n/navigation"
 import { isRtl } from "@/i18n/routing"
 import { requireAdmin } from "@/lib/auth/admin"
@@ -24,9 +33,10 @@ type T = Awaited<ReturnType<typeof getTranslations<"money.receipts">>>
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 /**
- * Money → Receipts: a gallery of every file kept with an expense (receipts and
- * invoices, photos or PDFs, and photos of furnishing), newest expense first,
- * each with what the expense was. Tabs: all, expenses, furnishing.
+ * Money → Receipts: a gallery of the expenses that kept files (receipts and
+ * invoices, photos or PDFs, and photos of furnishing), newest first: one card
+ * per expense with all its files and what the expense was, and the total of
+ * the tab's expenses above. Tabs: all, workshops, general, furnishing.
  */
 export default async function ReceiptsPage({ searchParams }: PageProps<"/[locale]/admin/money/receipts">) {
   await requireAdmin()
@@ -34,7 +44,7 @@ export default async function ReceiptsPage({ searchParams }: PageProps<"/[locale
   const group: ReceiptGroup = receiptGroups.find((g) => g === query.group) ?? "all"
   const page = Math.max(1, Math.min(10_000, Number.parseInt(String(query.page ?? "1"), 10) || 1))
   const workshopId = group === "workshops" && typeof query.workshop === "string" && UUID.test(query.workshop) ? query.workshop : undefined
-  const [{ rows, total, counts, workshops }, t, locale] = await Promise.all([
+  const [{ rows, total, counted, sum, counts, workshops }, t, locale] = await Promise.all([
     listReceipts(group, page, workshopId),
     getTranslations("money.receipts"),
     getLocale(),
@@ -93,12 +103,21 @@ export default async function ReceiptsPage({ searchParams }: PageProps<"/[locale
         </nav>
       )}
 
+      {total > 0 && (
+        // The tab's expenses added up (every page; reversed ones left out).
+        <p className="mb-6 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <span className="text-muted-foreground text-sm">{t("sum", { count: counted })}</span>
+          <Money value={sum} className="text-xl font-semibold" />
+          {counted < total && <span className="text-muted-foreground text-xs">{t("sumReversed", { count: total - counted })}</span>}
+        </p>
+      )}
+
       {rows.length === 0 ? (
         <EmptyState icon={ReceiptTextIcon} title={t("empty.title")} description={t("empty.description")} />
       ) : (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {rows.map((r) => (
-            <ReceiptCard key={r.id} receipt={r} edit={edits.get(r.transactionId) ?? null} locale={locale} t={t} />
+            <ReceiptCard key={r.transactionId} receipt={r} edit={edits.get(r.transactionId) ?? null} locale={locale} t={t} />
           ))}
         </ul>
       )}
@@ -128,38 +147,43 @@ export default async function ReceiptsPage({ searchParams }: PageProps<"/[locale
   )
 }
 
+/** At most this many files under the first one; a "+n" tile stands for the rest. */
+const THUMBS = 3
+
+/** One expense: its first file large, the others (the receipt beside the item's photo…) small below it. */
 function ReceiptCard({ receipt: r, edit, locale, t }: { receipt: ReceiptRow; edit: EditTarget | null; locale: string; t: T }) {
   const kind = r.furnishing ? "furnishing" : r.courseId ? "workshop" : "general"
-  const picture = r.pdf ? (
-    <span className="text-muted-foreground flex size-full flex-col items-center justify-center gap-2">
-      <FileTextIcon className="size-10" aria-hidden />
-      <span className="text-xs font-semibold tracking-wide">{t("pdf")}</span>
-    </span>
-  ) : r.url ? (
-    // eslint-disable-next-line @next/next/no-img-element -- a stored receipt on the CDN, already resized
-    <img src={r.url} alt={r.subject} loading="lazy" className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
-  ) : (
-    <span className="text-muted-foreground flex size-full items-center justify-center p-3 text-center text-xs">{t("unavailable")}</span>
-  )
+  const [first, ...others] = r.files
+  const shown = others.length > THUMBS ? others.slice(0, THUMBS - 1) : others
+  const hidden = others.length - shown.length
+  const roles = [...new Set(r.files.map((f) => f.role))]
+  // Receipts and an item photo together: each file says which it is.
+  const marked = roles.length > 1
 
   return (
     <li className="bg-card ring-foreground/8 group flex flex-col overflow-hidden rounded-xl shadow-xs ring-1">
-      {r.url ? (
-        <a
-          href={r.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={`${t("open")}: ${r.subject}`}
-          className="bg-muted/50 focus-visible:ring-ring/50 relative block aspect-[3/4] overflow-hidden outline-none focus-visible:ring-3"
-        >
-          {picture}
-        </a>
-      ) : (
-        <div className="bg-muted/50 relative aspect-[3/4] overflow-hidden">{picture}</div>
+      {first && <FileTile file={first} subject={r.subject} t={t} className="aspect-[3/4]" large marked={marked} />}
+      {others.length > 0 && (
+        <ul className="grid grid-cols-3 gap-2 px-3 pt-3">
+          {shown.map((f) => (
+            <li key={f.id}>
+              <FileTile file={f} subject={r.subject} t={t} className="ring-foreground/10 aspect-square rounded-md ring-1" marked={marked} />
+            </li>
+          ))}
+          {hidden > 0 && (
+            <li className="bg-muted text-muted-foreground flex aspect-square items-center justify-center rounded-md text-xs font-medium tabular-nums">
+              +{formatNumber(hidden, locale)}
+            </li>
+          )}
+        </ul>
       )}
       <div className="flex flex-1 flex-col gap-1.5 p-3 text-sm">
         <div className="flex flex-wrap gap-1">
-          <StatusBadge tone={r.role === "photo" ? "info" : "neutral"}>{t(`role.${r.role}`)}</StatusBadge>
+          {roles.map((role) => (
+            <StatusBadge key={role} tone={role === "photo" ? "info" : "neutral"}>
+              {t(`role.${role}`)}
+            </StatusBadge>
+          ))}
           {r.reversed && <StatusBadge tone="danger">{t("reversed")}</StatusBadge>}
         </div>
         <p className={cn("line-clamp-2 font-medium text-pretty", r.reversed && "line-through opacity-70")} dir="auto">
@@ -185,5 +209,63 @@ function ReceiptCard({ receipt: r, edit, locale, t }: { receipt: ReceiptRow; edi
         </div>
       </div>
     </li>
+  )
+}
+
+/** A file of an expense, opening it in a new tab: the picture, or a PDF sign. */
+function FileTile({
+  file: f,
+  subject,
+  t,
+  className,
+  large,
+  marked,
+}: {
+  file: ReceiptFile
+  subject: string
+  t: T
+  className?: string
+  large?: boolean
+  /** Show on the picture whether it is the receipt or the item's photo. */
+  marked?: boolean
+}) {
+  const RoleIcon = f.role === "photo" ? ImageIcon : ReceiptTextIcon
+  const picture = f.pdf ? (
+    <span className="text-muted-foreground flex size-full flex-col items-center justify-center gap-1">
+      <FileTextIcon className={large ? "size-10" : "size-5"} aria-hidden />
+      <span className={cn("font-semibold tracking-wide", large ? "text-xs" : "text-[0.6rem]")}>{t("pdf")}</span>
+    </span>
+  ) : f.url ? (
+    // eslint-disable-next-line @next/next/no-img-element -- a stored receipt on the CDN, already resized
+    <img src={f.url} alt={`${t(`role.${f.role}`)}: ${subject}`} loading="lazy" className="size-full object-cover transition-transform duration-300 hover:scale-[1.03]" />
+  ) : (
+    <span className={cn("text-muted-foreground flex size-full items-center justify-center text-center", large ? "p-3 text-xs" : "p-1 text-[0.6rem]")}>
+      {large ? t("unavailable") : <RoleIcon className="size-4" aria-hidden />}
+    </span>
+  )
+  const box = cn("bg-muted/50 relative block overflow-hidden", className)
+  if (!f.url) return <div className={box}>{picture}</div>
+  return (
+    <a
+      href={f.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`${t("open")}: ${t(`role.${f.role}`)}, ${subject}`}
+      title={t(`role.${f.role}`)}
+      className={cn(box, "focus-visible:ring-ring/50 outline-none focus-visible:ring-3")}
+    >
+      {picture}
+      {marked && (
+        <span
+          aria-hidden
+          className={cn(
+            "bg-background/85 text-foreground absolute start-1.5 top-1.5 flex items-center justify-center rounded-full shadow-xs backdrop-blur-sm",
+            large ? "size-6" : "size-4.5",
+          )}
+        >
+          <RoleIcon className={large ? "size-3.5" : "size-2.5"} />
+        </span>
+      )}
+    </a>
   )
 }

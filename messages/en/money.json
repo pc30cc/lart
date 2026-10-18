@@ -513,6 +513,8 @@
     },
     "reversed": "Reversed",
     "by": "Recorded by {name}",
+    "sum": "Total of {count, plural, one {# expense} other {# expenses}}",
+    "sumReversed": "({count, plural, one {# reversed expense} other {# reversed expenses}} not counted)",
     "open": "Open file",
     "pdf": "PDF",
     "unavailable": "File unavailable",

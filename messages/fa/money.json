@@ -513,6 +513,8 @@
     },
     "reversed": "برگشت خورده",
     "by": "ثبت: {name}",
+    "sum": "جمع مبلغ {count, plural, other {# هزینه}}",
+    "sumReversed": "({count, plural, other {# هزینهٔ برگشت‌خورده}} حساب نشده)",
     "open": "باز کردن فایل",
     "pdf": "PDF",
     "unavailable": "فایل در دسترس نیست",
