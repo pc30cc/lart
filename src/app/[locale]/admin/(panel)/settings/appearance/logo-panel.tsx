@@ -2,6 +2,7 @@
 
 import { Trash2Icon, TriangleAlertIcon, UploadIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { unstable_rethrow } from "next/navigation"
 import { useId, useRef, useState, useTransition } from "react"
 import { toast } from "sonner"
 
@@ -99,6 +100,7 @@ export function LogoPanel({ saved, brand }: { saved: LogoData | null; brand: str
         if (result.ok) toast.success(t("saved"))
         else setError(result.error)
       } catch (err) {
+        unstable_rethrow(err)
         setError(err instanceof LogoSvgError ? t(`errors.${err.code}`) : tc("errors.network"))
       }
     })

@@ -2,6 +2,7 @@
 
 import { ArrowLeftRightIcon, BanknoteIcon, CreditCardIcon, LandmarkIcon, type LucideIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { unstable_rethrow } from "next/navigation"
 import { useTransition } from "react"
 import { toast } from "sonner"
 
@@ -28,7 +29,8 @@ export function ChangePaymentWay({ registrationId, ways }: { registrationId: str
         const result = await changePaymentChoiceAction({ id: registrationId, choice })
         if (result.ok) toast.success(t("done"))
         else toast.error(result.error)
-      } catch {
+      } catch (err) {
+        unstable_rethrow(err)
         toast.error(tc("errors.network"))
       }
     })

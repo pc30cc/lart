@@ -2,6 +2,7 @@
 
 import { XCircleIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
+import { unstable_rethrow } from "next/navigation"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
@@ -69,7 +70,8 @@ export function CancelRegistration({
         }
         setOpen(false)
         toast.success(result.data.refund > 0 ? t("doneRefund", { refund: lira(result.data.refund) }) : t("done"))
-      } catch {
+      } catch (err) {
+        unstable_rethrow(err)
         toast.error(tc("errors.network"))
       }
     })

@@ -2,6 +2,7 @@
 
 import { CircleCheckIcon, PenLineIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { unstable_rethrow } from "next/navigation"
 import { useId, useState, useTransition } from "react"
 
 import { FormAlert } from "@/components/site/auth/fields"
@@ -64,7 +65,8 @@ export function SignForm({
         setError(result.fieldErrors?.signedName ?? result.error)
         // Show the contract as it is now (changed, replaced or already signed).
         router.refresh()
-      } catch {
+      } catch (err) {
+        unstable_rethrow(err)
         setError(tc("errors.network"))
       }
     })

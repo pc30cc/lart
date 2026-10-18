@@ -2,6 +2,7 @@
 
 import { EyeIcon, LogOutIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { unstable_rethrow } from "next/navigation"
 import { useTransition } from "react"
 import { toast } from "sonner"
 
@@ -41,7 +42,8 @@ export function ImpersonationBar({
         const result = await endImpersonationAction({ kind, id: personId })
         if (!result) return // redirected to the admin page
         if (!result.ok) toast.error(result.error)
-      } catch {
+      } catch (err) {
+        unstable_rethrow(err)
         toast.error(tc("errors.network"))
       }
     })

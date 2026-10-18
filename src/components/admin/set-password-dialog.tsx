@@ -2,6 +2,7 @@
 
 import { CheckIcon, CopyIcon, KeyRoundIcon, MailCheckIcon, MailWarningIcon, SparklesIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { unstable_rethrow } from "next/navigation"
 import { useEffect, useId, useState, useTransition } from "react"
 import { toast } from "sonner"
 
@@ -133,7 +134,8 @@ function SetPasswordForm({
         if (!result) return // the action redirected (e.g. the session ended)
         if (!result.ok) toast.error(result.error)
         else if (result.data.password) onGenerated({ password: result.data.password, emailed: result.data.emailed })
-      } catch {
+      } catch (err) {
+        unstable_rethrow(err)
         toast.error(tc("errors.network"))
       }
     })

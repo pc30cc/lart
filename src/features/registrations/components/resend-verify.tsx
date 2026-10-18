@@ -2,6 +2,7 @@
 
 import { MailIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { unstable_rethrow } from "next/navigation"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
@@ -31,7 +32,8 @@ export function ResendVerify() {
           setSent(true)
           toast.success(t("sent"))
         }
-      } catch {
+      } catch (err) {
+        unstable_rethrow(err)
         toast.error(tc("errors.network"))
       }
     })

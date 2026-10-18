@@ -2,6 +2,7 @@
 
 import { EyeIcon, EyeOffIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { unstable_rethrow } from "next/navigation"
 import { useEffect, useState, useTransition } from "react"
 import { toast } from "sonner"
 
@@ -34,7 +35,8 @@ export function IdNumberReveal({ id, masked }: { id: string; masked: string | nu
         if (!result) return
         if (result.ok) setPlain(result.data.idNumber)
         else toast.error(result.error)
-      } catch {
+      } catch (err) {
+        unstable_rethrow(err)
         toast.error(tc("errors.network"))
       }
     })

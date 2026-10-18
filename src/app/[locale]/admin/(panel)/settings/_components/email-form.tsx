@@ -2,6 +2,7 @@
 
 import { CircleCheckIcon, InfoIcon, KeyRoundIcon, SendIcon, ServerIcon, ZapIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { unstable_rethrow } from "next/navigation"
 import { useState, useTransition } from "react"
 import { useWatch, type Path } from "react-hook-form"
 import { toast } from "sonner"
@@ -82,7 +83,8 @@ export function EmailSettingsForm({ view, adminEmail }: { view: EmailView; admin
           )
           toast.error(result.error, { duration: 15_000 })
         }
-      } catch {
+      } catch (err) {
+        unstable_rethrow(err)
         toast.error(tc("errors.network"))
       }
     })

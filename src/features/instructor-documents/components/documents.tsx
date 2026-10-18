@@ -2,6 +2,7 @@
 
 import { AwardIcon, ExternalLinkIcon, FileTextIcon, FilePlus2Icon, PencilIcon, Trash2Icon, UploadIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
+import { unstable_rethrow } from "next/navigation"
 import type { LocalizedText } from "@/db/schema"
 import { profileText } from "@/features/instructors/schema"
 import { useRef, useState, useTransition } from "react"
@@ -146,7 +147,8 @@ function DeleteDocument({ doc, admin }: { doc: DocumentItem; admin: boolean }) {
         if (!result.ok) return void toast.error(result.error)
         toast.success(t("deleted"))
         router.refresh()
-      } catch {
+      } catch (err) {
+        unstable_rethrow(err)
         toast.error(tc("errors.network"))
       }
     })

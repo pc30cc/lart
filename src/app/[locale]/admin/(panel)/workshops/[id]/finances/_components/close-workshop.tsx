@@ -2,6 +2,7 @@
 
 import { CircleAlertIcon, CircleCheckIcon, LockIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
+import { unstable_rethrow } from "next/navigation"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
@@ -69,7 +70,8 @@ export function CloseWorkshop({
         } else {
           toast.error(result.error)
         }
-      } catch {
+      } catch (err) {
+        unstable_rethrow(err)
         toast.error(tc("errors.network"))
       }
     })

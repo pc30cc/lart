@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
+import { unstable_rethrow } from "next/navigation"
 import { useTransition } from "react"
 import { useForm, type DefaultValues, type FieldValues, type Path } from "react-hook-form"
 import { toast } from "sonner"
@@ -63,7 +64,9 @@ export function useActionForm<S extends z.ZodType<FieldValues, FieldValues>, T>(
               )
               toast.error(result.error)
             }
-          } catch {
+          } catch (err) {
+            // A redirect (signed out, or an action that goes elsewhere) navigates; it is no failure.
+            unstable_rethrow(err)
             toast.error(t("errors.network"))
           } finally {
             resolve()

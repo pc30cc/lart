@@ -2,6 +2,7 @@
 
 import { CheckIcon, CloudAlertIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { unstable_rethrow } from "next/navigation"
 import { useRef, useState } from "react"
 import { toast } from "sonner"
 
@@ -53,8 +54,9 @@ export function GalleryManager({
         setState("error")
         toast.error(result.error)
       }
-    } catch {
+    } catch (err) {
       if (run !== latest.current) return
+      unstable_rethrow(err)
       setState("error")
       toast.error(tc("errors.network"))
     }

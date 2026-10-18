@@ -1,7 +1,7 @@
 "use client"
 
 import { LockIcon } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { unstable_rethrow, useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { useOptimistic, useTransition } from "react"
 import { toast } from "sonner"
@@ -59,7 +59,8 @@ export function EmailSwitch({
                 toast.success(next ? t("turnedOn", { email: title }) : t("turnedOff", { email: title }))
                 router.refresh()
               } else toast.error(result.error)
-            } catch {
+            } catch (err) {
+              unstable_rethrow(err)
               toast.error(tc("errors.network"))
             }
           })

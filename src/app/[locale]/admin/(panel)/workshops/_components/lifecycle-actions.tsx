@@ -2,6 +2,7 @@
 
 import { BanIcon, CircleCheckBigIcon, MailIcon, PrinterIcon, UserRoundPlusIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
+import { unstable_rethrow } from "next/navigation"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
@@ -193,7 +194,8 @@ export function ResendContractButton({ courseId, variant = "outline" }: { course
             if (!result) return
             if (result.ok) toast.success(t("done"))
             else toast.error(result.error)
-          } catch {
+          } catch (err) {
+            unstable_rethrow(err)
             toast.error(tc("errors.network"))
           }
         })

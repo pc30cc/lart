@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
+import { unstable_rethrow } from "next/navigation"
 import { useState, useTransition } from "react"
 import { useForm, type DefaultValues, type FieldValues, type Path } from "react-hook-form"
 import type { z } from "zod"
@@ -12,8 +13,9 @@ import { zodIssueMessage, type ActionResult } from "@/lib/errors"
  * react-hook-form + a public or member server action, for the site's forms
  * (sign up, log in, passwords). Like `useActionForm`, but a problem is shown
  * in the form itself (`error`, next to the button) instead of a toast, which
- * is easy to miss on a phone. Actions that sign someone in redirect; then
- * there is no result to handle.
+ * is easy to miss on a phone. Actions that sign someone in redirect: Next.js
+ * then rejects the call with its redirect, which is passed on (it navigates),
+ * never shown as a connection problem.
  */
 export function useSiteForm<S extends z.ZodType<FieldValues, FieldValues>, T>({
   schema,
@@ -56,7 +58,8 @@ export function useSiteForm<S extends z.ZodType<FieldValues, FieldValues>, T>({
               form.setError(path as Path<z.input<S>>, { type: "server", message }, { shouldFocus: i === 0 }),
             )
             if (!fields.length) setError(result.error)
-          } catch {
+          } catch (err) {
+            unstable_rethrow(err)
             setError(t("errors.network"))
           } finally {
             resolve()
