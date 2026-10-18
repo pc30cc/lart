@@ -2,6 +2,7 @@
 
 import { CircleCheckIcon, MailWarningIcon, SendIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { unstable_rethrow } from "next/navigation"
 import { useEffect, useRef, useState, useTransition } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -60,7 +61,8 @@ export function VerifyEmail({
         if (!result) return
         if (result.ok) setMessage(result.data.verified ? t("doneTitle") : t("sent"))
         else setMessage(result.error)
-      } catch {
+      } catch (err) {
+        unstable_rethrow(err)
         setMessage(t("errors.notSent"))
       }
     })

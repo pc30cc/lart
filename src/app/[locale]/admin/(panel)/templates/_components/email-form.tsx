@@ -14,6 +14,7 @@ import { EMAIL_TEXT_MAX, type EmailTextField } from "@/emails/names"
 import { previewEmailTexts, saveEmailTexts } from "@/features/templates/actions"
 import type { EmailEditor } from "@/features/templates/emails"
 import { emailTextsSchema, type EmailTextsValues } from "@/features/templates/schema"
+import { isNavigating } from "@/lib/navigating"
 import { cn } from "@/lib/utils"
 
 const LOCALES: Locale[] = ["fa", "tr", "en"]
@@ -111,7 +112,7 @@ function Preview({ template }: { template: EmailEditor["template"] }) {
         if (stale) return
         setShown(result.ok ? { request, ...result.data } : { request, error: Object.values(result.fieldErrors ?? {})[0] ?? result.error })
       })
-      .catch(() => !stale && setShown({ request, error: tc("errors.generic") }))
+      .catch((err) => !stale && !isNavigating(err) && setShown({ request, error: tc("errors.generic") }))
     return () => {
       stale = true
     }

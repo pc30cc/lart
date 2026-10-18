@@ -2,7 +2,6 @@
 
 import { CheckIcon, CloudAlertIcon } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { unstable_rethrow } from "next/navigation"
 import { useRef, useState } from "react"
 import { toast } from "sonner"
 
@@ -10,6 +9,7 @@ import { MediaGrid, type MediaItem } from "@/components/admin/upload"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { saveGallery } from "@/features/workshops/actions"
+import { isNavigating } from "@/lib/navigating"
 
 type SaveState = "idle" | "saving" | "saved" | "error"
 
@@ -55,8 +55,7 @@ export function GalleryManager({
         toast.error(result.error)
       }
     } catch (err) {
-      if (run !== latest.current) return
-      unstable_rethrow(err)
+      if (run !== latest.current || isNavigating(err)) return
       setState("error")
       toast.error(tc("errors.network"))
     }

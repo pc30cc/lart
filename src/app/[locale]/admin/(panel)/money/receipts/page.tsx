@@ -147,15 +147,10 @@ export default async function ReceiptsPage({ searchParams }: PageProps<"/[locale
   )
 }
 
-/** At most this many files under the first one; a "+n" tile stands for the rest. */
-const THUMBS = 3
-
 /** One expense: its first file large, the others (the receipt beside the item's photo…) small below it. */
 function ReceiptCard({ receipt: r, edit, locale, t }: { receipt: ReceiptRow; edit: EditTarget | null; locale: string; t: T }) {
   const kind = r.furnishing ? "furnishing" : r.courseId ? "workshop" : "general"
   const [first, ...others] = r.files
-  const shown = others.length > THUMBS ? others.slice(0, THUMBS - 1) : others
-  const hidden = others.length - shown.length
   const roles = [...new Set(r.files.map((f) => f.role))]
   // Receipts and an item photo together: each file says which it is.
   const marked = roles.length > 1
@@ -165,16 +160,11 @@ function ReceiptCard({ receipt: r, edit, locale, t }: { receipt: ReceiptRow; edi
       {first && <FileTile file={first} subject={r.subject} t={t} className="aspect-[3/4]" large marked={marked} />}
       {others.length > 0 && (
         <ul className="grid grid-cols-3 gap-2 px-3 pt-3">
-          {shown.map((f) => (
+          {others.map((f) => (
             <li key={f.id}>
               <FileTile file={f} subject={r.subject} t={t} className="ring-foreground/10 aspect-square rounded-md ring-1" marked={marked} />
             </li>
           ))}
-          {hidden > 0 && (
-            <li className="bg-muted text-muted-foreground flex aspect-square items-center justify-center rounded-md text-xs font-medium tabular-nums">
-              +{formatNumber(hidden, locale)}
-            </li>
-          )}
         </ul>
       )}
       <div className="flex flex-1 flex-col gap-1.5 p-3 text-sm">
@@ -240,7 +230,7 @@ function FileTile({
     <img src={f.url} alt={`${t(`role.${f.role}`)}: ${subject}`} loading="lazy" className="size-full object-cover transition-transform duration-300 hover:scale-[1.03]" />
   ) : (
     <span className={cn("text-muted-foreground flex size-full items-center justify-center text-center", large ? "p-3 text-xs" : "p-1 text-[0.6rem]")}>
-      {large ? t("unavailable") : <RoleIcon className="size-4" aria-hidden />}
+      {large ? t("unavailable") : <RoleIcon className="size-4" role="img" aria-label={`${t(`role.${f.role}`)}: ${t("unavailable")}`} />}
     </span>
   )
   const box = cn("bg-muted/50 relative block overflow-hidden", className)
