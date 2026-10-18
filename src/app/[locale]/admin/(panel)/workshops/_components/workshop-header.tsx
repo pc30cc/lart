@@ -30,7 +30,8 @@ export async function WorkshopHeader({
 }) {
   const [t, locale] = await Promise.all([getTranslations("workshops"), getLocale()])
   const base = `/admin/workshops/${workshop.id}`
-  const registered = workshop.registered.confirmed + workshop.registered.pending
+  // Registrations and held places, like the site, the workshops list and the Registrations tab count them.
+  const registered = workshop.registered.confirmed + workshop.registered.pending + workshop.held
   const tabs: { key: WorkshopTab; href: string; label: string; count?: number }[] = [
     { key: "overview", href: base, label: t("tabs.overview") },
     { key: "contract", href: `${base}/contract`, label: t("tabs.contract") },

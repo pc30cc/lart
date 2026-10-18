@@ -12,6 +12,7 @@ import {
   media,
   members,
   registrations,
+  seatHolds,
   templates,
 } from "@/db/schema"
 import { requireAdmin } from "@/lib/auth/admin"
@@ -46,9 +47,12 @@ const urlOf = (s: Storage | null, path: string | null) => {
  * ("pending"), as the seats left on the site count them. Qualified by hand
  * (see categories/queries.ts).
  */
-const qualified = (table: typeof courses | typeof registrations, column: { name: string }) =>
+const qualified = (table: typeof courses | typeof registrations | typeof seatHolds, column: { name: string }) =>
   sql`${table}.${sql.identifier(column.name)}`
 const registeredCount = sql<number>`(select count(*)::int from ${registrations} where ${qualified(registrations, registrations.courseId)} = ${qualified(courses, courses.id)} and ${qualified(registrations, registrations.status)} in ('pending', 'confirmed'))`
+
+/** The places admins hold for guests (`seat_holds`): taken like registrations. */
+const heldCount = sql<number>`(select coalesce(sum(${qualified(seatHolds, seatHolds.count)}), 0)::int from ${seatHolds} where ${qualified(seatHolds, seatHolds.courseId)} = ${qualified(courses, courses.id)})`
 
 const active = ["awaiting_signature", "published", "confirmed"] as const
 
@@ -89,7 +93,8 @@ export async function listWorkshops(params: TableParams<Sort, Filter>, locale: s
 
   const lang = locale === "fa" || locale === "en" ? locale : "tr"
   const title = sql`lower(coalesce(nullif(${courses.title}->>${lang}, ''), ${courses.title}->>'tr', ''))`
-  const fill = sql`${registeredCount}::float / ${courses.maxCapacity}`
+  // Places taken as the meters show them (registrations and held places), against the places of all the days.
+  const fill = sql`(${registeredCount} + ${heldCount})::float / (${courses.maxCapacity} * coalesce(nullif(jsonb_array_length(${courses.days}), 0), 1))`
   const column = { startsAt: courses.startsAt, title, fill, price: courses.price }[params.sort]
   const direction = params.dir === "desc" ? desc : asc
 
@@ -183,7 +188,7 @@ export const getWorkshop = cache(async (id: string) => {
     .limit(1)
   if (!course) return null
 
-  const [[contract], counts, samples, [gallery], files] = await Promise.all([
+  const [[contract], counts, samples, [gallery], files, [holds]] = await Promise.all([
     // The current contract: the live one, or the last version when all are void.
     db
       .select({
@@ -220,6 +225,10 @@ export const getWorkshop = cache(async (id: string) => {
       .from(media)
       .where(and(eq(media.courseId, id), ne(media.kind, "sample"))),
     storage(),
+    db
+      .select({ n: sql<number>`coalesce(sum(${seatHolds.count}), 0)`.mapWith(Number) })
+      .from(seatHolds)
+      .where(eq(seatHolds.courseId, id)),
   ])
 
   const registered = { pending: 0, confirmed: 0, cancelled: 0 }
@@ -233,6 +242,8 @@ export const getWorkshop = cache(async (id: string) => {
     termsTemplateName: course.termsTemplate,
     contract: contract ?? null,
     registered,
+    /** Places held for guests and invited guests: taken like registrations. */
+    held: holds?.n ?? 0,
     paid,
     galleryCount: gallery.n,
     coverUrl: urlOf(files, course.course.coverPath),

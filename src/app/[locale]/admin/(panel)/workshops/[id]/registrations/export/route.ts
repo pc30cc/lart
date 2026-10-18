@@ -44,11 +44,12 @@ export async function GET(request: Request, ctx: RouteContext<"/[locale]/admin/w
   // Several days: which day each person comes (with the hours when two sessions share a date).
   const days = workshopDays(course)
   const several = days.length > 1
-  const sharedDate = (i: number) => days.filter((d) => zonedParts(d.startsAt).date === zonedParts(days[i].startsAt).date).length > 1
+  // The day as stored, or the first one when that day was removed since (a cancelled registration may keep it).
   const dayCell = (index: number | null) => {
     const d = registrationDay(course, index)
-    const i = index ?? 0
-    return sharedDate(i) ? `${day(d.startsAt)} ${zonedParts(d.startsAt).time}–${zonedParts(d.endsAt).time}` : day(d.startsAt)
+    const date = zonedParts(d.startsAt).date
+    const shared = days.filter((o) => zonedParts(o.startsAt).date === date).length > 1
+    return shared ? `${day(d.startsAt)} ${zonedParts(d.startsAt).time}–${zonedParts(d.endsAt).time}` : day(d.startsAt)
   }
   // Held places and invited guests take places too: listed after the registrations, with how many places each.
   const withHolds = holds.length > 0
@@ -86,7 +87,8 @@ export async function GET(request: Request, ctx: RouteContext<"/[locale]/admin/w
       yesNo(r.photoConsent),
       yesNo(r.videoConsent),
       day(r.createdAt),
-      ...(withHolds ? [1] : []),
+      // A cancelled registration takes no place.
+      ...(withHolds ? [r.status === "cancelled" ? 0 : 1] : []),
     ]),
     ...holds.map((h) => [
       h.note || t("holds.guests"),

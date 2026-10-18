@@ -1,7 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 
+import { eq } from "drizzle-orm"
+
 import { db } from "@/db"
-import { seatHolds } from "@/db/schema"
+import { courses, registrations, seatHolds } from "@/db/schema"
 import { csvDate } from "@/features/money/csv"
 import { addRegistration, makeAdmin, makeCourse, makeWorld, retireAdmins } from "@/features/money/testing"
 import { zonedParts } from "@/lib/format"
@@ -78,5 +80,42 @@ describe("GET registrations CSV", () => {
     expect(lines[2].at(-1)).toBe("3")
     expect(lines[3][0]).toBe("Ipek")
     expect(lines[3][4]).toBe("Invited · free")
+  })
+
+  it("gives two sessions on one date their hours, one place per active registration, and survives a removed day", async () => {
+    const world = await makeWorld()
+    const course = await makeCourse(world, state.adminId)
+    // Two sessions on 24 Oct 2026 (2 Aban 1405): 12:00–15:00 and 16:00–19:00 in Istanbul.
+    await db
+      .update(courses)
+      .set({
+        startsAt: new Date("2026-10-24T09:00:00Z"),
+        endsAt: new Date("2026-10-24T16:00:00Z"),
+        days: [
+          { startsAt: "2026-10-24T09:00:00.000Z", endsAt: "2026-10-24T12:00:00.000Z" },
+          { startsAt: "2026-10-24T13:00:00.000Z", endsAt: "2026-10-24T16:00:00.000Z" },
+        ],
+      })
+      .where(eq(courses.id, course))
+    const second = await addRegistration(world, course, { status: "pending" })
+    await db.update(registrations).set({ day: 1 }).where(eq(registrations.id, second))
+    // A cancelled registration still on a day the workshop no longer has.
+    const gone = await addRegistration(world, course, { status: "cancelled" })
+    await db.update(registrations).set({ day: 5 }).where(eq(registrations.id, gone))
+    await db.insert(seatHolds).values({ courseId: course, day: 1, count: 2, note: "", createdBy: state.adminId })
+
+    const response = await GET(new Request(`http://localhost/fa/admin/workshops/${course}/registrations/export`), {
+      params: Promise.resolve({ locale: "fa", id: course }),
+    })
+    expect(response.status).toBe(200)
+    const lines = (await response.text()).replace(/^\uFEFF/, "").trimEnd().split("\r\n").map((l) => l.split(","))
+    expect(lines).toHaveLength(4)
+    // Every row has as many cells as the header.
+    for (const line of lines) expect(line).toHaveLength(lines[0].length)
+    const dayColumn = lines[0].indexOf("روز")
+    expect(lines[1][dayColumn]).toBe("1405/08/02 16:00–19:00")
+    // The removed day falls back to the first session; a cancelled registration takes no place.
+    expect(lines[2][dayColumn]).toBe("1405/08/02 12:00–15:00")
+    expect(lines.slice(1).map((l) => l.at(-1))).toEqual(["1", "0", "2"])
   })
 })

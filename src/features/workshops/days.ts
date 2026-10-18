@@ -118,7 +118,8 @@ export function dayDateLabel(c: WithDays, day: number | null | undefined, locale
   const date = zonedParts(d.startsAt).date
   const shared = days.filter((o) => zonedParts(o.startsAt).date === date).length > 1
   const label = formatDate(d.startsAt, locale, style)
-  return shared ? `${label} · ${hoursOf(d, locale)}` : label
+  // The hours isolated (U+2068…U+2069, like a <bdi>): in Persian text the range keeps its order.
+  return shared ? `${label} · \u2068${hoursOf(d, locale)}\u2069` : label
 }
 
 /**

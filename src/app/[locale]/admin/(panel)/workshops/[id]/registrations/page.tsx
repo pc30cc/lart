@@ -211,6 +211,8 @@ export default async function WorkshopRegistrationsPage({
     participant: (h) => (
       <span className="block min-w-0">
         <HoldName hold={h} stacked />
+        {/* The places column is hidden on phones (and no stepper on a locked workshop): the number goes here. */}
+        <span className="block text-xs font-semibold tabular-nums sm:hidden">{t("holds.row.places", { count: h.count })}</span>
         {h.dayLabel && <span className="text-primary block truncate text-xs font-medium">{h.dayLabel}</span>}
         <span className="text-muted-foreground block truncate text-xs">
           {t("holds.by", { name: h.by ?? "—", date: formatDateTime(h.createdAt, locale, "medium") })}
@@ -227,7 +229,10 @@ export default async function WorkshopRegistrationsPage({
     createdAt: (h) => <span className="text-muted-foreground text-xs whitespace-nowrap">{formatDate(new Date(h.createdAt), locale, "medium")}</span>,
     actions: (h) => (
       <span className="flex items-center justify-end gap-1">
-        <HoldStepper hold={h} locked={locked} registrable={Boolean(holdable)} />
+        {/* On phones the row stays narrow: the stepper waits for a wider screen (the number is under the name). */}
+        <span className="hidden sm:contents">
+          <HoldStepper hold={h} locked={locked} registrable={Boolean(holdable)} />
+        </span>
         {!locked && <HoldActions hold={h} workshops={addable} compact />}
       </span>
     ),
@@ -295,7 +300,7 @@ export default async function WorkshopRegistrationsPage({
             />
             {!locked && holdable && <HoldSeatsDialog workshops={addable} courseId={holdable.id} />}
             {!locked && <AddRegistrationDialog workshops={addable} courseId={workshop.id} />}
-            {summary.active + summary.cancelled > 0 && (
+            {summary.active + summary.cancelled + held > 0 && (
               <Button asChild variant="outline" size="lg" className="px-4">
                 <a href={exportHref} download>
                   <DownloadIcon />
