@@ -13,6 +13,8 @@ import {
   templates,
 } from "@/db/schema"
 import { partnerCapitals, walletBalance } from "@/features/money/ledger"
+import { seatsTakenOf } from "@/features/registrations/public"
+import { workshopDays, type StoredDays } from "@/features/workshops/days"
 import { requireAdmin } from "@/lib/auth/admin"
 import { calendarFields, periodStart } from "@/lib/calendar"
 import { zonedParts, zonedToIso, type CalendarSystem } from "@/lib/format"
@@ -74,6 +76,54 @@ function participants(registered: unknown) {
     else coalesce(${courses.finalParticipants}, ${registered}, 0) end`
 }
 const netProfit = sql<number>`coalesce((${courses.closedTotals}->>'netProfit')::bigint, 0)`
+/**
+ * Places on all the days of the course in the outer query, as `workshopDays`
+ * counts them: the first day has the workshop's own, every other day its own
+ * or the same.
+ */
+const allDaysSeats = sql<number>`(${courses.maxCapacity} + coalesce((select sum(coalesce((e.d->>'maxCapacity')::int, ${courses.maxCapacity}))
+  from jsonb_array_elements(case when jsonb_typeof(${courses.days}) = 'array' then ${courses.days} end) with ordinality e(d, i) where e.i > 1), 0))`
+
+type DaysOf = { startsAt: Date; endsAt: Date; days: StoredDays; minCapacity: number; maxCapacity: number }
+
+/**
+ * Each day of a workshop (one for a one-day workshop) with its places:
+ * `taken` counts registrations and held places, as the site and the
+ * workshops list do; `min` and `max` are that day's. `session`: all the days
+ * are on one date (sessions, named by their hours); `sharedDate`: another day
+ * is on this one's date.
+ */
+function placesOf(w: DaysOf, taken: number[] | undefined) {
+  const days = workshopDays(w)
+  const date = (d: Date) => zonedParts(d).date
+  const session = days.every((d) => date(d.startsAt) === date(days[0].startsAt))
+  return days.map((d, i) => ({
+    n: i + 1,
+    startsAt: d.startsAt,
+    endsAt: d.endsAt,
+    min: d.minCapacity ?? w.minCapacity,
+    max: d.maxCapacity ?? w.maxCapacity,
+    taken: taken?.[i] ?? 0,
+    session,
+    sharedDate: days.some((o, j) => j !== i && date(o.startsAt) === date(d.startsAt)),
+  }))
+}
+export type Place = ReturnType<typeof placesOf>[number]
+
+/** A bar of the seats chart: a workshop, or one day of an upcoming one on several days (`place`). */
+type SeatBar = {
+  id: string
+  workshopId: string
+  title: (typeof courses.$inferSelect)["title"]
+  startsAt: Date
+  minCapacity: number
+  maxCapacity: number
+  registered: number
+  upcoming: boolean
+  place: Place | null
+}
+
+const sumOf = <T>(rows: T[], f: (row: T) => number) => rows.reduce((s, row) => s + f(row), 0)
 
 type Results<T extends readonly (() => unknown)[]> = { -readonly [K in keyof T]: Awaited<ReturnType<T[K]>> }
 
@@ -135,18 +185,15 @@ async function summary(exec: Exec, now: Date, windowStart: Date) {
   /** Held workshops: the participant figure (locked or fixed at the go decision). */
   const taken = participants(regs.registered)
   const upcoming = and(inArray(courses.status, active), gte(courses.endsAt, now))
-  const open = and(upcoming, ne(courses.status, "awaiting_signature"))
   const held = and(tookPlace(now), gte(courses.startsAt, windowStart))
 
   const [row] = await exec
     .select({
       workshops: count(),
       upcoming: n(upcoming),
-      upcomingSeats: total(courses.maxCapacity, open),
-      // Live, as the upcoming meters and the seats left on the site.
-      upcomingTaken: total(sql`coalesce(${regs.registered}, 0)`, open),
       held: n(held),
-      heldSeats: total(courses.maxCapacity, held),
+      // Every day's places (the participants figure counts every day's registrations).
+      heldSeats: total(allDaysSeats, held),
       heldTaken: total(taken, held),
       awaitingSignature: n(eq(courses.status, "awaiting_signature")),
       decisionsDue: n(and(eq(courses.status, "published"), lte(courses.decisionAt, now))),
@@ -191,6 +238,21 @@ function upcomingWorkshops(exec: Exec, now: Date) {
     .limit(UPCOMING)
 }
 
+/** Every upcoming workshop open for registration (not awaiting signature), for the places on the card. */
+function openWorkshops(exec: Exec, now: Date) {
+  return exec
+    .select({
+      id: courses.id,
+      startsAt: courses.startsAt,
+      endsAt: courses.endsAt,
+      days: courses.days,
+      minCapacity: courses.minCapacity,
+      maxCapacity: courses.maxCapacity,
+    })
+    .from(courses)
+    .where(and(inArray(courses.status, ["published", "confirmed"]), gte(courses.endsAt, now)))
+}
+
 /** The last workshops that took place, most recent first. */
 function heldWorkshops(exec: Exec, now: Date) {
   return exec
@@ -198,6 +260,8 @@ function heldWorkshops(exec: Exec, now: Date) {
       id: courses.id,
       title: courses.title,
       startsAt: courses.startsAt,
+      endsAt: courses.endsAt,
+      days: courses.days,
       minCapacity: courses.minCapacity,
       maxCapacity: courses.maxCapacity,
       registered: participants(registeredCount).mapWith(Number),
@@ -280,27 +344,40 @@ export async function getDashboard(now: Date = new Date(), exec: Exec = db, cale
   const months = lastMonths(today, MONTHS, calendar)
   const windowStart = new Date(zonedToIso(months[0], "00:00")!)
 
-  const [monthRows, wallet, counts, upcomingRows, heldRows, byWorkshop, byInstructor, people] = await gather(exec, [
+  const [monthRows, wallet, counts, upcomingRows, openRows, heldRows, byWorkshop, byInstructor, people] = await gather(exec, [
     () => monthly(exec, months, addMonths(today, 1, calendar)),
     () => walletBalance(exec),
     () => summary(exec, now, windowStart),
     () => upcomingWorkshops(exec, now),
+    () => openWorkshops(exec, now),
     () => heldWorkshops(exec, now),
     () => profitByWorkshop(exec, windowStart),
     () => profitByInstructor(exec, windowStart),
     () => partners(exec),
   ])
+  // Places taken per day, live (registrations and held places), as the site and the workshops list count them.
+  const takenOf = await seatsTakenOf([...new Set([...upcomingRows, ...openRows].map((w) => w.id))], exec)
+  const open = openRows.map((w) => placesOf(w, takenOf.get(w.id)))
 
   const figures = fillMonths(months, monthRows)
   const [lastMonth, thisMonth] = figures.slice(-2)
   const year = calendarFields(today, calendar).year
   const yearStart = periodStart(today, "year", calendar)
-  const upcoming = upcomingRows.map((w) => ({
-    ...w,
-    running: w.startsAt <= now,
-    alert: workshopAlert(w, now),
-    payment: paymentNote(w),
-  }))
+  const upcoming = upcomingRows.map((w) => {
+    const places = placesOf(w, takenOf.get(w.id))
+    const taken = sumOf(places, (p) => p.taken)
+    return {
+      ...w,
+      /** Places taken on all the days: registrations and held places. */
+      taken,
+      /** Each day (or session) with its own places; one entry for a one-day workshop. */
+      places,
+      running: w.startsAt <= now,
+      // Several days: each day must reach its own minimum.
+      alert: workshopAlert({ ...w, registered: taken, days: places.map((p) => ({ taken: p.taken, minCapacity: p.min })) }, now),
+      payment: paymentNote(w),
+    }
+  })
 
   return {
     today,
@@ -325,8 +402,9 @@ export async function getDashboard(now: Date = new Date(), exec: Exec = db, cale
       revenueChange: change(thisMonth.revenue, lastMonth.revenue),
       netThisYear: figures.filter((m) => m.month >= yearStart).reduce((s, m) => s + m.net, 0),
       upcoming: counts.upcoming,
-      upcomingSeats: counts.upcomingSeats,
-      upcomingTaken: counts.upcomingTaken,
+      /** Places on every day of the open upcoming workshops, and how many are taken (live, held places included). */
+      upcomingSeats: sumOf(open.flat(), (p) => p.max),
+      upcomingTaken: sumOf(open.flat(), (p) => p.taken),
       held: counts.held,
       heldSeats: counts.heldSeats,
       heldTaken: counts.heldTaken,
@@ -336,14 +414,34 @@ export async function getDashboard(now: Date = new Date(), exec: Exec = db, cale
     months: figures,
     partners: people,
     upcoming,
-    /** Recent and upcoming workshops, oldest first (registration is not open while awaiting signature). */
+    /**
+     * Recent and upcoming workshops, oldest first (registration is not open
+     * while awaiting signature). An upcoming one on several days has a bar
+     * per day (`place`; `id` is then "<workshop id>:<day>"); a held one, all
+     * its days' places against its participants.
+     */
     seats: [
-      ...[...heldRows].reverse().map((w) => ({ ...w, upcoming: false })),
-      ...upcomingRows
+      ...[...heldRows].reverse().map(({ endsAt, days, ...w }): SeatBar => {
+        const places = placesOf({ ...w, endsAt, days }, undefined)
+        return {
+          ...w,
+          workshopId: w.id,
+          minCapacity: sumOf(places, (p) => p.min),
+          maxCapacity: sumOf(places, (p) => p.max),
+          upcoming: false,
+          place: null,
+        }
+      }),
+      ...upcoming
         .filter((w) => w.status !== "awaiting_signature")
-        .map(({ id, title, startsAt, minCapacity, maxCapacity, registered: taken }) => ({
-          id, title, startsAt, minCapacity, maxCapacity, registered: taken, upcoming: true,
-        })),
+        .flatMap(({ id, title, startsAt, minCapacity, maxCapacity, taken, places }): SeatBar[] =>
+          places.length > 1
+            ? places.map((p) => ({
+                id: `${id}:${p.n - 1}`, workshopId: id, title, startsAt: p.startsAt,
+                minCapacity: p.min, maxCapacity: p.max, registered: p.taken, upcoming: true, place: p,
+              }))
+            : [{ id, workshopId: id, title, startsAt, minCapacity, maxCapacity, registered: taken, upcoming: true, place: null }],
+        ),
     ],
     profit: { workshops: byWorkshop, instructors: byInstructor },
   }

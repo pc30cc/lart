@@ -65,12 +65,22 @@ export type WorkshopAlert =
 
 /** What needs attention on an upcoming workshop, if anything. */
 export function workshopAlert(
-  w: { status: string; decisionAt: Date; registered: number; minCapacity: number },
+  w: {
+    status: string
+    decisionAt: Date
+    registered: number
+    minCapacity: number
+    /** Several days or sessions: each one's places taken and minimum (each must reach its own). */
+    days?: { taken: number; minCapacity: number }[]
+  },
   now: Date,
 ): WorkshopAlert {
   if (w.status === "awaiting_signature") return { kind: "awaitingSignature" }
   if (w.status !== "published") return null
-  const missing = Math.max(0, w.minCapacity - w.registered)
+  const missing =
+    w.days && w.days.length > 1
+      ? w.days.reduce((sum, d) => sum + Math.max(0, d.minCapacity - d.taken), 0)
+      : Math.max(0, w.minCapacity - w.registered)
   if (w.decisionAt <= now) return { kind: "decisionDue", missing }
   if (w.decisionAt.getTime() - now.getTime() <= DECISION_SOON_MS) return { kind: "decisionSoon", at: w.decisionAt, missing }
   return null

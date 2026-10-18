@@ -74,15 +74,15 @@ const toDays = (rows: { day: number; n: number }[]) => {
 export const seatsLeft = (limit: number, taken: number) => Math.max(0, limit - taken)
 
 /** Places taken (registrations and held places) per workshop and day, for lists. */
-export async function seatsTakenOf(courseIds: string[]): Promise<Map<string, number[]>> {
+export async function seatsTakenOf(courseIds: string[], exec: Exec = db): Promise<Map<string, number[]>> {
   if (!courseIds.length) return new Map()
   const [taken, held] = await Promise.all([
-    db
+    exec
       .select({ courseId: registrations.courseId, day: dayIndex, n: count() })
       .from(registrations)
       .where(and(inArray(registrations.courseId, courseIds), inArray(registrations.status, [...activeStatuses])))
       .groupBy(registrations.courseId, dayIndex),
-    db
+    exec
       .select({ courseId: seatHolds.courseId, day: holdDay, n: holdCount })
       .from(seatHolds)
       .where(inArray(seatHolds.courseId, courseIds))

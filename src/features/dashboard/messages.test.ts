@@ -12,7 +12,7 @@ function keys(tree: Tree, prefix = ""): string[] {
   return Object.entries(tree).flatMap(([k, v]) => (typeof v === "string" ? [`${prefix}${k}`] : keys(v, `${prefix}${k}.`)))
 }
 
-const values = { name: "Ayşe", date: "6 Oct", count: 3, done: "1", total: "5", amount: "₺1.250", year: "2026", taken: "8", seats: "12", max: "12", share: "60%", when: "8 Oct, 12:00" }
+const values = { n: 2, name: "Ayşe", date: "6 Oct", count: 3, done: "1", total: "5", amount: "₺1.250", year: "2026", taken: "8", seats: "12", max: "12", share: "60%", when: "8 Oct, 12:00" }
 
 function translator(locale: string, messages: unknown, errors: string[]) {
   return createTranslator({ locale, messages: { dashboard: messages }, onError: (e) => errors.push(e.message) }) as unknown as (

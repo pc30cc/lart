@@ -22,7 +22,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
-import { getLocale } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
 
 import { FillMeter, WorkshopStatusBadge } from "@/app/[locale]/admin/(panel)/workshops/_components/workshop-status"
 import { EmptyState } from "@/components/admin/empty-state"
@@ -38,6 +38,7 @@ import {
   formatMonthYear,
   formatNumber,
   formatPercent,
+  formatTimeRange,
   formatWeekday,
   intlLocale,
   localized,
@@ -46,7 +47,7 @@ import {
 } from "@/lib/format"
 import { formatLira } from "@/lib/money"
 import { cn } from "@/lib/utils"
-import { getDashboard, type Dashboard, type UpcomingWorkshop } from "../queries"
+import { getDashboard, type Dashboard, type Place, type UpcomingWorkshop } from "../queries"
 import { PartnersChart, ProfitPanel, RevenueChart, SeatsChart, type MonthPoint, type RankPoint, type SeatPoint } from "./charts"
 import { enter, Panel } from "./panel"
 import { workshopHours } from "@/features/workshops/days"
@@ -67,11 +68,18 @@ export async function DashboardContent() {
     full: formatMonthYear(noon(m.month), locale),
   }))
   const dayMonth = new Intl.DateTimeFormat(intlLocale(locale), { day: "numeric", month: "short", timeZone: TIME_ZONE })
+  const tPlace = await getTranslations("dashboard.upcoming")
+  // A day of a workshop on several days: its name beside the title, its hours beside the date when another day shares it.
   const seats: SeatPoint[] = data.seats.map((w) => ({
     id: w.id,
     label: dayMonth.format(w.startsAt),
-    title: localized(w.title, locale),
-    date: formatDate(w.startsAt, locale, "full"),
+    title: w.place
+      ? `${localized(w.title, locale)} · ${tPlace(w.place.session ? "session" : "day", { n: w.place.n })}`
+      : localized(w.title, locale),
+    date:
+      w.place && (w.place.session || w.place.sharedDate)
+        ? `${formatDate(w.startsAt, locale, "full")} · ⁨${formatTimeRange(w.place.startsAt, w.place.endsAt, locale)}⁩`
+        : formatDate(w.startsAt, locale, "full"),
     registered: w.registered,
     min: w.minCapacity,
     max: w.maxCapacity,
@@ -536,12 +544,25 @@ function UpcomingRow({ w, today }: { w: UpcomingWorkshop; today: string }) {
             <span className="text-muted-foreground text-xs">{t("notOpen")}</span>
           ) : (
             <>
-              <FillMeter
-                registered={w.registered}
-                min={w.minCapacity}
-                max={w.maxCapacity}
-                label={t("seats", { taken: num(w.registered), max: num(w.maxCapacity) })}
-              />
+              {w.places.length > 1 ? (
+                // Several days or sessions: one meter each, against that day's own places.
+                <span className="block space-y-2">
+                  {w.places.map((p) => (
+                    <span key={p.n} className="block">
+                      <PlaceName place={p} />
+                      <FillMeter registered={p.taken} min={p.min} max={p.max} label={t("seats", { taken: num(p.taken), max: num(p.max) })} />
+                    </span>
+                  ))}
+                </span>
+              ) : (
+                // Registrations and held places, as the site and the workshops list count them.
+                <FillMeter
+                  registered={w.taken}
+                  min={w.minCapacity}
+                  max={w.maxCapacity}
+                  label={t("seats", { taken: num(w.taken), max: num(w.maxCapacity) })}
+                />
+              )}
               {payment && (
                 <span className="text-muted-foreground mt-1 block text-xs">
                   {payment.kind === "free" ? t("free") : t("paid", { count: payment.count })}
@@ -555,6 +576,27 @@ function UpcomingRow({ w, today }: { w: UpcomingWorkshop; today: string }) {
         </span>
       </Link>
     </li>
+  )
+}
+
+/**
+ * A day of a workshop on several days, above its meter: "Day 2 · 3 Aban", or
+ * for sessions on one date "Session 2 · 16:00–19:00" (a date two sessions of
+ * a longer workshop share gets both).
+ */
+function PlaceName({ place: p }: { place: Place }) {
+  const t = useTranslations("dashboard.upcoming")
+  const locale = useLocale()
+  const date = new Intl.DateTimeFormat(intlLocale(locale), { day: "numeric", month: "short", timeZone: TIME_ZONE }).format(p.startsAt)
+  const hours = formatTimeRange(p.startsAt, p.endsAt, locale)
+  return (
+    <span className="text-muted-foreground block truncate text-[0.7rem]">
+      <span className="text-foreground/80 font-medium">{t(p.session ? "session" : "day", { n: p.n })}</span>
+      {" · "}
+      {!p.session && date}
+      {!p.session && p.sharedDate && " · "}
+      {(p.session || p.sharedDate) && <bdi className="tabular-nums">{hours}</bdi>}
+    </span>
   )
 }
 

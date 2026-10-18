@@ -74,6 +74,17 @@ describe("dashboard metrics", () => {
     expect(workshopAlert({ ...base, status: "confirmed", decisionAt: at(-10) }, now)).toBeNull()
   })
 
+  it("counts what each day of a workshop on several days still needs", () => {
+    const now = new Date("2026-10-06T12:00:00Z")
+    const w = { status: "published", decisionAt: new Date(now.getTime() - 1), registered: 9, minCapacity: 4 }
+    // 9 in all is above 4, but the second session has 1 of its 3: 2 short (the first's spare places never fill it).
+    const days = [{ taken: 8, minCapacity: 4 }, { taken: 1, minCapacity: 3 }]
+    expect(workshopAlert({ ...w, days }, now)).toEqual({ kind: "decisionDue", missing: 2 })
+    expect(workshopAlert({ ...w, days: [{ taken: 2, minCapacity: 4 }, { taken: 0, minCapacity: 3 }] }, now)).toEqual({ kind: "decisionDue", missing: 5 })
+    // One day: the workshop's own figures.
+    expect(workshopAlert({ ...w, registered: 3, days: [{ taken: 3, minCapacity: 4 }] }, now)).toEqual({ kind: "decisionDue", missing: 1 })
+  })
+
   it("says how many paid, or that a free workshop has nothing to pay", () => {
     expect(paymentNote({ price: 15000, registered: 4, paid: 3 })).toEqual({ kind: "paid", count: 3 })
     expect(paymentNote({ price: 15000, registered: 2, paid: 0 })).toEqual({ kind: "paid", count: 0 })

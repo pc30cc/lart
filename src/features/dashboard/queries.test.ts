@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto"
-import { eq, inArray } from "drizzle-orm"
+import { and, eq, inArray } from "drizzle-orm"
 import { TransactionRollbackError } from "drizzle-orm/errors"
 import { describe, expect, it, vi } from "vitest"
 
 import { db, type Tx } from "@/db"
-import { admins, categories, courses, instructors, members, registrations, templates, type ClosedTotals } from "@/db/schema"
+import { admins, categories, courses, instructors, members, registrations, seatHolds, templates, type ClosedTotals } from "@/db/schema"
 import { postContribution, postExpense, postTransaction, reverseTransaction } from "@/features/money/ledger"
 import { getDashboard, type Dashboard } from "./queries"
 
@@ -106,9 +106,9 @@ async function seed(tx: Tx) {
     w8: await course("W8", { status: "published", starts: "2026-10-12T10:00:00", decision: "2026-10-08T12:00:00", min: 2, max: 6 }),
     w9: await course("W9", { status: "cancelled", starts: "2026-10-02T10:00:00" }),
   }
-  const register = (courseId: string, status: "pending" | "confirmed" | "cancelled", amount = 15000) =>
+  const register = (courseId: string, status: "pending" | "confirmed" | "cancelled", amount = 15000, day: number | null = null) =>
     tx.insert(registrations).values({
-      courseId, memberId: member.id, participantName: "P", status, amount,
+      courseId, memberId: member.id, participantName: "P", status, amount, day,
       termsTemplateId: terms.id, termsSha256: "0".repeat(64), termsAcceptedAt: NOW,
     })
   for (const status of ["confirmed", "confirmed", "confirmed", "pending", "cancelled"] as const) await register(w.w5, status)
@@ -299,6 +299,65 @@ describe("dashboard queries", () => {
       })
       expect(d.kpis.upcomingTaken - before.kpis.upcomingTaken).toBe(3)
       expect(d.kpis.upcomingSeats - before.kpis.upcomingSeats).toBe(12)
+    })
+  })
+
+  it("splits a workshop on several days or sessions, held places included", async () => {
+    await rolledBack(async (tx) => {
+      const { course, register, totals } = await seed(tx)
+      const before = await getDashboard(NOW, tx)
+      const day = (starts: string, ends: string, more: { minCapacity?: number; maxCapacity?: number } = {}) => ({
+        startsAt: at(starts).toISOString(), endsAt: at(ends).toISOString(), ...more,
+      })
+      // Two sessions on 7 October: 10:00–12:00 for 4–8 people, 16:00–19:00 for 3–6.
+      const two = await course("Two", { status: "published", starts: "2026-10-07T10:00:00", decision: "2026-10-06T18:00:00", min: 4, max: 8 })
+      await tx
+        .update(courses)
+        .set({
+          days: [day("2026-10-07T10:00:00", "2026-10-07T12:00:00"), day("2026-10-07T16:00:00", "2026-10-07T19:00:00", { minCapacity: 3, maxCapacity: 6 })],
+          endsAt: at("2026-10-07T19:00:00"),
+        })
+        .where(eq(courses.id, two))
+      // First session: 2 registered (the cancelled one never counts) and 3 places held; second: 1 registered, 2 invited.
+      for (const status of ["confirmed", "pending", "cancelled"] as const) await register(two, status)
+      await register(two, "pending", 15000, 1)
+      await tx.insert(seatHolds).values([{ courseId: two, count: 3 }, { courseId: two, day: 1, count: 2, note: "Guests", invited: true }])
+      // Held on two days in September, 10 + 6 places, 13 participants.
+      const past = await course("Past", { status: "closed", starts: "2026-09-12T10:00:00", closedTotals: totals(0, 13) })
+      await tx
+        .update(courses)
+        .set({
+          days: [day("2026-09-12T10:00:00", "2026-09-12T12:00:00"), day("2026-09-13T10:00:00", "2026-09-13T12:00:00", { minCapacity: 2, maxCapacity: 6 })],
+          endsAt: at("2026-09-13T12:00:00"),
+        })
+        .where(eq(courses.id, past))
+
+      const d = await getDashboard(NOW, tx)
+      const row = d.upcoming.find((x) => x.id === two)!
+      expect(row.places.map((p) => [p.n, p.taken, p.min, p.max, p.session, p.sharedDate])).toEqual([
+        [1, 5, 4, 8, true, true],
+        [2, 3, 3, 6, true, true],
+      ])
+      // `registered` stays the registrations (for the paid count); `taken` adds the held places.
+      expect(row).toMatchObject({ registered: 3, paid: 1, taken: 8, alert: { kind: "decisionSoon", missing: 0 } })
+      expect(d.kpis.upcomingSeats - before.kpis.upcomingSeats).toBe(8 + 6)
+      expect(d.kpis.upcomingTaken - before.kpis.upcomingTaken).toBe(8)
+      // A bar per session, each against its own places.
+      expect(d.seats.filter((x) => x.workshopId === two).map((x) => [x.id, x.registered, x.minCapacity, x.maxCapacity, x.place?.n])).toEqual([
+        [`${two}:0`, 5, 4, 8, 1],
+        [`${two}:1`, 3, 3, 6, 2],
+      ])
+      // Held: every day's places against the participants.
+      expect(d.kpis.heldSeats - before.kpis.heldSeats).toBe(10 + 6)
+      expect(d.kpis.heldTaken - before.kpis.heldTaken).toBe(13)
+      const pastBar = d.seats.find((x) => x.id === past)
+      if (pastBar) expect(pastBar).toMatchObject({ registered: 13, minCapacity: 1 + 2, maxCapacity: 16, place: null })
+
+      // Without the invited guests the second session is 2 short of its own minimum, even though
+      // the first has places to spare.
+      await tx.delete(seatHolds).where(and(eq(seatHolds.courseId, two), eq(seatHolds.day, 1)))
+      const later = await getDashboard(NOW, tx)
+      expect(later.upcoming.find((x) => x.id === two)!.alert).toMatchObject({ kind: "decisionSoon", missing: 2 })
     })
   })
 

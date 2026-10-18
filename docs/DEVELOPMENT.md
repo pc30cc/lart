@@ -1687,8 +1687,12 @@ holds a seat, not paid yet; `confirmed` = paid (or a free workshop);
   fixed, the participant number of money/closing.ts and reports.ts. "Paid" is
   shown beside it where it helps (dashboard, workshop overview, finances): a
   confirmed registration with an amount above 0, so a free registration never
-  counts as paid. The dashboard's upcoming meters use the live registered
-  count, also after the go decision, with `final_participants` beside it.
+  counts as paid. The dashboard's upcoming meters use the live places taken
+  (registrations and held places, `seatsTakenOf`), also after the go
+  decision, with `final_participants` beside it; a workshop of several days
+  or sessions has a meter (and a bar in the seats chart) per day, each
+  against that day's places, and its "short of the minimum" adds up each
+  day's own shortfall. The places card counts every day's places.
 - **Places after the go decision** are capped at `final_participants`
   (`seatLimit(course)` in `features/registrations/schema.ts`, used by
   `registerForWorkshop` and the site's seats left). A cancelled place can be
