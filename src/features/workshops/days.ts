@@ -108,6 +108,20 @@ export function buildDays(startsAt: Date, endsAt: Date, extraDays: ExtraDay[]): 
 }
 
 /**
+ * A day's date for lists ("26 Mehr 1405"), with its hours too when another
+ * day of the workshop falls on the same date (two sessions on one day):
+ * "2 Aban 1405 · 16:00–19:00". `day` is the index (null: the first).
+ */
+export function dayDateLabel(c: WithDays, day: number | null | undefined, locale: string, style: "full" | "long" | "medium" = "medium"): string {
+  const days = workshopDays(c)
+  const d = days[day ?? 0] ?? days[0]
+  const date = zonedParts(d.startsAt).date
+  const shared = days.filter((o) => zonedParts(o.startsAt).date === date).length > 1
+  const label = formatDate(d.startsAt, locale, style)
+  return shared ? `${label} · ${hoursOf(d, locale)}` : label
+}
+
+/**
  * The day a registration is for (`registrations.day`: its index, null for
  * the first), or the first day when that index is gone.
  */

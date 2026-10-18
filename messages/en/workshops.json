@@ -429,7 +429,8 @@
       "consent": "Photos / videos allowed",
       "consentValue": "{photos} / {videos}",
       "consentHint": "Among the people coming",
-      "withHolds": "{registered} registered + {held} held or invited · {max} places"
+      "withHolds": "{registered} registered + {held} held or invited · {max} places",
+      "withHoldsDays": "{registered} registered + {held} held or invited"
     },
     "empty": {
       "title": "No registrations yet",
@@ -546,7 +547,10 @@
       "registeredOn": "Registered on",
       "yes": "Yes",
       "no": "No",
-      "day": "Day"
+      "day": "Day",
+      "held": "Place held",
+      "invited": "Invited · free",
+      "places": "Places"
     },
     "all": {
       "title": "Registrations",
@@ -634,6 +638,12 @@
         "invitedHint": "Free, by name; no account needed.",
         "heldBadge": "Held",
         "invitedBadge": "Invited · free"
+      },
+      "row": {
+        "noAccount": "No account",
+        "free": "Free · invited",
+        "held": "Place held",
+        "places": "{count, plural, one {# place} other {# places}}"
       }
     },
     "allDays": "All days"

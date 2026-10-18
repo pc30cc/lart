@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { buildDays, extraDaysOf, formatWorkshopDates, sameHours, workshopDays, workshopHours, type ExtraDay } from "./days"
+import { buildDays, dayDateLabel, extraDaysOf, formatWorkshopDates, sameHours, workshopDays, workshopHours, type ExtraDay } from "./days"
 import { workshopEditSchema } from "./schema"
 
 // 17 October 2026, 12:00–15:00 in Istanbul (UTC+3).
@@ -102,5 +102,21 @@ describe("two sessions on the same day", () => {
     }
     expect(formatWorkshopDates(c, "en", "long")).not.toContain(" · ")
     expect(workshopHours(c, "en")).toContain(" · ")
+    // Each session's own label carries its hours, so the two can be told apart.
+    expect(dayDateLabel(c, 0, "en")).toMatch(/12:00/)
+    expect(dayDateLabel(c, 1, "en")).toMatch(/16:00/)
+    expect(dayDateLabel(c, 1, "en")).not.toBe(dayDateLabel(c, 0, "en"))
+  })
+
+  it("leaves the hours out when every day has its own date", () => {
+    const c = {
+      startsAt: new Date("2026-10-20T09:00:00Z"),
+      endsAt: new Date("2026-10-22T12:00:00Z"),
+      days: [
+        { startsAt: "2026-10-20T09:00:00.000Z", endsAt: "2026-10-20T12:00:00.000Z" },
+        { startsAt: "2026-10-22T09:00:00.000Z", endsAt: "2026-10-22T12:00:00.000Z" },
+      ],
+    }
+    expect(dayDateLabel(c, 1, "en")).not.toMatch(/12:00/)
   })
 })

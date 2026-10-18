@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 
+import { db } from "@/db"
+import { seatHolds } from "@/db/schema"
 import { csvDate } from "@/features/money/csv"
 import { addRegistration, makeAdmin, makeCourse, makeWorld, retireAdmins } from "@/features/money/testing"
 import { zonedParts } from "@/lib/format"
@@ -54,5 +56,27 @@ describe("GET registrations CSV", () => {
     const en = await firstRow("en")
     expect(en[9]).toBe("2026-10-08")
     expect([en[7], en[12]]).toEqual([today, today])
+  })
+
+  it("lists the held places and invited guests after the registrations, with how many places each", async () => {
+    const world = await makeWorld()
+    const held = await makeCourse(world, state.adminId)
+    await addRegistration(world, held)
+    await db.insert(seatHolds).values([
+      { courseId: held, count: 3, note: "", createdBy: state.adminId },
+      { courseId: held, count: 1, note: "Ipek", invited: true, createdBy: state.adminId },
+    ])
+    const response = await GET(new Request(`http://localhost/en/admin/workshops/${held}/registrations/export`), {
+      params: Promise.resolve({ locale: "en", id: held }),
+    })
+    const lines = (await response.text()).replace(/^\uFEFF/, "").trimEnd().split("\r\n").map((l) => l.split(","))
+    expect(lines).toHaveLength(4)
+    expect(lines[0].at(-1)).toBe("Places")
+    expect(lines[1].at(-1)).toBe("1")
+    expect(lines[2][0]).toBe("Guests")
+    expect(lines[2][4]).toBe("Place held")
+    expect(lines[2].at(-1)).toBe("3")
+    expect(lines[3][0]).toBe("Ipek")
+    expect(lines[3][4]).toBe("Invited · free")
   })
 })

@@ -429,7 +429,8 @@
       "consent": "اجازهٔ عکس / ویدیو",
       "consentValue": "{photos} / {videos}",
       "consentHint": "از میان کسانی که می‌آیند",
-      "withHolds": "{registered} ثبت‌نام + {held} رزرو یا مهمان · ظرفیت {max}"
+      "withHolds": "{registered} ثبت‌نام + {held} رزرو یا مهمان · ظرفیت {max}",
+      "withHoldsDays": "{registered} ثبت‌نام + {held} رزرو یا مهمان"
     },
     "empty": {
       "title": "هنوز ثبت‌نامی نیست",
@@ -546,7 +547,10 @@
       "registeredOn": "تاریخ ثبت‌نام",
       "yes": "بله",
       "no": "خیر",
-      "day": "روز"
+      "day": "روز",
+      "held": "جای نگه‌داشته‌شده",
+      "invited": "دعوت‌شده · رایگان",
+      "places": "تعداد جا"
     },
     "all": {
       "title": "ثبت‌نام‌ها",
@@ -634,6 +638,12 @@
         "invitedHint": "رایگان و با نام؛ حساب کاربری لازم نیست.",
         "heldBadge": "رزرو",
         "invitedBadge": "دعوت‌شده · رایگان"
+      },
+      "row": {
+        "noAccount": "بدون حساب",
+        "free": "رایگان · دعوت‌شده",
+        "held": "جای نگه‌داشته‌شده",
+        "places": "{count, plural, one {# جا} other {# جا}}"
       }
     },
     "allDays": "همهٔ روزها"

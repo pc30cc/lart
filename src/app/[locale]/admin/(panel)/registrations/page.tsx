@@ -28,7 +28,7 @@ import { formatDate, formatNumber, localized } from "@/lib/format"
 import { getSetting } from "@/lib/settings"
 import { publicUrls } from "@/lib/storage"
 import { cn } from "@/lib/utils"
-import { registrationDay, workshopDays } from "@/features/workshops/days"
+import { dayDateLabel, registrationDay, workshopDays } from "@/features/workshops/days"
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("workshops.registrations.all")
@@ -101,7 +101,7 @@ export default async function RegistrationsPage({ searchParams }: PageProps<"/[l
           >
             {localized(r.course.title, locale)}
           </Link>
-          <span className="text-muted-foreground block text-xs">{formatDate(registrationDay(r.course, r.day).startsAt, locale, "medium")}</span>
+          <span className="text-muted-foreground block text-xs">{dayDateLabel(r.course, r.day, locale)}</span>
         </span>
       ),
     },
@@ -197,7 +197,7 @@ export default async function RegistrationsPage({ searchParams }: PageProps<"/[l
                 workshopTitle: localized(h.title, locale),
                 dayLabel:
                   workshopDays(h).length > 1
-                    ? t("table.day", { n: formatNumber((h.day ?? 0) + 1, locale), date: formatDate(registrationDay(h, h.day).startsAt, locale, "medium") })
+                    ? t("table.day", { n: formatNumber((h.day ?? 0) + 1, locale), date: dayDateLabel(h, h.day, locale) })
                     : null,
               }))}
             />

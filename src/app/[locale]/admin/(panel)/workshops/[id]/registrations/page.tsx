@@ -11,20 +11,21 @@ import { Money } from "@/components/admin/money"
 import { Button } from "@/components/ui/button"
 import { RegistrationActions } from "@/features/registrations/admin/components/dialogs"
 import { AddRegistrationDialog } from "@/features/registrations/admin/components/add-registration-dialog"
-import { HoldSeatsDialog, HoldsButton } from "@/features/registrations/admin/components/hold-seats"
+import { HoldActions, HoldName, HoldSeatsDialog, HoldsButton, HoldStepper, type HoldRow } from "@/features/registrations/admin/components/hold-seats"
+import { holdsForView, holdsOnPage } from "@/features/registrations/admin/hold-rows"
 import { listHolds } from "@/features/registrations/admin/holds"
 import { registrableWorkshops } from "@/features/registrations/admin/register"
 import { PaymentCell, refundOwed } from "@/features/registrations/admin/components/payment-cell"
 import { listWorkshopRegistrations, registrationSummary, type AdminRegistrationRow } from "@/features/registrations/admin/queries"
 import { seatsTakenByDay } from "@/features/registrations/public"
 import { paymentMethods, registrationTable, registrationViews, type PaymentMethod } from "@/features/registrations/admin/schema"
-import { registrationDay, workshopDays } from "@/features/workshops/days"
+import { dayDateLabel, registrationDay, workshopDays } from "@/features/workshops/days"
 import { getWorkshop } from "@/features/workshops/queries"
 import { isCancelled } from "@/features/workshops/schema"
 import { localeHref } from "@/i18n/links"
 import { Link } from "@/i18n/navigation"
 import { requireAdmin } from "@/lib/auth/admin"
-import { formatDate, formatNumber, localized } from "@/lib/format"
+import { formatDate, formatDateTime, formatNumber, localized } from "@/lib/format"
 import { getSetting } from "@/lib/settings"
 import { publicUrls } from "@/lib/storage"
 import { cn } from "@/lib/utils"
@@ -85,10 +86,25 @@ export default async function WorkshopRegistrationsPage({
   // Several days: each registration's day (cancelling and refunds count to it).
   const days = workshopDays(workshop)
   const dayTab = tableParams.filters.day
-  const dayLabel = (day: number | null) =>
-    t("table.day", { n: n((day ?? 0) + 1), date: formatDate(registrationDay(workshop, day).startsAt, locale, "medium") })
+  // Two sessions on one date: the label gives the hours too.
+  const dayLabel = (day: number | null) => t("table.day", { n: n((day ?? 0) + 1), date: dayDateLabel(workshop, day, locale) })
+  const holdRows: HoldRow[] = holds.map((h) => ({
+    id: h.id,
+    courseId: workshop.id,
+    day: h.day,
+    count: h.count,
+    note: h.note,
+    invited: h.invited,
+    by: h.by,
+    createdAt: h.createdAt.toISOString(),
+    dayLabel: days.length > 1 ? dayLabel(h.day) : null,
+  }))
+  // Held places and invited guests are rows of the list too (after the registrations): they take places like
+  // registrations, so the list adds up to the numbers above and on the workshops list ("8 of 8").
+  const heldInView = holdsForView(holdRows, { status: tableParams.filters.status, day: dayTab, q: tableParams.q })
+  const heldHere = holdsOnPage(heldInView, total, rows.length, tableParams)
 
-  const columns: Column<AdminRegistrationRow>[] = [
+  const registrationColumns: Column<AdminRegistrationRow>[] = [
     {
       key: "participant",
       header: t("table.participant"),
@@ -190,12 +206,49 @@ export default async function WorkshopRegistrationsPage({
         ]),
   ]
 
+  // A held place's cells, column by column (the others stay empty).
+  const holdCells: Record<string, (h: HoldRow) => React.ReactNode> = {
+    participant: (h) => (
+      <span className="block min-w-0">
+        <HoldName hold={h} stacked />
+        {h.dayLabel && <span className="text-primary block truncate text-xs font-medium">{h.dayLabel}</span>}
+        <span className="text-muted-foreground block truncate text-xs">
+          {t("holds.by", { name: h.by ?? "—", date: formatDateTime(h.createdAt, locale, "medium") })}
+        </span>
+      </span>
+    ),
+    member: () => <span className="text-muted-foreground text-xs">{t("holds.row.noAccount")}</span>,
+    payment: (h) => (
+      <span className={cn("text-xs font-medium", h.invited ? "text-success" : "text-muted-foreground")}>
+        {h.invited ? t("holds.row.free") : t("holds.row.held")}
+      </span>
+    ),
+    amount: (h) => <span className="text-muted-foreground text-sm tabular-nums">{t("holds.row.places", { count: h.count })}</span>,
+    createdAt: (h) => <span className="text-muted-foreground text-xs whitespace-nowrap">{formatDate(new Date(h.createdAt), locale, "medium")}</span>,
+    actions: (h) => (
+      <span className="flex items-center justify-end gap-1">
+        <HoldStepper hold={h} locked={locked} registrable={Boolean(holdable)} />
+        {!locked && <HoldActions hold={h} workshops={addable} compact />}
+      </span>
+    ),
+  }
+  type Row = { kind: "registration"; registration: AdminRegistrationRow } | { kind: "hold"; hold: HoldRow }
+  const columns: Column<Row>[] = registrationColumns.map((col) => ({
+    ...col,
+    cell: (row: Row) => (row.kind === "registration" ? col.cell(row.registration) : (holdCells[col.key]?.(row.hold) ?? null)),
+  }))
+  const tableRows: Row[] = [
+    ...rows.map((registration) => ({ kind: "registration" as const, registration })),
+    ...heldHere.map((hold) => ({ kind: "hold" as const, hold })),
+  ]
+
   const cards = [
     {
       label: t("summary.registered"),
       value: n(summary.active + held),
+      // Several days: the day tabs below give each day's places; one total of places would mislead here.
       sub: held
-        ? t("summary.withHolds", { registered: n(summary.active), held: n(held), max: n(workshop.maxCapacity) })
+        ? t(days.length > 1 ? "summary.withHoldsDays" : "summary.withHolds", { registered: n(summary.active), held: n(held), max: n(workshop.maxCapacity) })
         : t("summary.places", { max: n(workshop.maxCapacity), min: n(workshop.minCapacity) }),
     },
     {
@@ -238,17 +291,7 @@ export default async function WorkshopRegistrationsPage({
             <HoldsButton
               locked={locked}
               workshops={addable}
-              holds={holds.map((h) => ({
-                id: h.id,
-                courseId: workshop.id,
-                day: h.day,
-                count: h.count,
-                note: h.note,
-                invited: h.invited,
-                by: h.by,
-                createdAt: h.createdAt.toISOString(),
-                dayLabel: days.length > 1 ? dayLabel(h.day) : null,
-              }))}
+              holds={holdRows}
             />
             {!locked && holdable && <HoldSeatsDialog workshops={addable} courseId={holdable.id} />}
             {!locked && <AddRegistrationDialog workshops={addable} courseId={workshop.id} />}
@@ -287,7 +330,7 @@ export default async function WorkshopRegistrationsPage({
                 <li>
                   <DayTab href={`/admin/workshops/${workshop.id}/registrations`} active={dayTab === undefined}>
                     {t("allDays")}
-                    <span className="bg-background/70 rounded-full px-1.5 text-xs tabular-nums">{n(summary.active + summary.cancelled)}</span>
+                    <span className="bg-background/70 rounded-full px-1.5 text-xs tabular-nums">{n(perDay.reduce((a, b) => a + b, 0))}</span>
                   </DayTab>
                 </li>
                 {days.map((d, i) => (
@@ -306,10 +349,10 @@ export default async function WorkshopRegistrationsPage({
 
           <DataTable
             columns={columns}
-            rows={rows}
-            total={total}
+            rows={tableRows}
+            total={total + heldInView.length}
             params={tableParams}
-            rowKey={(r) => r.id}
+            rowKey={(r) => (r.kind === "registration" ? r.registration.id : `hold-${r.hold.id}`)}
             searchPlaceholder={t("search")}
             filters={[
               {

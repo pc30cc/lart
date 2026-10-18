@@ -187,6 +187,115 @@ export type HoldRow = {
   workshopTitle?: string
 }
 
+/** A hold's places with "−" / "+" one place (at 0 the hold is gone), or just the number when locked. */
+export function HoldStepper({ hold, locked, registrable }: { hold: Pick<HoldRow, "id" | "count">; locked: boolean; registrable: boolean }) {
+  const t = useTranslations("workshops.registrations.holds")
+  const locale = useLocale()
+  const [pending, start] = useTransition()
+  const router = useRouter()
+  if (locked) {
+    return (
+      <span className="bg-muted flex h-8 min-w-8 shrink-0 items-center justify-center rounded-full px-2 text-sm font-semibold tabular-nums">
+        {formatNumber(hold.count, locale)}
+      </span>
+    )
+  }
+  const change = (delta: 1 | -1) =>
+    start(async () => {
+      const result = await changeHoldAction({ id: hold.id, delta })
+      if (result && !result.ok) toast.error(result.error)
+      else router.refresh()
+    })
+  return (
+    <span className="bg-muted inline-flex shrink-0 items-center rounded-full p-0.5" aria-label={t("count")}>
+      <Button type="button" variant="ghost" size="icon-xs" className="rounded-full" disabled={pending} onClick={() => change(-1)} aria-label={t("less")}>
+        <MinusIcon />
+      </Button>
+      <span className="min-w-6 text-center text-sm font-semibold tabular-nums">{formatNumber(hold.count, locale)}</span>
+      <Button type="button" variant="ghost" size="icon-xs" className="rounded-full" disabled={pending || !registrable} onClick={() => change(1)} aria-label={t("more")}>
+        <PlusIcon />
+      </Button>
+    </span>
+  )
+}
+
+/**
+ * Who a hold is for, with its kind: "Ipek · Invited · free", or "Guests · Held".
+ * `stacked`: the kind under the name (a narrow table cell keeps the whole name).
+ */
+export function HoldName({ hold, stacked = false, className }: { hold: Pick<HoldRow, "note" | "invited">; stacked?: boolean; className?: string }) {
+  const t = useTranslations("workshops.registrations.holds")
+  return (
+    <span className={cn("flex min-w-0 gap-1.5 text-sm font-medium", stacked ? "flex-col items-start gap-1" : "items-center", className)}>
+      <span className="flex max-w-full min-w-0 items-center gap-1.5">
+        {hold.invited ? (
+          <GiftIcon className="text-primary size-3.5 shrink-0" aria-hidden />
+        ) : (
+          <UserRoundPlusIcon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
+        )}
+        <span className="truncate" dir="auto">
+          {hold.note || t("guests")}
+        </span>
+      </span>
+      <span
+        className={cn(
+          "shrink-0 rounded-full px-2 py-0.5 text-[0.7rem] font-medium",
+          stacked && "self-start",
+          hold.invited ? "bg-success/10 text-success" : "bg-muted text-muted-foreground",
+        )}
+      >
+        {hold.invited ? t("kind.invitedBadge") : t("kind.heldBadge")}
+      </span>
+    </span>
+  )
+}
+
+/** "Register on it" (someone takes one of the places: a registration on it) and "Delete hold" (all its places freed). */
+export function HoldActions({
+  hold,
+  workshops,
+  compact = false,
+}: {
+  hold: Pick<HoldRow, "id" | "courseId" | "count" | "note">
+  workshops: RegistrableWorkshop[]
+  /** Icons only on small screens (the registrations table). */
+  compact?: boolean
+}) {
+  const t = useTranslations("workshops.registrations.holds")
+  const registrable = workshops.some((w) => w.id === hold.courseId)
+  return (
+    <div className="flex items-center justify-end gap-1">
+      {registrable && (
+        <AddRegistrationDialog
+          workshops={workshops}
+          courseId={hold.courseId}
+          hold={{ id: hold.id, note: hold.note }}
+          button={
+            <Button variant="outline" size="sm" title={t("register")}>
+              <TicketPlusIcon />
+              <span className={cn(compact && "hidden xl:inline")}>{t("register")}</span>
+            </Button>
+          }
+        />
+      )}
+      <ConfirmAction
+        action={releaseHoldAction}
+        input={{ id: hold.id }}
+        title={t("release.title")}
+        description={t("release.description", { count: hold.count })}
+        confirmLabel={t("release.confirm")}
+        successMessage={t("release.done")}
+        trigger={
+          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive" title={t("release.action")}>
+            <Trash2Icon />
+            <span className={cn(compact ? "sr-only" : "hidden sm:inline")}>{t("release.action")}</span>
+          </Button>
+        }
+      />
+    </div>
+  )
+}
+
 /**
  * The places held: each with who for and by whom, "−" / "+" one place,
  * "Register" (someone takes one of them: a registration on that place) and
@@ -195,16 +304,8 @@ export type HoldRow = {
 export function HoldsList({ holds, locked, workshops }: { holds: HoldRow[]; locked: boolean; workshops: RegistrableWorkshop[] }) {
   const t = useTranslations("workshops.registrations.holds")
   const locale = useLocale()
-  const [pending, start] = useTransition()
-  const router = useRouter()
   if (!holds.length) return null
   const total = holds.reduce((s, h) => s + h.count, 0)
-  const change = (id: string, delta: 1 | -1) =>
-    start(async () => {
-      const result = await changeHoldAction({ id, delta })
-      if (result && !result.ok) toast.error(result.error)
-      else router.refresh()
-    })
   return (
     <section className="bg-card rounded-xl">
       <header className="flex items-center gap-3 border-b px-4 py-3 pe-12">
@@ -217,84 +318,22 @@ export function HoldsList({ holds, locked, workshops }: { holds: HoldRow[]; lock
         </div>
       </header>
       <ul className="divide-y">
-        {holds.map((h) => {
-          const registrable = workshops.some((w) => w.id === h.courseId)
-          return (
-            <li key={h.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
-              <div className="flex min-w-0 flex-1 items-center gap-3">
-                {!locked ? (
-                  <span className="bg-muted inline-flex items-center rounded-full p-0.5" aria-label={t("count")}>
-                    <Button type="button" variant="ghost" size="icon-xs" className="rounded-full" disabled={pending} onClick={() => change(h.id, -1)} aria-label={t("less")}>
-                      <MinusIcon />
-                    </Button>
-                    <span className="min-w-6 text-center text-sm font-semibold tabular-nums">{formatNumber(h.count, locale)}</span>
-                    <Button type="button" variant="ghost" size="icon-xs" className="rounded-full" disabled={pending || !registrable} onClick={() => change(h.id, 1)} aria-label={t("more")}>
-                      <PlusIcon />
-                    </Button>
-                  </span>
-                ) : (
-                  <span className="bg-muted flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-sm font-semibold tabular-nums">
-                    {formatNumber(h.count, locale)}
-                  </span>
-                )}
-                <div className="min-w-0">
-                  {h.workshopTitle && <p className="text-primary truncate text-xs font-medium">{h.workshopTitle}</p>}
-                  <p className="flex items-center gap-1.5 truncate text-sm font-medium" dir="auto">
-                    {h.invited ? (
-                      <GiftIcon className="text-primary size-3.5 shrink-0" aria-hidden />
-                    ) : (
-                      <UserRoundPlusIcon className="text-muted-foreground size-3.5 shrink-0" aria-hidden />
-                    )}
-                    {h.note || t("guests")}
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-[0.7rem] font-medium",
-                        h.invited ? "bg-success/10 text-success" : "bg-muted text-muted-foreground",
-                      )}
-                    >
-                      {h.invited ? t("kind.invitedBadge") : t("kind.heldBadge")}
-                    </span>
-                  </p>
-                  <p className="text-muted-foreground truncate text-xs">
-                    {h.dayLabel && <span className="text-primary font-medium">{h.dayLabel} · </span>}
-                    {t("by", { name: h.by ?? "—", date: formatDateTime(h.createdAt, locale, "medium") })}
-                  </p>
-                </div>
+        {holds.map((h) => (
+          <li key={h.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <HoldStepper hold={h} locked={locked} registrable={workshops.some((w) => w.id === h.courseId)} />
+              <div className="min-w-0">
+                {h.workshopTitle && <p className="text-primary truncate text-xs font-medium">{h.workshopTitle}</p>}
+                <HoldName hold={h} />
+                <p className="text-muted-foreground truncate text-xs">
+                  {h.dayLabel && <span className="text-primary font-medium">{h.dayLabel} · </span>}
+                  {t("by", { name: h.by ?? "—", date: formatDateTime(h.createdAt, locale, "medium") })}
+                </p>
               </div>
-              {!locked && (
-                <div className="flex items-center gap-1">
-                  {registrable && (
-                    <AddRegistrationDialog
-                      workshops={workshops}
-                      courseId={h.courseId}
-                      hold={{ id: h.id, note: h.note }}
-                      button={
-                        <Button variant="outline" size="sm">
-                          <TicketPlusIcon />
-                          {t("register")}
-                        </Button>
-                      }
-                    />
-                  )}
-                  <ConfirmAction
-                    action={releaseHoldAction}
-                    input={{ id: h.id }}
-                    title={t("release.title")}
-                    description={t("release.description", { count: h.count })}
-                    confirmLabel={t("release.confirm")}
-                    successMessage={t("release.done")}
-                    trigger={
-                      <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
-                        <Trash2Icon />
-                        <span className="hidden sm:inline">{t("release.action")}</span>
-                      </Button>
-                    }
-                  />
-                </div>
-              )}
-            </li>
-          )
-        })}
+            </div>
+            {!locked && <HoldActions hold={h} workshops={workshops} />}
+          </li>
+        ))}
       </ul>
     </section>
   )

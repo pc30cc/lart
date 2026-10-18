@@ -7,6 +7,7 @@ import { db } from "@/db"
 import { courses } from "@/db/schema"
 import { csvDate, lira, toCsv, type Cell } from "@/features/money/csv"
 import { today } from "@/features/money/ledger"
+import { listHolds } from "@/features/registrations/admin/holds"
 import { exportRegistrations } from "@/features/registrations/admin/queries"
 import { paymentState } from "@/features/registrations/schema"
 import { routing } from "@/i18n/routing"
@@ -36,12 +37,21 @@ export async function GET(request: Request, ctx: RouteContext<"/[locale]/admin/w
   const locale = hasLocale(routing.locales, requested) ? requested : routing.defaultLocale
   const t = await getTranslations({ locale, namespace: "workshops.registrations" })
 
-  const rows = await exportRegistrations(id)
+  const [rows, holds] = await Promise.all([exportRegistrations(id), listHolds(id)])
   // Istanbul days, in the language's calendar (Persian: "1405/07/16").
   const day = (value: Date | null) => (value ? csvDate(zonedParts(value).date, locale) : "")
   const yesNo = (value: boolean) => (value ? t("csv.yes") : t("csv.no"))
-  // Several days: which day each person comes.
-  const several = workshopDays(course).length > 1
+  // Several days: which day each person comes (with the hours when two sessions share a date).
+  const days = workshopDays(course)
+  const several = days.length > 1
+  const sharedDate = (i: number) => days.filter((d) => zonedParts(d.startsAt).date === zonedParts(days[i].startsAt).date).length > 1
+  const dayCell = (index: number | null) => {
+    const d = registrationDay(course, index)
+    const i = index ?? 0
+    return sharedDate(i) ? `${day(d.startsAt)} ${zonedParts(d.startsAt).time}–${zonedParts(d.endsAt).time}` : day(d.startsAt)
+  }
+  // Held places and invited guests take places too: listed after the registrations, with how many places each.
+  const withHolds = holds.length > 0
   const columns = [
     "participant",
     ...(several ? (["day"] as const) : []),
@@ -57,12 +67,13 @@ export async function GET(request: Request, ctx: RouteContext<"/[locale]/admin/w
     "photos",
     "videos",
     "registeredOn",
+    ...(withHolds ? (["places"] as const) : []),
   ] as const
   const table: Cell[][] = [
     columns.map((c) => t(`csv.${c}`)),
     ...rows.map((r) => [
       r.participantName,
-      ...(several ? [day(registrationDay(course, r.day).startsAt)] : []),
+      ...(several ? [dayCell(r.day)] : []),
       r.member.name,
       r.member.email,
       r.member.phone ?? "",
@@ -75,6 +86,24 @@ export async function GET(request: Request, ctx: RouteContext<"/[locale]/admin/w
       yesNo(r.photoConsent),
       yesNo(r.videoConsent),
       day(r.createdAt),
+      ...(withHolds ? [1] : []),
+    ]),
+    ...holds.map((h) => [
+      h.note || t("holds.guests"),
+      ...(several ? [dayCell(h.day)] : []),
+      "",
+      "",
+      "",
+      h.invited ? t("csv.invited") : t("csv.held"),
+      lira(0),
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      day(h.createdAt),
+      h.count,
     ]),
   ]
 
@@ -83,7 +112,7 @@ export async function GET(request: Request, ctx: RouteContext<"/[locale]/admin/w
     action: "registration.export",
     entity: "workshop",
     entityId: id,
-    data: { rows: rows.length },
+    data: { rows: rows.length, holds: holds.length },
   })
   return new Response(toCsv(table), {
     headers: {

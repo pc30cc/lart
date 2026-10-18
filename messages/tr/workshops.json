@@ -429,7 +429,8 @@
       "consent": "Fotoğraf / video izni",
       "consentValue": "{photos} / {videos}",
       "consentHint": "Katılacaklar arasında",
-      "withHolds": "{registered} kayıt + {held} ayrılmış veya davetli · {max} kontenjan"
+      "withHolds": "{registered} kayıt + {held} ayrılmış veya davetli · {max} kontenjan",
+      "withHoldsDays": "{registered} kayıt + {held} ayrılmış veya davetli"
     },
     "empty": {
       "title": "Henüz kayıt yok",
@@ -546,7 +547,10 @@
       "registeredOn": "Kayıt tarihi",
       "yes": "Evet",
       "no": "Hayır",
-      "day": "Gün"
+      "day": "Gün",
+      "held": "Ayrılmış yer",
+      "invited": "Davetli · ücretsiz",
+      "places": "Yer sayısı"
     },
     "all": {
       "title": "Kayıtlar",
@@ -634,6 +638,12 @@
         "invitedHint": "Ücretsiz, adıyla; hesap gerekmez.",
         "heldBadge": "Ayrıldı",
         "invitedBadge": "Davetli · ücretsiz"
+      },
+      "row": {
+        "noAccount": "Hesap yok",
+        "free": "Ücretsiz · davetli",
+        "held": "Ayrılmış yer",
+        "places": "{count, plural, other {# yer}}"
       }
     },
     "allDays": "Tüm günler"
