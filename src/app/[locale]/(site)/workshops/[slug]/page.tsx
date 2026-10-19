@@ -267,7 +267,8 @@ async function Facts({ workshop: w, locale }: { workshop: PublicWorkshop; locale
             value: (
               <ul className={cn(w.seats && w.window === "open" ? "mt-2 space-y-2.5" : "space-y-1")}>
                 {workshopSchedule(w, locale, "full").map((d, i) => {
-                  const seats = w.window === "open" ? w.seats?.days[i] : undefined
+                  const closed = w.window === "open" && !w.dayOpen[i]
+                  const seats = w.window === "open" && !closed ? w.seats?.days[i] : undefined
                   // Registered and left on that day with a bar (Settings → General), else only "Full".
                   return seats ? (
                     <li key={d.date} className="border-border/80 bg-background/45 rounded-xl border px-3.5 py-3">
@@ -280,7 +281,8 @@ async function Facts({ workshop: w, locale }: { workshop: PublicWorkshop; locale
                   ) : (
                     <li key={d.date}>
                       {d.date} · <bdi className="tabular-nums">{d.hours}</bdi>
-                      {w.window === "open" && (w.daySeatsLeft[i] ?? 0) <= 0 && (
+                      {closed && <span className="text-muted-foreground block text-xs font-medium">{t("dayClosed")}</span>}
+                      {w.window === "open" && !closed && (w.daySeatsLeft[i] ?? 0) <= 0 && (
                         <span className="text-destructive block text-xs font-medium">{t("dayFull")}</span>
                       )}
                     </li>

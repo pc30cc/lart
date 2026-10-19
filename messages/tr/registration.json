@@ -45,7 +45,8 @@
       "seats": "Yerler",
       "deadline": "Son kayıt",
       "days": "Atölye tarihleri (kayıt sırasında bir tarih seçin)",
-      "dayFull": "Dolu"
+      "dayFull": "Dolu",
+      "dayClosed": "Bu günün kayıtları kapandı"
     },
     "register": "Atölyeye Kayıt Ol",
     "registerHint": "Bir dakika sürer. Ödemeyi kayıttan sonra yaparsınız.",
@@ -140,7 +141,8 @@
     },
     "day": {
       "choose": "Tarih Seçin",
-      "full": "Kontenjan Doldu"
+      "full": "Kontenjan Doldu",
+      "closed": "Kayıtlar kapandı"
     }
   },
   "errors": {

@@ -205,7 +205,7 @@ function TermsDialog({
 }
 
 /** A workshop on several days: which day, as big cards to tap (a full day says so and can't be chosen). */
-type Day = { date: string; hours: string; left: number; taken?: number }
+type Day = { date: string; hours: string; left: number; taken?: number; closed?: boolean }
 
 function DayChoiceField({ days }: { days: Day[] }) {
   const t = useTranslations("registration.register.day")
@@ -241,7 +241,9 @@ function DayChoiceField({ days }: { days: Day[] }) {
                     </span>
                   </span>
                   {/* Registered and left when Settings → General shows them, else only "Full". */}
-                  {d.taken !== undefined ? (
+                  {d.closed ? (
+                    <span className="text-muted-foreground text-sm font-medium">{t("closed")}</span>
+                  ) : d.taken !== undefined ? (
                     <SeatsMeter taken={d.taken} left={d.left} label={d.date} className="mt-1.5 basis-full" />
                   ) : (
                     d.left <= 0 && <span className="text-destructive text-sm font-medium">{t("full")}</span>

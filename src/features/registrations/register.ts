@@ -15,6 +15,8 @@ import {
   MAX_ACTIVE_PER_MEMBER,
   paymentWayNames,
   registrationWindow,
+  bookableSeats,
+  dayDeadlines,
   sameParticipant,
   type CancelPreview,
   type registerSchema,
@@ -86,7 +88,9 @@ export async function registerForWorkshop(
 
     // The seat count is read under the lock: whoever comes second sees the first one's seat.
     const seats = daySeatsLeft(course, await seatsTakenByDay(course.id, tx))
-    const window = registrationWindow({ ...course, seatsLeft: seats.total }, now)
+    // Only the days still taking registrations (not started, before their own deadline).
+    const open = bookableSeats(course, seats.days, now)
+    const window = registrationWindow({ ...course, seatsLeft: open.reduce((a, b) => a + b, 0) }, now)
     if (window !== "open") throw new UserError(closedReason[window])
     // Several days: the day chosen must be one of them, not started, with a place left.
     const several = workshopDays(course).length > 1
@@ -94,6 +98,7 @@ export async function registerForWorkshop(
     if (several) {
       if (day === undefined || day >= seats.days.length) throw new UserError("registration.register.errors.day", { field: "day" })
       if (workshopDays(course)[day].startsAt <= now) throw new UserError("registration.errors.dayStarted", { field: "day" })
+      if (dayDeadlines(course)[day] <= now) throw new UserError("registration.errors.deadline", { field: "day" })
       if (seats.days[day] <= 0) throw new UserError("registration.errors.dayFull", { field: "day" })
     }
 

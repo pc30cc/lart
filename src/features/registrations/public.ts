@@ -1,5 +1,5 @@
 import "server-only"
-import { and, asc, count, eq, gt, inArray, isNotNull, sql } from "drizzle-orm"
+import { and, asc, count, eq, inArray, isNotNull, sql } from "drizzle-orm"
 import { cache } from "react"
 
 import { db, type Tx } from "@/db"
@@ -12,7 +12,8 @@ import { errorForLog } from "@/lib/errors"
 import { fallbackLanguage, localized, ownText } from "@/lib/format"
 import { getBrand, getSetting } from "@/lib/settings"
 import { getStorage, type Storage } from "@/lib/storage"
-import { activeStatuses, daySeatsLeft, registrationWindow, safePaymentUrl } from "./schema"
+import { workshopDays } from "@/features/workshops/days"
+import { activeStatuses, bookableSeats, dayDeadlines, daySeatsLeft, registrationWindow, safePaymentUrl } from "./schema"
 
 /**
  * The public side of workshops (no sign-in needed): the open workshops list,
@@ -28,11 +29,15 @@ const listedStatuses = ["published", "confirmed"] as const
 
 /**
  * The open workshops at `now`: listed (published or confirmed) and not started
- * yet. The one rule behind the workshops list, its categories
- * (site/public.ts) and the sitemap.
+ * yet; on several days, while a day has not started (the last one's start,
+ * `days` being in date order). The one rule behind the workshops list, its
+ * categories (site/public.ts) and the sitemap.
  */
 export const openWorkshopsWhere = (now: Date) =>
-  and(inArray(courses.status, [...listedStatuses]), gt(courses.startsAt, now))
+  and(
+    inArray(courses.status, [...listedStatuses]),
+    sql`coalesce((${courses.days}->-1->>'startsAt')::timestamptz, ${courses.startsAt}) > ${now.toISOString()}::timestamptz`,
+  )
 
 // ─── Seats ────────────────────────────────────────────────────────────────────
 
@@ -182,7 +187,8 @@ export async function listOpenWorkshops(
 
   return rows.map((r) => {
     const held = taken.get(r.id) ?? []
-    const left = daySeatsLeft(r, held).total
+    // Only the days still taking registrations (a started day of a workshop on several days has none).
+    const left = sum(bookableSeats(r, daySeatsLeft(r, held).days, now))
     const seats: ShownSeats = showSeats ? { taken: sum(held), left } : null
     return {
       id: r.id,
@@ -283,8 +289,9 @@ export const getPublicWorkshop = cache(async (slug: string, locale: string) => {
     storage(),
     getSetting("showSeats"),
   ])
-  const seats = daySeatsLeft(row, taken)
-  const left = seats.total
+  // Places left only on the days still taking registrations (a started day has none).
+  const seats = { days: bookableSeats(row, daySeatsLeft(row, taken).days) }
+  const left = sum(seats.days)
   const text = (value: Parameters<typeof localized>[0]) => localized(value, locale)
   const lang = (value: Parameters<typeof localized>[0]) => fallbackLanguage(value, locale)
 
@@ -327,6 +334,8 @@ export const getPublicWorkshop = cache(async (slug: string, locale: string) => {
     seatsLeft: left,
     /** Several days: the places left on each day (index = day), for choosing one. */
     daySeatsLeft: seats.days,
+    /** Each day: still taking registrations (not started, before its own deadline). */
+    dayOpen: dayDeadlines(row).map((deadline, i) => deadline > new Date() && workshopDays(row)[i].startsAt > new Date()),
     /** Registered and left, in all and on each day; null when hidden from visitors. */
     seats: showSeats
       ? {

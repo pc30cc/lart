@@ -45,7 +45,8 @@
       "seats": "Places",
       "deadline": "Registration closes",
       "days": "Days (choose one when registering)",
-      "dayFull": "Full"
+      "dayFull": "Full",
+      "dayClosed": "Registration for this day has closed"
     },
     "register": "Register",
     "registerHint": "It takes a minute. You pay after registering.",
@@ -140,7 +141,8 @@
     },
     "day": {
       "choose": "Which day will you come?",
-      "full": "Full"
+      "full": "Full",
+      "closed": "Registration closed"
     }
   },
   "errors": {

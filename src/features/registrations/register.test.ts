@@ -23,6 +23,8 @@ import {
   MAX_ACTIVE_PER_MEMBER,
   paymentWayNames,
   registrationWindow,
+  bookableSeats,
+  dayDeadlines,
   safePaymentUrl,
   sameParticipant,
   seatLimit,
@@ -766,6 +768,36 @@ describe("rules", () => {
     expect(registrationWindow({ ...base, status: "closed" })).toBe("past")
     expect(registrationWindow(base, new Date(base.startsAt.getTime() + 1))).toBe("started")
     expect(registrationWindow(base, new Date(base.endsAt.getTime() + 1))).toBe("past")
+  })
+
+  it("registrationWindow on several days: each day open until its own start and deadline", () => {
+    const h = 3_600_000
+    const t0 = new Date("2026-10-20T09:00:00Z")
+    const day = (offsetH: number) => ({
+      startsAt: new Date(t0.getTime() + offsetH * h).toISOString(),
+      endsAt: new Date(t0.getTime() + (offsetH + 3) * h).toISOString(),
+    })
+    const two = {
+      ...base,
+      startsAt: t0,
+      endsAt: new Date(t0.getTime() + 51 * h),
+      // The first day's registration closes 2 hours before it; the second's 2 hours before it too.
+      registrationDeadline: new Date(t0.getTime() - 2 * h),
+      days: [day(0), day(48)],
+    }
+    const at = (offsetH: number) => new Date(t0.getTime() + offsetH * h)
+    expect(dayDeadlines(two).map((d) => d.toISOString())).toEqual([at(-2).toISOString(), at(46).toISOString()])
+    // The first day has started: the second still takes registrations, with its own places only.
+    expect(bookableSeats(two, [0, 3], at(1))).toEqual([0, 3])
+    expect(registrationWindow({ ...two, seatsLeft: 3 }, at(1))).toBe("open")
+    expect(registrationWindow({ ...two, seatsLeft: 0 }, at(1))).toBe("full")
+    // Before the first day's deadline both count; between its deadline and start, only the second.
+    expect(bookableSeats(two, [2, 3], at(-3))).toEqual([2, 3])
+    expect(bookableSeats(two, [2, 3], at(-1))).toEqual([0, 3])
+    // Past the second day's deadline: closed; once it has started: started; when it is over: past.
+    expect(registrationWindow({ ...two, seatsLeft: 3 }, at(47))).toBe("closed")
+    expect(registrationWindow({ ...two, seatsLeft: 3 }, at(49))).toBe("started")
+    expect(registrationWindow({ ...two, seatsLeft: 3 }, at(52))).toBe("past")
   })
 
   it("seatLimit: the maximum, and after the go decision the final number (never above the maximum)", () => {

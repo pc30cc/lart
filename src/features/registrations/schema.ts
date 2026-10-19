@@ -151,12 +151,41 @@ export function daySeatsLeft(
 }
 
 /**
+ * Each day's registration deadline: the workshop's, moved on by as long as
+ * the day starts after the first (one day: the deadline itself). So a later
+ * day of a workshop on several days takes registrations until as long before
+ * its own start as the first day did.
+ */
+export function dayDeadlines(course: { startsAt: Date; endsAt: Date; days?: StoredDays; registrationDeadline: Date }): Date[] {
+  const days = workshopDays(course)
+  return days.map((d) => new Date(course.registrationDeadline.getTime() + (d.startsAt.getTime() - days[0].startsAt.getTime())))
+}
+
+/**
+ * Places left (`daySeatsLeft(...).days`) on the days that still take
+ * registrations at `now`: not started and before their deadline. A day that
+ * has started or closed has none, so it can't be chosen.
+ */
+export function bookableSeats(
+  course: { startsAt: Date; endsAt: Date; days?: StoredDays; registrationDeadline: Date },
+  left: number[],
+  now: Date = new Date(),
+): number[] {
+  const days = workshopDays(course)
+  const deadlines = dayDeadlines(course)
+  return days.map((d, i) => (d.startsAt > now && deadlines[i] > now ? (left[i] ?? 0) : 0))
+}
+
+/**
  * Whether a workshop takes registrations right now, and if not, why:
  * - open: published or confirmed, before the deadline, seats left (after the
  *   go decision, only up to its final number: `seatLimit`),
  * - full: no seats left, closed: the registration deadline has passed,
  * - started: it has begun, past: it is over (or closed), cancelled,
  * - paused: waiting for a new contract signature after a change.
+ * On several days, each day by itself: open while a day not started yet is
+ * before its own deadline (`dayDeadlines`) with a place left; `seatsLeft` is
+ * then the places of those days (`bookableSeats`).
  */
 export type RegistrationWindow = "open" | "full" | "closed" | "started" | "past" | "cancelled" | "paused"
 
@@ -166,15 +195,18 @@ export type WindowInput = {
   startsAt: Date
   endsAt: Date
   registrationDeadline: Date
+  days?: StoredDays
   seatsLeft: number
 }
 
 export function registrationWindow(course: WindowInput, now: Date = new Date()): RegistrationWindow {
   if (course.status === "cancelled" || course.cancelledAt) return "cancelled"
   if (course.status === "closed" || course.endsAt <= now) return "past"
-  if (course.startsAt <= now) return "started"
+  const days = workshopDays(course)
+  const deadlines = dayDeadlines(course)
+  if (days.every((d) => d.startsAt <= now)) return "started"
   if (course.status === "awaiting_signature") return "paused"
-  if (course.registrationDeadline <= now) return "closed"
+  if (days.every((d, i) => d.startsAt <= now || deadlines[i] <= now)) return "closed"
   if (course.seatsLeft <= 0) return "full"
   return "open"
 }

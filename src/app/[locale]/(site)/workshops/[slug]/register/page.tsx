@@ -194,6 +194,8 @@ async function RegisterView({ params }: PageProps<"/[locale]/workshops/[slug]/re
             ? workshopSchedule(w, locale, "full").map((d, i) => {
                 const left = w.daySeatsLeft[i] ?? 0
                 // The numbers only when visitors may see them; else just whether a place is left.
+                // A day that started or closed can't be chosen, and says so.
+                if (!w.dayOpen[i]) return { date: d.date, hours: d.hours, left: 0, closed: true }
                 return w.seats
                   ? { date: d.date, hours: d.hours, left, taken: w.seats.days[i]?.taken ?? 0 }
                   : { date: d.date, hours: d.hours, left: Math.min(left, 1) }
