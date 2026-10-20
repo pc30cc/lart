@@ -13,7 +13,7 @@ import { fallbackLanguage, localized, ownText } from "@/lib/format"
 import { getBrand, getSetting } from "@/lib/settings"
 import { getStorage, type Storage } from "@/lib/storage"
 import { workshopDays } from "@/features/workshops/days"
-import { activeStatuses, bookableSeats, dayDeadlines, daySeatsLeft, registrationWindow, safePaymentUrl } from "./schema"
+import { activeStatuses, bookableSeats, dayDeadlines, daySeatsLeft, nextDeadline, registrationWindow, safePaymentUrl } from "./schema"
 
 /**
  * The public side of workshops (no sign-in needed): the open workshops list,
@@ -203,7 +203,8 @@ export async function listOpenWorkshops(
       startsAt: r.startsAt,
       days: r.days,
       endsAt: r.endsAt,
-      registrationDeadline: r.registrationDeadline,
+      /** On several days, the next day's (`nextDeadline`). */
+      registrationDeadline: nextDeadline(r, now),
       price: r.price,
       maxCapacity: r.maxCapacity,
       seatsLeft: left,
@@ -328,7 +329,8 @@ export const getPublicWorkshop = cache(async (slug: string, locale: string) => {
     startsAt: row.startsAt,
     days: row.days,
     endsAt: row.endsAt,
-    registrationDeadline: row.registrationDeadline,
+    /** On several days, the next day's (`nextDeadline`). */
+    registrationDeadline: nextDeadline(row),
     maxCapacity: row.maxCapacity,
     price: row.price,
     seatsLeft: left,

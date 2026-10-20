@@ -163,6 +163,17 @@ export function dayDeadlines(course: { startsAt: Date; endsAt: Date; days?: Stor
 }
 
 /**
+ * The registration deadline to show: the first day still taking registrations
+ * (not started, before its own deadline), else the last day's. One day: the
+ * workshop's deadline.
+ */
+export function nextDeadline(course: { startsAt: Date; endsAt: Date; days?: StoredDays; registrationDeadline: Date }, now: Date = new Date()): Date {
+  const days = workshopDays(course)
+  const deadlines = dayDeadlines(course)
+  return deadlines.find((d, i) => days[i].startsAt > now && d > now) ?? deadlines[deadlines.length - 1]
+}
+
+/**
  * Places left (`daySeatsLeft(...).days`) on the days that still take
  * registrations at `now`: not started and before their deadline. A day that
  * has started or closed has none, so it can't be chosen.

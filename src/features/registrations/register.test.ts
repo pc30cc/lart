@@ -25,6 +25,7 @@ import {
   registrationWindow,
   bookableSeats,
   dayDeadlines,
+  nextDeadline,
   safePaymentUrl,
   sameParticipant,
   seatLimit,
@@ -813,6 +814,10 @@ describe("rules", () => {
     expect(registrationWindow({ ...two, seatsLeft: 3 }, at(47))).toBe("closed")
     expect(registrationWindow({ ...two, seatsLeft: 3 }, at(49))).toBe("started")
     expect(registrationWindow({ ...two, seatsLeft: 3 }, at(52))).toBe("past")
+    // The deadline shown: the next day still open, else the last one's.
+    expect(nextDeadline(two, at(-3)).toISOString()).toBe(at(-2).toISOString())
+    expect(nextDeadline(two, at(1)).toISOString()).toBe(at(46).toISOString())
+    expect(nextDeadline(two, at(50)).toISOString()).toBe(at(46).toISOString())
   })
 
   it("seatLimit: the maximum, and after the go decision the final number (never above the maximum)", () => {
