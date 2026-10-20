@@ -131,8 +131,10 @@ export function seatLimit(course: { maxCapacity: number; finalParticipants: numb
 /**
  * Places left on each day and in all. One day: `seatLimit` less those held.
  * Several days (each a session people choose one of): each day up to its own
- * maximum (the first day's is the workshop's), and after the go decision no
- * more than its final number in all days together.
+ * maximum (the first day's is the workshop's), also after the go decision:
+ * the go decision comes before the first day, while the later days still take
+ * registrations, and the contract names every day's participants. Their final
+ * number then follows the registrations (`followFinal`, registrations/final.ts).
  */
 export function daySeatsLeft(
   course: { maxCapacity: number; finalParticipants: number | null; startsAt: Date; endsAt: Date; days?: StoredDays },
@@ -145,9 +147,8 @@ export function daySeatsLeft(
     const left = Math.max(0, seatLimit(course) - all)
     return { days: [left], total: left }
   }
-  const cap = course.finalParticipants === null ? Infinity : Math.max(0, course.finalParticipants - all)
   const left = days.map((d, i) => Math.max(0, (i === 0 ? course.maxCapacity : (d.maxCapacity ?? course.maxCapacity)) - taken(i)))
-  return { days: left.map((n) => Math.min(n, cap)), total: Math.min(left.reduce((a, b) => a + b, 0), cap) }
+  return { days: left, total: left.reduce((a, b) => a + b, 0) }
 }
 
 /**

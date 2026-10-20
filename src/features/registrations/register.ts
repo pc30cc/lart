@@ -8,6 +8,7 @@ import { UserError } from "@/lib/errors"
 import { getSetting } from "@/lib/settings"
 import { forDay, workshopDays } from "@/features/workshops/days"
 import { seatsTakenByDay, workshopTerms } from "./public"
+import { followFinal } from "./final"
 import {
   activeStatuses,
   cancelPreview,
@@ -149,6 +150,7 @@ export async function registerForWorkshop(
         day: day ?? null,
       })
       .returning({ id: registrations.id })
+    await followFinal(tx, course.id)
     // The bell in the panel: someone registered.
     await tx.insert(adminNotifications).values({ kind: "registration", registrationId: row.id })
     return { id: row.id, status }

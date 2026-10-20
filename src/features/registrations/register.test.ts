@@ -411,6 +411,19 @@ describe("workshops on several days", () => {
     expect(await cancelMyRegistration(member.id, id)).toMatchObject({ paid: 150_000, percent: 100, refund: 150_000 })
   })
 
+  it("after the go decision a later day still takes registrations up to its own places, and the final number follows", async () => {
+    const course = await severalDays()
+    const [a, b] = [await newMember(), await newMember()]
+    await registerForWorkshop(a.id, await input(course.id, { day: 0 }))
+    // Decided with the one registration: the second day's place stays open.
+    await db.update(courses).set({ status: "confirmed", finalParticipants: 1 }).where(eq(courses.id, course.id))
+    expect(await getPublicWorkshop(course.slug, "en")).toMatchObject({ daySeatsLeft: [9, 1], window: "open" })
+    await registerForWorkshop(b.id, await input(course.id, { day: 1 }))
+    const [row] = await db.select({ finalParticipants: courses.finalParticipants }).from(courses).where(eq(courses.id, course.id))
+    expect(row.finalParticipants).toBe(2)
+    expect(await getPublicWorkshop(course.slug, "en")).toMatchObject({ daySeatsLeft: [9, 0] })
+  })
+
   it("a one-day workshop keeps no day", async () => {
     const course = await newCourse()
     const member = await newMember()
@@ -727,7 +740,7 @@ describe("public pages", () => {
 })
 
 describe("rules", () => {
-  it("daySeatsLeft: each day up to its own maximum, and no more than the final number in all", () => {
+  it("daySeatsLeft: each day up to its own maximum, also after the go decision", () => {
     const at = (d: number) => new Date(Date.UTC(2026, 9, d, 9)).toISOString()
     const days = [
       { startsAt: at(17), endsAt: at(17) },
@@ -735,7 +748,9 @@ describe("rules", () => {
     ]
     const course = { maxCapacity: 8, finalParticipants: null, startsAt: new Date(at(17)), endsAt: new Date(at(20)), days }
     expect(daySeatsLeft(course, [3, 4])).toEqual({ days: [5, 0], total: 5 })
-    expect(daySeatsLeft({ ...course, finalParticipants: 9 }, [3, 4])).toEqual({ days: [2, 0], total: 2 })
+    expect(daySeatsLeft({ ...course, finalParticipants: 7 }, [3, 4])).toEqual({ days: [5, 0], total: 5 })
+    // One day stays capped at its final number.
+    expect(daySeatsLeft({ ...course, days: null, finalParticipants: 4 }, [3])).toEqual({ days: [1], total: 1 })
     expect(daySeatsLeft({ ...course, days: null }, [3])).toEqual({ days: [5], total: 5 })
   })
 

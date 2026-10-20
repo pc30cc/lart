@@ -9,6 +9,7 @@ import { workshopDays } from "@/features/workshops/days"
 import { UserError } from "@/lib/errors"
 import { localized } from "@/lib/format"
 import { seatsTakenByDay, workshopTerms } from "../public"
+import { followFinal } from "../final"
 import { activeStatuses, daySeatsLeft, sameParticipant } from "../schema"
 import { momentOf, recordPayment } from "./payments"
 import type { addRegistrationSchema } from "./schema"
@@ -88,6 +89,7 @@ export async function registerByAdmin(tx: Tx, input: Input, adminId: string, now
       day: day ?? null,
     })
     .returning({ id: registrations.id })
+  await followFinal(tx, course.id)
   if (paid) {
     await recordPayment(tx, {
       registrationId: row.id,
