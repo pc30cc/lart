@@ -20,6 +20,7 @@ import { formatLira } from "@/lib/money"
 import { getSetting } from "@/lib/settings"
 import { sendEmail } from "@/lib/email"
 import { removeFiles, syncMedia } from "./media"
+import { workshopDays } from "./days"
 import {
   changedContractFields,
   contractLocked,
@@ -118,7 +119,7 @@ export const createWorkshop = adminAction(workshopSchema, async (input, ctx) => 
       )
       const [contract] = await tx
         .insert(contracts)
-        .values({ courseId: course.id, version: 1, instructorId: values.instructorId, templateId, status: "sent", ...fee })
+        .values({ courseId: course.id, version: 1, instructorId: values.instructorId, templateId, status: "sent", ...fee, feeDays: workshopDays(values).length })
         .returning({ id: contracts.id })
       await ctx.audit(
         {
@@ -261,7 +262,7 @@ export const updateWorkshop = adminAction(workshopUpdateSchema, async ({ id, ...
         const version = (current?.version ?? 0) + 1
         const [row] = await tx
           .insert(contracts)
-          .values({ courseId: id, version, instructorId: values.instructorId, templateId, status: "sent", ...fee })
+          .values({ courseId: id, version, instructorId: values.instructorId, templateId, status: "sent", ...fee, feeDays: workshopDays(values).length })
           .returning({ id: contracts.id })
         reissued = { id: row.id, version, voided: live?.version ?? null }
       }

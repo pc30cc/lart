@@ -317,6 +317,7 @@
     "feeEstimate": "Instructor fee (estimate)",
     "fee": {
       "fixed": "Fixed fee from the contract.",
+      "fixedDays": "{amount} a day × {count} days (days added after the contract included).",
       "perParticipant": "{count} participants × {amount}",
       "cancelled": "No fee: the workshop was cancelled.",
       "noContract": "No valid contract yet."

@@ -232,6 +232,13 @@
       "when": 1792309433444,
       "tag": "0032_hold_invited",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1792656061221,
+      "tag": "0033_contract_fee_days",
+      "breakpoints": true
     }
   ]
 }

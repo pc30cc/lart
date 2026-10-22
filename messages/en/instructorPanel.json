@@ -182,6 +182,7 @@
     },
     "fee": "Your fee",
     "feeFixed": "Fixed fee for the workshop",
+    "feeFixedDays": "{rate} a day × {count} days",
     "feePerParticipant": "{rate} per participant × {count}",
     "feeCancelled": "No fee: the workshop was cancelled",
     "advance": "Advance",

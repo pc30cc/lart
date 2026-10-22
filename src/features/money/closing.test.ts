@@ -3,7 +3,7 @@ import { and, desc, eq, inArray, ne, sql } from "drizzle-orm"
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { db } from "@/db"
-import { admins, auditLog, expenseFiles, ledgerLines, ledgerTransactions, registrations } from "@/db/schema"
+import { admins, auditLog, courses, expenseFiles, ledgerLines, ledgerTransactions, registrations } from "@/db/schema"
 import { cancelRegistration, recordPayment } from "@/features/registrations/admin/payments"
 import { splitByShares } from "@/lib/money"
 import en from "../../../messages/en/money.json"
@@ -77,6 +77,12 @@ describe("closingPlan (the math)", () => {
     expect(instructorFee(false, { type: "per_participant", amount: 15000 }, 8)).toBe(120000)
     expect(instructorFee(false, { type: "fixed", amount: 99000 }, 8)).toBe(99000)
     expect(instructorFee(true, { type: "fixed", amount: 99000 }, 8)).toBe(0)
+    // A fixed fee covers the days of its contract; a day added later adds the same again.
+    expect(instructorFee(false, { type: "fixed", amount: 800000, feeDays: 1, days: 2 }, 12)).toBe(1600000)
+    expect(instructorFee(false, { type: "fixed", amount: 800000, feeDays: 2, days: 2 }, 12)).toBe(800000)
+    expect(instructorFee(false, { type: "fixed", amount: 900000, feeDays: 2, days: 3 }, 12)).toBe(1350000)
+    // Per participant: every day's participants, whatever the days.
+    expect(instructorFee(false, { type: "per_participant", amount: 15000, feeDays: 1, days: 2 }, 8)).toBe(120000)
     expect(instructorFee(false, null, 8)).toBe(0)
   })
 
@@ -406,6 +412,21 @@ describe("closing a workshop", () => {
     expect((await payInstructor({ courseId, amount: 50001, occurredOn: yesterday(), note: "" })).ok).toBe(false)
     ok(await payInstructor({ courseId, amount: 50000, occurredOn: yesterday(), note: "IBAN" }))
     expect((await courseBalances(db, courseId)).payable).toBe(0)
+  })
+
+  it("a fixed fee counts again for a day added after the contract", async () => {
+    const courseId = await makeCourse(world, p1.id, { fee: { type: "fixed", amount: 800000 } })
+    const [row] = await db.select({ startsAt: courses.startsAt, endsAt: courses.endsAt }).from(courses).where(eq(courses.id, courseId))
+    const later = (d: Date) => new Date(d.getTime() + 2 * 86_400_000).toISOString()
+    // The contract was issued for one day; a second day is added to the workshop afterwards.
+    await db
+      .update(courses)
+      .set({ days: [{ startsAt: row.startsAt.toISOString(), endsAt: row.endsAt.toISOString() }, { startsAt: later(row.startsAt), endsAt: later(row.endsAt) }], endsAt: new Date(later(row.endsAt)) })
+      .where(eq(courses.id, courseId))
+    const preview = (await prepareClosing(db, courseId))!
+    expect(preview.plan.figures.instructorFee).toBe(1600000)
+    expect(preview.dayCount).toBe(2)
+    expect((await projectedFees()).get(courseId)).toBe(1600000)
   })
 
   it("closes a fixed-fee workshop that made a loss", async () => {

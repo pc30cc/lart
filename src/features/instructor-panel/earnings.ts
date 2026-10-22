@@ -17,7 +17,8 @@ export type EarningsInput = {
   cancelled: boolean
   /** `closed_totals.instructorFee` once the books are closed, else null. */
   closedFee: number | null
-  contract: { feeType: "fixed" | "per_participant"; feeAmount: number } | null
+  /** `feeDays`: the days the contract was issued for; `days`: the workshop's now (a fixed fee covers each day). */
+  contract: { feeType: "fixed" | "per_participant"; feeAmount: number; feeDays?: number; days?: number } | null
   participants: number
   /** Advance paid to the instructor, net of advances returned. */
   advancePaid: number
@@ -32,7 +33,11 @@ export type Earnings = { fee: number; received: number; owed: number; toReturn: 
 export function workshopEarnings(i: EarningsInput): Earnings {
   const fee =
     i.closedFee ??
-    instructorFee(i.cancelled, i.contract && { type: i.contract.feeType, amount: i.contract.feeAmount }, i.participants)
+    instructorFee(
+      i.cancelled,
+      i.contract && { type: i.contract.feeType, amount: i.contract.feeAmount, feeDays: i.contract.feeDays, days: i.contract.days },
+      i.participants,
+    )
   const received = i.advancePaid - i.advanceForCosts + i.payments
   return { fee, received, owed: Math.max(0, fee - received), toReturn: Math.max(0, received - fee) }
 }

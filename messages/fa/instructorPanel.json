@@ -182,6 +182,7 @@
     },
     "fee": "دستمزد شما",
     "feeFixed": "دستمزد ثابت برای کل ورکشاپ",
+    "feeFixedDays": "{rate} برای هر روز × {count} روز",
     "feePerParticipant": "{rate} برای هر شرکت‌کننده × {count}",
     "feeCancelled": "بدون دستمزد: ورکشاپ لغو شد",
     "advance": "پیش‌پرداخت",

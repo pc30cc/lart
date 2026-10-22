@@ -317,6 +317,7 @@
     "feeEstimate": "Eğitmen ücreti (tahmini)",
     "fee": {
       "fixed": "Sözleşmedeki sabit ücret.",
+      "fixedDays": "Gün başına {amount} × {count} gün (sözleşmeden sonra eklenen günler dahil).",
       "perParticipant": "{count} katılımcı × {amount}",
       "cancelled": "Atölye iptal edildi, ücret ödenmez.",
       "noContract": "Henüz geçerli bir sözleşme yok."

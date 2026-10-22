@@ -1,0 +1,1 @@
+ALTER TABLE "contracts" ADD COLUMN "fee_days" smallint DEFAULT 1 NOT NULL;

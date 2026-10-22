@@ -182,6 +182,7 @@
     },
     "fee": "Ücretiniz",
     "feeFixed": "Atölye için sabit ücret",
+    "feeFixedDays": "Gün başına {rate} × {count} gün",
     "feePerParticipant": "Katılımcı başına {rate} × {count}",
     "feeCancelled": "Ücret yok: atölye iptal edildi",
     "advance": "Ön ödeme",

@@ -91,7 +91,9 @@ function EarningsCard({ workshop: w, locale, brand }: { workshop: WorkshopEarnin
             {status === "cancelled"
               ? t("feeCancelled")
               : w.feeType === "fixed"
-                ? t("feeFixed")
+                ? w.dayCount > w.feeDays
+                  ? t("feeFixedDays", { rate: lira(Math.round(w.feeAmount / w.feeDays)), count: formatNumber(w.dayCount, locale) })
+                  : t("feeFixed")
                 : t("feePerParticipant", { rate: lira(w.feeAmount), count: formatNumber(w.participants, locale) })}
           </span>
         </Row>

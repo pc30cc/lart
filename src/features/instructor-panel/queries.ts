@@ -15,6 +15,7 @@ import {
   type Locale,
 } from "@/db/schema"
 import { renderContract } from "@/features/contracts/render"
+import { dayCount } from "@/features/money/closing"
 import { checkSignedText, recordedSignatureHashes, type SignedTextCheck } from "@/features/contracts/signed-text"
 import { maskIdNumber } from "@/features/instructors/schema"
 import { requireInstructor } from "@/lib/auth/instructor"
@@ -268,6 +269,7 @@ export async function getMyEarnings() {
       status: contracts.status,
       feeType: contracts.feeType,
       feeAmount: contracts.feeAmount,
+      feeDays: contracts.feeDays,
       advanceAmount: contracts.advanceAmount,
     })
     .from(contracts)
@@ -290,6 +292,7 @@ export async function getMyEarnings() {
       contractStatus: live.status,
       feeType: live.feeType,
       feeAmount: live.feeAmount,
+      feeDays: live.feeDays,
       advanceAmount: live.advanceAmount,
     })
     .from(courses)
@@ -310,7 +313,7 @@ export async function getMyEarnings() {
     const figures = workshopEarnings({
       cancelled,
       closedFee: closed ? (r.closedTotals?.instructorFee ?? null) : null,
-      contract: { feeType: r.feeType, feeAmount: r.feeAmount },
+      contract: { feeType: r.feeType, feeAmount: r.feeAmount, feeDays: r.feeDays, days: dayCount(r) },
       participants,
       ...money,
     })
@@ -327,6 +330,9 @@ export async function getMyEarnings() {
         closed,
         feeType: r.feeType,
         feeAmount: r.feeAmount,
+        /** A fixed fee: the days it is paid for now, and those the contract was issued for. */
+        dayCount: dayCount(r),
+        feeDays: r.feeDays,
         participants,
         /** The fee still depends on the number of participants (fixed at the go decision). */
         estimate: !closed && !cancelled && r.feeType === "per_participant" && r.finalParticipants === null,

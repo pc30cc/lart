@@ -336,6 +336,12 @@ export const contracts = pgTable("contracts", {
   feeType: feeType("fee_type").notNull(),
   /** Per participant or total, depending on feeType. */
   feeAmount: money("fee_amount").notNull(),
+  /**
+   * The days of the workshop this contract was issued for. A fixed fee covers
+   * them; a day added later without a new contract adds the same again
+   * (`instructorFee`): 8000 for one day, 16000 once a second day is added.
+   */
+  feeDays: smallint("fee_days").notNull().default(1),
   /** 0 means no advance payment. */
   advanceAmount: money("advance_amount").notNull().default(0),
   sentAt: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),

@@ -5,6 +5,7 @@ import { db, type Tx } from "@/db"
 import { admins, contracts, courses, registrations, type ClosedTotals } from "@/db/schema"
 import { UserError } from "@/lib/errors"
 import { splitByShares } from "@/lib/money"
+import { workshopDays, type StoredDays } from "@/features/workshops/days"
 import { courseBalances, postTransaction, today, type CourseBalances, type Line } from "./ledger"
 
 /**
@@ -21,7 +22,11 @@ import { courseBalances, postTransaction, today, type CourseBalances, type Line 
  * gives what confirmed workshops will owe, for the figures that need it.
  */
 
-export type FeeBasis = { type: "fixed" | "per_participant"; amount: number } | null
+/**
+ * The fee of a contract. `feeDays`: the days it was issued for; `days`: the
+ * workshop's days now (both 1 when left out).
+ */
+export type FeeBasis = { type: "fixed" | "per_participant"; amount: number; feeDays?: number; days?: number } | null
 export type Partner = { adminId: string; name: string; shareBp: number }
 
 /** Why a workshop cannot be closed (yet). Message keys: money.close.issues.<issue>. */
@@ -36,11 +41,20 @@ export type ClosingIssue =
   | "advanceTooBig"
   | "sharesNot100"
 
-/** The instructor fee: nothing for a cancelled workshop, else fixed or per participant. */
+/**
+ * The instructor fee: nothing for a cancelled workshop, else per participant
+ * (every day's together), or fixed for the days the contract was issued for:
+ * a day added later without a new contract adds the same again (8000 for one
+ * day, 16000 once a second day is added).
+ */
 export function instructorFee(cancelled: boolean, contract: FeeBasis, participants: number): number {
   if (cancelled || !contract) return 0
-  return contract.type === "fixed" ? contract.amount : contract.amount * participants
+  if (contract.type === "per_participant") return contract.amount * participants
+  return Math.round((contract.amount * (contract.days ?? 1)) / Math.max(1, contract.feeDays ?? 1))
 }
+
+/** The number of days of a workshop (one for a one-day workshop). */
+export const dayCount = (c: { startsAt: Date; endsAt: Date; days?: StoredDays }) => workshopDays(c).length
 
 export type ClosingFigures = {
   revenue: number
@@ -114,7 +128,13 @@ type Exec = Tx | typeof db
 /** The workshop's current (live) contract, or null. */
 async function liveContract(exec: Exec, courseId: string) {
   const [row] = await exec
-    .select({ feeType: contracts.feeType, feeAmount: contracts.feeAmount, advanceAmount: contracts.advanceAmount, status: contracts.status })
+    .select({
+      feeType: contracts.feeType,
+      feeAmount: contracts.feeAmount,
+      feeDays: contracts.feeDays,
+      advanceAmount: contracts.advanceAmount,
+      status: contracts.status,
+    })
     .from(contracts)
     .where(and(eq(contracts.courseId, courseId), ne(contracts.status, "void")))
     .orderBy(desc(contracts.version))
@@ -145,7 +165,9 @@ export async function prepareClosing(exec: Exec, courseId: string, now: Date = n
   const [course] = await exec
     .select({
       status: courses.status,
+      startsAt: courses.startsAt,
       endsAt: courses.endsAt,
+      days: courses.days,
       finalParticipants: courses.finalParticipants,
       closedAt: courses.closedAt,
       closedTotals: courses.closedTotals,
@@ -177,9 +199,12 @@ export async function prepareClosing(exec: Exec, courseId: string, now: Date = n
   const cancelled = course.status === "cancelled"
   // Fixed at the go decision; before it, everyone registered (paid or not yet), as the go decision counts.
   const participants = course.finalParticipants ?? regs.confirmed + regs.pending
+  const fee: FeeBasis = contract
+    ? { type: contract.feeType, amount: contract.feeAmount, feeDays: contract.feeDays, days: dayCount(course) }
+    : null
   const plan = closingPlan({
     cancelled,
-    contract: contract ? { type: contract.feeType, amount: contract.feeAmount } : null,
+    contract: fee,
     participants,
     balances,
     partners,
@@ -189,7 +214,7 @@ export async function prepareClosing(exec: Exec, courseId: string, now: Date = n
   // closing uses the ledger, and is refused while the two differ.
   const projection = closingPlan({
     cancelled,
-    contract: contract ? { type: contract.feeType, amount: contract.feeAmount } : null,
+    contract: fee,
     participants,
     balances: { ...balances, revenue: regs.expectedRevenue },
     partners,
@@ -211,6 +236,8 @@ export async function prepareClosing(exec: Exec, courseId: string, now: Date = n
 
   return {
     status: course.status,
+    /** The workshop's days now (a fixed fee covers each day the contract did not include: `instructorFee`). */
+    dayCount: dayCount(course),
     closedAt: course.closedAt,
     closedTotals: course.closedTotals,
     contract,
@@ -319,7 +346,7 @@ export async function workshopsToClose(exec: Exec = db, now: Date = new Date()) 
 export async function projectedFees(exec: Exec = db): Promise<Map<string, number>> {
   const id = sql`${courses}.${sql.identifier(courses.id.name)}`
   const live = exec
-    .selectDistinctOn([contracts.courseId], { courseId: contracts.courseId, feeType: contracts.feeType, feeAmount: contracts.feeAmount })
+    .selectDistinctOn([contracts.courseId], { courseId: contracts.courseId, feeType: contracts.feeType, feeAmount: contracts.feeAmount, feeDays: contracts.feeDays })
     .from(contracts)
     .where(ne(contracts.status, "void"))
     .orderBy(contracts.courseId, desc(contracts.version))
@@ -330,6 +357,10 @@ export async function projectedFees(exec: Exec = db): Promise<Map<string, number
       participants: sql<number>`coalesce(${courses.finalParticipants}, (select count(*) from ${registrations} r where r.course_id = ${id} and r.status in ('pending', 'confirmed')))`.mapWith(Number),
       feeType: live.feeType,
       feeAmount: live.feeAmount,
+      feeDays: live.feeDays,
+      startsAt: courses.startsAt,
+      endsAt: courses.endsAt,
+      days: courses.days,
     })
     .from(courses)
     .leftJoin(live, eq(live.courseId, courses.id))
@@ -337,7 +368,11 @@ export async function projectedFees(exec: Exec = db): Promise<Map<string, number
   return new Map(
     rows.map((r) => [
       r.id,
-      instructorFee(false, r.feeType && r.feeAmount !== null ? { type: r.feeType, amount: r.feeAmount } : null, r.participants),
+      instructorFee(
+        false,
+        r.feeType && r.feeAmount !== null ? { type: r.feeType, amount: r.feeAmount, feeDays: r.feeDays ?? 1, days: dayCount(r) } : null,
+        r.participants,
+      ),
     ]),
   )
 }

@@ -88,7 +88,13 @@ function feeText(finances: WorkshopFinances, t: T, locale: string, participants:
   const c = finances.contract
   if (finances.status === "cancelled") return t("finances.fee.cancelled")
   if (!c) return t("finances.fee.noContract")
-  if (c.feeType === "fixed") return t("finances.fee.fixed")
+  if (c.feeType === "fixed") {
+    // Days added after the contract: each costs what a day of the contract did.
+    if (finances.dayCount > c.feeDays) {
+      return t("finances.fee.fixedDays", { amount: formatLira(Math.round(c.feeAmount / c.feeDays), locale), count: formatNumber(finances.dayCount, locale) })
+    }
+    return t("finances.fee.fixed")
+  }
   return t("finances.fee.perParticipant", { count: formatNumber(participants, locale), amount: formatLira(c.feeAmount, locale) })
 }
 
