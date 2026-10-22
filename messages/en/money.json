@@ -509,7 +509,9 @@
     "kind": {
       "general": "General expense",
       "workshop": "Workshop expense",
-      "furnishing": "Furnishing"
+      "furnishing": "Furnishing",
+      "instructorPayment": "Payment to the instructor",
+      "instructorAdvance": "Instructor advance"
     },
     "reversed": "Reversed",
     "by": "Recorded by {name}",
@@ -521,6 +523,7 @@
     "field": {
       "receipts": "Receipt or invoice",
       "receiptsHint": "A photo or PDF of the receipt. You can add several files.",
+      "paymentHint": "The receipt of the payment to the instructor (photo or PDF). The instructor sees it in their panel.",
       "photos": "Item photo",
       "photosHint": "A photo of what was bought.",
       "add": "Add",

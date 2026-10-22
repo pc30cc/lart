@@ -12,6 +12,7 @@ const flat = (obj: object, prefix = ""): string[] =>
 
 /** Values for every placeholder the panel's messages use; numbers where they are formatted as numbers. */
 const values = {
+  n: "2",
   brand: "Lart",
   email: "a@b.c",
   name: "Zeynep",

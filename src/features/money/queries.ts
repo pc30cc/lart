@@ -556,12 +556,14 @@ export async function listReceipts(group: ReceiptGroup, page: number, workshopId
     group === "all" ? undefined : and(sql`${kind} = ${group}`, group === "workshops" && workshopId ? eq(t.courseId, workshopId) : undefined),
   )
   const reversal = alias(ledgerTransactions, "reversal")
-  // The expense's amount: its debit to the workshop's or the general expenses.
-  const amount = sql<number>`(select coalesce(sum(l.amount), 0) from ${ledgerLines} l where l.transaction_id = ${q(t, t.id)} and l.account in ('course_expenses', 'general_expenses'))`.mapWith(Number)
+  // The entry's amount: its debits (an expense's cost, a payment to the instructor, an advance paid or returned).
+  const amount = size
   const [rows, [totals], counts, workshops, url] = await Promise.all([
     db
       .select({
         transactionId: t.id,
+        /** "expense", or a payment to or from the instructor ("instructor_payment", "instructor_advance"). */
+        kind: t.kind,
         subject: t.description,
         occurredOn: t.occurredOn,
         furnishing: t.furnishing,

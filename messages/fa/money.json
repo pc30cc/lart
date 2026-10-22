@@ -509,7 +509,9 @@
     "kind": {
       "general": "هزینهٔ عمومی",
       "workshop": "هزینهٔ ورکشاپ",
-      "furnishing": "اثاثیه"
+      "furnishing": "اثاثیه",
+      "instructorPayment": "پرداخت به مدرس",
+      "instructorAdvance": "پیش‌پرداخت مدرس"
     },
     "reversed": "برگشت خورده",
     "by": "ثبت: {name}",
@@ -521,6 +523,7 @@
     "field": {
       "receipts": "فیش یا فاکتور",
       "receiptsHint": "عکس یا فایل PDF فیش. می‌توانید چند فایل اضافه کنید.",
+      "paymentHint": "رسید پرداخت به مدرس (عکس یا PDF). مدرس آن را در پنل خودش می‌بیند.",
       "photos": "عکس وسیله",
       "photosHint": "عکس چیزی که خریده شد.",
       "add": "افزودن",

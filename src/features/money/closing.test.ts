@@ -8,7 +8,7 @@ import { cancelRegistration, recordPayment } from "@/features/registrations/admi
 import { splitByShares } from "@/lib/money"
 import en from "../../../messages/en/money.json"
 import { setSetting } from "@/lib/settings"
-import { closeWorkshop, payInstructor, recordAdvance, recordContribution, recordExpense, recordWithdrawal, reverseEntry } from "./actions"
+import { closeWorkshop, editExpense, payInstructor, recordAdvance, recordContribution, recordExpense, recordWithdrawal, reverseEntry } from "./actions"
 import { closingPlan, instructorFee, prepareClosing, projectedFees, workshopsToClose, type Partner } from "./closing"
 import { courseBalances, partnerCapitals, postRegistrationPayment, postRegistrationRefund, today } from "./ledger"
 import { isReversible, listPartnerAccounts, listReceipts, listTransactions } from "./queries"
@@ -301,6 +301,14 @@ describe("receipts and furnishing", () => {
     expect(mine.rows.map((r) => r.transactionId)).toEqual([clay.id])
     expect(mine.workshops.find((w) => w.id === courseId)?.n).toBe(1)
     expect((await listReceipts("general", 1)).rows.some((r) => r.transactionId === clay.id)).toBe(false)
+  })
+
+  it("keeps an expense's files when it is edited, and those the form still lists only", async () => {
+    const [r1, r2] = [file("e1"), file("e2")]
+    const { id } = ok(await recordExpense({ ...entry(), category: "Paper", files: [r1, r2] }))
+    const edited = ok(await editExpense({ id, ...entry(), amount: 3000, category: "Paper", files: [r1] }))
+    const kept = await db.select({ transactionId: expenseFiles.transactionId, path: expenseFiles.path }).from(expenseFiles).where(inArray(expenseFiles.path, [r1.path, r2.path]))
+    expect(kept).toEqual([{ transactionId: edited.id, path: r1.path }])
   })
 
   it("refuses files that were never uploaded, item photos without furnishing, and furnishing of a workshop", async () => {

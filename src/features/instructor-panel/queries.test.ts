@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm"
 import { beforeAll, describe, expect, it, vi } from "vitest"
 
 import { db } from "@/db"
-import { contracts, courses, type ClosedTotals } from "@/db/schema"
+import { contracts, courses, expenseFiles, type ClosedTotals } from "@/db/schema"
 import { postAdvance, postExpense, postInstructorPayment, postTransaction, reverseTransaction, today } from "@/features/money/ledger"
 import {
   addRegistration,
@@ -232,10 +232,16 @@ describe("getMyEarnings", () => {
       postInstructorPayment(tx, { ...common, courseId: course.id, amount: 70_000 }),
     )
     await reverseTransaction(mistake, adminId)
-    await db.transaction((tx) => postInstructorPayment(tx, { ...common, courseId: course.id, amount: 50_000 }))
+    const paid = await db.transaction((tx) => postInstructorPayment(tx, { ...common, courseId: course.id, amount: 50_000 }))
+    await db.insert(expenseFiles).values({ transactionId: paid, role: "receipt", path: `receipts/pay-${run}.pdf`, contentType: "application/pdf", createdBy: adminId })
 
     const after = (await getMyEarnings()).workshops.find((w) => w.id === course.id)
     expect(after).toMatchObject({ fee: 150_000, received: 80_000, owed: 70_000, closed: true })
+    // Each payment listed, the reversed one left out, with the receipt kept with it.
+    expect(after!.payments.map((p) => [p.kind, p.amount, p.receipts.length, p.receipts[0]?.pdf ?? null])).toEqual([
+      ["advance", 40_000, 0, null],
+      ["payment", 50_000, 1, true],
+    ])
   })
 
   it("a per-participant fee before the go decision is an estimate from everyone registered, paid or not yet", async () => {

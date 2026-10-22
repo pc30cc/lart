@@ -149,7 +149,12 @@ export default async function ReceiptsPage({ searchParams }: PageProps<"/[locale
 
 /** One expense: its first file large, the others (the receipt beside the item's photo…) small below it. */
 function ReceiptCard({ receipt: r, edit, locale, t }: { receipt: ReceiptRow; edit: EditTarget | null; locale: string; t: T }) {
-  const kind = r.furnishing ? "furnishing" : r.courseId ? "workshop" : "general"
+  const kind =
+    r.kind === "instructor_payment" ? "instructorPayment"
+    : r.kind === "instructor_advance" ? "instructorAdvance"
+    : r.furnishing ? "furnishing"
+    : r.courseId ? "workshop"
+    : "general"
   const [first, ...others] = r.files
   const roles = [...new Set(r.files.map((f) => f.role))]
   // Receipts and an item photo together: each file says which it is.

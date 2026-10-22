@@ -164,6 +164,16 @@
   },
   "earnings": {
     "metaTitle": "Kazançlarım",
+    "payments": {
+      "title": "Ödemeler",
+      "kind": {
+        "advance": "Avans",
+        "advanceReturned": "İade edilen avans",
+        "payment": "Ücret ödemesi"
+      },
+      "receipt": "Dekontu gör",
+      "receiptN": "Dekont {n}"
+    },
     "title": "Kazançlarım",
     "subtitle": "Her atölye için ücretiniz, aldıklarınız ve kalan tutar.",
     "total": {

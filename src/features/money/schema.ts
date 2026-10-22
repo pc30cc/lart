@@ -110,12 +110,20 @@ export const workshopExpenseSchema = expenseSchema.refine((v) => v.courseId !== 
   error: "money.validation.chooseWorkshop",
 })
 
+/** Receipts kept with a payment to or from the instructor (photo or PDF; no item photos). */
+const paymentReceipts = z
+  .array(expenseFileSchema)
+  .max(MAX_EXPENSE_FILES)
+  .default([])
+  .refine((files) => files.every((f) => f.role === "receipt") && new Set(files.map((f) => f.path)).size === files.length)
+
 export const advanceSchema = z.object({
   courseId: uuid(),
   direction: z.enum(["paid", "returned"]),
   amount,
   occurredOn: entryDate(),
   note,
+  files: paymentReceipts,
 })
 export type AdvanceValues = z.input<typeof advanceSchema>
 
@@ -124,6 +132,7 @@ export const instructorPaymentSchema = z.object({
   amount,
   occurredOn: entryDate(),
   note,
+  files: paymentReceipts,
 })
 export type InstructorPaymentValues = z.input<typeof instructorPaymentSchema>
 

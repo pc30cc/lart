@@ -3,7 +3,7 @@
 import { and, eq, sum } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
-import { db } from "@/db"
+import { db, type Tx } from "@/db"
 import { admins, expenseFiles, ledgerLines } from "@/db/schema"
 import { adminAction, UserError } from "@/lib/action"
 import { getSetting } from "@/lib/settings"
@@ -32,6 +32,7 @@ import {
   instructorPaymentSchema,
   reverseSchema,
   withdrawalSchema,
+  type ExpenseFile,
 } from "./schema"
 
 /**
@@ -97,12 +98,30 @@ export const recordWithdrawal = adminAction(withdrawalSchema, async ({ partnerId
   return { id }
 })
 
+/** Only files that were really uploaded (a form left open may hold one a failed save never kept). */
+async function assertUploaded(files: ExpenseFile[]) {
+  const stored = await Promise.all(files.map((f) => exists(f.path)))
+  if (stored.includes(false)) throw new UserError("money.errors.fileGone", { field: "files" })
+}
+
+/** Keep the files (receipts, item photos) with a ledger entry. */
+async function keepFiles(tx: Tx, transactionId: string, files: ExpenseFile[], adminId: string) {
+  if (!files.length) return
+  await tx.insert(expenseFiles).values(
+    files.map((f) => ({
+      transactionId,
+      role: f.role,
+      path: f.path,
+      contentType: mediaContentType(f.path) ?? "application/octet-stream",
+      createdBy: adminId,
+    })),
+  )
+}
+
 /** An expense of a workshop (`courseId`) or of the business, paid from the wallet or out of the advance; recorded by the spender. */
 export const recordExpense = adminAction(expenseSchema, async ({ courseId, category, amount, occurredOn, source, furnishing, files }, ctx) => {
   await assertSpender(ctx.admin.id)
-  // Only files that were really uploaded (a form left open may hold one a failed save never kept).
-  const stored = await Promise.all(files.map((f) => exists(f.path)))
-  if (stored.includes(false)) throw new UserError("money.errors.fileGone", { field: "files" })
+  await assertUploaded(files)
   const id = await db.transaction(async (tx) => {
     const id = await postExpense(tx, {
       courseId,
@@ -113,17 +132,7 @@ export const recordExpense = adminAction(expenseSchema, async ({ courseId, categ
       furnishing,
       createdBy: ctx.admin.id,
     })
-    if (files.length) {
-      await tx.insert(expenseFiles).values(
-        files.map((f) => ({
-          transactionId: id,
-          role: f.role,
-          path: f.path,
-          contentType: mediaContentType(f.path) ?? "application/octet-stream",
-          createdBy: ctx.admin.id,
-        })),
-      )
-    }
+    await keepFiles(tx, id, files, ctx.admin.id)
     await ctx.audit(
       {
         action: "money.expense",
@@ -140,8 +149,9 @@ export const recordExpense = adminAction(expenseSchema, async ({ courseId, categ
 })
 
 /** An advance paid to a workshop's instructor from the wallet (by the spender), or returned by them to it. */
-export const recordAdvance = adminAction(advanceSchema, async ({ courseId, direction, amount, occurredOn, note }, ctx) => {
+export const recordAdvance = adminAction(advanceSchema, async ({ courseId, direction, amount, occurredOn, note, files }, ctx) => {
   if (direction === "paid") await assertSpender(ctx.admin.id)
+  await assertUploaded(files)
   const id = await db.transaction(async (tx) => {
     const id = await postAdvance(tx, {
       courseId,
@@ -151,12 +161,13 @@ export const recordAdvance = adminAction(advanceSchema, async ({ courseId, direc
       description: note,
       createdBy: ctx.admin.id,
     })
+    await keepFiles(tx, id, files, ctx.admin.id)
     await ctx.audit(
       {
         action: `money.advance_${direction}`,
         entity: "ledger_transaction",
         entityId: id,
-        data: { courseId, amount, occurredOn, note },
+        data: { courseId, amount, occurredOn, note, files: files.map((f) => f.path) },
       },
       tx,
     )
@@ -167,8 +178,9 @@ export const recordAdvance = adminAction(advanceSchema, async ({ courseId, direc
 })
 
 /** Pay the instructor what a closed workshop still owes them (or part of it), from the wallet; by the spender. */
-export const payInstructor = adminAction(instructorPaymentSchema, async ({ courseId, amount, occurredOn, note }, ctx) => {
+export const payInstructor = adminAction(instructorPaymentSchema, async ({ courseId, amount, occurredOn, note, files }, ctx) => {
   await assertSpender(ctx.admin.id)
+  await assertUploaded(files)
   const id = await db.transaction(async (tx) => {
     const id = await postInstructorPayment(tx, {
       courseId,
@@ -177,12 +189,13 @@ export const payInstructor = adminAction(instructorPaymentSchema, async ({ cours
       description: note,
       createdBy: ctx.admin.id,
     })
+    await keepFiles(tx, id, files, ctx.admin.id)
     await ctx.audit(
       {
         action: "money.instructor_payment",
         entity: "ledger_transaction",
         entityId: id,
-        data: { courseId, amount, occurredOn, note },
+        data: { courseId, amount, occurredOn, note, files: files.map((f) => f.path) },
       },
       tx,
     )
@@ -271,8 +284,7 @@ export const markDiscrepancy = adminAction(discrepancySchema, async ({ id, reaso
 /** Edit an expense (furnishing too): subject, amount, date, paid from, and its files. The workshop stays. */
 export const editExpense = adminAction(editExpenseSchema, async ({ id, category, amount, occurredOn, source, files }, ctx) => {
   await assertSpender(ctx.admin.id)
-  const stored = await Promise.all(files.map((f) => exists(f.path)))
-  if (stored.includes(false)) throw new UserError("money.errors.fileGone", { field: "files" })
+  await assertUploaded(files)
   const newId = await db.transaction(async (tx) => {
     const original = await startEdit(tx, id, ctx.admin.id)
     if (original.kind !== "expense") throw new UserError("money.errors.notEditable")
@@ -286,17 +298,9 @@ export const editExpense = adminAction(editExpenseSchema, async ({ id, category,
       createdBy: ctx.admin.id,
       editOf: id,
     })
-    if (files.length) {
-      await tx.insert(expenseFiles).values(
-        files.map((f) => ({
-          transactionId: newId,
-          role: f.role,
-          path: f.path,
-          contentType: mediaContentType(f.path) ?? "application/octet-stream",
-          createdBy: ctx.admin.id,
-        })),
-      )
-    }
+    // The files move to the corrected entry (a path is kept once): those the form still lists.
+    await tx.delete(expenseFiles).where(eq(expenseFiles.transactionId, id))
+    await keepFiles(tx, newId, files, ctx.admin.id)
     await ctx.audit(
       { action: "money.edit", entity: "ledger_transaction", entityId: id, data: { newId, kind: "expense", category, amount, occurredOn, paidFrom: source, files: files.map((f) => f.path) } },
       tx,
@@ -337,6 +341,8 @@ export const editAdvance = adminAction(editAdvanceSchema, async ({ id, direction
     const original = await startEdit(tx, id, ctx.admin.id)
     if (original.kind !== "instructor_advance" || !original.courseId) throw new UserError("money.errors.notEditable")
     const newId = await postAdvance(tx, { courseId: original.courseId, direction, amount, occurredOn, description: note, createdBy: ctx.admin.id, editOf: id })
+    // Its receipts stay with it (the edit form does not change them).
+    await tx.update(expenseFiles).set({ transactionId: newId }).where(eq(expenseFiles.transactionId, id))
     await ctx.audit(
       { action: "money.edit", entity: "ledger_transaction", entityId: id, data: { newId, kind: "instructor_advance", direction, amount, occurredOn, note } },
       tx,
@@ -354,6 +360,8 @@ export const editInstructorPayment = adminAction(editInstructorPaymentSchema, as
     const original = await startEdit(tx, id, ctx.admin.id)
     if (original.kind !== "instructor_payment" || !original.courseId) throw new UserError("money.errors.notEditable")
     const newId = await postInstructorPayment(tx, { courseId: original.courseId, amount, occurredOn, description: note, createdBy: ctx.admin.id, editOf: id })
+    // Its receipts stay with it (the edit form does not change them).
+    await tx.update(expenseFiles).set({ transactionId: newId }).where(eq(expenseFiles.transactionId, id))
     await ctx.audit(
       { action: "money.edit", entity: "ledger_transaction", entityId: id, data: { newId, kind: "instructor_payment", amount, occurredOn, note } },
       tx,

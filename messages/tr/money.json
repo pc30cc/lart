@@ -509,7 +509,9 @@
     "kind": {
       "general": "Genel gider",
       "workshop": "Atölye gideri",
-      "furnishing": "Demirbaş"
+      "furnishing": "Demirbaş",
+      "instructorPayment": "Eğitmene ödeme",
+      "instructorAdvance": "Eğitmen avansı"
     },
     "reversed": "İptal edildi",
     "by": "Kaydeden: {name}",
@@ -521,6 +523,7 @@
     "field": {
       "receipts": "Fiş veya fatura",
       "receiptsHint": "Fişin fotoğrafı ya da PDF dosyası. Birden fazla dosya ekleyebilirsiniz.",
+      "paymentHint": "Eğitmene ödemenin dekontu (fotoğraf veya PDF). Eğitmen bunu kendi panelinde görür.",
       "photos": "Eşyanın fotoğrafı",
       "photosHint": "Alınan şeyin fotoğrafı.",
       "add": "Ekle",

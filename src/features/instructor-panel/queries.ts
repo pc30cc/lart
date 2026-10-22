@@ -7,6 +7,7 @@ import { db } from "@/db"
 import {
   contracts,
   courses,
+  expenseFiles,
   instructors,
   ledgerLines,
   ledgerTransactions,
@@ -19,7 +20,7 @@ import { maskIdNumber } from "@/features/instructors/schema"
 import { requireInstructor } from "@/lib/auth/instructor"
 import { decrypt, sha256 } from "@/lib/crypto"
 import { errorForLog } from "@/lib/errors"
-import { getStorage } from "@/lib/storage"
+import { getStorage, publicUrls } from "@/lib/storage"
 import { workshopEarnings } from "./earnings"
 
 /**
@@ -295,7 +296,10 @@ export async function getMyEarnings() {
     .innerJoin(live, eq(live.courseId, courses.id))
     .where(eq(courses.instructorId, instructor.id))
     .orderBy(desc(courses.startsAt), asc(courses.id))
-  const moved = await instructorMoney(instructor.id, rows.map((r) => r.id))
+  const [moved, paid] = await Promise.all([
+    instructorMoney(instructor.id, rows.map((r) => r.id)),
+    instructorPayments(instructor.id, rows.map((r) => r.id)),
+  ])
 
   const workshops = rows.flatMap((r) => {
     const money = moved.get(r.id) ?? { advancePaid: 0, advanceForCosts: 0, payments: 0 }
@@ -328,6 +332,8 @@ export async function getMyEarnings() {
         estimate: !closed && !cancelled && r.feeType === "per_participant" && r.finalParticipants === null,
         advancePaid: money.advancePaid,
         advanceForCosts: money.advanceForCosts,
+        /** Each payment to (or advance returned by) the instructor, oldest first, with its receipts. */
+        payments: paid.get(r.id) ?? [],
         ...figures,
       },
     ]
@@ -383,6 +389,67 @@ async function instructorMoney(instructorId: string, courseIds: string[]) {
     if (!r.courseId) continue
     // Debit-positive lines: an advance paid is a debit, costs paid from it a credit.
     out.set(r.courseId, { advancePaid: r.advancePaid, advanceForCosts: 0 - r.advanceForCosts, payments: r.payments })
+  }
+  return out
+}
+
+/**
+ * The payments themselves, per workshop, oldest first: advances paid or
+ * returned and payments of the fee, each with its date, amount and the
+ * receipts the team kept with it. Only entries in force (not reversed; an
+ * edited one by its corrected version) and, as `instructorMoney`, booked on
+ * or after this instructor's first contract for the workshop.
+ */
+async function instructorPayments(instructorId: string, courseIds: string[]) {
+  type Payment = {
+    id: string
+    kind: "advance" | "advanceReturned" | "payment"
+    occurredOn: string
+    amount: number
+    receipts: { id: string; url: string; pdf: boolean }[]
+  }
+  const out = new Map<string, Payment[]>()
+  if (!courseIds.length) return out
+  const t = ledgerTransactions
+  const reversal = alias(ledgerTransactions, "reversal")
+  const id = sql`${t}.${sql.identifier(t.id.name)}`
+  const rows = await db
+    .select({
+      id: t.id,
+      courseId: t.courseId,
+      kind: t.kind,
+      occurredOn: t.occurredOn,
+      // Debit-positive: an advance paid (or a payment) is a debit of its account, an advance returned a credit.
+      amount: sql<number>`(select coalesce(sum(l.amount), 0) from ${ledgerLines} l where l.transaction_id = ${id} and l.account in ('instructor_advance', 'instructor_payable'))`.mapWith(Number),
+    })
+    .from(t)
+    .leftJoin(reversal, eq(reversal.reversalOf, t.id))
+    .where(
+      and(
+        inArray(t.courseId, courseIds),
+        inArray(t.kind, ["instructor_advance", "instructor_payment"]),
+        sql`${t.reversalOf} is null and ${reversal.id} is null`,
+        sql`${t.createdAt} >= (select min(c.sent_at) from ${contracts} c where c.course_id = ${t.courseId} and c.instructor_id = ${instructorId})`,
+      ),
+    )
+    .orderBy(asc(t.occurredOn), asc(t.createdAt))
+  if (!rows.length) return out
+  const [files, url] = await Promise.all([
+    db
+      .select({ id: expenseFiles.id, transactionId: expenseFiles.transactionId, path: expenseFiles.path, contentType: expenseFiles.contentType })
+      .from(expenseFiles)
+      .where(inArray(expenseFiles.transactionId, rows.map((r) => r.id)))
+      .orderBy(asc(expenseFiles.createdAt), asc(expenseFiles.id)),
+    publicUrls(),
+  ])
+  for (const r of rows) {
+    if (!r.courseId) continue
+    const receipts = files.flatMap((f) => {
+      const link = f.transactionId === r.id ? url(f.path) : null
+      return link ? [{ id: f.id, url: link, pdf: f.contentType === "application/pdf" }] : []
+    })
+    const kind = r.kind === "instructor_payment" ? "payment" : r.amount < 0 ? "advanceReturned" : "advance"
+    out.set(r.courseId, [...(out.get(r.courseId) ?? []), { id: r.id, kind, occurredOn: r.occurredOn, amount: Math.abs(r.amount), receipts }])
   }
   return out
 }

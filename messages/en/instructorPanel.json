@@ -164,6 +164,16 @@
   },
   "earnings": {
     "metaTitle": "My earnings",
+    "payments": {
+      "title": "Payments",
+      "kind": {
+        "advance": "Advance",
+        "advanceReturned": "Advance returned",
+        "payment": "Fee payment"
+      },
+      "receipt": "View receipt",
+      "receiptN": "Receipt {n}"
+    },
     "title": "My earnings",
     "subtitle": "Your fee for each workshop, what you’ve received and what is still to come.",
     "total": {

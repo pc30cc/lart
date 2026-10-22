@@ -418,16 +418,19 @@ function AdvanceForm({
       amount: suggested && suggested > 0 ? suggested : undefined,
       occurredOn: todayIso(),
       note: "",
+      files: [],
     },
     successMessage: t(`advance.${direction}.done`),
     onSuccess: onDone,
   })
+  const receipts = usePaymentReceipts(form)
   return (
-    <DialogForm form={form} submit={submit} pending={pending} submitLabel={t("forms.save")}>
+    <DialogForm form={form} submit={submit} pending={pending || receipts.uploading} submitLabel={t("forms.save")}>
       <AmountField<AdvanceValues> label={t("forms.amount")} />
       <DateField<AdvanceValues> name="occurredOn" label={t("forms.date")} />
       <FromWallet text={direction === "paid" ? t("forms.fromWallet") : t("forms.toWallet")} />
       <TextField<AdvanceValues> name="note" label={t("forms.note")} description={t("forms.noteHint")} maxLength={200} />
+      <ReceiptFiles role="receipt" label={t("receipts.field.receipts")} hint={t("receipts.field.paymentHint")} {...receipts.field} />
     </DialogForm>
   )
 }
@@ -477,16 +480,40 @@ function PayForm({
   const { form, submit, pending } = useActionForm({
     schema: instructorPaymentSchema,
     action: payInstructor,
-    defaultValues: { courseId, amount: owed, occurredOn: todayIso(), note: "" },
+    defaultValues: { courseId, amount: owed, occurredOn: todayIso(), note: "", files: [] },
     successMessage: t("pay.done"),
     onSuccess: onDone,
   })
+  const receipts = usePaymentReceipts(form)
   return (
-    <DialogForm form={form} submit={submit} pending={pending} submitLabel={t("pay.submit")}>
+    <DialogForm form={form} submit={submit} pending={pending || receipts.uploading} submitLabel={t("pay.submit")}>
       <AmountField<InstructorPaymentValues> label={t("forms.amount")} />
       <DateField<InstructorPaymentValues> name="occurredOn" label={t("forms.date")} />
       <FromWallet text={t("forms.fromWallet")} />
       <TextField<InstructorPaymentValues> name="note" label={t("forms.note")} description={t("forms.noteHint")} maxLength={200} />
+      <ReceiptFiles role="receipt" label={t("receipts.field.receipts")} hint={t("receipts.field.paymentHint")} {...receipts.field} />
     </DialogForm>
   )
+}
+
+/**
+ * The receipt or invoice of a payment to or from the instructor (the
+ * instructor sees it in their panel): the form's `files`, and whether an
+ * upload is still running (the form waits for it).
+ */
+function usePaymentReceipts<T extends FieldValues & { files?: ExpenseFile[] }, O>(form: UseFormReturn<T, unknown, O>) {
+  const [uploading, setUploading] = useState(0)
+  const name = "files" as Path<T>
+  const value = (useWatch({ control: form.control, name }) as ExpenseFile[] | undefined) ?? []
+  const current = () => (form.getValues(name) as ExpenseFile[] | undefined) ?? []
+  const set = (files: ExpenseFile[]) => form.setValue(name, files as T[Path<T>], { shouldDirty: true })
+  return {
+    uploading: uploading > 0,
+    field: {
+      value,
+      onAdd: (file: ExpenseFile) => set([...current(), file]),
+      onRemove: (path: string) => set(current().filter((f) => f.path !== path)),
+      onBusy: (delta: number) => setUploading((n) => n + delta),
+    },
+  }
 }

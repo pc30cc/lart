@@ -1,4 +1,4 @@
-import { InfoIcon, WalletIcon } from "lucide-react"
+import { FileTextIcon, InfoIcon, ReceiptTextIcon, WalletIcon } from "lucide-react"
 import type { Metadata } from "next"
 import { useTranslations } from "next-intl"
 import { getTranslations } from "next-intl/server"
@@ -108,6 +108,37 @@ function EarningsCard({ workshop: w, locale, brand }: { workshop: WorkshopEarnin
           <Money value={w.owed} className={cn("font-semibold", w.owed > 0 && "text-primary")} />
         </Row>
       </dl>
+
+      {w.payments.length > 0 && (
+        <section aria-label={t("payments.title")} className="space-y-2">
+          <h3 className="text-muted-foreground text-xs font-medium">{t("payments.title")}</h3>
+          <ul className="divide-y rounded-xl border text-sm">
+            {w.payments.map((p) => (
+              <li key={p.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 px-3.5 py-2.5">
+                <span className="min-w-0">
+                  <span className="block font-medium">{t(`payments.kind.${p.kind}`)}</span>
+                  <span className="text-muted-foreground block text-xs">{formatDate(`${p.occurredOn}T09:00:00Z`, locale, "long")}</span>
+                </span>
+                <span className="flex items-center gap-2">
+                  <Money value={p.amount} className="font-medium" />
+                  {p.receipts.map((r, i) => (
+                    <a
+                      key={r.id}
+                      href={r.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:bg-primary/8 focus-visible:ring-ring/50 inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium outline-none focus-visible:ring-3"
+                    >
+                      {r.pdf ? <FileTextIcon className="size-3.5" aria-hidden /> : <ReceiptTextIcon className="size-3.5" aria-hidden />}
+                      {p.receipts.length > 1 ? t("payments.receiptN", { n: formatNumber(i + 1, locale) }) : t("payments.receipt")}
+                    </a>
+                  ))}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {w.toReturn > 0 && (
         <p className="bg-warning/10 rounded-xl p-3 text-sm text-pretty">{t("toReturn", { amount: lira(w.toReturn), brand })}</p>
