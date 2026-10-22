@@ -66,7 +66,8 @@ export const addRegistrationAction = adminAction(addRegistrationSchema, async (i
     if (input.holdId) {
       const hold = await changeHold(tx, input.holdId, -1)
       if (hold.courseId !== input.courseId) throw new UserError("workshops.registrations.holds.errors.gone")
-      input = { ...input, day: hold.day ?? undefined }
+      // A hold without a day is on the first one (one day, or the first of several).
+      input = { ...input, day: hold.day ?? 0 }
       await ctx.audit({ action: "registration.release", entity: "workshop", entityId: hold.courseId, data: { count: 1, day: hold.day, note: hold.note, registered: true } }, tx)
     }
     const added = await registerByAdmin(tx, input, ctx.admin.id)
