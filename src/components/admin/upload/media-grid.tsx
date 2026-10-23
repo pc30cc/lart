@@ -307,14 +307,19 @@ export function MediaGrid({
                     )}
                   >
                     {item.kind === "image" ? (
-                      // eslint-disable-next-line @next/next/no-img-element -- CDN URL, any host
-                      <img
-                        src={item.url}
-                        alt={label(item.kind, index)}
-                        loading="lazy"
-                        draggable={false}
-                        className="size-full object-cover transition-transform duration-500 group-hover/tile:scale-[1.03]"
-                      />
+                      // The whole photo, whatever its shape, on a blurred copy of itself.
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element -- CDN URL, any host */}
+                        <img src={item.url} alt="" aria-hidden loading="lazy" draggable={false} className="absolute inset-0 size-full scale-110 object-cover opacity-60 blur-lg" />
+                        {/* eslint-disable-next-line @next/next/no-img-element -- CDN URL, any host */}
+                        <img
+                          src={item.url}
+                          alt={label(item.kind, index)}
+                          loading="lazy"
+                          draggable={false}
+                          className="relative size-full object-contain transition-transform duration-500 group-hover/tile:scale-[1.03]"
+                        />
+                      </>
                     ) : (
                       <>
                         <video

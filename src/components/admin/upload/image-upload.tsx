@@ -133,13 +133,28 @@ export function ImageUpload({
               className={cn("size-full scale-105 blur-[2px]", isLogo ? "object-contain p-4" : "object-cover")}
             />
           ) : url && broken !== url ? (
-            // eslint-disable-next-line @next/next/no-img-element -- CDN URL, any host
-            <img
-              src={url}
-              alt={t("upload.photoAlt")}
-              onError={() => setBroken(url)}
-              className={cn("size-full animate-in fade-in-0 duration-300", isLogo ? "object-contain p-4" : "object-cover")}
-            />
+            isLogo ? (
+              // eslint-disable-next-line @next/next/no-img-element -- CDN URL, any host
+              <img
+                src={url}
+                alt={t("upload.photoAlt")}
+                onError={() => setBroken(url)}
+                className="size-full animate-in object-contain p-4 duration-300 fade-in-0"
+              />
+            ) : (
+              // The whole photo, whatever its shape (a portrait one is not cut down to its middle), on a blurred copy of itself.
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element -- CDN URL, any host */}
+                <img src={url} alt="" aria-hidden className="absolute inset-0 size-full scale-110 object-cover opacity-60 blur-xl" />
+                {/* eslint-disable-next-line @next/next/no-img-element -- CDN URL, any host */}
+                <img
+                  src={url}
+                  alt={t("upload.photoAlt")}
+                  onError={() => setBroken(url)}
+                  className="relative size-full animate-in object-contain duration-300 fade-in-0"
+                />
+              </>
+            )
           ) : (
             <div className="flex size-full flex-col items-center justify-center gap-2 text-muted-foreground">
               <ImageIcon className="size-6" />

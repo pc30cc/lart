@@ -105,7 +105,8 @@ export function emptyWorkshopValues(): DefaultValues<Values> {
  * created, or by "Start over".
  */
 const DRAFT_KEY = "limer:new-workshop-draft:v1"
-type Draft = { values: Partial<Values>; slugEdited: boolean }
+/** `coverUrl`: the uploaded cover's address, to show it again after a reload. */
+type Draft = { values: Partial<Values>; slugEdited: boolean; coverUrl?: string | null }
 
 function readDraft(): Draft | null {
   try {
@@ -211,6 +212,8 @@ export function WorkshopForm({
 
   // A new workshop: bring back the draft kept in this browser, then keep it as it is typed.
   const [draftRestored, setDraftRestored] = useState(false)
+  // The address of a cover uploaded here (the saved workshop's comes with it).
+  const [coverUrl, setCoverUrl] = useState<string | null>(null)
   const [draftLoaded, setDraftLoaded] = useState(editing)
   // The draft lives in this browser's storage, readable only after the page is shown (not while it is rendered on the server).
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -220,6 +223,7 @@ export function WorkshopForm({
     if (draft?.values) {
       form.reset({ ...emptyWorkshopValues(), ...draft.values })
       setSlugEdited(draft.slugEdited)
+      if (draft.values.coverPath && draft.coverUrl) setCoverUrl(draft.coverUrl)
       setDraftRestored(true)
     }
     setDraftLoaded(true)
@@ -230,13 +234,14 @@ export function WorkshopForm({
   useEffect(() => {
     if (editing || !draftLoaded) return
     const timer = window.setTimeout(() => {
-      if (form.formState.isDirty) writeDraft({ values: form.getValues(), slugEdited })
+      if (form.formState.isDirty) writeDraft({ values: form.getValues(), slugEdited, coverUrl })
     }, 400)
     return () => window.clearTimeout(timer)
-  }, [watched, slugEdited, editing, draftLoaded, form])
+  }, [watched, slugEdited, coverUrl, editing, draftLoaded, form])
   function startOver() {
     writeDraft(null)
     form.reset(emptyWorkshopValues())
+    setCoverUrl(null)
     setSlugEdited(false)
     setDraftRestored(false)
   }
@@ -366,6 +371,7 @@ export function WorkshopForm({
             <Select
               value={(field.value as string | null) ?? "default"}
               onValueChange={(v) => {
+                if (!v) return // see SelectField
                 field.onChange(v === "default" ? null : v)
                 field.onBlur()
               }}
@@ -416,8 +422,11 @@ export function WorkshopForm({
               purpose="course_cover"
               {...field}
               value={field.value as string | null}
-              onChange={(path) => field.onChange(path)}
-              previewUrl={workshop?.coverUrl}
+              onChange={(path, result) => {
+                field.onChange(path)
+                setCoverUrl(result?.url ?? null)
+              }}
+              previewUrl={coverUrl ?? workshop?.coverUrl}
               target={uploadTarget}
             />
           )}
@@ -565,6 +574,9 @@ function SelectField({
         <Select
           value={(field.value as string) || undefined}
           onValueChange={(v) => {
+            // Radix reports "" when the value is set from code (a restored draft) before its options are
+            // rendered; taking it would clear the choice and the form would then refuse to save.
+            if (!v) return
             field.onChange(v)
             field.onBlur()
           }}
