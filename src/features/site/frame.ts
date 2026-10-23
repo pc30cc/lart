@@ -40,6 +40,7 @@ export async function getSiteFrame(
     footer: {
       links: [
         { href: "/workshops", label: th("workshops") },
+        { href: "/workshops?view=past", label: th("past") },
         { href: "/about", label: th("about") },
         { href: "/story", label: th("story") },
         { href: "/contact", label: tl("contact") },

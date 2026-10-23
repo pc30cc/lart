@@ -8,7 +8,19 @@
     "emptyText": "Nothing is open for registration right now. Please check back in a little while!",
     "filterLabel": "Workshops by craft",
     "all": "All",
-    "with": "with {name}"
+    "with": "with {name}",
+    "views": {
+      "label": "Show workshops",
+      "upcoming": "Upcoming",
+      "past": "Past"
+    },
+    "past": {
+      "title": "Past Workshops",
+      "subtitle": "Moments from the workshops we made together.",
+      "metaDescription": "Workshops {brand} has held, with their photos.",
+      "emptyTitle": "No workshops held yet",
+      "emptyText": "After the first workshops, their photos will show here."
+    }
   },
   "price": {
     "free": "Free",

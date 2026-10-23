@@ -8,7 +8,19 @@
     "emptyText": "Şu anda kayda açık bir atölye yok. Lütfen biraz sonra yeniden bakın!",
     "filterLabel": "Zanaata göre atölyeler",
     "all": "Tümü",
-    "with": "Eğitmen: {name}"
+    "with": "Eğitmen: {name}",
+    "views": {
+      "label": "Atölyeleri göster",
+      "upcoming": "Yaklaşan",
+      "past": "Geçmiş"
+    },
+    "past": {
+      "title": "Geçmiş Atölyeler",
+      "subtitle": "Birlikte yarattığımız atölyelerden anlar.",
+      "metaDescription": "{brand}'in düzenlediği atölyeler ve fotoğrafları.",
+      "emptyTitle": "Henüz düzenlenmiş atölye yok",
+      "emptyText": "İlk atölyelerden sonra fotoğrafları burada görünecek."
+    }
   },
   "price": {
     "free": "Ücretsiz",

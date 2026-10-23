@@ -3,7 +3,7 @@ import { renderToString } from "react-dom/server"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { WorkshopCard } from "@/features/registrations/public"
-import type { PublicCategory } from "@/themes/types"
+import type { PastWorkshop, PublicCategory } from "@/themes/types"
 import WorkshopsPage, { generateMetadata } from "./page"
 
 // Outside a Next.js request: plain links, the real English texts, a bare card
@@ -31,7 +31,7 @@ vi.mock("next-intl/server", async () => {
   }
 })
 
-const state = vi.hoisted(() => ({ workshops: [] as WorkshopCard[], categories: [] as PublicCategory[] }))
+const state = vi.hoisted(() => ({ workshops: [] as WorkshopCard[], categories: [] as PublicCategory[], past: [] as PastWorkshop[] }))
 vi.mock("@/features/registrations/public", () => ({
   listOpenWorkshops: vi.fn(async (_locale: string, { category }: { category?: string } = {}) =>
     state.workshops.filter((w) => !category || w.categorySlug === category),
@@ -40,6 +40,7 @@ vi.mock("@/features/registrations/public", () => ({
 vi.mock("@/features/site/public", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/features/site/public")>()),
   listPublicCategories: async () => state.categories,
+  listPastWorkshops: async () => state.past,
 }))
 vi.mock("@/themes/registry", () => ({
   getActiveTheme: async () => ({ theme: { WorkshopCard: ({ workshop }: { workshop: WorkshopCard }) => <article>{workshop.title}</article> } }),
@@ -97,6 +98,7 @@ beforeEach(() => {
     { slug: "candles", name: "Candles", count: 2 },
     { slug: "ceramics", name: "Ceramics", count: 1 },
   ]
+  state.past = []
   vi.clearAllMocks()
 })
 
@@ -154,5 +156,23 @@ describe("/workshops", () => {
     const filtered = await generateMetadata(props({ category: "candles" }))
     expect(filtered.alternates).toBeUndefined()
     expect(filtered.robots).toEqual({ index: false, follow: true })
+  })
+
+  it("?view=past shows the workshops already held, with tabs to switch back", async () => {
+    state.past = [{ slug: "candl", title: "Hand-made candles", startsAt: new Date("2026-10-20T09:00:00Z"), coverUrl: "https://cdn.test/c.webp", photos: [] }]
+    const html = await render({ view: "past" })
+    expect(html).toMatch(/<h1[^>]*>Past Workshops<\/h1>/)
+    expect(html).toContain("Hand-made candles")
+    expect(html).toContain('href="/workshops/candl"')
+    expect(titles(html)).toEqual([])
+    expect(pills(html).slice(0, 2)).toEqual([
+      ["Upcoming", "/workshops", false],
+      ["Past", "/workshops?view=past", true],
+    ])
+    // The upcoming list shows the tabs too once a workshop was held.
+    expect(pills(await render()).slice(0, 2)).toEqual([
+      ["Upcoming", "/workshops", true],
+      ["Past", "/workshops?view=past", false],
+    ])
   })
 })
