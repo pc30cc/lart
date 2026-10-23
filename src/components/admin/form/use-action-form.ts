@@ -73,7 +73,20 @@ export function useActionForm<S extends z.ZodType<FieldValues, FieldValues>, T>(
           }
         })
       }),
+    // Not sent: the field with the problem may be far up a long form, out of sight of the button.
+    // Say so by the button, and bring the first marked field into view.
+    () => window.setTimeout(showFirstInvalid, 50),
   )
+
+  function showFirstInvalid() {
+    const field = document.querySelector<HTMLElement>('[data-invalid="true"]')
+    // The label as seen: without the required mark and its screen-reader word.
+    const labelNode = field?.querySelector('[data-slot="field-label"]')?.cloneNode(true) as HTMLElement | undefined
+    labelNode?.querySelectorAll(".sr-only, [aria-hidden]").forEach((node) => node.remove())
+    const label = labelNode?.textContent?.replace(/\*/g, "").trim()
+    toast.error(t("errors.invalidInput"), label ? { description: label } : undefined)
+    field?.scrollIntoView({ behavior: "smooth", block: "center" })
+  }
 
   return { form, submit, pending }
 }
