@@ -626,5 +626,26 @@
         "sent": "Test message sent to {count, plural, one {# admin} other {# admins}}."
       }
     }
+  },
+  "translation": {
+    "title": "Automatic translation",
+    "description": "The «Translate» button by every field in three languages fills the empty languages from the text written. With an OpenAI key the translation is more natural and accurate; without one a free service is used (plainer quality, a daily limit).",
+    "key": "OpenAI (ChatGPT) API key",
+    "keyHint": "From platform.openai.com → API keys. Left empty: the free service is used.",
+    "keySaved": "A key is saved. Enter a new one to replace it.",
+    "model": "Model",
+    "modelHint": "Cheap models. gpt-4o-mini is enough for the site's texts.",
+    "models": {
+      "gpt4oMini": "Cheap and good; recommended",
+      "gpt41Mini": "A bit more accurate, a bit dearer",
+      "gpt41Nano": "Cheapest, plainer"
+    },
+    "removeKey": "Remove key",
+    "errors": {
+      "failed": "The translation service did not answer. Try again in a moment.",
+      "badKey": "The OpenAI key is wrong or revoked. Enter a new key in Settings → General.",
+      "limit": "The service's translation limit is reached. Try again later (or enter an OpenAI key).",
+      "keyFormat": "The key starts with sk-."
+    }
   }
 }

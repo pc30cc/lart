@@ -718,7 +718,8 @@ describe("public pages", () => {
     const paused = await newCourse({ status: "awaiting_signature" }, 3 * HOUR)
     const cancelled = await newCourse({ status: "cancelled", cancelledAt: new Date() }, 3 * HOUR)
 
-    const list = await listOpenWorkshops("en")
+    // No cap: rows earlier runs left in the test database must not push this one out.
+    const list = await listOpenWorkshops("en", { limit: 100_000 })
     expect(list.find((w) => w.id === open.id)).toMatchObject({ title: "Candle making", venue: "Moda Art House", seatsLeft: 2, window: "open" })
     expect(list.map((w) => w.id)).not.toContain(paused.id)
     expect(list.map((w) => w.id)).not.toContain(cancelled.id)

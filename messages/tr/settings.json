@@ -626,5 +626,26 @@
         "sent": "Deneme mesajı {count, plural, one {# yöneticiye} other {# yöneticiye}} gönderildi."
       }
     }
+  },
+  "translation": {
+    "title": "Otomatik çeviri",
+    "description": "Üç dilli her alanın yanındaki «Çevir» düğmesi boş dilleri yazılan metinden doldurur. OpenAI anahtarıyla çeviri daha doğal ve doğru olur; anahtar yoksa ücretsiz bir servis (daha sade kalite, günlük sınır) kullanılır.",
+    "key": "OpenAI (ChatGPT) API anahtarı",
+    "keyHint": "platform.openai.com → API keys. Boş bırakılırsa ücretsiz servis kullanılır.",
+    "keySaved": "Anahtar kayıtlı. Değiştirmek için yenisini girin.",
+    "model": "Model",
+    "modelHint": "Ucuz modeller. Site metinleri için gpt-4o-mini yeterli.",
+    "models": {
+      "gpt4oMini": "Ucuz ve iyi; önerilen",
+      "gpt41Mini": "Biraz daha doğru, biraz daha pahalı",
+      "gpt41Nano": "En ucuz, daha sade"
+    },
+    "removeKey": "Anahtarı sil",
+    "errors": {
+      "failed": "Çeviri servisi yanıt vermedi. Biraz sonra tekrar deneyin.",
+      "badKey": "OpenAI anahtarı geçersiz. Ayarlar → Genel'de yeni bir anahtar girin.",
+      "limit": "Servisin çeviri sınırı doldu. Biraz sonra tekrar deneyin (veya bir OpenAI anahtarı girin).",
+      "keyFormat": "Anahtar sk- ile başlamalı."
+    }
   }
 }

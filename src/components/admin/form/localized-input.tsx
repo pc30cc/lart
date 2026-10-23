@@ -1,9 +1,11 @@
 "use client"
 
-import { CheckIcon } from "lucide-react"
+import { CheckIcon, LanguagesIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
-import { useId, useState } from "react"
+import { unstable_rethrow } from "next/navigation"
+import { useId, useState, useTransition } from "react"
 import { Controller, useFormContext, useWatch } from "react-hook-form"
+import { toast } from "sonner"
 
 import { RequiredMark, useErrorText } from "@/components/admin/form/form"
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field"
@@ -11,7 +13,9 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import type { Locale, LocalizedText } from "@/db/schema"
+import { translateTextAction } from "@/features/translate/actions"
 import { cn } from "@/lib/utils"
+import { useCanTranslate } from "./translate-context"
 
 const LOCALES: Locale[] = ["fa", "tr", "en"]
 
@@ -68,6 +72,31 @@ function LocalizedField({
   }
 
   const filled = LOCALES.filter((l) => value[l]?.trim()).length
+  // "Translate": from the tab shown (or the first language written) into the empty ones.
+  const canTranslate = useCanTranslate()
+  const { setValue } = useFormContext()
+  const [translating, startTranslate] = useTransition()
+  const source = value[active]?.trim() ? active : LOCALES.find((l) => value[l]?.trim())
+  const empty = LOCALES.filter((l) => !value[l]?.trim())
+  function translateNow() {
+    if (!source || !empty.length) return
+    startTranslate(async () => {
+      try {
+        const result = await translateTextAction({ text: value[source] ?? "", from: source, to: empty })
+        if (!result) return
+        if (!result.ok) return void toast.error(result.error)
+        const done = empty.filter((l) => result.data[l])
+        for (const l of done) setValue(`${name}.${l}`, result.data[l], { shouldDirty: true, shouldValidate: formState.isSubmitted })
+        if (done.length) {
+          setActive(done[0])
+          toast.success(t("translate.done"))
+        } else toast.error(t("translate.failed"))
+      } catch (err) {
+        unstable_rethrow(err)
+        toast.error(t("errors.network"))
+      }
+    })
+  }
 
   return (
     <Field data-invalid={errorLocales.length > 0} className={className}>
@@ -76,8 +105,22 @@ function LocalizedField({
           {label}
           {required.length > 0 && <RequiredMark />}
         </FieldLabel>
-        <span className="text-muted-foreground text-xs tabular-nums">
-          {t("form.languagesFilled", { count: filled, total: LOCALES.length })}
+        <span className="flex items-center gap-2">
+          {canTranslate && filled > 0 && empty.length > 0 && (
+            <button
+              type="button"
+              onClick={translateNow}
+              disabled={translating}
+              className="text-primary hover:bg-primary/8 focus-visible:ring-ring/50 inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs font-medium outline-none focus-visible:ring-3 disabled:opacity-60"
+              title={t("translate.hint")}
+            >
+              <LanguagesIcon aria-hidden className={cn("size-3.5", translating && "animate-pulse")} />
+              {translating ? t("translate.working") : t("translate.button")}
+            </button>
+          )}
+          <span className="text-muted-foreground text-xs tabular-nums">
+            {t("form.languagesFilled", { count: filled, total: LOCALES.length })}
+          </span>
         </span>
       </div>
 

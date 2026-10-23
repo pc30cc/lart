@@ -106,5 +106,12 @@
     "label": "Başka birinin hesabı",
     "text": "{name} olarak görüntülüyorsunuz — {admin} hesabıyla giriş yaptınız",
     "end": "Bitir"
+  },
+  "translate": {
+    "button": "Çevir",
+    "working": "Çevriliyor…",
+    "done": "Çevrildi. Kaydetmeden önce bir göz atın.",
+    "failed": "Çevrilemedi. Tekrar deneyin.",
+    "hint": "Boş dilleri yazdığınız metinden çevirir"
   }
 }

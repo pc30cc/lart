@@ -275,6 +275,15 @@ export const settingSchemas = {
   backup: z.object({
     auto: z.boolean(),
   }),
+  /**
+   * Automatic translation (the "Translate" button by every field in three
+   * languages): an OpenAI API key (encrypted; empty: a free service without
+   * a key) and the model to use.
+   */
+  translation: z.object({
+    openaiKeyEnc: z.string(),
+    model: z.string().trim().min(1).max(60),
+  }),
   email: z.object({
     provider: z.enum(["env", "resend", "smtp"]),
     /** The sender address; the display name is always the brand. Empty: EMAIL_FROM. */
@@ -334,6 +343,7 @@ export const settingDefaults: { [K in SettingKey]: SettingValue<K> } = {
   legal: { legalName: "", taxOffice: "", taxNumber: "", mersis: "", address: "", phone: "", email: "", kep: "" },
   telegram: { botTokenEnc: "", chatId: "", locale: "fa" },
   telegramAdmins: { notify: true, locale: "fa", people: [], secret: "", botUsername: "" },
+  translation: { openaiKeyEnc: "", model: "gpt-4o-mini" },
   email: {
     provider: "env",
     fromAddress: "",

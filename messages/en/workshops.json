@@ -136,6 +136,10 @@
       "confirmTitle": "Send a new contract?",
       "confirmDescription": "We’ll replace the current contract with version {version} and email it to {name}. Until it’s signed, the workshop waits for the signature and doesn’t show on the site. People who already registered keep their places, and a confirmed workshop is confirmed again with the same final number once it’s signed.",
       "confirm": "Yes, save and send"
+    },
+    "draft": {
+      "restored": "The draft you wrote earlier was brought back.",
+      "startOver": "Start over"
     }
   },
   "fields": {

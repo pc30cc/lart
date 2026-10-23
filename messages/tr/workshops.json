@@ -136,6 +136,10 @@
       "confirmTitle": "Yeni sözleşme gönderilsin mi?",
       "confirmDescription": "Mevcut sözleşmenin yerine {version}. sürüm hazırlanıp {name} adlı eğitmene e-postayla gönderilecek. İmzalanana kadar atölye imza bekler ve sitede görünmez. Kayıt yaptıranların yerleri korunur; kesinleşmiş bir atölye, imzalandığında aynı kesin katılımcı sayısıyla yeniden kesinleşir.",
       "confirm": "Evet, kaydet ve gönder"
+    },
+    "draft": {
+      "restored": "Daha önce yazdığınız taslak geri getirildi.",
+      "startOver": "Baştan başla"
     }
   },
   "fields": {

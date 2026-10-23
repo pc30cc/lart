@@ -106,5 +106,12 @@
     "label": "Viewing as someone else",
     "text": "You are viewing as {name} — signed in as {admin}",
     "end": "End"
+  },
+  "translate": {
+    "button": "Translate",
+    "working": "Translating…",
+    "done": "Translated. Have a look before saving.",
+    "failed": "Could not translate. Try again.",
+    "hint": "Fills the empty languages from the text you wrote"
   }
 }

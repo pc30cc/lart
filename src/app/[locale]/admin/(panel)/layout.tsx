@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server"
 import { Suspense } from "react"
 
 import { AppShell } from "@/components/admin/app-shell"
+import { TranslateProvider } from "@/components/admin/form/translate-context"
 import { AdminNoticeToast } from "@/components/admin/notice-toast"
 import { requireAdmin } from "@/lib/auth/admin"
 import { getBrand, getSetting } from "@/lib/settings"
@@ -39,7 +40,7 @@ export default async function PanelLayout({ children, params }: LayoutProps<"/[l
       admin={{ name: admin.name, email: admin.email, photoUrl: url(admin.photoPath) }}
       defaultOpen={store.get("sidebar_state")?.value !== "false"}
     >
-      {children}
+      <TranslateProvider>{children}</TranslateProvider>
       <Suspense>
         <AdminNoticeToast />
       </Suspense>
