@@ -40,7 +40,7 @@ export default async function PanelLayout({ children, params }: LayoutProps<"/[l
       admin={{ name: admin.name, email: admin.email, photoUrl: url(admin.photoPath) }}
       defaultOpen={store.get("sidebar_state")?.value !== "false"}
     >
-      <TranslateProvider>{children}</TranslateProvider>
+      <TranslateProvider audience="admin">{children}</TranslateProvider>
       <Suspense>
         <AdminNoticeToast />
       </Suspense>

@@ -13,6 +13,9 @@ export const translateSchema = z.object({
 })
 export type TranslateInput = z.input<typeof translateSchema>
 
+/** On the signed-out instructor sign-up form: its longest field (the bio) fits. */
+export const signupTranslateSchema = translateSchema.extend({ text: z.string().trim().min(1).max(1000) })
+
 /** The cheap OpenAI models offered; the first is the default. */
 export const translationModels = ["gpt-4o-mini", "gpt-4.1-mini", "gpt-4.1-nano"] as const
 

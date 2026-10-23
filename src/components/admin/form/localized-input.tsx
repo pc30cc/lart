@@ -13,11 +13,17 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import type { Locale, LocalizedText } from "@/db/schema"
-import { translateTextAction } from "@/features/translate/actions"
+import { translateInstructorTextAction, translateSignupTextAction, translateTextAction } from "@/features/translate/actions"
 import { cn } from "@/lib/utils"
-import { useCanTranslate } from "./translate-context"
+import { useTranslateAudience, type TranslateAudience } from "./translate-context"
 
 const LOCALES: Locale[] = ["fa", "tr", "en"]
+
+const translateActions: Record<TranslateAudience, typeof translateTextAction> = {
+  admin: translateTextAction,
+  instructor: translateInstructorTextAction,
+  signup: translateSignupTextAction,
+}
 
 type Props = {
   /** Form field holding a `LocalizedText` ({ fa, tr, en }). */
@@ -72,20 +78,23 @@ function LocalizedField({
   }
 
   const filled = LOCALES.filter((l) => value[l]?.trim()).length
-  // "Translate": from the tab shown (or the first language written) into the empty ones.
-  const canTranslate = useCanTranslate()
+  // "Translate": from the tab shown (or the first language written) into the empty ones;
+  // with all three written, from the tab shown into the other two (after asking).
+  const audience = useTranslateAudience()
   const { setValue } = useFormContext()
   const [translating, startTranslate] = useTransition()
   const source = value[active]?.trim() ? active : LOCALES.find((l) => value[l]?.trim())
   const empty = LOCALES.filter((l) => !value[l]?.trim())
+  const targets = empty.length ? empty : LOCALES.filter((l) => l !== source)
   function translateNow() {
-    if (!source || !empty.length) return
+    if (!audience || !source) return
+    if (!empty.length && !window.confirm(t("translate.overwrite", { language: t(`locales.${source}`) }))) return
     startTranslate(async () => {
       try {
-        const result = await translateTextAction({ text: value[source] ?? "", from: source, to: empty })
+        const result = await translateActions[audience]({ text: value[source] ?? "", from: source, to: targets })
         if (!result) return
         if (!result.ok) return void toast.error(result.error)
-        const done = empty.filter((l) => result.data[l])
+        const done = targets.filter((l) => result.data[l])
         for (const l of done) setValue(`${name}.${l}`, result.data[l], { shouldDirty: true, shouldValidate: formState.isSubmitted })
         if (done.length) {
           setActive(done[0])
@@ -106,13 +115,13 @@ function LocalizedField({
           {required.length > 0 && <RequiredMark />}
         </FieldLabel>
         <span className="flex items-center gap-2">
-          {canTranslate && filled > 0 && empty.length > 0 && (
+          {audience && (
             <button
               type="button"
               onClick={translateNow}
-              disabled={translating}
-              className="text-primary hover:bg-primary/8 focus-visible:ring-ring/50 inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs font-medium outline-none focus-visible:ring-3 disabled:opacity-60"
-              title={t("translate.hint")}
+              disabled={translating || !source}
+              className="text-primary hover:bg-primary/8 focus-visible:ring-ring/50 inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs font-medium outline-none focus-visible:ring-3 disabled:cursor-not-allowed disabled:opacity-50"
+              title={!source ? t("translate.writeFirst") : empty.length ? t("translate.hint") : t("translate.hintAll", { language: t(`locales.${source}`) })}
             >
               <LanguagesIcon aria-hidden className={cn("size-3.5", translating && "animate-pulse")} />
               {translating ? t("translate.working") : t("translate.button")}

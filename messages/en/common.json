@@ -112,6 +112,9 @@
     "working": "Translating…",
     "done": "Translated. Have a look before saving.",
     "failed": "Could not translate. Try again.",
-    "hint": "Fills the empty languages from the text you wrote"
+    "hint": "Fills the empty languages from the text you wrote",
+    "writeFirst": "Write the text in one language first, then translate",
+    "hintAll": "Translates the other two languages again from {language}",
+    "overwrite": "All three languages are filled. Translate the other two again from {language}? Their current text will be replaced."
   }
 }

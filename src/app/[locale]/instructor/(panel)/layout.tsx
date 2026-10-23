@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { getTranslations } from "next-intl/server"
 
+import { TranslateProvider } from "@/components/admin/form/translate-context"
 import { getMyPhotoUrl, listContractsToSign } from "@/features/instructor-panel/queries"
 import { profileText } from "@/features/instructors/schema"
 import { requireInstructor } from "@/lib/auth/instructor"
@@ -43,7 +44,7 @@ export default async function InstructorPanelLayout({ children, params }: Layout
       // A super admin viewing as the instructor: only the admin's name goes to the browser, never their id.
       viewing={impersonatedBy ? { personId: instructor.id, adminName: impersonatedBy.name } : null}
     >
-      {children}
+      <TranslateProvider audience="instructor">{children}</TranslateProvider>
     </PanelShell>
   )
 }

@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { getTranslations } from "next-intl/server"
 
+import { TranslateProvider } from "@/components/admin/form/translate-context"
 import { InstructorSignupForm } from "@/components/site/auth/instructor-signup-form"
 import { localeHref } from "@/i18n/links"
 import { Link } from "@/i18n/navigation"
@@ -35,7 +36,9 @@ export default async function InstructorSignupPage({ params }: PageProps<"/[loca
         <p className="text-muted-foreground max-w-lg text-base text-pretty">{t("subtitle", { brand })}</p>
       </div>
       <div className="bg-card ring-foreground/8 rounded-2xl p-5 shadow-sm ring-1 sm:p-8">
-        <InstructorSignupForm minLength={ACCOUNT_PASSWORD_MIN_LENGTH} />
+        <TranslateProvider audience="signup">
+          <InstructorSignupForm minLength={ACCOUNT_PASSWORD_MIN_LENGTH} />
+        </TranslateProvider>
       </div>
       <p className="text-muted-foreground mt-6 text-center text-base">
         {t("hasAccount")}{" "}

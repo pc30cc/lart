@@ -3,13 +3,17 @@
 import { createContext, useContext } from "react"
 
 /**
- * Whether the fields in three languages show a "Translate" button: only in
- * the admin panel (its layout provides it), where `translateTextAction` may run.
+ * Who may press "Translate" by the fields in three languages, which picks the
+ * server action that runs it: the admin panel, the instructor panel, or the
+ * instructor sign-up form (rate limited per network). Each one's layout or
+ * page provides it; without a provider the button is not shown.
  */
-const TranslateContext = createContext(false)
+export type TranslateAudience = "admin" | "instructor" | "signup"
 
-export function TranslateProvider({ children }: { children: React.ReactNode }) {
-  return <TranslateContext.Provider value>{children}</TranslateContext.Provider>
+const TranslateContext = createContext<TranslateAudience | null>(null)
+
+export function TranslateProvider({ audience, children }: { audience: TranslateAudience; children: React.ReactNode }) {
+  return <TranslateContext.Provider value={audience}>{children}</TranslateContext.Provider>
 }
 
-export const useCanTranslate = () => useContext(TranslateContext)
+export const useTranslateAudience = () => useContext(TranslateContext)

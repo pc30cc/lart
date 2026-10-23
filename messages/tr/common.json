@@ -112,6 +112,9 @@
     "working": "Çevriliyor…",
     "done": "Çevrildi. Kaydetmeden önce bir göz atın.",
     "failed": "Çevrilemedi. Tekrar deneyin.",
-    "hint": "Boş dilleri yazdığınız metinden çevirir"
+    "hint": "Boş dilleri yazdığınız metinden çevirir",
+    "writeFirst": "Önce dillerden birinde metni yazın, sonra çevirin",
+    "hintAll": "Diğer iki dili {language} metninden yeniden çevirir",
+    "overwrite": "Üç dil de dolu. Diğer iki dil {language} metninden yeniden çevrilsin mi? Mevcut metinlerinin yerini alır."
   }
 }
