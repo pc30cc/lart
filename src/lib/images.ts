@@ -1,4 +1,5 @@
 import "server-only"
+import { Worker } from "node:worker_threads"
 import type { Sharp } from "sharp"
 
 import type { SettingValue } from "@/lib/settings"
@@ -50,7 +51,11 @@ async function loadSharp(): Promise<SharpModule> {
 
 const load = async (input: Buffer) => (await loadSharp())(input, { limitInputPixels: MAX_INPUT_PIXELS, autoOrient: true })
 
-/** Checks the type and size before any pixel is decoded. Returns the type and the upright size. */
+/**
+ * Checks the type and size before any pixel is decoded. Returns the type, the
+ * upright size, and whether it is an HEVC HEIC that sharp's build cannot decode
+ * (iPhone and Mac photos): `decodeHeic` reads those.
+ */
 async function inspect(input: Buffer) {
   const type = sniffImage(input)
   if (!type) throw new UploadError("unsupported_type")
@@ -61,12 +66,86 @@ async function inspect(input: Buffer) {
       throw new UploadError(type === "heic" ? "heic_unsupported" : "invalid_image")
     })
   if (meta.format !== SHARP_FORMAT[type]) throw new UploadError("invalid_image")
-  if (type === "heic" && meta.compression === "hevc" && !sharp.format.heif.input.fileSuffix?.includes(".heic")) {
-    throw new UploadError("heic_unsupported")
-  }
+  const hevc = type === "heic" && meta.compression === "hevc" && !sharp.format.heif.input.fileSuffix?.includes(".heic")
   if (!meta.width || !meta.height) throw new UploadError("invalid_image")
   if (meta.width * meta.height > MAX_INPUT_PIXELS) throw new UploadError("too_many_pixels")
-  return { type, width: meta.autoOrient.width, height: meta.autoOrient.height }
+  return { type, width: meta.autoOrient.width, height: meta.autoOrient.height, hevc, icc: meta.icc }
+}
+
+/**
+ * Decodes in a worker thread: libheif's WebAssembly runs synchronously (about
+ * 1-2 s for a 12 MP photo) and its memory never shrinks, so on the main thread
+ * it would hold up every other request and keep the memory for good. The
+ * worker ends after each photo; photos are decoded one at a time.
+ */
+const HEIC_WORKER = `
+const { parentPort, workerData } = require("node:worker_threads")
+// Display P3 (iPhone and Mac photos) to sRGB: same tone curve as sRGB, other primaries.
+function p3ToSrgb(data) {
+  const lin = new Float32Array(256)
+  for (let i = 0; i < 256; i++) { const c = i / 255; lin[i] = c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4 }
+  const enc = new Uint8Array(4097)
+  for (let i = 0; i <= 4096; i++) { const c = i / 4096; enc[i] = Math.round(255 * (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055)) }
+  const out = (v) => enc[Math.round(Math.min(1, Math.max(0, v)) * 4096)]
+  for (let i = 0; i < data.length; i += 4) {
+    const r = lin[data[i]], g = lin[data[i + 1]], b = lin[data[i + 2]]
+    data[i] = out(1.2249401 * r - 0.2249404 * g)
+    data[i + 1] = out(-0.0420569 * r + 1.0420571 * g)
+    data[i + 2] = out(-0.0196376 * r - 0.0786361 * g + 1.0982735 * b)
+  }
+}
+require("heic-decode")({ buffer: Buffer.from(workerData.input) }).then(
+  ({ width, height, data }) => {
+    if (workerData.p3) p3ToSrgb(data)
+    parentPort.postMessage({ width, height, data }, [data.buffer])
+  },
+  (error) => parentPort.postMessage({ error: String((error && error.message) || error) }),
+)`
+
+/** Whether an ICC profile is Display P3 (its description names it, in ASCII or UTF-16). */
+function isDisplayP3(icc: Buffer | undefined): boolean {
+  if (!icc) return false
+  return icc.includes("Display P3", 0, "latin1") || icc.includes(Buffer.from("Display P3", "utf16le").swap16())
+}
+
+type HeicPixels = { width: number; height: number; data: Uint8ClampedArray }
+let heicQueue: Promise<unknown> = Promise.resolve()
+
+function decodeHeicPixels(input: Buffer, p3: boolean): Promise<HeicPixels> {
+  const run = async () => {
+    const copy = input.buffer.slice(input.byteOffset, input.byteOffset + input.byteLength) as ArrayBuffer
+    const worker = new Worker(HEIC_WORKER, { eval: true, workerData: { input: copy, p3 }, transferList: [copy] })
+    try {
+      return await new Promise<HeicPixels>((resolve, reject) => {
+        worker.once("message", (m: HeicPixels | { error: string }) => ("error" in m ? reject(new Error(m.error)) : resolve(m)))
+        worker.once("error", reject)
+        worker.once("exit", (code) => reject(new Error(`HEIC worker stopped (${code})`)))
+      })
+    } finally {
+      await worker.terminate()
+    }
+  }
+  const result = heicQueue.then(run, run)
+  heicQueue = result.catch(() => undefined)
+  return result
+}
+
+/**
+ * An HEVC HEIC decoded by libheif in WebAssembly (sharp's prebuilt libvips has
+ * no HEVC decoder): upright (libheif applies the photo's rotation), no metadata.
+ */
+async function decodeHeic(input: Buffer, icc: Buffer | undefined): Promise<{ image: Sharp; width: number; height: number }> {
+  // libheif gives the photo's own colour values; a Display P3 photo is converted to sRGB (else it looks dull).
+  const [{ width, height, data }, sharp] = await Promise.all([decodeHeicPixels(input, isDisplayP3(icc)), loadSharp()])
+  if (width * height > MAX_INPUT_PIXELS) throw new UploadError("too_many_pixels")
+  const pixels = Buffer.from(data.buffer, data.byteOffset, data.byteLength)
+  return { image: sharp(pixels, { raw: { width, height, channels: 4 }, limitInputPixels: MAX_INPUT_PIXELS }).removeAlpha(), width, height }
+}
+
+/** The image to process and its upright size: sharp's own decoder, or `decodeHeic`. */
+async function open(input: Buffer, source: Awaited<ReturnType<typeof inspect>>) {
+  if (source.hevc) return decodeHeic(input, source.icc)
+  return { image: await load(input), width: source.width, height: source.height }
 }
 
 /** Decoding errors become friendly upload errors. */
@@ -111,9 +190,9 @@ export async function processImage(
   purpose: ImagePurpose,
   watermark?: { settings: WatermarkLayout; logo: Buffer } | null,
 ): Promise<ProcessedImage> {
-  const { type, width, height } = await inspect(input)
-  return guard(type, async () => {
-    const image = await load(input)
+  const source = await inspect(input)
+  return guard(source.type, async () => {
+    const { image, width, height } = await open(input, source)
     switch (purpose) {
       case "instructor_photo": {
         const side = Math.min(800, width, height)

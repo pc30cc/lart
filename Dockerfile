@@ -10,8 +10,13 @@ FROM base AS build
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
-# The build needs no secrets and never touches the database: placeholder values
-# only satisfy the environment check. Real values come from Coolify at runtime.
+# Coolify passes this build variable (Settings → Environment variables, "build"):
+# a fixed key keeps the server actions' IDs the same from one deploy to the next,
+# so a form opened before a deploy still saves after it. Without it each build
+# gets a random key, and such a form fails until the page is reloaded.
+ARG NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
+# Otherwise the build needs no secrets and never touches the database: placeholder
+# values only satisfy the environment check. Real values come from Coolify at runtime.
 RUN DATABASE_URL=postgres://build:build@127.0.0.1:5432/build \
     APP_URL=https://build.invalid \
     ENCRYPTION_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= \

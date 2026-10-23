@@ -34,7 +34,9 @@
     "invalidInput": "Lütfen işaretli alanları kontrol edin.",
     "notFound": "Bunu bulamadık. Kaldırılmış olabilir.",
     "unauthorized": "Devam etmek için lütfen yeniden giriş yapın.",
-    "impersonationBlocked": "Bu kişinin hesabını görüntülerken bu işlem yapılamaz. Bunu yalnızca kişinin kendisi yapabilir."
+    "impersonationBlocked": "Bu kişinin hesabını görüntülerken bu işlem yapılamaz. Bunu yalnızca kişinin kendisi yapabilir.",
+    "siteUpdated": "Site az önce güncellendi ve bu sayfa eski kaldı. Sayfayı yenileyip tekrar gönderin (yazdıklarınız silinir; uzunsa önce kopyalayın).",
+    "reload": "Sayfayı yenile"
   },
   "validation": {
     "required": "Lütfen bu alanı doldurun.",

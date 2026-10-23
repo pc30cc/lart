@@ -121,7 +121,8 @@ function crossCheck(v: Fields, ctx: z.RefinementCtx) {
   if (dates.some((d) => d <= first) || new Set(dates).size !== dates.length) {
     issue("extraDays", "workshops.validation.daysAfterFirst")
   }
-  if (v.extraDays.some((d) => d.end <= d.start)) issue("extraDays", "workshops.validation.dayEndAfterStart")
+  // Only days with both hours written: an empty hour has its own "required" error (a misleading one here would hide it).
+  if (v.extraDays.some((d) => d.start && d.end && d.end <= d.start)) issue("extraDays", "workshops.validation.dayEndAfterStart")
   if (v.extraDays.some((d) => d.maxCapacity < d.minCapacity)) issue("extraDays", "workshops.validation.dayMaxBelowMin")
   if (v.maxCapacity < v.minCapacity) issue("maxCapacity", "workshops.validation.maxBelowMin")
   if (v.registrationDeadline > v.startsAt) issue("registrationDeadline", "workshops.validation.deadlineBeforeStart")

@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslations } from "next-intl"
-import { unstable_rethrow } from "next/navigation"
+import { unstable_isUnrecognizedActionError, unstable_rethrow } from "next/navigation"
 import { useTransition } from "react"
 import { useForm, type DefaultValues, type FieldValues, type Path } from "react-hook-form"
 import { toast } from "sonner"
@@ -67,7 +67,13 @@ export function useActionForm<S extends z.ZodType<FieldValues, FieldValues>, T>(
           } catch (err) {
             // A redirect (signed out, or an action that goes elsewhere) navigates; it is no failure.
             unstable_rethrow(err)
-            toast.error(t("errors.network"))
+            // The page is from before a deploy that changed this action: only a reload helps.
+            if (unstable_isUnrecognizedActionError(err)) {
+              toast.error(t("errors.siteUpdated"), {
+                duration: Number.POSITIVE_INFINITY,
+                action: { label: t("errors.reload"), onClick: () => window.location.reload() },
+              })
+            } else toast.error(t("errors.network"))
           } finally {
             resolve()
           }
@@ -79,7 +85,10 @@ export function useActionForm<S extends z.ZodType<FieldValues, FieldValues>, T>(
   )
 
   function showFirstInvalid() {
-    const field = document.querySelector<HTMLElement>('[data-invalid="true"]')
+    const field =
+      document.querySelector<HTMLElement>('[data-invalid="true"]') ??
+      document.querySelector<HTMLElement>('[aria-invalid="true"]')?.closest<HTMLElement>('[data-slot="field"]') ??
+      null
     // The label as seen: without the required mark and its screen-reader word.
     const labelNode = field?.querySelector('[data-slot="field-label"]')?.cloneNode(true) as HTMLElement | undefined
     labelNode?.querySelectorAll(".sr-only, [aria-hidden]").forEach((node) => node.remove())

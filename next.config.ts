@@ -19,6 +19,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // HEIC photos (iPhone, Mac) are decoded by libheif in WebAssembly: loaded from node_modules as it is, never bundled.
+  serverExternalPackages: ["heic-decode", "libheif-js"],
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

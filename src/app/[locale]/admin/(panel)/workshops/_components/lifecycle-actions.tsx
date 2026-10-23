@@ -7,6 +7,7 @@ import { useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import { ConfirmAction } from "@/components/admin/confirm-action"
+import { WholeNumberInput } from "@/components/admin/form/digit-inputs"
 import { Form, FormField, SubmitButton } from "@/components/admin/form/form"
 import { useActionForm } from "@/components/admin/form/use-action-form"
 import { Button } from "@/components/ui/button"
@@ -19,7 +20,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { resendContract } from "@/features/contracts/actions"
 import { cancelWorkshop, confirmWorkshop, raiseFinalParticipants } from "@/features/workshops/actions"
@@ -117,19 +117,7 @@ function RaiseFinalForm({ id, current, max, onDone }: { id: string; current: num
         required
       >
         {({ value, onChange, ...field }) => (
-          <Input
-            {...field}
-            ref={field.ref}
-            type="number"
-            inputMode="numeric"
-            min={current + 1}
-            max={max}
-            step={1}
-            dir="ltr"
-            className="h-10 max-w-32 text-base tabular-nums"
-            value={typeof value === "number" && Number.isFinite(value) ? value : ""}
-            onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
-          />
+          <WholeNumberInput {...field} ref={field.ref} className="h-10 max-w-32 text-base" value={value} onChange={onChange} />
         )}
       </FormField>
       <p className="text-muted-foreground text-sm text-pretty">{t("after")}</p>

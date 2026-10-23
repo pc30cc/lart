@@ -27,6 +27,22 @@ export function useErrorText(message: string | undefined): string | undefined {
   return isMessageKey(message) && t.has(message) ? t(message) : message
 }
 
+/**
+ * The first message inside an error, also a nested one: a list or group field
+ * (e.g. one row of a list) has no message of its own, only its parts do.
+ */
+export function firstErrorMessage(error: unknown): string | undefined {
+  if (!error || typeof error !== "object") return undefined
+  const own = (error as { message?: unknown }).message
+  if (typeof own === "string" && own) return own
+  for (const [key, value] of Object.entries(error)) {
+    if (key === "ref" || key === "type" || key === "types") continue
+    const found = firstErrorMessage(value)
+    if (found) return found
+  }
+  return undefined
+}
+
 /** <form> wired to react-hook-form. Use with `useActionForm`. */
 export function Form<T extends FieldValues, C, O>({
   form,
@@ -121,11 +137,12 @@ export function FormField<T extends FieldValues = FieldValues>({
   const id = useId()
   const { control } = useFormContext<T>()
   const { field, fieldState } = useController({ name, control })
-  const error = useErrorText(fieldState.error?.message)
+  // A list or group field (extra days, sample photos) gets its parts' first message.
+  const error = useErrorText(firstErrorMessage(fieldState.error))
   const describedBy = [description && `${id}-desc`, error && `${id}-err`].filter(Boolean).join(" ") || undefined
 
   return (
-    <Field data-invalid={Boolean(error)} className={className}>
+    <Field data-invalid={fieldState.invalid || Boolean(error)} className={className}>
       {label && (
         <FieldLabel htmlFor={id} className="gap-1">
           {label}

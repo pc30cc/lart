@@ -5,6 +5,7 @@ import {
   ChevronRightIcon,
   CircleAlertIcon,
   GripVerticalIcon,
+  ImageIcon,
   ImagePlusIcon,
   PlayIcon,
   PlusIcon,
@@ -26,7 +27,7 @@ import {
 } from "@/lib/storage/shared"
 import { cn } from "@/lib/utils"
 import { Dropzone, OverlayButton, UploadMessage, UploadOverlay } from "./parts"
-import { checkFile, failureCode, fileKind, isVideoFile, uploadFile, useFileDrop, useMediaText, type ClientUploadError } from "./upload-client"
+import { checkFile, failureCode, fileKind, isVideoFile, RETRYABLE, uploadFile, useFileDrop, useMediaText, type ClientUploadError } from "./upload-client"
 
 export type MediaItem = Pick<UploadResult, "path" | "url" | "width" | "height"> & {
   kind: "image" | "video"
@@ -58,12 +59,12 @@ export type MediaGridProps = {
   max?: number
   disabled?: boolean
   className?: string
+  /** Told whether files are still uploading (or waiting their turn), e.g. so a form waits before saving. */
+  onBusyChange?: (busy: boolean) => void
 }
 
 let lastId = 0
 
-/** Errors worth a retry (the file itself was fine). */
-const RETRYABLE: ClientUploadError[] = ["network", "server", "storage", "bad_request", "unauthorized"]
 const tile = "relative aspect-square overflow-hidden rounded-xl border bg-muted shadow-xs"
 
 /**
@@ -80,6 +81,7 @@ export function MediaGrid({
   max = 200,
   disabled,
   className,
+  onBusyChange,
 }: MediaGridProps) {
   const { t, size, error } = useMediaText()
   const format = useFormatter()
@@ -108,6 +110,16 @@ export function MediaGrid({
         URL.revokeObjectURL(p.preview)
       })
   }, [])
+
+  // Uploading or waiting its turn: every pending file without an error.
+  const busy = pending.some((p) => !p.code)
+  const onBusyRef = useRef(onBusyChange)
+  useEffect(() => {
+    onBusyRef.current = onBusyChange
+  })
+  useEffect(() => {
+    onBusyRef.current?.(busy)
+  }, [busy])
 
   const setPending = useCallback((update: (list: Pending[]) => Pending[]) => {
     pendingRef.current = update(pendingRef.current)
@@ -307,19 +319,7 @@ export function MediaGrid({
                     )}
                   >
                     {item.kind === "image" ? (
-                      // The whole photo, whatever its shape, on a blurred copy of itself.
-                      <>
-                        {/* eslint-disable-next-line @next/next/no-img-element -- CDN URL, any host */}
-                        <img src={item.url} alt="" aria-hidden loading="lazy" draggable={false} className="absolute inset-0 size-full scale-110 object-cover opacity-60 blur-lg" />
-                        {/* eslint-disable-next-line @next/next/no-img-element -- CDN URL, any host */}
-                        <img
-                          src={item.url}
-                          alt={label(item.kind, index)}
-                          loading="lazy"
-                          draggable={false}
-                          className="absolute inset-0 size-full object-contain transition-transform duration-500 group-hover/tile:scale-[1.03]"
-                        />
-                      </>
+                      <TileImage url={item.url} alt={label(item.kind, index)} unavailable={t("upload.uploaded")} />
                     ) : (
                       <>
                         <video
@@ -455,5 +455,37 @@ export function MediaGrid({
         )}
       </div>
     </MotionConfig>
+  )
+}
+
+/**
+ * A photo tile: the whole photo, whatever its shape, on a blurred copy of
+ * itself; if the address does not load (a CDN rule, a wrong address in the
+ * settings), an "uploaded" sign instead of an empty tile.
+ */
+function TileImage({ url, alt, unavailable }: { url: string; alt: string; unavailable: string }) {
+  const [broken, setBroken] = useState<string | null>(null)
+  if (broken === url) {
+    return (
+      <span className="text-muted-foreground absolute inset-0 flex flex-col items-center justify-center gap-1 p-2 text-center text-xs">
+        <ImageIcon className="size-5" aria-hidden />
+        {unavailable}
+      </span>
+    )
+  }
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element -- CDN URL, any host */}
+      <img src={url} alt="" aria-hidden loading="lazy" draggable={false} className="absolute inset-0 size-full scale-110 object-cover opacity-60 blur-lg" />
+      {/* eslint-disable-next-line @next/next/no-img-element -- CDN URL, any host */}
+      <img
+        src={url}
+        alt={alt}
+        loading="lazy"
+        draggable={false}
+        onError={() => setBroken(url)}
+        className="absolute inset-0 size-full object-contain transition-transform duration-500 group-hover/tile:scale-[1.03]"
+      />
+    </>
   )
 }

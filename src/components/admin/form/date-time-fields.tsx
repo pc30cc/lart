@@ -9,7 +9,7 @@ import { RequiredMark, useErrorText } from "@/components/admin/form/form"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { TimeTextInput } from "@/components/admin/form/digit-inputs"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { formatDate, zonedParts, zonedToIso } from "@/lib/format"
 import { cn } from "@/lib/utils"
@@ -45,14 +45,11 @@ export function DateTimeFields({
   className?: string
 }) {
   const t = useTranslations("common.date")
-  const locale = useLocale()
   const id = useId()
   const { control, setValue, getFieldState, formState } = useFormContext()
   const startIso = useWatch({ control, name: startName })
   const endIso = useWatch({ control, name: endName ?? startName })
   const [parts, setParts] = useState<Parts>(() => partsOf(startIso, endName ? endIso : null))
-  const [open, setOpen] = useState(false)
-
   // Follow outside changes (form reset) without fighting the user's edits.
   const external = `${startIso ?? ""}|${endName ? (endIso ?? "") : ""}`
   const [seen, setSeen] = useState(external)
@@ -75,7 +72,6 @@ export function DateTimeFields({
   const startError = useErrorText(getFieldState(startName, formState).error?.message)
   const endError = useErrorText(endName ? getFieldState(endName, formState).error?.message : undefined)
   const error = startError ?? endError
-  const selected = parts.date ? new Date(`${parts.date}T12:00:00`) : undefined
   const describedBy = [description && `${id}-desc`, error && `${id}-err`].filter(Boolean).join(" ") || undefined
 
   return (
@@ -85,38 +81,13 @@ export function DateTimeFields({
         {required && <RequiredMark />}
       </FieldLabel>
       <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              id={`${id}-date`}
-              type="button"
-              variant="outline"
-              aria-invalid={Boolean(startError) || undefined}
-              aria-describedby={describedBy}
-              className={cn("h-9 justify-start gap-2 px-2.5 font-normal", !parts.date && "text-muted-foreground")}
-            >
-              <CalendarIcon className="text-muted-foreground" />
-              {/* "full" style includes the weekday, e.g. "Tuesday, 14 October 2026". Its punctuation
-                  differs between ICU builds (server vs browser), so only this text may differ on hydration. */}
-              <span className="truncate" suppressHydrationWarning>{parts.date ? formatDate(`${parts.date}T09:00:00Z`, locale, "full") : t("pickDate")}</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={selected}
-              defaultMonth={selected}
-              onSelect={(day) => {
-                if (!day) return
-                const y = day.getFullYear()
-                const m = String(day.getMonth() + 1).padStart(2, "0")
-                const d = String(day.getDate()).padStart(2, "0")
-                update({ date: `${y}-${m}-${d}` })
-                setOpen(false)
-              }}
-            />
-          </PopoverContent>
-        </Popover>
+        <DateButton
+          id={`${id}-date`}
+          value={parts.date}
+          onChange={(date) => update({ date })}
+          invalid={Boolean(startError)}
+          describedBy={describedBy}
+        />
         <div className="flex items-center gap-2" dir="ltr">
           <TimeInput
             label={t("start")}
@@ -141,6 +112,66 @@ export function DateTimeFields({
   )
 }
 
+/**
+ * A calendar date ("YYYY-MM-DD") picked in the site's calendar (Shamsi in
+ * Persian), instead of the browser's own date box (Gregorian, and in Safari
+ * hard to type into on a Persian page).
+ */
+export function DateButton({
+  value,
+  onChange,
+  id,
+  invalid,
+  describedBy,
+  className,
+}: {
+  value: string
+  onChange: (date: string) => void
+  id?: string
+  invalid?: boolean
+  describedBy?: string
+  className?: string
+}) {
+  const t = useTranslations("common.date")
+  const locale = useLocale()
+  const [open, setOpen] = useState(false)
+  const selected = value ? new Date(`${value}T12:00:00`) : undefined
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          id={id}
+          type="button"
+          variant="outline"
+          aria-invalid={invalid || undefined}
+          aria-describedby={describedBy}
+          className={cn("h-9 justify-start gap-2 px-2.5 font-normal", !value && "text-muted-foreground", className)}
+        >
+          <CalendarIcon className="text-muted-foreground" />
+          {/* "full" style includes the weekday, e.g. "Tuesday, 14 October 2026". Its punctuation
+              differs between ICU builds (server vs browser), so only this text may differ on hydration. */}
+          <span className="truncate" suppressHydrationWarning>{value ? formatDate(`${value}T09:00:00Z`, locale, "full") : t("pickDate")}</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-auto p-0">
+        <Calendar
+          mode="single"
+          selected={selected}
+          defaultMonth={selected}
+          onSelect={(day) => {
+            if (!day) return
+            const y = day.getFullYear()
+            const m = String(day.getMonth() + 1).padStart(2, "0")
+            const d = String(day.getDate()).padStart(2, "0")
+            onChange(`${y}-${m}-${d}`)
+            setOpen(false)
+          }}
+        />
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 function TimeInput({
   label,
   value,
@@ -155,15 +186,13 @@ function TimeInput({
   return (
     <div className="relative">
       <ClockIcon className="text-muted-foreground pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2" />
-      <Input
-        type="time"
-        step={300}
+      <TimeTextInput
         aria-label={label}
         title={label}
         value={value}
         aria-invalid={invalid || undefined}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-9 w-30 ps-8 tabular-nums [&::-webkit-calendar-picker-indicator]:hidden"
+        onChange={onChange}
+        className="h-9 w-30 ps-8"
       />
     </div>
   )

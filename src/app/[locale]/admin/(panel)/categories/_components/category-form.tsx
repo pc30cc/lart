@@ -4,7 +4,8 @@ import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useWatch } from "react-hook-form"
 
-import { Form, FormActions, FormSection, SubmitButton, TextField } from "@/components/admin/form/form"
+import { WholeNumberInput } from "@/components/admin/form/digit-inputs"
+import { Form, FormActions, FormField, FormSection, SubmitButton, TextField } from "@/components/admin/form/form"
 import { LocalizedInput } from "@/components/admin/form/localized-input"
 import { useActionForm } from "@/components/admin/form/use-action-form"
 import { Button } from "@/components/ui/button"
@@ -62,17 +63,9 @@ export function CategoryForm({ category }: { category?: Category }) {
           className="[&_input]:font-mono [&_input]:text-sm"
           onInput={() => setSlugEdited(true)}
         />
-        <TextField<CategoryFormValues>
-          name="sort"
-          label={t("fields.sort")}
-          description={t("fields.sortHint")}
-          type="number"
-          inputMode="numeric"
-          min={0}
-          max={10000}
-          dir="ltr"
-          className="[&_input]:max-w-40"
-        />
+        <FormField<CategoryFormValues> name="sort" label={t("fields.sort")} description={t("fields.sortHint")}>
+          {({ value, onChange, ...field }) => <WholeNumberInput {...field} ref={field.ref} className="max-w-40" value={value} onChange={onChange} />}
+        </FormField>
       </FormSection>
 
       <FormActions>

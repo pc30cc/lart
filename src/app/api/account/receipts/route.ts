@@ -69,7 +69,11 @@ export async function POST(request: Request) {
     after(() => notifyAdmins(id.data, "receipt"))
     return Response.json({ ok: true }, { status: 201 })
   } catch (error) {
-    if (error instanceof UploadError) return fail(error.code)
+    if (error instanceof UploadError) {
+      // A refused file (wrong type, too large, unreadable): one line, nothing personal, so refusals show in the log.
+      console.warn("[uploads] refused:", error.code)
+      return fail(error.code)
+    }
     console.error("[account receipts]", errorForLog(error))
     return fail(error instanceof StorageError ? "storage" : "server")
   } finally {

@@ -7,6 +7,7 @@ import { useState, useTransition } from "react"
 import { useWatch, type Path } from "react-hook-form"
 import { toast } from "sonner"
 
+import { WholeNumberInput } from "@/components/admin/form/digit-inputs"
 import { Form, FormActions, FormField, FormSection, SubmitButton, TextField } from "@/components/admin/form/form"
 import { useActionForm } from "@/components/admin/form/use-action-form"
 import { Button } from "@/components/ui/button"
@@ -168,18 +169,7 @@ export function EmailSettingsForm({ view, adminEmail }: { view: EmailView; admin
             </FormField>
             <FormField<EmailSettingsInput> name="smtpPort" label={t("fields.smtpPort")} required>
               {({ value, onChange, ...field }) => (
-                <Input
-                  {...field}
-                  ref={field.ref}
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  max={65535}
-                  dir="ltr"
-                  value={String(value ?? "")}
-                  onChange={(e) => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
-                  className="font-mono text-sm"
-                />
+                <WholeNumberInput {...field} ref={field.ref} value={value} onChange={(n) => onChange(n ?? 0)} className="font-mono text-sm" />
               )}
             </FormField>
           </div>

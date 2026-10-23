@@ -89,11 +89,24 @@ const activeRegistrations = (tx: Tx, courseId: string) =>
     .then(([row]) => row.n)
 
 /** The contract email never blocks saving: the result only tells the admin whether it went out. */
-async function emailContract(contractId: string): Promise<boolean> {
-  return sendContractReady(contractId).catch((err) => {
+/** How long saving waits for the contract email; a slower mail server finishes it in the background. */
+const EMAIL_WAIT_MS = 12_000
+
+/** Sent (true), failed (false), or still being sent after EMAIL_WAIT_MS ("pending"). */
+async function emailContract(contractId: string): Promise<boolean | "pending"> {
+  const sending = sendContractReady(contractId).catch((err) => {
     console.error("[workshops] contract_ready email failed", errorForLog(err))
     return false
   })
+  let timer: NodeJS.Timeout | undefined
+  const waited = new Promise<"pending">((resolve) => {
+    timer = setTimeout(() => resolve("pending"), EMAIL_WAIT_MS)
+  })
+  try {
+    return await Promise.race([sending, waited])
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 /**
@@ -144,7 +157,7 @@ export const createWorkshop = adminAction(workshopSchema, async (input, ctx) => 
 
   const emailSent = await emailContract(contractId)
   revalidate()
-  return { id, contractVersion: 1 as number | null, emailSent: emailSent as boolean | null }
+  return { id, contractVersion: 1 as number | null, emailSent: emailSent as boolean | "pending" | null }
 })
 
 /**

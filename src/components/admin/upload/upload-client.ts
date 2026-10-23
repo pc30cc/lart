@@ -162,6 +162,9 @@ export async function uploadFile(file: File, purpose: UploadPurpose, options: Op
   }
 }
 
+/** Errors worth a retry: the file itself was fine (a wrong type, size or HEIC never gets better). */
+export const RETRYABLE: readonly ClientUploadError[] = ["network", "server", "storage", "bad_request", "unauthorized"]
+
 export const failureCode = (error: unknown): ClientUploadError | "aborted" =>
   error instanceof UploadFailure ? error.code : "server"
 

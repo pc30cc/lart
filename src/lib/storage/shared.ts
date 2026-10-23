@@ -55,8 +55,13 @@ export const MAX_MEGAPIXELS = 70
  */
 export const VIDEO_PART_BYTES = 8 * MB
 
-/** For `<input accept>`. The server checks the real type from the content. */
-export const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,.heic,.heif"
+/**
+ * For `<input accept>`. The server checks the real type from the content.
+ * HEIC is left out on purpose: Safari (Mac, iPhone) then converts a chosen
+ * HEIC photo to JPEG itself, with the right colours. A HEIC dropped onto the
+ * box still arrives as it is, and the server decodes it (lib/images.ts).
+ */
+export const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/avif"
 /** A receipt: a photo, or a PDF. */
 export const RECEIPT_ACCEPT = `${IMAGE_ACCEPT},application/pdf,.pdf`
 /** An instructor's certificate or licence: a photo or a PDF, like a receipt. */

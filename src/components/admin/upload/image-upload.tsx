@@ -1,13 +1,13 @@
 "use client"
 
 import { ImageIcon, ImagePlusIcon, RefreshCwIcon, Trash2Icon } from "lucide-react"
-import { useId, useRef, useState, type Ref } from "react"
+import { useEffect, useId, useRef, useState, type Ref } from "react"
 
 import { Button } from "@/components/ui/button"
 import { IMAGE_ACCEPT, MAX_IMAGE_BYTES, type ImagePurpose, type UploadResult, type UploadTarget } from "@/lib/storage/shared"
 import { cn } from "@/lib/utils"
 import { Dropzone, OverlayButton, UploadMessage, UploadOverlay } from "./parts"
-import { useFileDrop, useMediaText, useSingleUpload, type UploadEndpoint } from "./upload-client"
+import { RETRYABLE, useFileDrop, useMediaText, useSingleUpload, type UploadEndpoint } from "./upload-client"
 
 const frames: Record<ImagePurpose, string> = {
   instructor_photo: "aspect-square w-full max-w-56",
@@ -53,6 +53,8 @@ export type ImageUploadProps = {
   className?: string
   "aria-invalid"?: boolean
   "aria-describedby"?: string
+  /** Told whether a file is uploading, e.g. so a form waits before saving. */
+  onBusyChange?: (busy: boolean) => void
 }
 
 /**
@@ -73,6 +75,7 @@ export function ImageUpload({
   name,
   ref,
   className,
+  onBusyChange,
   ...aria
 }: ImageUploadProps) {
   const { t, size, error } = useMediaText()
@@ -94,6 +97,13 @@ export function ImageUpload({
 
   const url = value ? (uploaded?.path === value ? uploaded.url : previewUrl) || null : null
   const busy = phase.kind === "uploading"
+  const onBusyRef = useRef(onBusyChange)
+  useEffect(() => {
+    onBusyRef.current = onBusyChange
+  })
+  useEffect(() => {
+    onBusyRef.current?.(busy)
+  }, [busy])
   const choose = () => inputRef.current?.click()
   const isLogo = purpose === "watermark_logo"
   const hint = t(isLogo ? "upload.logoHint" : "upload.imageHint", { size: size(MAX_IMAGE_BYTES) })
@@ -216,9 +226,9 @@ export function ImageUpload({
               variant="link"
               size="xs"
               className="h-auto p-0 text-destructive"
-              onClick={() => (phase.file ? start(phase.file) : dismiss())}
+              onClick={() => (phase.file && RETRYABLE.includes(phase.code) ? start(phase.file) : dismiss())}
             >
-              {phase.file ? t("upload.retry") : t("upload.dismiss")}
+              {phase.file && RETRYABLE.includes(phase.code) ? t("upload.retry") : t("upload.dismiss")}
             </Button>
           }
         >

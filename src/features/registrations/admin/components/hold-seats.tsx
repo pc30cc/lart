@@ -7,11 +7,11 @@ import { useState, useTransition } from "react"
 import { useWatch } from "react-hook-form"
 
 import { ConfirmAction } from "@/components/admin/confirm-action"
+import { WholeNumberInput } from "@/components/admin/form/digit-inputs"
 import { Form, FormField, SubmitButton, TextField } from "@/components/admin/form/form"
 import { useActionForm } from "@/components/admin/form/use-action-form"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { formatDate, formatDateTime, formatNumber, formatTimeRange } from "@/lib/format"
@@ -149,9 +149,7 @@ function HoldForm({ workshops, courseId, onDone }: { workshops: RegistrableWorks
         )}
       </FormField>
       <FormField<HoldSeatsValues> name="count" label={t("count")} description={workshop && !several ? tr("left", { count: workshop.days[0]?.left ?? 0 }) : undefined}>
-        {({ value, ...field }) => (
-          <Input {...field} value={String(value ?? "")} type="number" inputMode="numeric" min={1} max={100} className="w-28 tabular-nums" />
-        )}
+        {({ value, onChange, ...field }) => <WholeNumberInput {...field} ref={field.ref} value={value} onChange={onChange} className="w-28" />}
       </FormField>
       <TextField<HoldSeatsValues>
         name="note"

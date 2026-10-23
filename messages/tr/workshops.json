@@ -136,7 +136,8 @@
       "confirmTitle": "Yeni sözleşme gönderilsin mi?",
       "confirmDescription": "Mevcut sözleşmenin yerine {version}. sürüm hazırlanıp {name} adlı eğitmene e-postayla gönderilecek. İmzalanana kadar atölye imza bekler ve sitede görünmez. Kayıt yaptıranların yerleri korunur; kesinleşmiş bir atölye, imzalandığında aynı kesin katılımcı sayısıyla yeniden kesinleşir.",
       "confirm": "Evet, kaydet ve gönder"
-    }
+    },
+    "photosUploading": "Fotoğraflar hâlâ yükleniyor. Bitmelerini bekleyip tekrar deneyin."
   },
   "fields": {
     "title": "Atölye adı",
@@ -206,6 +207,7 @@
     "advanceMax": "En fazla {amount}.",
     "dayNumber": "{n, number}. gün",
     "addDay": "Gün ekle",
+    "addDayFirst": "Önce ilk günün tarihini, saatlerini ve katılımcı sayılarını girin.",
     "removeDay": "Bu günü kaldır",
     "extraDays": "Diğer günler (birkaç günlük atölye)",
     "extraDaysHint": "Atölye birden fazla gün sürüyorsa sonraki günleri ekleyin. Her günün kendi saatleri ve katılımcı sayısı vardır (yeni gün bir önceki günün değerleriyle başlar); bunlar eğitmen sözleşmesine yazılır. Ücret tüm günler içindir; kayıtları atölyenin kontenjanı sınırlar.",
@@ -234,7 +236,9 @@
     "createdNoEmail": "Atölye oluşturuldu ama sözleşme e-postayla gönderilemedi. Sözleşme sekmesinden yeniden gönderebilirsiniz.",
     "reissued": "Değişiklikler kaydedildi. Sözleşmenin {version}. sürümü e-postayla gönderildi: {name}",
     "reissuedNoEmail": "Değişiklikler kaydedildi ve sözleşmenin {version}. sürümü hazır, ama e-postayla gönderilemedi. Sözleşme sekmesinden yeniden gönderebilirsiniz.",
-    "updated": "Değişiklikler kaydedildi."
+    "updated": "Değişiklikler kaydedildi.",
+    "createdSending": "Atölye oluşturuldu. Sözleşme e-postası {name} için gönderiliyor.",
+    "reissuedSending": "Değişiklikler kaydedildi. Sözleşmenin {version}. sürümü {name} için gönderiliyor."
   },
   "errors": {
     "slugTaken": "Bu sayfa adresini başka bir atölye kullanıyor. Lütfen farklı bir adres seçin.",

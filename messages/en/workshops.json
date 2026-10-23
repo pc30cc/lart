@@ -136,7 +136,8 @@
       "confirmTitle": "Send a new contract?",
       "confirmDescription": "We’ll replace the current contract with version {version} and email it to {name}. Until it’s signed, the workshop waits for the signature and doesn’t show on the site. People who already registered keep their places, and a confirmed workshop is confirmed again with the same final number once it’s signed.",
       "confirm": "Yes, save and send"
-    }
+    },
+    "photosUploading": "Photos are still uploading. Wait for them to finish, then try again."
   },
   "fields": {
     "title": "Workshop name",
@@ -206,6 +207,7 @@
     "advanceMax": "At most {amount}.",
     "dayNumber": "Day {n, number}",
     "addDay": "Add a day",
+    "addDayFirst": "Fill in the first day's date, hours and participants first.",
     "removeDay": "Remove this day",
     "extraDays": "Other days (a workshop on several days)",
     "extraDaysHint": "If the workshop runs on more than one day, add the following days. Each day has its own hours and number of participants (a new day starts with the previous day's); these go into the instructor's contract. The price is for all the days together, and the workshop's places limit the registrations.",
@@ -234,7 +236,9 @@
     "createdNoEmail": "Workshop created, but we couldn’t email the contract. You can send it again from the Contract tab.",
     "reissued": "Changes saved. Contract version {version} is on its way to {name}.",
     "reissuedNoEmail": "Changes saved and contract version {version} is ready, but we couldn’t email it. You can send it again from the Contract tab.",
-    "updated": "Changes saved."
+    "updated": "Changes saved.",
+    "createdSending": "Workshop created. The contract email to {name} is on its way.",
+    "reissuedSending": "Changes saved. Version {version} of the contract is being emailed to {name}."
   },
   "errors": {
     "slugTaken": "Another workshop already uses this page address. Please choose a different one.",

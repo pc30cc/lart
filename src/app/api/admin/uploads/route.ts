@@ -154,7 +154,11 @@ export async function POST(request: Request) {
     if (error instanceof UploadError && error.code === "bad_request" && declared > 10 * 1024 * 1024) {
       console.warn("[uploads] body ended early: is src/proxy.ts running on /api/admin/uploads? It buffers only 10 MB.")
     }
-    if (error instanceof UploadError) return fail(error.code)
+    if (error instanceof UploadError) {
+      // A refused file (wrong type, too large, unreadable): one line, nothing personal, so refusals show in the log.
+      console.warn("[uploads] refused:", error.code)
+      return fail(error.code)
+    }
     if (error instanceof PartMismatch) return Response.json(error.received, { status: 409 })
     console.error("[uploads]", errorForLog(error))
     return fail(error instanceof StorageError ? "storage" : "server")

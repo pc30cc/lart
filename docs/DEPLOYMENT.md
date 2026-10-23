@@ -109,6 +109,10 @@ Moved on 2026-10-07 from `analyticsme.site` to the Coolify on **vps-50cc1602**
 - Environment variables, the `/app/.data` volume and the `pnpm jobs` task
   (every 15 minutes) are set in Coolify. `ENCRYPTION_KEY` is the one from the
   first install (checked equal by hash after the move): never change it.
+- `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` (added 2026-10-23, build and runtime,
+  32 random bytes in base64): keeps the server actions' IDs the same across
+  deploys, so a form left open during a deploy still saves. Changing it is
+  harmless but breaks forms that are open at that moment once.
 - Emails: choose the provider in Settings → Email (Resend or SMTP). Both are
   saved there, so switching loses nothing; Resend is the active one.
 - Own mail server (added 2026-10-07): Coolify service **LimerMail** in the

@@ -6,11 +6,12 @@ import { useEffect, useState } from "react"
 import { useFormContext, useWatch, type DefaultValues } from "react-hook-form"
 import { toast } from "sonner"
 
-import { DateTimeFields } from "@/components/admin/form/date-time-fields"
+import { DateButton, DateTimeFields } from "@/components/admin/form/date-time-fields"
 import { Form, FormActions, FormField, FormSection, SubmitButton, TextField } from "@/components/admin/form/form"
 import { LocalizedInput, LocalizedTextarea } from "@/components/admin/form/localized-input"
 import { MoneyInput } from "@/components/admin/form/money-input"
 import { useActionForm } from "@/components/admin/form/use-action-form"
+import { TimeTextInput, WholeNumberInput } from "@/components/admin/form/digit-inputs"
 import { ImageUpload, MediaGrid, type MediaItem } from "@/components/admin/upload"
 import {
   AlertDialog,
@@ -23,7 +24,6 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Field, FieldContent, FieldDescription, FieldLabel, FieldTitle } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
@@ -154,11 +154,13 @@ export function WorkshopForm({
     onSuccess: (data) => {
       const name = instructorName(form.getValues("instructorId"))
       if (!workshop) {
-        if (data.emailSent) toast.success(t("toast.created", { name }))
+        if (data.emailSent === "pending") toast.success(t("toast.createdSending", { name }))
+        else if (data.emailSent) toast.success(t("toast.created", { name }))
         else toast.warning(t("toast.createdNoEmail"))
       } else if (data.contractVersion) {
         const version = formatNumber(data.contractVersion, locale)
-        if (data.emailSent) toast.success(t("toast.reissued", { name, version }))
+        if (data.emailSent === "pending") toast.success(t("toast.reissuedSending", { name, version }))
+        else if (data.emailSent) toast.success(t("toast.reissued", { name, version }))
         else toast.warning(t("toast.reissuedNoEmail", { version }))
       } else {
         toast.success(t("toast.updated"))
@@ -197,8 +199,13 @@ export function WorkshopForm({
   // Uploads go to the workshop's folder: the saved one's, or named after the slug typed so far.
   const uploadTarget = workshop ? { courseId: workshop.id } : { folder: watched.slug }
 
+  // Photos still uploading are not in the form yet: saving now would leave them out.
+  const [coverBusy, setCoverBusy] = useState(false)
+  const [samplesBusy, setSamplesBusy] = useState(false)
+
   async function onSubmit(event?: React.BaseSyntheticEvent) {
     event?.preventDefault()
+    if (coverBusy || samplesBusy) return void toast.warning(t("form.photosUploading"))
     if (reissue && (await form.trigger())) setConfirming(true)
     else await submit()
   }
@@ -355,6 +362,7 @@ export function WorkshopForm({
           {(field) => (
             <ImageUpload
               purpose="course_cover"
+              onBusyChange={setCoverBusy}
               {...field}
               value={field.value as string | null}
               onChange={(path) => field.onChange(path)}
@@ -369,6 +377,7 @@ export function WorkshopForm({
               value={(field.value as MediaItem[]) ?? []}
               onChange={field.onChange}
               imagePurpose="course_sample"
+              onBusyChange={setSamplesBusy}
               allowVideos={false}
               target={uploadTarget}
               max={12}
@@ -553,19 +562,7 @@ function NumberField({
   return (
     <FormField<Values> name={name} label={label} required className={className}>
       {({ value, onChange, ...field }) => (
-        <Input
-          {...field}
-          ref={field.ref}
-          type="number"
-          inputMode="numeric"
-          min={min}
-          max={max}
-          step={1}
-          dir="ltr"
-          className="max-w-32 tabular-nums"
-          value={typeof value === "number" && Number.isFinite(value) ? value : ""}
-          onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
-        />
+        <WholeNumberInput {...field} ref={field.ref} aria-valuemin={min} aria-valuemax={max} className="max-w-32" value={value} onChange={onChange} />
       )}
     </FormField>
   )
@@ -610,7 +607,7 @@ function ChoiceCards<V extends string>({
 
 function AgeGroupField() {
   const t = useTranslations("workshops.fields")
-  const { control } = useFormContext<Values>()
+  const { control, setValue, clearErrors } = useFormContext<Values>()
   const group = useWatch({ control, name: "ageGroup" })
   return (
     <div className="space-y-4">
@@ -619,7 +616,15 @@ function AgeGroupField() {
           <ChoiceCards
             id={field.id}
             value={field.value as (typeof ageGroups)[number]}
-            onChange={field.onChange}
+            onChange={(value) => {
+              field.onChange(value)
+              // Hidden ages would still be checked, and block saving without a field to show it on.
+              if (value !== "children") {
+                setValue("ageMin", null)
+                setValue("ageMax", null)
+                clearErrors(["ageMin", "ageMax"])
+              }
+            }}
             describedBy={field["aria-describedby"]}
             choices={[
               { value: "adults", title: t("adults"), description: t("adultsHint"), icon: UsersRoundIcon },
@@ -677,10 +682,13 @@ function SwitchRow({
   name,
   label,
   description,
+  onHide,
 }: {
   name: "bringNothing" | "experienceRequired" | "hasAdvance"
   label: string
   description?: string
+  /** Called with the new state: clear what the switch hides (hidden values are still checked, with no field to show an error on). */
+  onHide?: (checked: boolean) => void
 }) {
   return (
     <FormField<Values> name={name}>
@@ -700,6 +708,7 @@ function SwitchRow({
             onCheckedChange={(checked) => {
               field.onChange(checked)
               field.onBlur()
+              onHide?.(checked)
             }}
           />
         </label>
@@ -710,11 +719,20 @@ function SwitchRow({
 
 function BringField() {
   const t = useTranslations("workshops.fields")
-  const { control } = useFormContext<Values>()
+  const { control, setValue, clearErrors } = useFormContext<Values>()
   const nothing = useWatch({ control, name: "bringNothing" })
   return (
     <div className="space-y-3">
-      <SwitchRow name="bringNothing" label={t("bringNothing")} description={t("bringNothingHint")} />
+      <SwitchRow
+        name="bringNothing"
+        label={t("bringNothing")}
+        description={t("bringNothingHint")}
+        onHide={(checked) => {
+          if (!checked) return
+          setValue("bring", { fa: "", tr: "", en: "" })
+          clearErrors("bring")
+        }}
+      />
       {!nothing && (
         <LocalizedTextarea
           name="bring"
@@ -731,11 +749,20 @@ function BringField() {
 
 function ExperienceField() {
   const t = useTranslations("workshops.fields")
-  const { control } = useFormContext<Values>()
+  const { control, setValue, clearErrors } = useFormContext<Values>()
   const required = useWatch({ control, name: "experienceRequired" })
   return (
     <div className="space-y-3">
-      <SwitchRow name="experienceRequired" label={t("experience")} description={t("experienceHint")} />
+      <SwitchRow
+        name="experienceRequired"
+        label={t("experience")}
+        description={t("experienceHint")}
+        onHide={(checked) => {
+          if (checked) return
+          setValue("experienceNote", { fa: "", tr: "", en: "" })
+          clearErrors("experienceNote")
+        }}
+      />
       {required && (
         <LocalizedInput
           name="experienceNote"
@@ -751,7 +778,7 @@ function ExperienceField() {
 function ContractFields() {
   const t = useTranslations("workshops.fields")
   const locale = useLocale()
-  const { control } = useFormContext<Values>()
+  const { control, setValue, clearErrors } = useFormContext<Values>()
   const [feeType, feeAmount, maxCapacity, hasAdvance] = useWatch({
     control,
     name: ["feeType", "feeAmount", "maxCapacity", "hasAdvance"],
@@ -781,7 +808,16 @@ function ContractFields() {
       >
         {(field) => <MoneyInput {...field} className="max-w-48" />}
       </FormField>
-      <SwitchRow name="hasAdvance" label={t("hasAdvance")} description={t("hasAdvanceHint")} />
+      <SwitchRow
+        name="hasAdvance"
+        label={t("hasAdvance")}
+        description={t("hasAdvanceHint")}
+        onHide={(checked) => {
+          if (checked) return
+          setValue("advanceAmount", null)
+          clearErrors("advanceAmount")
+        }}
+      />
       {hasAdvance && (
         <FormField<Values>
           name="advanceAmount"
@@ -804,7 +840,13 @@ function ContractFields() {
 function ExtraDaysField() {
   const t = useTranslations("workshops")
   const locale = useLocale()
-  const { getValues } = useFormContext<Values>()
+  const { control, getValues, getFieldState, formState } = useFormContext<Values>()
+  // A new day starts from the first day's date, hours and participants: filled in first, so no day is
+  // added empty, before the first one, or for a single participant.
+  const [startsAt, endsAt, minCapacity, maxCapacity] = useWatch({ control, name: ["startsAt", "endsAt", "minCapacity", "maxCapacity"] })
+  const firstDayReady = Boolean(startsAt && endsAt) && Number(minCapacity) > 0 && Number(maxCapacity) > 0
+  // A day's wrong input is outlined; the message is shown under the list (FormField).
+  const wrong = (i: number, key: keyof ExtraDay) => getFieldState(`extraDays.${i}.${key}`, formState).invalid || undefined
   return (
     <FormField<Values> name="extraDays" label={<ContractLabel>{t("fields.extraDays")}</ContractLabel>} description={t("fields.extraDaysHint")}>
       {({ value, onChange, id }) => {
@@ -844,41 +886,33 @@ function ExtraDaysField() {
                       <XIcon />
                     </Button>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-                    <label className="col-span-2 space-y-1 sm:col-span-1">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-6">
+                    <label className="col-span-2 space-y-1">
                       <span className="text-muted-foreground text-xs">{t("fields.dayDate")}</span>
-                      <Input type="date" dir="ltr" value={day.date} onChange={(e) => set(i, { date: e.target.value })} />
+                      <DateButton value={day.date} invalid={wrong(i, "date")} onChange={(date) => set(i, { date })} className="w-full" />
                     </label>
                     <label className="space-y-1">
                       <span className="text-muted-foreground text-xs">{t("fields.dayStart")}</span>
-                      <Input type="time" dir="ltr" value={day.start} onChange={(e) => set(i, { start: e.target.value })} />
+                      <TimeTextInput value={day.start} aria-invalid={wrong(i, "start")} onChange={(start) => set(i, { start })} />
                     </label>
                     <label className="space-y-1">
                       <span className="text-muted-foreground text-xs">{t("fields.dayEnd")}</span>
-                      <Input type="time" dir="ltr" value={day.end} onChange={(e) => set(i, { end: e.target.value })} />
+                      <TimeTextInput value={day.end} aria-invalid={wrong(i, "end")} onChange={(end) => set(i, { end })} />
                     </label>
                     <label className="space-y-1">
                       <span className="text-muted-foreground text-xs">{t("fields.dayMin")}</span>
-                      <Input
-                        type="number"
-                        inputMode="numeric"
-                        dir="ltr"
-                        min={1}
-                        max={500}
-                        value={Number.isFinite(day.minCapacity) ? day.minCapacity : ""}
-                        onChange={(e) => set(i, { minCapacity: e.target.valueAsNumber })}
+                      <WholeNumberInput
+                        value={day.minCapacity}
+                        aria-invalid={wrong(i, "minCapacity")}
+                        onChange={(n) => set(i, { minCapacity: n ?? Number.NaN })}
                       />
                     </label>
                     <label className="space-y-1">
                       <span className="text-muted-foreground text-xs">{t("fields.dayMax")}</span>
-                      <Input
-                        type="number"
-                        inputMode="numeric"
-                        dir="ltr"
-                        min={1}
-                        max={500}
-                        value={Number.isFinite(day.maxCapacity) ? day.maxCapacity : ""}
-                        onChange={(e) => set(i, { maxCapacity: e.target.valueAsNumber })}
+                      <WholeNumberInput
+                        value={day.maxCapacity}
+                        aria-invalid={wrong(i, "maxCapacity")}
+                        onChange={(n) => set(i, { maxCapacity: n ?? Number.NaN })}
                       />
                     </label>
                   </div>
@@ -886,10 +920,13 @@ function ExtraDaysField() {
               )
             })}
             {days.length < 13 && (
-              <Button type="button" variant="outline" size="sm" onClick={() => onChange([...days, next()])}>
-                <CalendarPlusIcon />
-                {t("fields.addDay")}
-              </Button>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <Button type="button" variant="outline" size="sm" disabled={!firstDayReady} onClick={() => onChange([...days, next()])}>
+                  <CalendarPlusIcon />
+                  {t("fields.addDay")}
+                </Button>
+                {!firstDayReady && <span className="text-muted-foreground text-xs">{t("fields.addDayFirst")}</span>}
+              </div>
             )}
           </div>
         )
