@@ -99,7 +99,8 @@ async function withMyMemory(text: string, from: AppLocale, to: AppLocale[]) {
         parts.push(piece)
         continue
       }
-      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(piece)}&langpair=${from}|${target}`
+      // onlyprivate + mt: the machine translation, not a stranger's sentence from the shared memory.
+      const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(piece)}&langpair=${from}|${target}&onlyprivate=1&mt=1`
       const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) })
       if (res.status === 429) throw new UserError("settings.translation.errors.limit")
       if (!res.ok) throw new Error(`mymemory ${res.status}`)

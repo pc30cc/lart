@@ -43,6 +43,7 @@ describe("translate", () => {
     vi.stubGlobal("fetch", fetchMock)
     expect(await translate("Line one\n\nLine two", "en", ["tr"])).toEqual({ tr: "[Line one]\n\n[Line two]" })
     expect(fetchMock.mock.calls.map(([u]) => new URL(u as string).searchParams.get("langpair"))).toEqual(["en|tr", "en|tr"])
+    expect(new URL(fetchMock.mock.calls[0][0] as string).searchParams.get("onlyprivate")).toBe("1")
   })
 
   it("turns a service failure into a friendly error", async () => {
