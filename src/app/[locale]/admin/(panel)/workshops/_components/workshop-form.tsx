@@ -1,6 +1,6 @@
 "use client"
 
-import { BabyIcon, CalendarPlusIcon, FileSignatureIcon, HistoryIcon, Link2Icon, LockIcon, TriangleAlertIcon, UsersRoundIcon, XIcon } from "lucide-react"
+import { BabyIcon, CalendarPlusIcon, FileSignatureIcon, Link2Icon, LockIcon, TriangleAlertIcon, UsersRoundIcon, XIcon } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 import { useFormContext, useWatch, type DefaultValues } from "react-hook-form"
@@ -99,32 +99,6 @@ export function emptyWorkshopValues(): DefaultValues<Values> {
   }
 }
 
-/**
- * The new workshop form's draft, kept in this browser as it is typed: a
- * reload (or a closed tab) does not lose it. Removed once the workshop is
- * created, or by "Start over".
- */
-const DRAFT_KEY = "limer:new-workshop-draft:v1"
-/** `coverUrl`: the uploaded cover's address, to show it again after a reload. */
-type Draft = { values: Partial<Values>; slugEdited: boolean; coverUrl?: string | null }
-
-function readDraft(): Draft | null {
-  try {
-    const raw = window.localStorage.getItem(DRAFT_KEY)
-    return raw ? (JSON.parse(raw) as Draft) : null
-  } catch {
-    return null
-  }
-}
-function writeDraft(draft: Draft | null) {
-  try {
-    if (draft) window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
-    else window.localStorage.removeItem(DRAFT_KEY)
-  } catch {
-    // Private window or storage full: the form still works, only without a draft.
-  }
-}
-
 /** Stable JSON for comparing form values (object keys sorted). */
 const stable = (v: unknown) =>
   JSON.stringify(v, (_k, x: unknown) =>
@@ -179,7 +153,6 @@ export function WorkshopForm({
     successMessage: false,
     onSuccess: (data) => {
       const name = instructorName(form.getValues("instructorId"))
-      if (!workshop) writeDraft(null)
       if (!workshop) {
         if (data.emailSent) toast.success(t("toast.created", { name }))
         else toast.warning(t("toast.createdNoEmail"))
@@ -210,41 +183,14 @@ export function WorkshopForm({
   // Editing a field that is in the contract re-issues it: warn before saving.
   const watched = useWatch({ control: form.control }) as Partial<Values>
 
-  // A new workshop: bring back the draft kept in this browser, then keep it as it is typed.
-  const [draftRestored, setDraftRestored] = useState(false)
-  // The address of a cover uploaded here (the saved workshop's comes with it).
-  const [coverUrl, setCoverUrl] = useState<string | null>(null)
-  const [draftLoaded, setDraftLoaded] = useState(editing)
-  // The draft lives in this browser's storage, readable only after the page is shown (not while it is rendered on the server).
-  /* eslint-disable react-hooks/set-state-in-effect */
+  // The draft that this form kept in the browser for a while is no longer used: remove what is left of it.
   useEffect(() => {
-    if (editing) return
-    const draft = readDraft()
-    if (draft?.values) {
-      form.reset({ ...emptyWorkshopValues(), ...draft.values })
-      setSlugEdited(draft.slugEdited)
-      if (draft.values.coverPath && draft.coverUrl) setCoverUrl(draft.coverUrl)
-      setDraftRestored(true)
+    try {
+      window.localStorage.removeItem("limer:new-workshop-draft:v1")
+    } catch {
+      // Storage blocked: nothing was kept there either.
     }
-    setDraftLoaded(true)
-    // Once, when the form opens.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  /* eslint-enable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (editing || !draftLoaded) return
-    const timer = window.setTimeout(() => {
-      if (form.formState.isDirty) writeDraft({ values: form.getValues(), slugEdited, coverUrl })
-    }, 400)
-    return () => window.clearTimeout(timer)
-  }, [watched, slugEdited, coverUrl, editing, draftLoaded, form])
-  function startOver() {
-    writeDraft(null)
-    form.reset(emptyWorkshopValues())
-    setCoverUrl(null)
-    setSlugEdited(false)
-    setDraftRestored(false)
-  }
   const live = workshop?.contract && workshop.contract.status !== "void" ? workshop.contract : null
   const locked = Boolean(workshop?.contractLocked)
   const reissue = Boolean(workshop && !locked && reissues(workshop.values, watched))
@@ -259,17 +205,6 @@ export function WorkshopForm({
 
   return (
     <Form form={form} onSubmit={onSubmit}>
-      {draftRestored && (
-        <div className="bg-info/8 border-info/25 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 text-sm">
-          <p className="flex items-start gap-2">
-            <HistoryIcon aria-hidden className="text-info mt-0.5 size-4 shrink-0" />
-            <span className="text-pretty">{t("form.draft.restored")}</span>
-          </p>
-          <Button type="button" variant="outline" size="sm" onClick={startOver}>
-            {t("form.draft.startOver")}
-          </Button>
-        </div>
-      )}
       {locked && (
         <Notice icon={LockIcon} title={t("form.lockedTitle")}>
           {t("form.lockedDescription")}
@@ -422,11 +357,8 @@ export function WorkshopForm({
               purpose="course_cover"
               {...field}
               value={field.value as string | null}
-              onChange={(path, result) => {
-                field.onChange(path)
-                setCoverUrl(result?.url ?? null)
-              }}
-              previewUrl={coverUrl ?? workshop?.coverUrl}
+              onChange={(path) => field.onChange(path)}
+              previewUrl={workshop?.coverUrl}
               target={uploadTarget}
             />
           )}
@@ -574,7 +506,7 @@ function SelectField({
         <Select
           value={(field.value as string) || undefined}
           onValueChange={(v) => {
-            // Radix reports "" when the value is set from code (a restored draft) before its options are
+            // Radix can report "" when the value is set from code (a form reset) before its options are
             // rendered; taking it would clear the choice and the form would then refuse to save.
             if (!v) return
             field.onChange(v)

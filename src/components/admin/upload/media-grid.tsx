@@ -317,7 +317,7 @@ export function MediaGrid({
                           alt={label(item.kind, index)}
                           loading="lazy"
                           draggable={false}
-                          className="relative size-full object-contain transition-transform duration-500 group-hover/tile:scale-[1.03]"
+                          className="absolute inset-0 size-full object-contain transition-transform duration-500 group-hover/tile:scale-[1.03]"
                         />
                       </>
                     ) : (
@@ -328,7 +328,7 @@ export function MediaGrid({
                           muted
                           playsInline
                           preload="metadata"
-                          className="size-full object-cover"
+                          className="absolute inset-0 size-full object-cover"
                         />
                         <span className="pointer-events-none absolute inset-0 m-auto flex size-10 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm">
                           <PlayIcon className="size-4 fill-current" />
@@ -389,11 +389,11 @@ export function MediaGrid({
                       <img
                         src={p.preview}
                         alt=""
-                        className="size-full scale-105 object-cover blur-[2px]"
+                        className="absolute inset-0 size-full scale-105 object-cover blur-[2px]"
                         onError={(event) => (event.currentTarget.style.visibility = "hidden")}
                       />
                     ) : (
-                      <video src={p.preview} muted playsInline preload="metadata" className="size-full object-cover opacity-70" />
+                      <video src={p.preview} muted playsInline preload="metadata" className="absolute inset-0 size-full object-cover opacity-70" />
                     )}
                     {p.status === "error" ? (
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/90 p-3 text-center backdrop-blur-sm">

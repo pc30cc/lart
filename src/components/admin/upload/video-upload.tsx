@@ -83,7 +83,7 @@ export function VideoUpload({
 
       {phase.kind === "uploading" ? (
         <div className="relative aspect-video w-full overflow-hidden rounded-xl border bg-black shadow-xs">
-          <video src={phase.preview} muted playsInline preload="metadata" className="size-full object-contain opacity-60" />
+          <video src={phase.preview} muted playsInline preload="metadata" className="absolute inset-0 size-full object-contain opacity-60" />
           <div className="absolute inset-x-0 top-0 flex items-center gap-2 p-3 text-xs text-white/90">
             <FilmIcon className="size-4 shrink-0" />
             <span className="truncate font-medium" dir="auto">
@@ -101,9 +101,9 @@ export function VideoUpload({
       ) : value ? (
         <div className={cn("group/preview relative aspect-video w-full overflow-hidden rounded-xl border bg-black shadow-xs", dragging && "ring-3 ring-primary/40")}>
           {url ? (
-            <video src={url} controls playsInline preload="metadata" className="size-full object-contain animate-in fade-in-0 duration-300" />
+            <video src={url} controls playsInline preload="metadata" className="absolute inset-0 size-full object-contain animate-in fade-in-0 duration-300" />
           ) : (
-            <div className="flex size-full flex-col items-center justify-center gap-2 text-white/70">
+            <div className="flex absolute inset-0 size-full flex-col items-center justify-center gap-2 text-white/70">
               <VideoIcon className="size-6" />
               <span className="text-xs">{t("upload.uploaded")}</span>
             </div>

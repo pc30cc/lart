@@ -130,7 +130,7 @@ export function ImageUpload({
               src={phase.preview}
               alt=""
               onError={(event) => (event.currentTarget.style.visibility = "hidden")}
-              className={cn("size-full scale-105 blur-[2px]", isLogo ? "object-contain p-4" : "object-cover")}
+              className={cn("absolute inset-0 size-full scale-105 blur-[2px]", isLogo ? "object-contain p-4" : "object-cover")}
             />
           ) : url && broken !== url ? (
             isLogo ? (
@@ -139,7 +139,7 @@ export function ImageUpload({
                 src={url}
                 alt={t("upload.photoAlt")}
                 onError={() => setBroken(url)}
-                className="size-full animate-in object-contain p-4 duration-300 fade-in-0"
+                className="absolute inset-0 size-full animate-in object-contain p-4 duration-300 fade-in-0"
               />
             ) : (
               // The whole photo, whatever its shape (a portrait one is not cut down to its middle), on a blurred copy of itself.
@@ -151,12 +151,12 @@ export function ImageUpload({
                   src={url}
                   alt={t("upload.photoAlt")}
                   onError={() => setBroken(url)}
-                  className="relative size-full animate-in object-contain duration-300 fade-in-0"
+                  className="absolute inset-0 size-full animate-in object-contain duration-300 fade-in-0"
                 />
               </>
             )
           ) : (
-            <div className="flex size-full flex-col items-center justify-center gap-2 text-muted-foreground">
+            <div className="flex absolute inset-0 size-full flex-col items-center justify-center gap-2 text-muted-foreground">
               <ImageIcon className="size-6" />
               <span className="text-xs">{t("upload.uploaded")}</span>
             </div>
