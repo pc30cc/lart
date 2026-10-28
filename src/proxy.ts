@@ -119,7 +119,10 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const noindex = Boolean(area)
 
   // Maintenance: the admin panel works (with its sign-in); everything else is the logo only.
-  if (maintenance && area !== "admin") return closedForMaintenance(false)
+  // Not for the container's own health check (Coolify: curl http://localhost:3000/): a 503 there
+  // marks the app unhealthy and the reverse proxy then drops it. Visitors always come with the
+  // site's host name, never "localhost".
+  if (maintenance && area !== "admin" && !isLocalCheck(request)) return closedForMaintenance(false)
 
   // A language that is off for the site (Settings → General): its public and
   // account pages go to the main language (not permanent: it can be turned
@@ -164,6 +167,12 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
  * with no body to show.
  */
 const MAINTENANCE_HTML = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Limer</title><style>html,body{margin:0;height:100%;overflow:hidden;background:#f2e9e5}body{display:grid;place-items:center;height:100dvh}i{display:block;width:min(64vw,360px);aspect-ratio:4468/1478;background:#5b311e;-webkit-mask:url(/brand/limer-logo.svg) center/contain no-repeat;mask:url(/brand/limer-logo.svg) center/contain no-repeat}</style></head><body><i role="img" aria-label="Limer"></i></body></html>`
+
+/** A request made inside the container (its health check), by host name. */
+function isLocalCheck(request: NextRequest): boolean {
+  const host = (request.headers.get("host") ?? "").toLowerCase().replace(/:\d+$/, "")
+  return host === "localhost" || host === "127.0.0.1" || host === "[::1]"
+}
 
 function closedForMaintenance(api: boolean): NextResponse {
   const response = new NextResponse(api ? null : MAINTENANCE_HTML, {

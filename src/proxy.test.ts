@@ -408,6 +408,12 @@ describe("proxy: maintenance (lib/maintenance.ts)", () => {
     expect((await proxy(request("/api/admin/exports/x"))).status).not.toBe(503)
   })
 
+  it("answers the container's health check (localhost) with the real page", async () => {
+    const res = await proxy(request("/", { headers: { host: "localhost:3000" } }))
+    expect(res.status).not.toBe(503)
+    expect((await proxy(request("/", { headers: { host: "limer.tr" } }))).status).toBe(503)
+  })
+
   it("does nothing while it is off", async () => {
     setMain("tr", true, locales, false)
     expect(served(await proxy(request("/workshops")))).toBe(true)
