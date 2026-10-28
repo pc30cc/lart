@@ -99,5 +99,8 @@
     "cancelled": "İptal edildi",
     "workshop": "Yeni atölye yayımlandı · Telegram'a göndermek için onaylayın",
     "posted": "Telegram'da"
+  },
+  "maintenance": {
+    "notice": "Site bakımda: ziyaretçiler yalnızca logoyu görüyor. Panelde hiçbir şey değiştirilemez veya silinemez; yalnızca son atölyeye («{workshop}») gider kaydedilebilir."
   }
 }

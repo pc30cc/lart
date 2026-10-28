@@ -4,6 +4,7 @@ import { audit } from "@/lib/audit"
 import { requireInstructorApi } from "@/lib/auth/instructor"
 import { createRateLimiter } from "@/lib/auth/rate-limit"
 import { errorForLog } from "@/lib/errors"
+import { isMaintenance } from "@/lib/maintenance"
 import { getSetting } from "@/lib/settings"
 import { getStorage, StorageError } from "@/lib/storage"
 import { MultipartReader, multipartBoundary } from "@/lib/storage/multipart"
@@ -33,6 +34,8 @@ const fail = (code: UploadErrorCode) => Response.json({ error: code }, { status:
  * entry's admin, with `impersonatedBy`).
  */
 export async function POST(request: Request) {
+  // Maintenance (lib/maintenance.ts): closed outside the admin panel.
+  if (await isMaintenance()) return new Response(null, { status: 503, headers: { "Retry-After": "3600" } })
   const session = await requireInstructorApi(request)
   if (!session) return fail("unauthorized")
   const instructorId = session.instructor.id

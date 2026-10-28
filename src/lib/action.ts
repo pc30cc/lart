@@ -11,6 +11,7 @@ import { requireMember, type MemberSession } from "@/lib/auth/member"
 import { createRateLimiter, rateLimitClient } from "@/lib/auth/rate-limit"
 import { clientIp } from "@/lib/auth/request"
 import { UserError, errorForLog, isMessageKey, zodIssueMessage, type ActionResult, type MessageValues } from "@/lib/errors"
+import { isMaintenance } from "@/lib/maintenance"
 import type { Tx } from "@/db"
 
 export type { ActionResult } from "@/lib/errors"
@@ -32,13 +33,20 @@ export type AdminActionContext = AdminSession & {
  * `ActionResult`: `{ ok: true, data }` or `{ ok: false, error, fieldErrors? }`
  * with friendly, translated text. Throw `UserError` for expected failures;
  * anything else is logged and shown as a generic message.
+ *
+ * During maintenance (lib/maintenance.ts) it refuses everything, unless
+ * `{ duringMaintenance: true }`: an action that changes nothing (translate),
+ * or that checks itself what it allows then (recording the latest workshop's
+ * expense).
  */
 export function adminAction<S extends z.ZodType, T = undefined>(
   schema: S,
   handler: (input: z.output<S>, ctx: AdminActionContext) => Promise<T>,
+  options: { duringMaintenance?: boolean } = {},
 ): (input: z.input<S> | FormData) => Promise<ActionResult<T>> {
   return async (input) => {
     const session = await requireAdmin()
+    if (!options.duringMaintenance && (await isMaintenance())) return maintenanceRefusal()
     const ctx: AdminActionContext = {
       ...session,
       audit: (entry, tx) => audit({ ...entry, adminId: session.admin.id }, tx),
@@ -103,6 +111,7 @@ export function memberAction<S extends z.ZodType, T = undefined>(
   options: PersonActionOptions & { verified?: boolean } = {},
 ): (input: z.input<S> | FormData) => Promise<ActionResult<T>> {
   return async (input) => {
+    if (await isMaintenance()) return maintenanceRefusal()
     const session = await requireMember()
     const ctx: MemberActionContext = { ...session, audit: personAudit("member", session.impersonatedBy) }
     return runAction(schema, input, async (data) => {
@@ -126,6 +135,7 @@ export function instructorAction<S extends z.ZodType, T = undefined>(
   options: PersonActionOptions = {},
 ): (input: z.input<S> | FormData) => Promise<ActionResult<T>> {
   return async (input) => {
+    if (await isMaintenance()) return maintenanceRefusal()
     const session = await requireInstructor()
     const ctx: InstructorActionContext = { ...session, audit: personAudit("instructor", session.impersonatedBy) }
     return runAction(schema, input, async (data) => {
@@ -149,12 +159,19 @@ export function publicAction<S extends z.ZodType, T = undefined>(
 ): (input: z.input<S> | FormData) => Promise<ActionResult<T>> {
   const limiter = options.rateLimit && createRateLimiter(options.rateLimit)
   return async (input) => {
+    if (await isMaintenance()) return maintenanceRefusal()
     if (limiter && !limiter.consume(rateLimitClient(clientIp(await headers()) ?? "unknown")).ok) {
       const t = await getTranslations()
       return { ok: false, error: t(options.rateLimitMessage ?? "auth.errors.rateLimited") }
     }
     return runAction(schema, input, handler)
   }
+}
+
+/** The answer of an action refused during maintenance. */
+async function maintenanceRefusal(): Promise<{ ok: false; error: string }> {
+  const t = await getTranslations()
+  return { ok: false, error: t("common.errors.maintenance") }
 }
 
 /**

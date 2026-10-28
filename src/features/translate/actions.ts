@@ -11,7 +11,7 @@ const HOUR = 60 * 60_000
 const LIMIT_MESSAGE = "settings.translation.errors.limit"
 
 /** The "Translate" button in the admin panel: the text in the other languages wanted. */
-export const translateTextAction = adminAction(translateSchema, async ({ text, from, to }) => translate(text, from, to))
+export const translateTextAction = adminAction(translateSchema, async ({ text, from, to }) => translate(text, from, to), { duringMaintenance: true })
 
 /** Per instructor, so one account cannot use up the shared translation quota. */
 const instructorLimiter = createRateLimiter({ limit: 60, windowMs: HOUR })

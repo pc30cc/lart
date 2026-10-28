@@ -5,6 +5,7 @@ import { clientIp } from "@/lib/auth/client-ip"
 import { createRateLimiter } from "@/lib/auth/rate-limit"
 import { isSameOrigin } from "@/lib/auth/request"
 import { errorForLog } from "@/lib/errors"
+import { isMaintenance } from "@/lib/maintenance"
 
 const report = z.object({
   path: z.string().max(400),
@@ -23,6 +24,7 @@ const done = () => new Response(null, { status: 204 })
  * waits on it or learns anything from it.
  */
 export async function POST(request: Request) {
+  if (await isMaintenance()) return done()
   if (!isSameOrigin(request)) return done()
   if (!views.consume(clientIp(request.headers) ?? "unknown").ok) return done()
   if (Number(request.headers.get("content-length") ?? 0) > 2048) return done()

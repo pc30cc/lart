@@ -40,6 +40,13 @@ const session = vi.hoisted(() => ({
 }))
 vi.mock("@/lib/auth/admin", () => ({ requireAdmin: async () => session, getAdmin: async () => session }))
 
+// Maintenance is off unless a test turns it on.
+const maintenance = vi.hoisted(() => ({ on: false, latest: null as string | null }))
+vi.mock("@/lib/maintenance", () => ({
+  isMaintenance: async () => maintenance.on,
+  latestWorkshop: async () => (maintenance.latest ? { id: maintenance.latest, title: {} } : null),
+}))
+
 const yesterday = () => new Date(Date.now() - 86_400_000).toISOString().slice(0, 10)
 const zero = { revenue: 0, instructorFees: 0, courseExpenses: 0, advance: 0, payable: 0 }
 const two: Partner[] = [
@@ -232,6 +239,29 @@ describe("money rules (Settings → Money)", () => {
       ok(await recordWithdrawal({ partnerId: p1.id, ...entry(), note: "" }))
     } finally {
       await setSetting("money", { withdrawals: false, spenderId: p1.id })
+    }
+  })
+
+  it("during maintenance takes only an expense of the latest workshop, and refuses every other change", async () => {
+    const latest = await makeCourse(world, p1.id, { status: "published" })
+    const other = await makeCourse(world, p1.id, { status: "published" })
+    await setSetting("money", { withdrawals: false, spenderId: p1.id })
+    session.admin.id = p1.id
+    Object.assign(maintenance, { on: true, latest })
+    try {
+      ok(await recordExpense({ courseId: latest, category: "Clay", ...entry(), source: "wallet" }))
+      expect(await recordExpense({ courseId: other, category: "Clay", ...entry(), source: "wallet" })).toMatchObject({
+        ok: false,
+        error: expect.stringContaining("only be recorded for the latest workshop"),
+      })
+      expect(await recordExpense({ courseId: null, category: "Ink", ...entry(), source: "wallet" })).toMatchObject({ ok: false })
+      expect(await recordAdvance({ courseId: latest, direction: "paid", ...entry(), note: "" })).toMatchObject({
+        ok: false,
+        error: expect.stringContaining("under maintenance"),
+      })
+      expect(await recordContribution({ ...entry(), note: "" })).toMatchObject({ ok: false, error: expect.stringContaining("under maintenance") })
+    } finally {
+      Object.assign(maintenance, { on: false, latest: null })
     }
   })
 

@@ -25,6 +25,10 @@ import { FALLBACK_LOCALE, isAppLocale, locales, type AppLocale } from "./locales
  * site is shown in) are read and cached with it, the main language always
  * among them; while nothing was read, every language counts as on.
  *
+ * The maintenance switch (the `maintenance` setting, true or absent; it has
+ * no form: it is set in the database) is read and cached with them too:
+ * `lib/maintenance.ts`. While nothing was read, it counts as off.
+ *
  * The cache lives on `globalThis`: the proxy and the app are bundled
  * separately and get their own copy of this module, but run in one process.
  */
@@ -37,7 +41,7 @@ const COLD_WAIT_MS = 1_500
  * the fallback guessed while the database did not answer; with the site's
  * languages (`site`, the main one included).
  */
-export type MainLocaleState = { locale: AppLocale; known: boolean; site: readonly AppLocale[] }
+export type MainLocaleState = { locale: AppLocale; known: boolean; site: readonly AppLocale[]; maintenance: boolean }
 
 type Store = {
   value: AppLocale | null
@@ -45,6 +49,8 @@ type Store = {
   site: AppLocale[] | null
   /** `value` came from a successful read (or a save), not from the fallback. */
   known: boolean
+  /** The `maintenance` setting as last read. */
+  maintenance: boolean
   expiresAt: number
   inflight: Promise<MainLocaleState> | null
   version: number
@@ -54,12 +60,13 @@ const store = ((globalThis as { [key: symbol]: Store })[Symbol.for("lart.mainLoc
   value: null,
   site: null,
   known: false,
+  maintenance: false,
   expiresAt: 0,
   inflight: null,
   version: 0,
 })
 
-const GUESS: MainLocaleState = { locale: FALLBACK_LOCALE, known: false, site: locales }
+const GUESS: MainLocaleState = { locale: FALLBACK_LOCALE, known: false, site: locales, maintenance: false }
 
 /** The site's languages as stored, in the usual order, always with the main language (none valid: all of them). */
 export function siteLocalesOf(raw: unknown, main: AppLocale): AppLocale[] {
@@ -69,7 +76,9 @@ export function siteLocalesOf(raw: unknown, main: AppLocale): AppLocale[] {
 
 /** The cached value, if any. (`=== true`: a store left by an older copy of this module, in development, has no `known`.) */
 const cached = (): MainLocaleState | null =>
-  store.value ? { locale: store.value, known: store.known === true, site: siteLocalesOf(store.site ?? locales, store.value) } : null
+  store.value
+    ? { locale: store.value, known: store.known === true, site: siteLocalesOf(store.site ?? locales, store.value), maintenance: store.maintenance === true }
+    : null
 
 async function load(): Promise<MainLocaleState> {
   const version = store.version
@@ -80,16 +89,17 @@ async function load(): Promise<MainLocaleState> {
     const rows = await db
       .select({ key: settings.key, value: settings.value })
       .from(settings)
-      .where(inArray(settings.key, ["defaultLocale", "siteLocales"]))
-      .limit(2)
+      .where(inArray(settings.key, ["defaultLocale", "siteLocales", "maintenance"]))
+      .limit(3)
     const raw = (key: string) => rows.find((r) => r.key === key)?.value
     // No row or an unknown value: the setting's own default, a real answer.
     const main = raw("defaultLocale")
     const value = isAppLocale(main) ? main : FALLBACK_LOCALE
     const site = siteLocalesOf(raw("siteLocales"), value)
+    const maintenance = raw("maintenance") === true
     // A save in this process while the query ran wins over what it read.
-    if (store.version === version) Object.assign(store, { value, site, known: true, expiresAt: Date.now() + MAIN_LOCALE_TTL_MS })
-    return cached() ?? { locale: value, known: true, site }
+    if (store.version === version) Object.assign(store, { value, site, maintenance, known: true, expiresAt: Date.now() + MAIN_LOCALE_TTL_MS })
+    return cached() ?? { locale: value, known: true, site, maintenance }
   } catch (err) {
     console.warn("[i18n] main language not read", errorForLog(err))
     // The last value read stays (still known); without one, the fallback is a guess.
@@ -150,6 +160,7 @@ export function resetMainLocaleCache(): void {
   store.value = null
   store.site = null
   store.known = false
+  store.maintenance = false
   store.expiresAt = 0
   store.inflight = null
 }

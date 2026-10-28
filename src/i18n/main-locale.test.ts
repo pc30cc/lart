@@ -137,8 +137,8 @@ describe("getMainLocale", () => {
 })
 
 describe("getMainLocaleState: known or only guessed", () => {
-  const known = (locale: string) => ({ locale, known: true, site: ["fa", "tr", "en"] })
-  const guessed = { locale: "tr", known: false, site: ["fa", "tr", "en"] }
+  const known = (locale: string) => ({ locale, known: true, site: ["fa", "tr", "en"], maintenance: false })
+  const guessed = { locale: "tr", known: false, site: ["fa", "tr", "en"], maintenance: false }
 
   it("is known once the setting was read, also when it has no value (the default)", async () => {
     answer(row("fa"))

@@ -26,6 +26,8 @@ import { areaOf, canonicalPath, isOpenPath } from "@/lib/routes"
  *   sign-in should come back to: `currentPath()` in lib/auth/request),
  * - noindex for the admin panel, the instructor panel, the member's account
  *   pages and their APIs, in every language,
+ * - maintenance (lib/maintenance.ts): every page and API outside the admin
+ *   panel answers only the logo on the brand colour (503),
  * - an optimistic redirect to the right sign-in page when a private page is
  *   opened without that area's session cookie (the sign-in pages themselves,
  *   the `open` routes of lib/routes, stay open). The real checks happen on the
@@ -92,13 +94,16 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   requestHeaders.set("content-security-policy", csp)
   requestHeaders.set("x-pathname", (pathname + search).slice(0, 2048))
 
-  // The APIs are never localized.
+  const path = routerPath(pathname)
+
+  // The APIs are never localized and never wait for the main language. During
+  // maintenance only the admin panel's answer (its own read only for the others).
   if (/^\/api(\/|$)/.test(pathname)) {
+    if (!/^\/api\/admin(\/|$)/.test(path) && (await getMainLocaleState()).maintenance) return closedForMaintenance(true)
     return withHeaders(NextResponse.next({ request: { headers: requestHeaders } }), csp, PRIVATE_API.test(pathname))
   }
 
-  const { locale: main, known, site } = await getMainLocaleState()
-  const path = routerPath(pathname)
+  const { locale: main, known, site, maintenance } = await getMainLocaleState()
 
   // An old address: one permanent redirect to today's, before the gate (an
   // emailed /admin/accept-invite?token=… link must reach the invitation page).
@@ -112,6 +117,9 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { locale: prefix, rest } = splitLocale(path)
   const area = areaOf(rest)
   const noindex = Boolean(area)
+
+  // Maintenance: the admin panel works (with its sign-in); everything else is the logo only.
+  if (maintenance && area !== "admin") return closedForMaintenance(false)
 
   // A language that is off for the site (Settings → General): its public and
   // account pages go to the main language (not permanent: it can be turned
@@ -147,6 +155,27 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   // headers and cookies, and forwards these request headers (with the nonce)
   // to the page.
   return withHeaders(intlFor(main)(new NextRequest(request.url, { headers: requestHeaders })), csp, noindex)
+}
+
+/**
+ * The maintenance page: the brand colour with the Limer logo in the middle,
+ * nothing else (no text, nothing to scroll). 503 with Retry-After, so search
+ * engines keep the site as it was; never cached. An API gets the same status
+ * with no body to show.
+ */
+const MAINTENANCE_HTML = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Limer</title><style>html,body{margin:0;height:100%;overflow:hidden;background:#f2e9e5}body{display:grid;place-items:center;height:100dvh}i{display:block;width:min(64vw,360px);aspect-ratio:4468/1478;background:#5b311e;-webkit-mask:url(/brand/limer-logo.svg) center/contain no-repeat;mask:url(/brand/limer-logo.svg) center/contain no-repeat}</style></head><body><i role="img" aria-label="Limer"></i></body></html>`
+
+function closedForMaintenance(api: boolean): NextResponse {
+  const response = new NextResponse(api ? null : MAINTENANCE_HTML, {
+    status: 503,
+    headers: api ? {} : { "Content-Type": "text/html; charset=utf-8" },
+  })
+  response.headers.set("Retry-After", "3600")
+  response.headers.set("Cache-Control", "no-store")
+  response.headers.set("X-Robots-Tag", "noindex")
+  // Its own policy: no script at all, only the inline style and the logo file.
+  if (!api) response.headers.set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
+  return response
 }
 
 /** 308 to `pathname` (query kept). Never cached: it depends on the main language, a setting. */

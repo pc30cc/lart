@@ -42,7 +42,8 @@
     "processing_unavailable": "Bu sunucuda şu anda fotoğraf işlenemiyor, bu yüzden fotoğraf kaydedilmedi. Lütfen sitenin teknik sorumlusuna haber verin.",
     "storage": "Dosya depolama alanına kaydedilemedi. Lütfen CDN ayarlarını kontrol edin veya biraz sonra tekrar deneyin.",
     "server": "Bizim tarafımızda bir sorun oluştu. Lütfen tekrar deneyin.",
-    "network": "Bağlantı kesildi. Lütfen internet bağlantınızı kontrol edip tekrar deneyin."
+    "network": "Bağlantı kesildi. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.",
+    "maintenance": "Site bakımda: şu an yalnızca gider fişi veya fotoğrafı yüklenebilir."
   },
   "preview": {
     "alt": "Örnek bir fotoğraf üzerinde filigran önizlemesi"

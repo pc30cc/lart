@@ -42,7 +42,8 @@
     "processing_unavailable": "Photos can't be processed on this server right now, so the photo wasn't saved. Please tell the site's technical contact.",
     "storage": "The file couldn't be saved to storage. Please check the CDN settings, or try again in a moment.",
     "server": "Something went wrong on our side. Please try again.",
-    "network": "The connection was interrupted. Please check your internet connection and try again."
+    "network": "The connection was interrupted. Please check your internet connection and try again.",
+    "maintenance": "The site is under maintenance: only an expense's receipt or photo can be uploaded now."
   },
   "preview": {
     "alt": "Watermark preview on a sample photo"

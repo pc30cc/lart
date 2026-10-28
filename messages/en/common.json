@@ -36,7 +36,9 @@
     "unauthorized": "Please sign in again to continue.",
     "impersonationBlocked": "This can’t be done while you’re viewing as this person. Only they can do it themselves.",
     "siteUpdated": "The site was just updated and this page is out of date. Reload it and send again (what you typed is cleared; copy it first if it is long).",
-    "reload": "Reload page"
+    "reload": "Reload page",
+    "maintenance": "The site is under maintenance: nothing can be changed or removed right now. Only an expense of the latest workshop can be recorded.",
+    "maintenanceExpenseOnly": "During maintenance an expense can only be recorded for the latest workshop."
   },
   "validation": {
     "required": "Please fill this in.",

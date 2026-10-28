@@ -46,7 +46,8 @@ const served = (res: Response) => res.status === 200 && (rewrite(res) !== null |
 
 const mainLocaleState = vi.mocked(getMainLocaleState)
 /** The main language of the next requests: read from the setting, or (`known` false) only guessed. */
-const setMain = (locale: AppLocale, known = true, site: readonly AppLocale[] = locales) => mainLocaleState.mockResolvedValue({ locale, known, site })
+const setMain = (locale: AppLocale, known = true, site: readonly AppLocale[] = locales, maintenance = false) =>
+  mainLocaleState.mockResolvedValue({ locale, known, site, maintenance })
 const others = (main: AppLocale) => locales.filter((l) => l !== main)
 
 beforeEach(() => setMain("tr"))
@@ -314,8 +315,10 @@ describe("proxy: the sign-in gate", () => {
 })
 
 describe("proxy: APIs", () => {
-  it("marks the private APIs noindex, without language routing or the main language", async () => {
+  it("marks the private APIs noindex, without language routing; the admin APIs never wait for the setting", async () => {
     mainLocaleState.mockClear()
+    expect((await proxy(request("/api/admin/something"))).headers.get("x-middleware-next")).toBe("1")
+    expect(mainLocaleState).not.toHaveBeenCalled()
     for (const path of ["/api/admin/something", "/api/instructor/x", "/api/account/x"]) {
       const res = await proxy(request(path))
       expect(res.headers.get("x-middleware-next"), path).toBe("1")
@@ -323,7 +326,6 @@ describe("proxy: APIs", () => {
       expect(res.headers.get("x-robots-tag"), path).toBe("noindex, nofollow")
     }
     expect((await proxy(request("/api/health"))).headers.get("x-robots-tag")).toBeNull()
-    expect(mainLocaleState).not.toHaveBeenCalled()
   })
 
   it("skips static files, media files and the upload endpoints", () => {
@@ -368,5 +370,46 @@ describe("proxy: the site's languages (Settings → General)", () => {
     expect(admin.status).toBe(200)
     setMain("tr", false, ["tr"])
     expect(served(await proxy(request("/en/workshops")))).toBe(true)
+  })
+})
+
+describe("proxy: maintenance (lib/maintenance.ts)", () => {
+  beforeEach(() => setMain("tr", true, locales, true))
+
+  it.each(["/", "/fa", "/workshops", "/en/workshops/candle", "/account", "/instructor", "/fa/instructor/login"])(
+    "shows only the logo page for %s (503, nothing cached, no script)",
+    async (path) => {
+      const res = await proxy(request(path))
+      expect(res.status).toBe(503)
+      expect(res.headers.get("retry-after")).toBe("3600")
+      expect(res.headers.get("cache-control")).toBe("no-store")
+      expect(res.headers.get("content-security-policy")).toContain("default-src 'none'")
+      const html = await res.text()
+      expect(html).toContain("/brand/limer-logo.svg")
+      expect(html).toContain("overflow:hidden")
+      expect(html).not.toContain("<script")
+    },
+  )
+
+  it("closes a server action posted to a public page", async () => {
+    const res = await proxy(request("/fa/workshops/candle", { method: "POST", headers: { "next-action": "abc" } }))
+    expect(res.status).toBe(503)
+  })
+
+  it("keeps the admin panel and its sign-in", async () => {
+    expect(served(await proxy(request("/admin/login")))).toBe(true)
+    expect(served(await proxy(request("/fa/admin", { cookie: "admin" })))).toBe(true)
+  })
+
+  it("answers the APIs outside the admin panel with an empty 503", async () => {
+    const res = await proxy(request("/api/account/registrations"))
+    expect(res.status).toBe(503)
+    expect(await res.text()).toBe("")
+    expect((await proxy(request("/api/admin/exports/x"))).status).not.toBe(503)
+  })
+
+  it("does nothing while it is off", async () => {
+    setMain("tr", true, locales, false)
+    expect(served(await proxy(request("/workshops")))).toBe(true)
   })
 })

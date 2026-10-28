@@ -4,6 +4,7 @@ import { z } from "zod"
 import { requireMemberApi } from "@/lib/auth/member"
 import { createRateLimiter } from "@/lib/auth/rate-limit"
 import { errorForLog } from "@/lib/errors"
+import { isMaintenance } from "@/lib/maintenance"
 import { attachReceipt, canAttachReceipt } from "@/features/registrations/receipt"
 import { notifyAdmins } from "@/features/telegram/admin-notices"
 import { getSetting } from "@/lib/settings"
@@ -30,6 +31,8 @@ const notFound = () => Response.json({ error: "not_found" }, { status: 404 })
  * views as them. Answers { ok: true } (201) or { error }.
  */
 export async function POST(request: Request) {
+  // Maintenance (lib/maintenance.ts): closed outside the admin panel.
+  if (await isMaintenance()) return new Response(null, { status: 503, headers: { "Retry-After": "3600" } })
   const session = await requireMemberApi(request)
   if (!session) return fail("unauthorized")
   if (session.impersonatedBy) return Response.json({ error: "impersonating" }, { status: 403 })

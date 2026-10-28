@@ -99,5 +99,8 @@
     "cancelled": "Cancelled",
     "workshop": "A new workshop is public · approve its Telegram post",
     "posted": "On Telegram"
+  },
+  "maintenance": {
+    "notice": "The site is under maintenance: visitors only see the logo. Nothing can be changed or removed in the panel; only an expense of the latest workshop (“{workshop}”) can be recorded."
   }
 }

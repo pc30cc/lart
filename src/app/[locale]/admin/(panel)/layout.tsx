@@ -7,6 +7,8 @@ import { AppShell } from "@/components/admin/app-shell"
 import { TranslateProvider } from "@/components/admin/form/translate-context"
 import { AdminNoticeToast } from "@/components/admin/notice-toast"
 import { requireAdmin } from "@/lib/auth/admin"
+import { localized } from "@/lib/format"
+import { isMaintenance, latestWorkshop } from "@/lib/maintenance"
 import { getBrand, getSetting } from "@/lib/settings"
 import { publicUrls } from "@/lib/storage"
 
@@ -25,13 +27,15 @@ export async function generateMetadata({ params }: LayoutProps<"/[locale]/admin"
  */
 export default async function PanelLayout({ children, params }: LayoutProps<"/[locale]/admin">) {
   const { locale } = await params
-  const [{ admin }, brand, store, url, logo] = await Promise.all([
+  const [{ admin }, brand, store, url, logo, maintenance] = await Promise.all([
     requireAdmin(),
     getBrand(locale),
     cookies(),
     publicUrls(),
     getSetting("logo"),
+    isMaintenance(),
   ])
+  const [latest, t] = maintenance ? await Promise.all([latestWorkshop(), getTranslations("admin.maintenance")]) : [null, null]
 
   return (
     <AppShell
@@ -40,6 +44,12 @@ export default async function PanelLayout({ children, params }: LayoutProps<"/[l
       admin={{ name: admin.name, email: admin.email, photoUrl: url(admin.photoPath) }}
       defaultOpen={store.get("sidebar_state")?.value !== "false"}
     >
+      {t && (
+        // Maintenance (lib/maintenance.ts): what still works, so a refused change is no surprise.
+        <p role="status" className="bg-warning/10 border-warning/30 text-foreground mb-6 rounded-xl border px-4 py-3 text-sm text-pretty">
+          {t("notice", { workshop: latest ? localized(latest.title, locale) : "—" })}
+        </p>
+      )}
       <TranslateProvider audience="admin">{children}</TranslateProvider>
       <Suspense>
         <AdminNoticeToast />

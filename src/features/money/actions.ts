@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache"
 import { db, type Tx } from "@/db"
 import { admins, expenseFiles, ledgerLines } from "@/db/schema"
 import { adminAction, UserError } from "@/lib/action"
+import { isMaintenance, latestWorkshop } from "@/lib/maintenance"
 import { getSetting } from "@/lib/settings"
 import { exists, mediaContentType } from "@/lib/storage"
 import { activePartners, closeCourse } from "./closing"
@@ -120,6 +121,11 @@ async function keepFiles(tx: Tx, transactionId: string, files: ExpenseFile[], ad
 
 /** An expense of a workshop (`courseId`) or of the business, paid from the wallet or out of the advance; recorded by the spender. */
 export const recordExpense = adminAction(expenseSchema, async ({ courseId, category, amount, occurredOn, source, furnishing, files }, ctx) => {
+  // Maintenance (lib/maintenance.ts): only an expense of the latest workshop.
+  if (await isMaintenance()) {
+    const latest = await latestWorkshop()
+    if (!courseId || courseId !== latest?.id) throw new UserError("common.errors.maintenanceExpenseOnly")
+  }
   await assertSpender(ctx.admin.id)
   await assertUploaded(files)
   const id = await db.transaction(async (tx) => {
@@ -146,7 +152,7 @@ export const recordExpense = adminAction(expenseSchema, async ({ courseId, categ
   })
   revalidate()
   return { id }
-})
+}, { duringMaintenance: true })
 
 /** An advance paid to a workshop's instructor from the wallet (by the spender), or returned by them to it. */
 export const recordAdvance = adminAction(advanceSchema, async ({ courseId, direction, amount, occurredOn, note, files }, ctx) => {

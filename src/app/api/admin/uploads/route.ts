@@ -7,6 +7,7 @@ import { audit } from "@/lib/audit"
 import { requireAdminApi, type AdminSession } from "@/lib/auth/admin"
 import { errorForLog } from "@/lib/errors"
 import { getSetting } from "@/lib/settings"
+import { isMaintenance } from "@/lib/maintenance"
 import { getStorage, StorageError } from "@/lib/storage"
 import { MultipartReader, multipartBoundary } from "@/lib/storage/multipart"
 import {
@@ -110,6 +111,8 @@ export async function POST(request: Request) {
     const fields = fieldsSchema.safeParse(Object.fromEntries(raw))
     if (part?.name !== "file" || part.filename === null || !fields.success) return fail("bad_request")
     const { purpose, total, upload, offset } = fields.data
+    // Maintenance: only an expense's receipt or item photo (lib/maintenance.ts).
+    if (purpose !== "receipt" && (await isMaintenance())) return Response.json({ error: "maintenance" }, { status: 503 })
     if (isImagePurpose(purpose) && (total !== undefined || upload !== undefined || offset !== undefined)) return fail("bad_request")
     if (declared > maxUploadBytes(purpose) + FRAMING_BYTES) return fail("too_large")
     const folder = await folderOf(purpose, fields.data, session.admin)
