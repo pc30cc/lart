@@ -37,8 +37,8 @@
     "impersonationBlocked": "Bu kişinin hesabını görüntülerken bu işlem yapılamaz. Bunu yalnızca kişinin kendisi yapabilir.",
     "siteUpdated": "Site az önce güncellendi ve bu sayfa eski kaldı. Sayfayı yenileyip tekrar gönderin (yazdıklarınız silinir; uzunsa önce kopyalayın).",
     "reload": "Sayfayı yenile",
-    "maintenance": "Site bakımda: şu an hiçbir şey değiştirilemez veya silinemez. Yalnızca son atölyeye gider kaydedilebilir.",
-    "maintenanceExpenseOnly": "Bakım sırasında yalnızca son atölyeye gider kaydedilebilir."
+    "maintenance": "Site bakımda: şu an hiçbir şey değiştirilemez veya silinemez. Yalnızca son atölyeye ya da genel gider olarak gider kaydedilebilir.",
+    "maintenanceExpenseOnly": "Bakım sırasında yalnızca son atölyeye ya da genel gider olarak gider kaydedilebilir."
   },
   "validation": {
     "required": "Lütfen bu alanı doldurun.",

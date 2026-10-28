@@ -18,8 +18,9 @@ import { getMainLocaleState } from "@/i18n/main-locale"
  * - every page and API outside the admin panel shows only the logo on the
  *   brand colour (src/proxy.ts), 200 with noindex,
  * - in the admin panel nothing can be changed or removed (`adminAction`),
- *   except recording an expense of the latest workshop (`latestWorkshopId`)
- *   with its receipts; signing in and out still work.
+ *   except recording an expense of the latest workshop (`latestWorkshop`) or
+ *   a general one (how a closed workshop's later cost is recorded, its name
+ *   in the text), with its receipts; signing in and out still work.
  */
 export async function isMaintenance(): Promise<boolean> {
   return (await getMainLocaleState()).maintenance

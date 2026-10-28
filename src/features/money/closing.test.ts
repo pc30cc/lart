@@ -254,7 +254,9 @@ describe("money rules (Settings → Money)", () => {
         ok: false,
         error: expect.stringContaining("only be recorded for the latest workshop"),
       })
-      expect(await recordExpense({ courseId: null, category: "Ink", ...entry(), source: "wallet" })).toMatchObject({ ok: false })
+      // A general expense is allowed (a closed workshop's late cost), furnishing is not.
+      ok(await recordExpense({ courseId: null, category: "Candle workshop: wax", ...entry(), source: "wallet" }))
+      expect(await recordExpense({ courseId: null, category: "Chair", ...entry(), source: "wallet", furnishing: true })).toMatchObject({ ok: false })
       expect(await recordAdvance({ courseId: latest, direction: "paid", ...entry(), note: "" })).toMatchObject({
         ok: false,
         error: expect.stringContaining("under maintenance"),

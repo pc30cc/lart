@@ -121,10 +121,12 @@ async function keepFiles(tx: Tx, transactionId: string, files: ExpenseFile[], ad
 
 /** An expense of a workshop (`courseId`) or of the business, paid from the wallet or out of the advance; recorded by the spender. */
 export const recordExpense = adminAction(expenseSchema, async ({ courseId, category, amount, occurredOn, source, furnishing, files }, ctx) => {
-  // Maintenance (lib/maintenance.ts): only an expense of the latest workshop.
+  // Maintenance (lib/maintenance.ts): only an expense of the latest workshop, or a general one
+  // (not furnishing): a closed workshop's later cost is recorded that way, its name in the text.
   if (await isMaintenance()) {
     const latest = await latestWorkshop()
-    if (!courseId || courseId !== latest?.id) throw new UserError("common.errors.maintenanceExpenseOnly")
+    const allowed = courseId ? courseId === latest?.id : !furnishing
+    if (!allowed) throw new UserError("common.errors.maintenanceExpenseOnly")
   }
   await assertSpender(ctx.admin.id)
   await assertUploaded(files)

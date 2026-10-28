@@ -101,6 +101,6 @@
     "posted": "On Telegram"
   },
   "maintenance": {
-    "notice": "The site is under maintenance: visitors only see the logo. Nothing can be changed or removed in the panel; only an expense of the latest workshop (“{workshop}”) can be recorded."
+    "notice": "The site is under maintenance: visitors only see the logo. Nothing can be changed or removed in the panel; only an expense of the latest workshop (“{workshop}”) or a general expense can be recorded. Record a cost of a closed workshop (such as the hand-made candle one) as a general expense, with the workshop's name in its text."
   }
 }

@@ -101,6 +101,6 @@
     "posted": "Telegram'da"
   },
   "maintenance": {
-    "notice": "Site bakımda: ziyaretçiler yalnızca logoyu görüyor. Panelde hiçbir şey değiştirilemez veya silinemez; yalnızca son atölyeye («{workshop}») gider kaydedilebilir."
+    "notice": "Site bakımda: ziyaretçiler yalnızca logoyu görüyor. Panelde hiçbir şey değiştirilemez veya silinemez; yalnızca son atölyeye («{workshop}») ya da genel gider olarak gider kaydedilebilir. Kapanmış bir atölyenin (ör. el yapımı mum) giderini, açıklamada atölyenin adıyla genel gider olarak kaydedin."
   }
 }
