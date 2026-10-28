@@ -97,6 +97,12 @@ originals, the watermark logo, partners' photos). Now there is one.
 
 ## Production (limer.tr)
 
+**Since 2026-10-28 everything (the app, LimerPostgres, LimerMail, the Coolify
+panel on port 8000) runs on the server `host` (`5.39.70.213`); DNS points
+there. `vps-50cc1602` is no longer used for Limer: do not deploy or change
+anything there.** The notes below were written for the earlier server; the
+names of the Coolify resources stayed the same.
+
 Moved on 2026-10-07 from `analyticsme.site` to the Coolify on **vps-50cc1602**
 (`192.99.68.134`, Intel Haswell: sharp and photo uploads work there).
 

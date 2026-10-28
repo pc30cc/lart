@@ -377,11 +377,11 @@ describe("proxy: maintenance (lib/maintenance.ts)", () => {
   beforeEach(() => setMain("tr", true, locales, true))
 
   it.each(["/", "/fa", "/workshops", "/en/workshops/candle", "/account", "/instructor", "/fa/instructor/login"])(
-    "shows only the logo page for %s (503, nothing cached, no script)",
+    "shows only the logo page for %s (200, noindex, nothing cached, no script)",
     async (path) => {
       const res = await proxy(request(path))
-      expect(res.status).toBe(503)
-      expect(res.headers.get("retry-after")).toBe("3600")
+      expect(res.status).toBe(200)
+      expect(res.headers.get("x-robots-tag")).toBe("noindex")
       expect(res.headers.get("cache-control")).toBe("no-store")
       expect(res.headers.get("content-security-policy")).toContain("default-src 'none'")
       const html = await res.text()
@@ -393,7 +393,7 @@ describe("proxy: maintenance (lib/maintenance.ts)", () => {
 
   it("closes a server action posted to a public page", async () => {
     const res = await proxy(request("/fa/workshops/candle", { method: "POST", headers: { "next-action": "abc" } }))
-    expect(res.status).toBe(503)
+    expect(await res.text()).toContain("/brand/limer-logo.svg")
   })
 
   it("keeps the admin panel and its sign-in", async () => {
@@ -410,8 +410,8 @@ describe("proxy: maintenance (lib/maintenance.ts)", () => {
 
   it("answers the container's health check (localhost) with the real page", async () => {
     const res = await proxy(request("/", { headers: { host: "localhost:3000" } }))
-    expect(res.status).not.toBe(503)
-    expect((await proxy(request("/", { headers: { host: "limer.tr" } }))).status).toBe(503)
+    expect(served(res)).toBe(true)
+    expect(await (await proxy(request("/", { headers: { host: "limer.tr" } }))).text()).toContain("/brand/limer-logo.svg")
   })
 
   it("does nothing while it is off", async () => {

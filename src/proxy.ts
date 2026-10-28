@@ -27,7 +27,7 @@ import { areaOf, canonicalPath, isOpenPath } from "@/lib/routes"
  * - noindex for the admin panel, the instructor panel, the member's account
  *   pages and their APIs, in every language,
  * - maintenance (lib/maintenance.ts): every page and API outside the admin
- *   panel answers only the logo on the brand colour (503),
+ *   panel answers only the logo on the brand colour,
  * - an optimistic redirect to the right sign-in page when a private page is
  *   opened without that area's session cookie (the sign-in pages themselves,
  *   the `open` routes of lib/routes, stay open). The real checks happen on the
@@ -162,9 +162,10 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
 /**
  * The maintenance page: the brand colour with the Limer logo in the middle,
- * nothing else (no text, nothing to scroll). 503 with Retry-After, so search
- * engines keep the site as it was; never cached. An API gets the same status
- * with no body to show.
+ * nothing else (no text, nothing to scroll). 200 (the owner's choice: uptime
+ * monitors then do not report the site as down), with noindex so search
+ * engines do not take the logo page for the site; never cached. An API gets
+ * an empty 503.
  */
 const MAINTENANCE_HTML = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Limer</title><style>html,body{margin:0;height:100%;overflow:hidden;background:#f2e9e5}body{display:grid;place-items:center;height:100dvh}i{display:block;width:min(64vw,360px);aspect-ratio:4468/1478;background:#5b311e;-webkit-mask:url(/brand/limer-logo.svg) center/contain no-repeat;mask:url(/brand/limer-logo.svg) center/contain no-repeat}</style></head><body><i role="img" aria-label="Limer"></i></body></html>`
 
@@ -176,10 +177,10 @@ function isLocalCheck(request: NextRequest): boolean {
 
 function closedForMaintenance(api: boolean): NextResponse {
   const response = new NextResponse(api ? null : MAINTENANCE_HTML, {
-    status: 503,
+    status: api ? 503 : 200,
     headers: api ? {} : { "Content-Type": "text/html; charset=utf-8" },
   })
-  response.headers.set("Retry-After", "3600")
+  if (api) response.headers.set("Retry-After", "3600")
   response.headers.set("Cache-Control", "no-store")
   response.headers.set("X-Robots-Tag", "noindex")
   // Its own policy: no script at all, only the inline style and the logo file.

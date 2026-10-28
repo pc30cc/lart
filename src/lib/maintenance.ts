@@ -16,7 +16,7 @@ import { getMainLocaleState } from "@/i18n/main-locale"
  * Every process follows within 30 seconds (it is cached with the main
  * language, i18n/main-locale.ts). While it is on:
  * - every page and API outside the admin panel shows only the logo on the
- *   brand colour (src/proxy.ts), 503,
+ *   brand colour (src/proxy.ts), 200 with noindex,
  * - in the admin panel nothing can be changed or removed (`adminAction`),
  *   except recording an expense of the latest workshop (`latestWorkshopId`)
  *   with its receipts; signing in and out still work.
